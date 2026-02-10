@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->enum('item_type',['food','liquor'])->nullable()->after('category_id');
 
-            $table->enum('unit',['plate','ml','bottle'])->nullable()->change();
+            $table->enum('unit',['plate','ml'])->nullable()->change();
 
         });
     }

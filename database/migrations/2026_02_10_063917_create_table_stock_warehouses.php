@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('minimum_spend_rule', function (Blueprint $table) {
+        Schema::create('stock_warehouses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('club_id')->nullable()->constrained('clubs')->nullOnDelete();
-            $table->enum('duration_type',['monthly','yearly']);
-            $table->decimal('minimum_amount', 10, 2)->nullable();
+            $table->string('name')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('minimum_spend_rule');
+        Schema::dropIfExists('stock_warehouses');
     }
 };
