@@ -27,7 +27,7 @@ return new class extends Migration
             $table->decimal('taxable_amount', 10, 2)->nullable();
             $table->decimal('gst_percentage', 5, 2)->nullable();
             $table->decimal('gst_amount', 10, 2)->nullable();
-            $table->decimal('gross_amount', 10, 2)->nullable();
+            $table->decimal('net_amount', 10, 2)->nullable();
             $table->string('payment_mode',100)->nullable();
             $table->enum('payment_status',['pending', 'success', 'failed', 'refunded'])->default('pending');
             $table->string('bank_name')->nullable();

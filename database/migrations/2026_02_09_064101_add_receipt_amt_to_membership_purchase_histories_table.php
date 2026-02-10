@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('membership_purchase_histories', function (Blueprint $table) {
-            $table->decimal('receipt_amount', 10, 2)->default(0)->after('fine_amount')->comment('Actual amount received after gst & all');
+            $table->decimal('net_amount', 10, 2)->default(0)->after('fine_amount')->comment('Actual amount received after gst & all');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('membership_purchase_histories', function (Blueprint $table) {
-            $table->dropColumn(['receipt_amount']);
+            $table->dropColumn(['net_amount']);
         });
     }
 };
