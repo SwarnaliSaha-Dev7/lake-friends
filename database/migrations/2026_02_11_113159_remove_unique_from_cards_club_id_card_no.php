@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stock_warehouses', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('club_id')->nullable()->constrained('clubs')->nullOnDelete();
-            $table->string('stock_name',255)->nullable();
-            $table->timestamps();
+        Schema::table('cards', function (Blueprint $table) {
+            
+        $table->dropUnique('cards_club_id_card_no_unique');
+        
         });
     }
 
@@ -24,6 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('stock_warehouses');
+        Schema::table('cards', function (Blueprint $table) {
+
+            $table->unique(['club_id', 'card_no']);
+            
+        });
     }
 };

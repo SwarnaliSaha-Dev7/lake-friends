@@ -29,7 +29,7 @@ return new class extends Migration
             $table->decimal('gst_amount',10,2)->nullable();
             $table->decimal('net_amount',10,2)->nullable();
 
-            $table->enum('status',['paid','cancelled','refunded']);
+            $table->enum('status',['pending','paid','cancelled','refunded'])->default('pending');
             $table->timestamps();
         });
     }
