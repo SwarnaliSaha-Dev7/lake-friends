@@ -1,0 +1,598 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+/* global css start */
+:root {
+    --theme-White: #ffffff;
+    --right-Panel-bg-Gray: #F0F1F3;
+    --table-Header-bg-Color: #97A0AC;
+    --menu-Link-Color: #A99FB3;
+    --menu-Link-Bg-Color: #F0F1F3;
+    --theme-Blue-Color: #1E205B;
+    --header-Text-Color: #565E6D;
+    --anchore-Text-Color: #0E5598;
+    --danger-Color: #EF4646;
+    --success-Color: #21C45D;
+    --common-Heading-Color: #363636;
+    --body-Text-Color: #555555;
+    --action-Link-Color: #66778E;
+    --global-Font: "Barlow", sans-serif;
+    --info-Light-bg-Color: #EDF6FF;
+    --info-Light-Text-Color: #166DBE;
+    --left-Panel-Graddiant-Color: linear-gradient(349.2deg, #5C1060 18.13%, #092350 107.13%);
+    --heading-Gradiant-Color: linear-gradient(180deg, #152353 -60%, #C022C8 151.67%);
+    --boxgrid-Card-bg-info-color: linear-gradient(101.41deg, #62C8F8 10.85%, #0DA2E7 101.33%);
+    --boxgrid-Card-bg-success-color: linear-gradient(98.95deg, #7BFFAB 1.44%, #32CA6A 100.15%);
+    --boxgrid-Card-bg-secondary-color: linear-gradient(100.31deg, #94A5BD 1.62%, #65768E 98.45%);
+    --boxgrid-Card-bg-warning-color: linear-gradient(99.92deg, #F9C05D -0.07%, #F5A00D 100%);
+    --boxgrid-Card-bg-primary-color: linear-gradient(99.52deg, #A9A3FF 0.6%, #7369FE 100.07%);
+    --boxgrid-Card-bg-danger-color: linear-gradient(99.6deg, #F99E9F 2.53%, #FF5658 98.66%);
+    --btn-primary-bg-color: #0DA2E7;
+    --btn-sky-border-color: #83C3FF;
+    --action-btn-icon-color: #747474;
+    --disable-tr-bg-color: #F6F6F6;
+    --notification-btn-primary-bg-color: #7369FF66;
+    --notification-btn-primary-stroke-color: #514BA3;
+    --notification-card-bg-color: #7470AC21;
+    --notification-body-bg-color: #142152;
+    --scrollbar-bg-color: #2F3B78;
+    --select2-border-color: #dee2e6;
+    --view-profile-table-bg-color: #EDEDED;
+
+}
+
+html {
+    overflow-x: hidden;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+iframe {
+    max-width: 100%;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+a {
+    text-decoration: none;
+    color: var(--btn-primary-bg-color);
+}
+
+a,
+a:hover {
+    transition: all ease-in-out 0.3s;
+}
+
+a:hover {
+    color: var(--anchore-Text-Color);
+}
+
+body {
+    overflow-x: hidden;
+    font-family: var(--global-Font);
+    color: var(--body-Text-Color);
+}
+
+.btn-info {
+    background: var(--info-Light-bg-Color);
+    border: var(--btn-sky-border-color) 1px solid;
+    color: var(--info-Light-Text-Color);
+}
+
+.btn-info:hover {
+    background: var(--anchore-Text-Color);
+    color: var(--theme-White);
+}
+
+.modal {
+    scrollbar-width: none;
+}
+
+.modal .btn-close {
+    background: none;
+}
+
+.form-control,
+.form-select {
+    font-size: 14px;
+}
+
+.btn-primary {
+    background: var(--btn-primary-bg-color);
+    border-color: var(--btn-sky-border-color);
+}
+
+td,
+th {
+    position: relative;
+}
+
+/* global css end */
+
+/* login page css start */
+
+.login-main-wrapper {
+    background-color: var(--right-Panel-bg-Gray);
+}
+
+.overlay-logo {
+    top: 65px;
+    left: 65px;
+}
+
+.login-right {
+    padding: 90px 60px 90px 50px;
+}
+
+.login-right h2 + h4 {
+    margin-bottom: 90px;
+}
+
+.login-right .form-control,
+.login-right .form-select  {
+    min-height: 48px;
+}
+
+.login-right h2 {
+    font-size: 48px;
+}
+/* login page css end */
+
+.left-panel {
+    background: var(--left-Panel-Graddiant-Color);
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    min-height: 100vh;
+    z-index: 999;
+}
+
+.notification-dropdown {
+    width: 400px;
+    display: none;
+}
+
+.noti-head {
+    background: var(--left-Panel-Graddiant-Color);
+}
+
+.notification .badge {
+    min-width: 22px;
+}
+
+.notification>a>.badge {
+    left: 14px;
+    top: -6px;
+}
+
+.notification-dropdown .btn-primary {
+    background: var(--notification-btn-primary-bg-color);
+    border-color: var(--notification-btn-primary-stroke-color);
+}
+
+.close-notific {
+    color: var(--menu-Link-Color);
+}
+
+.noti-body {
+    background: var(--notification-body-bg-color);
+    height: 402px;
+}
+
+.noti-body::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+.noti-body::-webkit-scrollbar {
+    width: 6px;
+    background-color: transparent;
+}
+
+.noti-body::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+    background-color: var(--scrollbar-bg-color);
+}
+
+
+.notific-view-all .btn {
+    background: var(--notification-body-bg-color);
+}
+
+.noti-body .card {
+    background: var(--notification-card-bg-color);
+}
+
+.post-time {
+    color: var(--menu-Link-Color);
+}
+
+.nav-menu ul li+li {
+    margin-top: 10px;
+}
+
+.nav-menu ul li a {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--menu-Link-Color);
+    padding: 10px 10px 10px 30px;
+    border-radius: 26px 0 0 26px;
+    display: block;
+}
+
+
+.nav-menu ul li a:hover,
+.nav-menu ul li.active a {
+    background: var(--menu-Link-Bg-Color);
+    color: var(--theme-Blue-Color);
+}
+
+.nav-menu ul li a i {
+    width: 30px;
+    margin-right: 10px;
+}
+
+.card-entry {
+    bottom: 60px;
+}
+
+.card-entry a {
+    font-size: 18px;
+    color: var(--menu-Link-Color);
+}
+
+.card-entry a:hover {
+    color: var(--theme-White);
+}
+
+.card-entry span {
+    background: var(--boxgrid-Card-bg-warning-color);
+    width: 60px;
+    height: 60px;
+}
+
+.right-panel {
+    width: calc(100vw - 260px);
+    margin-left: auto;
+}
+
+.right-header {
+    color: var(--body-Text-Color);
+    width: calc(100vw - 260px);
+    z-index: 11;
+}
+
+.right-header h1,
+.modal-title,
+.login-right h2 {
+    background: var(--heading-Gradiant-Color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.login-user span:last-child {
+    width: 30px;
+    height: 30px;
+    background: var(--left-Panel-Graddiant-Color);
+}
+
+.log-user-icon {
+    cursor: pointer;
+}
+
+.login-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--left-Panel-Graddiant-Color);
+    width: 200px;
+    display: none;
+}
+
+.login-dropdown ul li+li {
+    margin-top: 30px;
+}
+
+.login-dropdown ul li a {
+    color: var(--theme-White);
+}
+
+.login-dropdown ul li a:hover {
+    color: var(--menu-Link-Color);
+}
+
+.right-body {
+    background: var(--right-Panel-bg-Gray);
+    min-height: 100vh;
+    padding-top: 128px;
+}
+
+.box-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.box-grid .card {
+    border-radius: 8px;
+}
+
+.box-grid .card-body {
+    padding: 33px 15px 20px 20px;
+}
+
+.box-grid .card-header {
+    padding: 20px;
+}
+
+.box-grid .card-header i {
+    background: #E6F5FC1A;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.box-grid .card.bg-info {
+    background: var(--boxgrid-Card-bg-info-color);
+}
+
+.box-grid .card.bg-success {
+    background: var(--boxgrid-Card-bg-success-color)
+}
+
+.box-grid .card.bg-secondary {
+    background: var(--boxgrid-Card-bg-secondary-color);
+}
+
+.box-grid .card.bg-warning {
+    background: var(--boxgrid-Card-bg-warning-color);
+}
+
+.box-grid .card.bg-primary {
+    background: var(--boxgrid-Card-bg-primary-color);
+}
+
+.box-grid .card.bg-danger {
+    background: var(--boxgrid-Card-bg-danger-color);
+}
+
+.common-heading {
+    color: var(--common-Heading-Color);
+}
+
+@media (min-width: 1400.98px) {
+    .action-box p.card-text {
+        font-size: 18px;
+    }
+}
+
+
+.action-box p.card-text {
+    color: var(--action-Link-Color);
+}
+
+.action-box {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.action-box:hover {
+    box-shadow: -3px 5px 11px rgb(0 0 0 / 8%);
+}
+
+.action-box::after {
+    content: '';
+    width: 5px;
+    height: 100%;
+    background: var(--left-Panel-Graddiant-Color);
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 9;
+}
+
+/* Fix DataTable sort icons for Bootstrap 5 */
+
+table.dataTable thead th {
+    position: relative;
+    padding-right: 25px;
+}
+
+table.dataTable thead th.sorting:after,
+table.dataTable thead th.sorting_asc:after,
+table.dataTable thead th.sorting_desc:after {
+    content: "\f0b0";
+    position: absolute;
+    right: 10px;
+    color: var(--theme-White);
+    font-family: "Font Awesome 7 Pro";
+    font-weight: 300;
+    font-size: 12px;
+    top: 52%;
+    transform: translateY(-50%);
+}
+
+table.dataTable thead th {
+    background: var(--table-Header-bg-Color);
+    padding-left: 15px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+table.dataTable tbody td {
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: 14px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    color: var(--body-Text-Color);
+}
+
+div.dataTables_wrapper div.dataTables_filter input {
+    margin-left: 0.5em;
+    display: inline-block;
+    width: auto;
+    border-radius: 6px;
+    border: var(--action-Link-Color) 1px solid;
+    outline: none;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+div#DataTables_Table_0_paginate {
+    margin-top: 30px;
+}
+
+.paginate_button {
+    background: var(--theme-White);
+    padding: 6px 13px;
+    font-size: 13px;
+    margin: 2px;
+    border-radius: 8px;
+    color: var(--body-Text-Color);
+    cursor: pointer;
+    display: inline-block;
+}
+
+.paginate_button:hover {
+    background: var(--info-Light-bg-Color);
+}
+
+.paginate_button.current {
+    background: var(--btn-primary-bg-color);
+    color: var(--theme-White);
+}
+
+.member-list-part div#DataTables_Table_0_filter {
+    position: absolute;
+    right: 310px;
+    top: 6px;
+}
+
+select#statusFilter {
+    background-color: var(--info-Light-bg-Color);
+    border-color: var(--btn-sky-border-color);
+    color: var(--info-Light-Text-Color);
+    min-height: 38px;
+    background-image: url('data:image/svg+xml,<svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 0.5H0.5L6.5 7.595V12.5L9.5 14V7.595L15.5 0.5Z" stroke="%23166DBE" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+table.dataTable thead th.sorting:after,
+table.dataTable thead th.sorting_asc:after,
+table.dataTable thead th.sorting_desc:after {
+    font-weight: 600;
+}
+
+/* table.dataTable thead th.sorting_asc:after {
+    content: "▲";
+}
+
+table.dataTable thead th.sorting_desc:after {
+    content: "▼";
+} */
+.select2-container--default .select2-search--inline .select2-search__field {
+    min-height: 24px;
+    font-size: 14px;
+    font-family: var(--global-Font) !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border: solid var(--select2-border-color) 1px;
+    outline: 0;
+    border-radius: 6px;
+}
+
+.label-icon {
+    background: var(--info-Light-bg-Color);
+    width: 34px;
+    height: 34px;
+}
+
+.upload-text {
+    font-size: 11px
+}
+
+small.text-muted {
+    font-size: 10px
+}
+
+.mod-footer .btn {
+    min-width: 120px;
+}
+
+.action-btn {
+    color: var(--action-btn-icon-color);
+}
+
+.action-btn:hover {
+    color: var(--btn-primary-bg-color);
+}
+
+.current-balance {
+    background: var(--left-Panel-Graddiant-Color);
+}
+
+.wallet-table td {
+    border-color: var(--menu-Link-Color) !important;
+}
+
+.wallet-table tr:last-child td {
+    border: none;
+}
+
+.custom-radio input {
+    cursor: pointer;
+}
+
+.custom-radio input:checked+label {
+    background: var(--info-Light-bg-Color);
+}
+
+.membership-plan-table tr {
+    border-bottom: 5px var(--theme-White) solid;
+}
+
+.membership-plan-table tr td:first-child {
+    border-radius: 8px 0 0 12px;
+}
+
+.membership-plan-table tr td:last-child {
+    border-radius: 0 8px 12px 0;
+}
+
+.membership-plan-table td.bg-info {
+    background: var(--info-Light-bg-Color) !important;
+}
+
+.membership-plan-table tr.expire-member td.bg-info {
+    background: var(--disable-tr-bg-color) !important;
+}
+
+#viewprofile table td {
+    background-color: var(--view-profile-table-bg-color);
+}
+
+@media (min-width: 992px) {
+
+    #addclubmember .modal-lg,
+    #addswimmingmember .modal-lg {
+        --bs-modal-width: 1000px;
+    }
+}
