@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
+use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', function () {
         return view('change-password');
     })->name('change.password');
+
+
+    Route::resource('manage-operators', OperatorManageController::class);
+
 });
 
 require __DIR__.'/auth.php';

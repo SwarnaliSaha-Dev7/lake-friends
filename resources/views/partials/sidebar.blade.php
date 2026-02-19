@@ -6,6 +6,7 @@
     <nav class="nav-menu">
         <ul class="list-unstyled">
             <li class="active"><a href="index.html"><i class="fa-solid fa-table-cells"></i> Dashboard</a></li>
+            <li class="{{ request()->routeIs('manage-operators.*') ? 'active' : '' }}"><a href="{{ route('manage-operators.index') }}"><i class="fa-solid fa-table-cells"></i> Operator</a></li>
             <li><a href="club-member.html"><i class="fa-regular fa-user"></i> Club Member</a></li>
             <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
             <li><a href="#"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>

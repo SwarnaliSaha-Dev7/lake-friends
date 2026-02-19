@@ -61,13 +61,13 @@ jQuery(function ($) {
     // notification js end
 
     // datatable js start
-    document.title = 'Simple DataTable';
+    // document.title = 'Simple DataTable';
     $('.clubmemberlist').DataTable(
         {
             "dom": '<"dt-buttons"Bf><"clear">lirtp',
             "paging": false,
             "autoWidth": false,
-            "searching": true,
+            "searching": false,
             "lengthChange": false,
             "info": false,
             "buttons": [

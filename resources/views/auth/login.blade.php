@@ -1,6 +1,6 @@
 @extends('base.beforeLoginApp')
 
-@section('title', 'LakeFriends Calcutta')
+@section('title', 'Login')
 
 @section('content')
     <div class="login-main-wrapper px-3 min-vh-100">
