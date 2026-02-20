@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
+use App\Http\Controllers\Master\CardTypesManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     })->name('change.password');
 
     Route::resource('manage-membership-duration-types', MembershipDurationTypesManageController::class);
+    Route::resource('manage-card-types', CardTypesManageController::class);
 });
 
 

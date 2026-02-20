@@ -7,8 +7,9 @@
         <ul class="list-unstyled">
             <li class="active"><a href="index.html"><i class="fa-solid fa-table-cells"></i> Dashboard</a></li>
             <li><a href="club-member.html"><i class="fa-regular fa-user"></i> Club Member</a></li>
-            <li><a href="#"><i class="fa-regular fa-user"></i> Membership Duration Types Manage</a></li>
+            <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li>
             <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
+            <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li>
             <li><a href="#"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
             <li><a href="#"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a></li>
             <li><a href="#"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>

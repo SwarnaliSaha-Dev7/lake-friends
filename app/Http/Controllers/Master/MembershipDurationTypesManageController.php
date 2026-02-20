@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\MembershipDurationType;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MembershipDurationTypesManageController extends Controller
 {
@@ -13,15 +14,17 @@ class MembershipDurationTypesManageController extends Controller
      */
     public function index()
     {
-        $user = auth()->user();
+        $page_title = 'Manage Membership Duration Types';
+        $title      = 'Membership Duration Types List';
 
-        $club_id = $user->club_id;
+        $user       = auth()->user();
+        $club_id    = $user->club_id;
 
         $membership_duration_types = MembershipDurationType::where('club_id', $club_id)
-                                        ->latest()
-                                        ->get();
+                                                           ->latest()
+                                                           ->get();
 
-        return view('master_manage.membership_duration_types.list', compact('membership_duration_types'));
+        return view('master_manage.membership_duration_types.list', compact('membership_duration_types','title','page_title'));
     }
 
     /**
@@ -29,11 +32,13 @@ class MembershipDurationTypesManageController extends Controller
      */
     public function create()
     {
-        $user = auth()->user();
+        $page_title = 'Membership Duration Types Add';
+        $title      = 'Membership Duration Types Add';
 
-        $club_id = $user->club_id;
+        $user       = auth()->user();
+        $club_id    = $user->club_id;
 
-        return view('master_manage.membership_duration_types.create');
+        return view('master_manage.membership_duration_types.create', compact('title','page_title'));
     }
 
     /**
@@ -41,14 +46,19 @@ class MembershipDurationTypesManageController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name'              => 'required | string | max:255',
+        $data = $request->validate([
+            'name'              => ['required', 'string', 'max:255',
+                                    Rule::unique('membership_duration_types')
+                                        ->where(function ($query) use ($request) {
+                                            return $query->where('club_id', $request->user()->club_id)
+                                                        ->whereNull('deleted_at');
+                                        }),
+                                    ],
             'duration_months'   => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
             'is_lifetime'       => 'nullable | boolean'
         ]);
 
         $user = auth()->user();
-
         $club_id = $user->club_id;
 
         $store = MembershipDurationType::create([
@@ -59,7 +69,9 @@ class MembershipDurationTypesManageController extends Controller
             'club_id'           => $club_id,
         ]);
 
-        return redirect()->route('manage-membership-duration-types.index')->with('success', 'Membership Duration Type created successfully!');
+        return redirect()
+                ->route('manage-membership-duration-types.index')
+                ->with('success', 'Membership Duration Type added successfully!');
     }
 
     /**
@@ -75,15 +87,17 @@ class MembershipDurationTypesManageController extends Controller
      */
     public function edit(string $id)
     {
-        $user = auth()->user();
+        $page_title = 'Edit Membership Duration Types';
+        $title      = 'Edit Membership Duration Types';
 
+        $user = auth()->user();
         $club_id = $user->club_id;
 
         $membership_duration_types = MembershipDurationType::where('club_id', $club_id)
                         ->where('id', $id)
                         ->firstOrFail();
 
-        return view('master_manage.membership_duration_types.edit', compact('membership_duration_types'));
+        return view('master_manage.membership_duration_types.edit', compact('membership_duration_types','page_title','title'));
     }
 
     /**
@@ -91,19 +105,25 @@ class MembershipDurationTypesManageController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'name'              => 'required | string | max:255',
-            'duration_months'   => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
-            'is_lifetime'       => 'nullable | boolean'
-        ]);
-
-        $user = auth()->user();
-
+        $user    = auth()->user();
         $club_id = $user->club_id;
 
         $membership_duration_types = MembershipDurationType::where('club_id', $club_id)
-                                            ->where('id', $id)
-                                            ->firstOrFail();
+                                                            ->where('id', $id)
+                                                            ->firstOrFail();
+
+        $data = $request->validate([
+            'name'              => ['required', 'string', 'max:255',
+                                    Rule::unique('membership_duration_types')
+                                    ->ignore($id)
+                                    ->where(function ($query) use ($request) {
+                                        return $query->where('club_id', $request->user()->club_id)
+                                                    ->whereNull('deleted_at');
+                                        }),
+                                    ],
+            'duration_months'   => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
+            'is_lifetime'       => 'nullable | boolean'
+        ]);
 
         $membership_duration_types->update([
             'name'              => $request->name,
@@ -111,7 +131,9 @@ class MembershipDurationTypesManageController extends Controller
             'is_lifetime'       => $request->has('is_lifetime') ? 1 : 0,
         ]);
 
-        return redirect()->route('manage-membership-duration-types.index')->with('success', 'Membership Duration Type updated successfully!');
+        return redirect()
+                ->route('manage-membership-duration-types.index')
+                ->with('success', 'Membership Duration Type updated successfully!');
     }
 
     /**
@@ -119,17 +141,18 @@ class MembershipDurationTypesManageController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = auth()->user();
-
+        $user    = auth()->user();
         $club_id = $user->club_id;
 
         $membership_duration_types = MembershipDurationType::where('club_id', $club_id)
-                                            ->where('id', $id)
-                                            ->firstOrFail();
+                                                            ->where('id', $id)
+                                                            ->firstOrFail();
 
         $membership_duration_types->delete();
 
-        return redirect()->route('manage-membership-duration-types.index')->with('success', 'Membership Duration Type deleted successfully!');
+        return redirect()
+                ->route('manage-membership-duration-types.index')
+                ->with('success', 'Membership Duration Type deleted successfully!');
 
     }
 }

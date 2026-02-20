@@ -10,7 +10,7 @@
             <div class="col-12">
                 <div class="member-list-part position-relative">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Membership Duration Types list</h2>
+                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Card Types list</h2>
                         <div class="d-flex gap-2">
                             <div class="d-flex justify-content-end">
                                 <select id="statusFilter"
@@ -22,7 +22,7 @@
                                     <option value="Blocked">Blocked</option>
                                 </select>
                             </div>
-                            <a href="{{ route('manage-membership-duration-types.create') }}" class="btn btn-info">+ Add</a>
+                            <a href="{{ route('manage-card-types.create') }}" class="btn btn-info">+ Add</a>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -32,34 +32,32 @@
                                 <tr>
                                     <th class="text-white fw-medium align-middle text-nowrap">Sl No.</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Name</th>
-                                    <th class="text-white fw-medium align-middle text-nowrap">Duration Months</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($membership_duration_types as $types)
+                                @foreach($cardTypesList as $cards)
                                 <tr>
 
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
-                                    <td class="text-nowrap">{{ $types->name }}</td>
-                                    <td class="text-nowrap">{{ $types->duration_months ?? 'Lifetime' }}</td>
+                                    <td class="text-nowrap">{{ $cards->name }}</td>
                                     <!-- <td class="text-success text-nowrap">No</td> -->
                                     <td class="text-nowrap">
 
-                                        <a href="{{ route('manage-membership-duration-types.edit', $types->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
+                                        <a href="{{ route('manage-card-types.edit', $cards->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
                                             <small>
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </small>
                                         </a>
 
-                                        <form id="delete-form-{{ $types->id }}" action="{{ route('manage-membership-duration-types.destroy', $types->id) }}" method="POST">
+                                        <form id="delete-form-{{ $cards->id }}" action="{{ route('manage-card-types.destroy', $cards->id) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
 
                                             <button type="submit"
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn  delete-row" id="delete-btn"
-                                            data-id="{{ $types->id }}" title="Delete">
+                                            data-id="{{ $cards->id }}" title="Delete">
                                                 <small>
                                                     <i class="fa-solid fa-trash"></i>
                                                 </small>
@@ -126,14 +124,14 @@ $(document).ready(function(){
     $(document).on("click", "#delete-btn", function(e){
         e.preventDefault(); // stop form submit
 
-        let durationTypeId = $(this).data("id");
-        $('#delete_user_id').val(durationTypeId);
+        let cardTypeId = $(this).data("id");
+        $('#delete_user_id').val(cardTypeId);
     });
 
     $('#confirmDeleteBtn').click(function(event){
 
-        let durationTypeId = $("#delete_user_id").val();
-        $(`#delete-form-${durationTypeId}`).submit();
+        let cardTypeId = $("#delete_user_id").val();
+        $(`#delete-form-${cardTypeId}`).submit();
     });
 });
 </script>
