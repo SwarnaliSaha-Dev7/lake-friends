@@ -1,7 +1,7 @@
 <div class="right-header d-flex align-items-center justify-content-between py-3 ps-lg-5 pe-3 ps-3 bg-white position-fixed top-0">
     <div class="item-left">
-        <h1 class="mb-1 fs-3 fw-semibold">Dashboard</h1>
-        <p class="m-0">Overview of your member management system</p>
+        <h1 class="mb-1 fs-3 fw-semibold">@yield('page_title')</h1>
+        {{-- <p class="m-0">Overview of your member management system</p> --}}
     </div>
     <div class="item-right d-flex align-items-center position-relative">
         <div class="notification position-relative">
@@ -62,7 +62,7 @@
             </div>
         </div>
         <div class="login-user border-start ps-2 ms-2">
-            <span class="auth-user fw-medium">Admin User</span> <span
+            <span class="auth-user fw-medium">{{ Auth::user()->name }}</span> <span
                 class="d-inline-flex justify-content-center align-items-center rounded-3 text-white ms-2 log-user-icon"><i
                     class="fa-regular fa-user"></i></span>
         </div>

@@ -1,6 +1,7 @@
 @extends('base.app')
 
-@section('title', 'LakeFriends Calcutta')
+@section('title', $title)
+@section('page_title', $page_title)
 
 @section('content')
     <form action="{{ route('manage-operators.store') }}" method="POST">
@@ -52,8 +53,7 @@
             </div>
 
         </div>
-        <button class="btn btn-primary fw-semibold">Default</button>
-        <button type="submit" class="btn btn-info fw-semibold">Submit</button>
+        <button type="submit" class="btn btn-primary fw-semibold">Submit</button>
     </form>
 @endsection
 

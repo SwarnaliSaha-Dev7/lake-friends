@@ -1,6 +1,7 @@
 @extends('base.app')
 
-@section('title', 'LakeFriends Calcutta')
+@section('title', $title)
+@section('page_title', $page_title)
 
 @section('content')
     <div class="repeat-holder">

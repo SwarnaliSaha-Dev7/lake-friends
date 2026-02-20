@@ -1,6 +1,7 @@
 @extends('base.app')
 
-@section('title', 'LakeFriends Calcutta')
+@section('title', $title)
+@section('page_title', $page_title)
 
 @section('content')
     <div class="repeat-holder">
@@ -20,7 +21,7 @@
                                     {{-- <option value="Blocked">Blocked</option> --}}
                                 </select>
                             </div>
-                            <a href="{{ route('manage-operators.create') }}"><button class="btn btn-info">+ Add operator</button></a>
+                            <a href="{{ route('manage-operators.create') }}"><button class="btn btn-info">+ Add</button></a>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -103,10 +104,7 @@
 @endsection
 
 @section('customJS')
-{{-- <link href="{{ asset('assets/css/toastr.min.css') }}" rel="stylesheet"> --}}
-{{-- <script src="{{ asset('assets/js/toastr.min.js') }}"></script> --}}
 <script>
-
     $(document).ready(function() {
 
         $(document).on("click", "#delete-btn", function(e) {
@@ -118,12 +116,8 @@
         });
 
         $("#confirmDeleteBtn").click(function(event) {
-            // event.preventDefault();
-
             let operatorId = $("#delete_user_id").val();
             $(`#delete-form-${operatorId}`).submit();
-
-            // let operatorId = $("#delete_user_id").val();
         });
 
     });

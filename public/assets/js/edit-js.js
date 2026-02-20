@@ -60,6 +60,15 @@ jQuery(function ($) {
     });
     // notification js end
 
+    $('.nav-menu ul > li > ul').parent().prepend('<i class="arw-nav"></i>');
+    function subMenu() {
+        $(this).parent('li').find('> ul').stop(true, true).slideToggle();
+        $(this).parents('li').siblings().find('ul').stop(true, true).slideUp();
+        $(this).toggleClass('actv');
+        $(this).parent().siblings().find('.arw-nav').removeClass('actv');
+    }
+    $('.nav-menu ul > li > .arw-nav').on('click', subMenu);
+
     // datatable js start
     // document.title = 'Simple DataTable';
     $('.clubmemberlist').DataTable(

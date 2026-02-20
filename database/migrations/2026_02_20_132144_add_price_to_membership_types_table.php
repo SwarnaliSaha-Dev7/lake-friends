@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->tinyInteger('status')->default(0)->after('password');
+        Schema::table('membership_types', function (Blueprint $table) {
+            $table->decimal('price', 10, 2)->default(0)->after('name');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('status');
+        Schema::table('membership_types', function (Blueprint $table) {
+            $table->dropColumn('price');
         });
     }
 };

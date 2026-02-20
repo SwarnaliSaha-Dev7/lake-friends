@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class OperatorManageController extends Controller
 {
@@ -15,9 +16,10 @@ class OperatorManageController extends Controller
      */
     public function index()
     {
-        $page_title = 'Operator List';
+        $page_title = 'Manage Operator';
         $title = 'Operator List';
         $operatorList = User::role('operator')
+                            ->where('club_id', Auth::user()->club_id) // security restriction
                             ->latest('id')->get();
         return view('master_manage.operator.list', compact('operatorList','title','page_title'));
     }
@@ -29,7 +31,7 @@ class OperatorManageController extends Controller
     {
         $page_title = 'Operator Add';
         $title = 'Operator Add';
-        return view('master_manage.operator.create');
+        return view('master_manage.operator.create', compact('title','page_title'));
     }
 
     /**
@@ -39,7 +41,14 @@ class OperatorManageController extends Controller
     {
         $data = $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->whereNull('deleted_at')
+                        ->where(function ($query) {
+                            return $query->where('club_id', Auth::user()->club_id);
+                        }),
+            ],
             'password' => 'required|min:8',
             'status'   => 'required'
         ]);
@@ -53,7 +62,6 @@ class OperatorManageController extends Controller
         return redirect()
             ->route('manage-operators.index')
             ->with('success', 'Operator added successfully');
-        // return redirect()->route('admin.schools.index')->with('success', 'School added successfully');
     }
 
     /**
@@ -91,7 +99,17 @@ class OperatorManageController extends Controller
 
         $data = $request->validate([
             'name'   => 'required|string|max:255',
-            'email'  => 'required|email|unique:users,email,' . $operator->id,
+            // 'email'  => 'required|email|unique:users,email,' . $operator->id,
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')
+                    ->ignore($operator->id)
+                    ->whereNull('deleted_at')
+                    ->where(function ($query) {
+                        return $query->where('club_id', Auth::user()->club_id);
+                    }),
+            ],
             'status' => 'required',
             'password' => 'nullable|min:8'
         ]);
