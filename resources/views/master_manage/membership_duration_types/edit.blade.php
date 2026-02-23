@@ -33,6 +33,9 @@
                             <option value="{{ $i }}" {{ old('duration_months',$membership_duration_types->duration_months) == $i ? 'selected' : ''}}>{{ $i }}</option>
                         @endfor
                     </select>
+                    @error('duration_months')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
@@ -51,7 +54,7 @@
 
         </div>
         <!-- <button class="btn btn-primary fw-semibold">Default</button> -->
-        <button class="btn btn-info fw-semibold">Submit</button>
+        <button class="btn btn-info fw-semibold">Update</button>
     </form>
 
 @endsection

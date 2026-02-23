@@ -10,7 +10,8 @@
             <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li>
             <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
             <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li>
-            <li><a href="#"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
+            <li><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
+            <li><a href="{{ route('manage-gst-rates.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> GST Rate</a></li>
             <li><a href="#"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a></li>
             <li><a href="#"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
         </ul>

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
             $table->foreignId('club_id')->nullable()->constrained('clubs')->cascadeOnDelete();
-            $table->string('card_no',131)->nullable();
+            $table->string('card_no',255)->nullable();
             $table->tinyInteger('status')->default(0)->nullable();
             $table->timestamp('issued_at')->nullable();
             $table->timestamps();

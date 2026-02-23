@@ -22,7 +22,7 @@
 
         </div>
         <!-- <button class="btn btn-primary fw-semibold">Default</button> -->
-        <button class="btn btn-primary fw-semibold">Submit</button>
+        <button class="btn btn-primary fw-semibold">Update</button>
     </form>
 
 @endsection

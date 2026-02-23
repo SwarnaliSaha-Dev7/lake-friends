@@ -31,6 +31,9 @@
                             <option value="{{ $i }}">{{ $i }}</option>
                         @endfor
                     </select>
+                    @error('duration_months')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
