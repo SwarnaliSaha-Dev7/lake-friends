@@ -426,7 +426,8 @@
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
-                    <form action="">
+                    <form id="club-member-form" enctype="multipart/form-data">
+                        @csrf
                         <div class="row">
                             <div class="col-lg-6">
                                 <label for="" class="form-label fw-semibold text-dark mb-3"><span
@@ -436,28 +437,29 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Name</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Full Name">
+                                            <input type="text" class="form-control py-2 shadow-none text-only" id="" name="name"
+                                                placeholder="Full Name" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                                            <input type="email" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Email">
+                                            <input type="email" class="form-control py-2 shadow-none" id="" name="email"
+                                                placeholder="Email" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Phone">
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="phone"
+                                                placeholder="Phone" required>
+                                            <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                            <select name="blood_grp" id="" class="form-select py-2 shadow-none" required>
                                                 <option value="">Blood Group</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -473,15 +475,15 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="" rows="3"
-                                                placeholder="Address"></textarea>
+                                            <textarea class="form-control py-2 shadow-none" id="" name="address" rows="3"
+                                                placeholder="Address" required></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none">
+                                                <input type="file" class="file-input d-none profile-image" name="image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -489,10 +491,11 @@
                                                         Passport size Image
                                                     </p>
                                                     <small class="text-muted">
-                                                        PNG & JPEG, max file size 10kb
+                                                        JPG, JPEG & PNG, max file size 2MB
                                                     </small>
                                                 </div>
                                             </label>
+                                            <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -506,28 +509,29 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Name</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                            <input type="text" class="form-control py-2 shadow-none text-only" id="" name="spouse_name"
                                                 placeholder="Spouse Full Name">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                                            <input type="email" class="form-control py-2 shadow-none" id=""
+                                            <input type="email" class="form-control py-2 shadow-none" id="" name="spouse_email"
                                                 placeholder="Email">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none" id=""
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="spose_phone" name="spouse_phone"
                                                 placeholder="Phone">
+                                            <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                            <select name="" id="" class="form-select py-2 shadow-none" name="spouse_blood_grp">
                                                 <option value="">Blood Group</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -543,7 +547,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="" rows="3"
+                                            <textarea class="form-control py-2 shadow-none" id="" name="spouse_address" rows="3"
                                                 placeholder="Address"></textarea>
                                         </div>
                                     </div>
@@ -551,7 +555,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none">
+                                                <input type="file" class="file-input d-none profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -559,10 +563,11 @@
                                                         Passport size Image
                                                     </p>
                                                     <small class="text-muted">
-                                                        PNG & JPEG, max file size 10kb
+                                                        JPG, JPEG & PNG, max file size 2MB
                                                     </small>
                                                 </div>
                                             </label>
+                                            <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -581,7 +586,8 @@
                                             @foreach ($membershipDurationTypeList as $type)
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="membership_duration_type_id"
-                                                    id="membership_duration_type_{{ $type->id }}" value="{{ $type->id }}">
+                                                    id="membership_duration_type_{{ $type->id }}" value="{{ $type->id }}"
+                                                    {{ $loop->first ? 'required' : '' }}>
                                                 <label class="form-check-label"
                                                     for="membership_duration_type_{{ $type->id }}"><small>{{ $type->name }}</small></label>
                                             </div>
@@ -592,48 +598,48 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>A/C Head</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="A/C Head">
+                                                placeholder="A/C Head" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Card No.</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Card No.">
+                                                placeholder="Card No." required>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Taxable Amt.</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Taxable Amt.">
+                                                placeholder="Taxable Amt." required>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>GST%</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST%">
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="gstPercentage"
+                                                placeholder="GST%" value="{{ $gstPercentage }}" required>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>GST Amt</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST Amt">
+                                                placeholder="GST Amt" required>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Receipt Amt</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Receipt Amt">
+                                                placeholder="Receipt Amt" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Bank Name</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                            <select name="" id="" class="form-select py-2 shadow-none" required>
                                                 <option value="">Bank Name</option>
                                                 <option value="">Bank Name 1</option>
                                                 <option value="">Bank Name 2</option>
@@ -644,7 +650,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Remarks</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Remarks">
+                                                placeholder="Remarks" required>
                                         </div>
                                     </div>
                                 </div>
@@ -1055,4 +1061,120 @@
     </div>
 @endsection
 
+@section('customJS')
+<script>
+    $(document).ready(function() {
 
+        //name validation
+        $('.text-only').on('input', function () {
+            this.value = this.value.replace(/[^A-Za-z\s]/g, '');
+        });
+
+        //phone no validation
+        $('.phone-input').on('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+
+        $('#club-member-form').on('submit', function (e) {
+            e.preventDefault();
+
+            let isValid = true;
+            $('.phone-input').each(function () {
+
+                let phone = $(this).val();
+                let errorDiv = $(this).next('.error-div');
+
+                if (phone !== '' && !/^\d{10}$/.test(phone)) {
+                    errorDiv.text('Phone number must be 10 digits.');
+                    $(this).addClass('is-invalid');
+                    isValid = false;
+
+                } else {
+                    $(this).removeClass('is-invalid');
+                    errorDiv.text('');
+                }
+            });
+
+            $('.profile-image').each(function () {
+
+                let fileInput = this;
+                let errorDiv = $(this).closest('.form-part').find('.error-div');
+
+                if (fileInput.files.length > 0) {
+
+                    let file = fileInput.files[0];
+                    let allowedTypes = ['image/jpeg', 'image/png'];
+                    let maxSize = 2 * 1024 * 1024; // 2MB
+
+                    let errors = [];
+
+                    if (!allowedTypes.includes(file.type)) {
+                        errors.push('Only JPG, JPEG and PNG images are allowed.');
+                    }
+
+                    if (file.size > maxSize) {
+                        errors.push('Image must be less than 2MB.');
+                    }
+
+                    if (errors.length > 0) {
+                        isValid = false;
+                        errorDiv.html(errors.join('<br>'));
+                        $(this).addClass('is-invalid');
+                    } else {
+                        errorDiv.text('');
+                        $(this).removeClass('is-invalid');
+                    }
+                } else {
+                    // If optional field → clear error
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+
+            });
+
+            if (!isValid) {
+                return isValid;
+            }
+
+            let clubMemberformData = new FormData($("#club-member-form")[0]);
+            $.ajax({
+                url: "{{ route('club-member.store') }}",
+                type: "POST",
+                data: clubMemberformData,
+                processData: false,
+                contentType: false,
+                // data:{
+                // "_token": "{{ csrf_token() }}",
+                // "balance": balance,
+                // "user_id": userId
+                // },
+                success: function(response) {
+                    console.log(response);
+                    // if (response.statusCode == 200) {
+                    //     toastr.success("Balance added successfully.");
+                    //     document.activeElement.blur();//removes focus from modal
+                    //     $('#kt_modal_create_api_key').modal('hide');
+                    //     $("#balanceAmount").val("");
+                    //     setTimeout(function() {
+                    //         location.reload();
+                    //     }, 1500);
+                    // } else {
+                    //     if(response.message){
+                    //         toastr.error(response.message);
+                    //     }
+                    //     else{
+                    //         toastr.error("Something went wrong, Please try again.");
+                    //     }
+                    // }
+                },
+                error: function(xhr, status, error) {
+                    // Handle errors
+                    console.error(xhr.responseText);
+                }
+            });
+
+        });
+
+    });
+</script>
+@endsection
