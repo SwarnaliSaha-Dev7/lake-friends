@@ -32,16 +32,19 @@
                                 <tr>
                                     <th class="text-white fw-medium align-middle text-nowrap">Sl No.</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">GST Percentage</th>
+                                    <th class="text-white fw-medium align-middle text-nowrap">GST Type</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($gstList as $gst)
                                 <tr>
-                                    
+
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
                                     <td class="text-nowrap">{{ $gst->gst_percentage }}</td>
+
+                                    <td class="text-nowrap">{{ ucwords(str_replace('_', ' ', $gst->gst_type)) }}</td>
 
                                     <!-- <td class="text-success text-nowrap">No</td> -->
                                     <td class="text-nowrap">

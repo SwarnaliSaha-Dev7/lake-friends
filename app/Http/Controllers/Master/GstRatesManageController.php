@@ -81,7 +81,7 @@ class GstRatesManageController extends Controller
                              ->firstOrFail();
 
         $data = $request->validate([
-            'gst_percentage' => 'required|numeric'
+            'gst_percentage' => 'required|numeric|between:0,100|decimal:0,2'
         ]);
 
         $gst->update(['gst_percentage' => $request->gst_percentage]);

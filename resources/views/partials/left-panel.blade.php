@@ -9,18 +9,20 @@
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Master Manage</a>
                 <ul class="list-unstyled" style="{{ request()->routeIs('manage-*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('manage-operators.*') ? 'active' : '' }}"><a href="{{ route('manage-operators.index') }}">Operator</a></li>
+                    <li class="{{ request()->routeIs('manage-gst-rates.*') ? 'active' : '' }}"><a href="{{ route('manage-gst-rates.index') }}">GST Rate</a></li>
+                    
                     {{-- <li><a href="#">Drinks</a></li>
                     <li><a href="#">Item1</a></li>
                     <li><a href="#">Item2</a></li> --}}
                 </ul>
             </li>
-            <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li>
-            <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li>
-            <li><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
-            <li><a href="{{ route('manage-gst-rates.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> GST Rate</a></li>
+            <!-- <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li> -->
+            <!-- <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li> -->
+            
+            
             <li class="{{ request()->routeIs('club-member.list') ? 'active' : '' }}"><a href="{{ route('club-member.list') }}"><i class="fa-regular fa-user"></i> Club Member</a></li>
             <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
-            <li><a href="#"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
+            <li class="{{ request()->routeIs('manage-cards.index') ? 'active' : '' }}"><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
             <li><a href="liqueur-manage.html"><i class="fa-solid fa-wine-bottle"></i> Liqueur Manage</a>
                 <ul class="list-unstyled">
                     <li><a href="current-stock-inventory.html">Current Stock Inventory</a></li>
