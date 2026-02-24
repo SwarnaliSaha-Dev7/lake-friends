@@ -10,6 +10,7 @@ use App\Http\Controllers\Master\GstRatesManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SwimmingMemberController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -44,8 +45,11 @@ Route::middleware('auth')->group(function () {
         Route::post('store', [ClubMemberController::class, 'store'])->name('club-member.store');
     });
 
-
+    Route::prefix('swimming-member')->group(function () {
+        Route::get('/list', [SwimmingMemberController::class, 'list'])->name('swimming-member.list');
+        Route::post('store', [SwimmingMemberController::class, 'store'])->name('swimming-member.store');
+    });
 });
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

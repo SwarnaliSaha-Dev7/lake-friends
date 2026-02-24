@@ -19,7 +19,7 @@
             <li><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
             <li><a href="{{ route('manage-gst-rates.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> GST Rate</a></li>
             <li class="{{ request()->routeIs('club-member.list') ? 'active' : '' }}"><a href="{{ route('club-member.list') }}"><i class="fa-regular fa-user"></i> Club Member</a></li>
-            <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
+            <li class="{{ request()->routeIs('swimming-member.list') ? 'active' : '' }}"><a href="{{ route('swimming-member.list') }}"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
             <li><a href="#"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
             <li><a href="liqueur-manage.html"><i class="fa-solid fa-wine-bottle"></i> Liqueur Manage</a>
                 <ul class="list-unstyled">

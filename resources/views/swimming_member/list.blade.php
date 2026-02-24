@@ -20,7 +20,7 @@
                                 <option value="Blocked">Blocked</option>
                             </select>
                         </div>
-                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addclubmember">+ Add club member</button>
+                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addswimmingmember">+ Add club member</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -416,82 +416,176 @@
 
 @section('modalComponent')
     <!-- add Club Member Modal start -->
-    <div class="modal fade" id="addclubmember" tabindex="-1" aria-labelledby="addclubmemberModalLabel"
+    <div class="modal fade" id="addswimmingmember" tabindex="-1" aria-labelledby="addswimmingmemberModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h2 class="modal-title fs-5 fw-semibold" id="addclubmemberModalLabel">Add New Member</h2>
+                    <h2 class="modal-title fs-5 fw-semibold" id="addswimmingmemberModalLabel">Swimming-only membership
+                    </h2>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
-                    <form id="club-member-form" enctype="multipart/form-data">
+                    <form action="" id="swimmingMemberForm">
                         @csrf
                         <div class="row">
-                            <div class="col-lg-6">
+                            <div class="col-lg-12">
                                 <label for="" class="form-label fw-semibold text-dark mb-3"><span
                                         class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
                                             class="fa-regular fa-user"></i></span> Personal Details</label>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Name</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none text-only" id="" name="name"
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Full Name</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_name" id=""
                                                 placeholder="Full Name" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                                            <input type="email" class="form-control py-2 shadow-none" id="" name="email"
+                                            <input type="email" class="form-control py-2 shadow-none" name="swim_email" id=""
                                                 placeholder="Email" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="phone"
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input" name="swim_phone" id=""
                                                 placeholder="Phone" required>
                                             <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select name="blood_grp" id="" class="form-select py-2 shadow-none" required>
-                                                <option value="">Blood Group</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_address" id=""
+                                                placeholder="Address" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Age</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_age" id=""
+                                                placeholder="Age" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
+                                            <select name="swim_sex" id="" class="form-select py-2 shadow-none" required>
+                                                <option value="">Sex</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="" name="address" rows="3"
-                                                placeholder="Address" required></textarea>
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Height</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_height" id=""
+                                                placeholder="Height" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Weight</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_weight" id=""
+                                                placeholder="Weight" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Pulse Rate</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_pulse_rate" id=""
+                                                placeholder="Pulse Rate" required>
+                                        </div>
+                                    </div>
+                                    {{-- <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                                <option value="">Batch</option>
+                                                <option value="">Batch1</option>
+                                                <option value="">Batch2</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                                <option value="">Vaccination</option>
+                                                <option value="">vaccination1</option>
+                                            </select>
+                                        </div>
+                                    </div> --}}
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Batch</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_batch" id=""
+                                                placeholder="Batch" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Vaccination</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_vaccination" id=""
+                                                placeholder="Vaccination" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" value="swim_i_agree" name="" id="flexCheck1" required>
+                                            <label class="form-check-label" for="flexCheck1">
+                                                <small>I have gone through the rules & Regulations overleaf and undertake to abide by the same at my risk and cost.</small>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-8">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100"><small>I am not suffering
+                                                    from</small></label>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox1"
+                                                    value="occational_faint" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox1"><small>Any sudden
+                                                        or
+                                                        occasional faint</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox2"
+                                                    value="lung_heart_trouble" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox2"><small>Lung/Heart
+                                                        trouble</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox3"
+                                                    value="skin_disease" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox3"><small>Skin
+                                                        disease</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox4"
+                                                    value="other_disease" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox4"><small>Any other
+                                                        disease</small></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="image" accept=".jpg,.jpeg,.png">
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
                                                     <p class="upload-text mb-0">
-                                                        Passport size Image
+                                                        Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
-                                                        JPG, JPEG & PNG, max file size 2MB
+                                                        Image format, PNG & JPEG, max file size 10kb
                                                     </small>
                                                 </div>
                                             </label>
@@ -501,69 +595,38 @@
                                 </div>
 
                             </div>
-                            <div class="col-lg-6">
-                                <label for="" class="form-label fw-semibold text-dark mb-3"><span
+                            <div class="col-lg-12">
+                                <label for="" class="form-label fw-semibold text-dark my-3"><span
                                         class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
-                                            class="fa-regular fa-user"></i></span> Spouse Details</label>
+                                            class="fa-regular fa-user"></i></span> Family Details</label>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-lg-4">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Name</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none text-only" id="" name="spouse_name"
-                                                placeholder="Spouse Full Name">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Full Name</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name">
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-4">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                                            <input type="email" class="form-control py-2 shadow-none" id="" name="spouse_email"
-                                                placeholder="Email">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Occupation</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation">
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-lg-4">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="spose_phone" name="spouse_phone"
-                                                placeholder="Phone">
-                                            <span class="error-div text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none" name="spouse_blood_grp">
-                                                <option value="">Blood Group</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="" name="spouse_address" rows="3"
-                                                placeholder="Address"></textarea>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
                                                     <p class="upload-text mb-0">
-                                                        Passport size Image
+                                                        Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
-                                                        JPG, JPEG & PNG, max file size 2MB
+                                                        Image format, PNG & JPEG, max file size 10kb
                                                     </small>
                                                 </div>
                                             </label>
@@ -579,67 +642,99 @@
                                             class="fa-regular fa-regular fa-credit-card"></i></span> Card
                                     Details</label>
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-12">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Plan type</small></label>
-
-                                            @foreach ($membershipDurationTypeList as $type)
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="membership_duration_type_id"
-                                                    id="membership_duration_type_{{ $type->id }}" value="{{ $type->id }}"
-                                                    {{ $loop->first ? 'required' : '' }}>
-                                                <label class="form-check-label"
-                                                    for="membership_duration_type_{{ $type->id }}"><small>{{ $type->name }}</small></label>
-                                            </div>
+                                            @foreach ($membershipPlanList as $membershipPlan)
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="inlineRadioOptions2"
+                                                        id="inlineRadio4" value="{{$membershipPlan->id}}">
+                                                    <label class="form-check-label"
+                                                        for="inlineRadio4"><small>{{$membershipPlan->name}}</small></label>
+                                                </div>
                                             @endforeach
+                                            {{-- <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="inlineRadioOptions2"
+                                                    id="inlineRadio4" value="option1">
+                                                <label class="form-check-label"
+                                                    for="inlineRadio4"><small>Annual</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="inlineRadioOptions2"
+                                                    id="inlineRadio5" value="option2">
+                                                <label class="form-check-label"
+                                                    for="inlineRadio5"><small>Lifetime</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="inlineRadioOptions2"
+                                                    id="inlineRadio6" value="option3">
+                                                <label class="form-check-label"
+                                                    for="inlineRadio6"><small>Silver</small></label>
+                                            </div> --}}
+                                        </div>
+                                    </div>
+                                    {{-- <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                                <option value="">Card Type</option>
+                                                <option value="">Card Type1</option>
+                                                <option value="">Card Type2</option>
+                                            </select>
+                                        </div>
+                                    </div> --}}
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="Card No.">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Card Mode</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="Card Mode">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="A/C Head">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="Taxable Amt. (Min 500)">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="GST%">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>GST Amt</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="GST Amt">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Receipt Amt</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                                placeholder="Receipt Amt">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>A/C Head</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="A/C Head" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Card No.</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Card No." required>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Taxable Amt.</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Taxable Amt." required>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>GST%</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="" name="gstPercentage"
-                                                placeholder="GST%" value="{{ $gstPercentage }}" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>GST Amt</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST Amt" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Receipt Amt</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Receipt Amt" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Bank Name</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none" required>
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
+                                            <select name="" id="" class="form-select py-2 shadow-none">
                                                 <option value="">Bank Name</option>
                                                 <option value="">Bank Name 1</option>
                                                 <option value="">Bank Name 2</option>
@@ -648,9 +743,9 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Remarks</small></label>
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Remarks" required>
+                                                placeholder="Remarks">
                                         </div>
                                     </div>
                                 </div>
@@ -660,7 +755,7 @@
                         <div class="text-end mod-footer mt-3">
                             <button type="button" class="btn btn-info fw-semibold"
                                 data-bs-dismiss="modal">Cancel</button>
-                            <input type="submit" class="btn btn-primary fw-semibold" value="Add member">
+                            <input type="submit" class="btn btn-primary fw-semibold" value="Add Swimming-membership" id="swim_submit">
                         </div>
                     </form>
                 </div>
@@ -1075,7 +1170,7 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
-        $('#club-member-form').on('submit', function (e) {
+        $('#swimmingMemberForm').on('submit', function (e) {
             e.preventDefault();
 
             let isValid = true;
@@ -1136,11 +1231,11 @@
                 return isValid;
             }
 
-            let clubMemberformData = new FormData($("#club-member-form")[0]);
+            let swimmingMemberformData = new FormData($("#swimmingMemberForm")[0]);
             $.ajax({
-                url: "{{ route('club-member.store') }}",
+                url: "{{ route('swimming-member.store') }}",
                 type: "POST",
-                data: clubMemberformData,
+                data: swimmingMemberformData,
                 processData: false,
                 contentType: false,
                 // data:{
