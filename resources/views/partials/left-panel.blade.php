@@ -1,6 +1,6 @@
 <div class="left-panel py-5 pb-3 ps-3">
     <div class="logo mb-lg-5 mb-3 text-center pe-3">
-        <a href="index.html"><img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97"
+        <a href="{{ route('dashboard') }}"><img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97"
                 height="106"></a>
     </div>
     <nav class="nav-menu">

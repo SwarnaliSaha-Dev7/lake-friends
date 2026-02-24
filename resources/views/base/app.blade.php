@@ -8,8 +8,8 @@
 <body>
     <section class="dashboard-wrapper">
 
-        {{-- Sidebar --}}
-        @include('partials.sidebar')
+        {{-- Left Panel --}}
+        @include('partials.left-panel')
         <div class="right-panel">
 
             {{-- Header --}}
