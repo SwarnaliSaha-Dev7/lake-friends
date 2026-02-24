@@ -12,7 +12,7 @@
         <!-- data type number -->
         <div class="col-xl-4 col-md-6">
                 <div class="form-part mb-3">
-                    <input type="number" name="gst_percentage" class="form-control py-2 shadow-none" placeholder="Qty"  value="{{ old('gst_percentage', $gst->gst_percentage) }}" required>
+                    <input type="number" name="gst_percentage" class="form-control py-2 shadow-none" placeholder="GST Percentage"  value="{{ old('gst_percentage', $gst->gst_percentage) }}" required>
                 </div>
         </div>
 
