@@ -14,6 +14,10 @@
                     <li><a href="#">Item2</a></li> --}}
                 </ul>
             </li>
+            <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li>
+            <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li>
+            <li><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
+            <li><a href="{{ route('manage-gst-rates.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> GST Rate</a></li>
             <li class="{{ request()->routeIs('club-member.list') ? 'active' : '' }}"><a href="{{ route('club-member.list') }}"><i class="fa-regular fa-user"></i> Club Member</a></li>
             <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
             <li><a href="#"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
