@@ -483,7 +483,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none profile-image" name="image" accept=".jpg,.jpeg,.png">
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="image" accept=".jpg,.jpeg,.png" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -555,7 +555,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -583,13 +583,13 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Plan type</small></label>
 
-                                            @foreach ($membershipDurationTypeList as $type)
+                                            @foreach ($clubMembershipPlanTypeList as $type)
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="membership_duration_type_id"
-                                                    id="membership_duration_type_{{ $type->id }}" value="{{ $type->id }}"
+                                                <input class="form-check-input plan-type" type="radio" name="membership_plan_type_id"
+                                                    id="membership_plan_type_{{ $type->id }}" value="{{ $type->id }}"
                                                     {{ $loop->first ? 'required' : '' }}>
                                                 <label class="form-check-label"
-                                                    for="membership_duration_type_{{ $type->id }}"><small>{{ $type->name }}</small></label>
+                                                    for="membership_plan_type_{{ $type->id }}"><small>{{ $type->name }}</small></label>
                                             </div>
                                             @endforeach
                                         </div>
@@ -611,7 +611,7 @@
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Taxable Amt.</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                            <input type="text" class="form-control py-2 shadow-none" id="taxable_amount" name="taxable_amount"
                                                 placeholder="Taxable Amt." required>
                                         </div>
                                     </div>
@@ -1073,6 +1073,26 @@
         //phone no validation
         $('.phone-input').on('input', function () {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+
+        $('.plan-type').on('change', function () {
+
+            let planTypeId = $(this).val();
+
+            $.ajax({
+                url: "",
+                type: "GET",
+                data: {
+                    planTypeId: planTypeId
+                },
+                success: function (response) {
+                    $('#taxable_amount').val(response.price);
+                },
+                error: function () {
+                    alert('Something went wrong');
+                }
+            });
+
         });
 
         $('#club-member-form').on('submit', function (e) {

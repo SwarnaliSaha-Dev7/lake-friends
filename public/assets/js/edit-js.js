@@ -90,8 +90,9 @@ jQuery(function ($) {
         }
     );
 
+    // 1 Initialize DataTable ONCE
     var table = $('.clubmemberlist2').DataTable({
-        dom: '<"dt-buttons"Bf><"clear">lirtp',
+        dom: '<"dt-buttons"Bf><"clear">rtip', // removed 'l' to hide length dropdown
         paging: true,
         autoWidth: false,
         lengthChange: false,
@@ -107,12 +108,42 @@ jQuery(function ($) {
         ]
     });
 
+    // 2 Detect Status column dynamically (Status / Satus)
+    var statusColumnIndex = -1;
 
+    table.columns().every(function (index) {
+        var headerText = $(this.header()).text().trim().toLowerCase();
+        if (headerText === 'status' || headerText === 'satus') {
+            statusColumnIndex = index;
+        }
+    });
+
+    // Safety check
+    if (statusColumnIndex === -1) {
+        console.warn('Status column not found');
+        return;
+    }
+
+    // 3 Custom status filter (register ONCE)
+    $.fn.dataTable.ext.search.push(function (settings, data) {
+
+        // Apply only to this table
+        if (settings.nTable !== table.table().node()) {
+            return true;
+        }
+
+        var selectedStatus = $('#statusFilter').val();
+
+        // Show all if "All" or placeholder
+        if (!selectedStatus) return true;
+
+        var statusText = data[statusColumnIndex].trim();
+        return statusText === selectedStatus;
+    });
+
+    // 4 Redraw table on dropdown change
     $('#statusFilter').on('change', function () {
-        var status = $(this).val();
-
-        // Status column index (change if needed)
-        table.column(6).search(status).draw();
+        table.draw();
     });
     // datatable js end
 

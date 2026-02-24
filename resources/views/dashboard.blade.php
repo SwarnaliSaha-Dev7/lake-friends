@@ -346,7 +346,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none">
+                                                <input type="file" class="file-input opacity-0 position-absolute">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -404,7 +404,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none">
+                                                <input type="file" class="file-input opacity-0 position-absolute">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -653,7 +653,7 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none">
+                                                <input type="file" class="file-input opacity-0 position-absolute">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -690,7 +690,7 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input d-none">
+                                                <input type="file" class="file-input opacity-0 position-absolute">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>

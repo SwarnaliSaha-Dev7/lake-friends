@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('club-member')->group(function () {
         Route::get('/list', [ClubMemberController::class, 'list'])->name('club-member.list');
         Route::post('store', [ClubMemberController::class, 'store'])->name('club-member.store');
+        Route::get('/get-plan-price', [ClubMemberController::class, 'getClubMemberPlanPrice'])->name('club-member-plan.price');
     });
 
 

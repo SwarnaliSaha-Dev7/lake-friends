@@ -18,7 +18,7 @@
                                     <option value="">All</option>
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
-                                    {{-- <option value="Blocked">Blocked</option> --}}
+                                    <option value="Blocked">Blocked</option>
                                 </select>
                             </div>
                             <a href="{{ route('manage-operators.create') }}"><button class="btn btn-info">+ Add</button></a>
