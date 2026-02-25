@@ -451,7 +451,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="phone"
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="phone" name="phone"
                                                 placeholder="Phone" required>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -459,7 +459,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select name="blood_grp" id="" class="form-select py-2 shadow-none" required>
+                                            <select id="" class="form-select py-2 shadow-none" name="blood_grp" required>
                                                 <option value="">Blood Group</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -474,8 +474,8 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="" name="address" rows="3"
+                                            <label for="address" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
+                                            <textarea class="form-control py-2 shadow-none" id="address" name="address" rows="3"
                                                 placeholder="Address" required></textarea>
                                         </div>
                                     </div>
@@ -531,7 +531,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none" name="spouse_blood_grp">
+                                            <select id="" class="form-select py-2 shadow-none" name="spouse_blood_grp">
                                                 <option value="">Blood Group</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -546,8 +546,8 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="" name="spouse_address" rows="3"
+                                            <label for="spouse-address" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
+                                            <textarea class="form-control py-2 shadow-none" id="spouse-address" name="spouse_address" rows="3"
                                                 placeholder="Address"></textarea>
                                         </div>
                                     </div>
@@ -597,14 +597,14 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>A/C Head</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="ac_head"
                                                 placeholder="A/C Head" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Card No.</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="card_id"
                                                 placeholder="Card No." required>
                                         </div>
                                     </div>
@@ -612,34 +612,34 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Taxable Amt.</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="taxable_amount" name="taxable_amount"
-                                                placeholder="Taxable Amt." required>
+                                                placeholder="Taxable Amt." readonly>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>GST%</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="gstPercentage"
-                                                placeholder="GST%" value="{{ $gstPercentage }}" required>
+                                                placeholder="GST%" value="{{ $gstPercentage }}" readonly>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>GST Amt</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST Amt" required>
+                                                placeholder="GST Amt" readonly>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Receipt Amt</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Receipt Amt" required>
+                                                placeholder="Receipt Amt" readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Bank Name</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none" required>
+                                            <select id="" class="form-select py-2 shadow-none" name="bank_id" required>
                                                 <option value="">Bank Name</option>
                                                 <option value="">Bank Name 1</option>
                                                 <option value="">Bank Name 2</option>
@@ -649,7 +649,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Remarks</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="remarks"
                                                 placeholder="Remarks" required>
                                         </div>
                                     </div>
@@ -1080,16 +1080,27 @@
             let planTypeId = $(this).val();
 
             $.ajax({
-                url: "",
+                url: "{{ route('club-member-plan-price') }}",
                 type: "GET",
                 data: {
                     planTypeId: planTypeId
                 },
                 success: function (response) {
-                    $('#taxable_amount').val(response.price);
+                    if (response.statusCode == 200) {
+                        $('#taxable_amount').val(response.data.plan.price);
+                    } else {
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                        }
+                    }
                 },
-                error: function () {
-                    alert('Something went wrong');
+                error: function(xhr, status, error) {
+                    // Handle errors
+                    toastr.error("Something went wrong, Please try again.");
+                    console.error(xhr.responseText);
                 }
             });
 
@@ -1160,35 +1171,38 @@
             $.ajax({
                 url: "{{ route('club-member.store') }}",
                 type: "POST",
+                // "_token": "{{ csrf_token() }}",
                 data: clubMemberformData,
                 processData: false,
                 contentType: false,
-                // data:{
-                // "_token": "{{ csrf_token() }}",
-                // "balance": balance,
-                // "user_id": userId
-                // },
                 success: function(response) {
-                    console.log(response);
-                    // if (response.statusCode == 200) {
-                    //     toastr.success("Balance added successfully.");
-                    //     document.activeElement.blur();//removes focus from modal
-                    //     $('#kt_modal_create_api_key').modal('hide');
-                    //     $("#balanceAmount").val("");
-                    //     setTimeout(function() {
-                    //         location.reload();
-                    //     }, 1500);
-                    // } else {
-                    //     if(response.message){
-                    //         toastr.error(response.message);
-                    //     }
-                    //     else{
-                    //         toastr.error("Something went wrong, Please try again.");
-                    //     }
-                    // }
+
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message ?? "Member created successfully.");
+
+                        // Reset form
+                        $('#club-member-form')[0].reset();
+
+                        // Optional: reload after 1.5s
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+
+                    } else {
+                        if (response.message) {
+                            toastr.error(response.message);
+                        } else {
+                            toastr.error("Something went wrong, Please try again.");
+                        }
+                    }
+
                 },
                 error: function(xhr, status, error) {
-                    // Handle errors
+                    // if (xhr.responseJSON && xhr.responseJSON.message) {
+                    //     toastr.error(xhr.responseJSON.message);
+                    // } else {
+                        toastr.error("Something went wrong, Please try again.");
+                    // }
                     console.error(xhr.responseText);
                 }
             });

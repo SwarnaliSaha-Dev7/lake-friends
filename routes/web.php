@@ -40,9 +40,9 @@ Route::middleware('auth')->group(function () {
     // master manage end
 
     Route::prefix('club-member')->group(function () {
-        Route::get('/list', [ClubMemberController::class, 'list'])->name('club-member.list');
+        Route::get('list', [ClubMemberController::class, 'list'])->name('club-member.list');
         Route::post('store', [ClubMemberController::class, 'store'])->name('club-member.store');
-        Route::get('/get-plan-price', [ClubMemberController::class, 'getClubMemberPlanPrice'])->name('club-member-plan.price');
+        Route::get('plan-price', [ClubMemberController::class, 'getPlanPrice'])->name('club-member-plan-price');
     });
 
 
