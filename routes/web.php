@@ -48,6 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('swimming-member')->group(function () {
         Route::get('/list', [SwimmingMemberController::class, 'list'])->name('swimming-member.list');
         Route::post('store', [SwimmingMemberController::class, 'store'])->name('swimming-member.store');
+        Route::get('plan-price', [SwimmingMemberController::class, 'getPlanPrice'])->name('swimming-member.plan-price');
+        Route::get('view/{$id}', [SwimmingMemberController::class, 'view'])->name('swimming-member.view');
     });
 });
 

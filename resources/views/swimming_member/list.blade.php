@@ -20,7 +20,7 @@
                                 <option value="Blocked">Blocked</option>
                             </select>
                         </div>
-                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addswimmingmember">+ Add club member</button>
+                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addswimmingmember">+ Add swimming member</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -36,12 +36,58 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Exp. Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Approve by
                                 </th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Satus</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Status</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            @foreach ($members as $member)
+                                <tr>
+                                    <td class="text-nowrap">{{$member->name}}</td>
+                                    <td class="text-nowrap">{{$member->phone}}</td>
+                                    <td class="text-nowrap">{{$member->member_code}}</td>
+                                    <td class="text-nowrap">₹ 0</td>
+                                    <td class="text-nowrap">12/31/2026</td>
+                                    <td class="text-nowrap">Admin</td>
+                                    @if ($member->status == 'active')
+                                        <td class="text-success text-nowrap">Active</td>
+                                    @elseif ($member->status == 'pending_approval')
+                                        <td class="text-warning text-nowrap">Pending</td>
+                                    @elseif ($member->status == 'suspended')
+                                        <td class="text-secondary text-nowrap">Suspended</td>
+                                    @elseif ($member->status == 'terminated')
+                                        <td class="text-danger text-nowrap">Terminated</td>
+                                    @endif
+
+                                    <td class="text-nowrap">
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
+                                            data-bs-toggle="modal" data-bs-target="#viewprofile"
+                                            title="View Profile" data-id={{$member->id}} id="viewProfileBtn"><small><i
+                                                    class="fa-regular fa-eye"></i></small></button>
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
+                                            data-bs-toggle="modal" data-bs-target="#membershipplan"
+                                            title="Membership Plan"><small><i
+                                                    class="fa-sharp fa-clock-rotate-left"></i></small></button>
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
+                                            data-bs-toggle="modal" data-bs-target="#walletrecharge"
+                                            title="Wallet Recharge"><small><i
+                                                    class="fa-solid fa-wallet"></i></small></button>
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
+                                            data-bs-toggle="modal" data-bs-target="#planrenewal"
+                                            title="Plan Renewal"><small><i
+                                                    class="fa-solid fa-rotate-right"></i></small></button>
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
+                                            title="Edit"><small><i
+                                                    class="fa-solid fa-pen-to-square"></i></small></button>
+                                        <button
+                                            class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row"
+                                            title="Delete"><small><i
+                                                    class="fa-solid fa-trash"></i></small></button>
+
+                                    </td>
+                                </tr>
+                            @endforeach
+                            {{-- <tr>
                                 <td class="text-nowrap">Soumen Das</td>
                                 <td class="text-nowrap">+91 9025 321423</td>
                                 <td class="text-nowrap">12345abcd</td>
@@ -405,7 +451,7 @@
                                                 class="fa-solid fa-trash"></i></small></button>
 
                                 </td>
-                            </tr>
+                            </tr> --}}
                         </tbody>
                     </table>
                 </div>
@@ -460,8 +506,10 @@
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" name="swim_address" id=""
-                                                placeholder="Address" required>
+                                            {{-- <input type="text" class="form-control py-2 shadow-none" name="swim_address" id=""
+                                                placeholder="Address" required> --}}
+                                            <textarea class="form-control py-2 shadow-none" id="" name="swim_address" rows="3"
+                                                placeholder="Address" required></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
@@ -604,14 +652,14 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Full Name</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name">
+                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Occupation</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation">
+                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-4">
@@ -645,12 +693,13 @@
                                     <div class="col-12">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Plan type</small></label>
+
                                             @foreach ($membershipPlanList as $membershipPlan)
                                                 <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="inlineRadioOptions2"
-                                                        id="inlineRadio4" value="{{$membershipPlan->id}}">
+                                                    <input class="form-check-input plan-type" type="radio" name="swim_membership_plan_type"
+                                                        id="inlineRadio{{$loop->iteration}}" value="{{$membershipPlan->id}}" required>
                                                     <label class="form-check-label"
-                                                        for="inlineRadio4"><small>{{$membershipPlan->name}}</small></label>
+                                                        for="inlineRadio{{$loop->iteration}}"><small>{{$membershipPlan->name}}</small></label>
                                                 </div>
                                             @endforeach
                                             {{-- <div class="form-check form-check-inline">
@@ -682,70 +731,84 @@
                                             </select>
                                         </div>
                                     </div> --}}
+                                    {{-- <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_card_no" id=""
+                                                placeholder="Card No.">
+                                        </div>
+                                    </div> --}}
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Card No.">
+                                            <select name="swim_card_id" id="" class="form-select py-2 shadow-none" required>
+                                                <option value="">Card No.</option>
+                                                @foreach ($cards as $card)
+                                                    <option value="{{$card->id}}">{{$card->card_no}}</option>
+                                                @endforeach
+
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Card Mode</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Card Mode">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Payment Mode</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="swim_payment_mode"
+                                                placeholder="Payment Mode" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="A/C Head">
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="swim_ac_head"
+                                                placeholder="A/C Head" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Taxable Amt. (Min 500)">
+                                            <input type="text" class="form-control py-2 shadow-none" id="taxable_amount" name="swim_taxable_amt"
+                                                placeholder="Taxable Amt. (Min 500)" readonly required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST%">
+                                            <input type="text" class="form-control py-2 shadow-none" id="gstPercentage" name="swim_gst_percent"
+                                                placeholder="GST%" value="{{$gstPercentage}}" readonly required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>GST Amt</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST Amt">
+                                            <input type="text" class="form-control py-2 shadow-none" id="gstAmt" name="swim_gst_amt"
+                                                placeholder="GST Amt" readonly required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Receipt Amt</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Receipt Amt">
+                                            <input type="text" class="form-control py-2 shadow-none" id="receiptAmt" name="swim_receipt_amt"
+                                                placeholder="Receipt Amt" readonly required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
-                                            <select name="" id="" class="form-select py-2 shadow-none">
+                                            <select name="swim_bank_id" id="" class="form-select py-2 shadow-none" required>
                                                 <option value="">Bank Name</option>
-                                                <option value="">Bank Name 1</option>
-                                                <option value="">Bank Name 2</option>
+                                                @foreach ($bankList as $bank)
+                                                    <option value="{{$bank->id}}">{{$bank->name}}</option>
+                                                @endforeach
+
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Remarks">
+                                            <input type="text" class="form-control py-2 shadow-none" id="" name="swim_remarks"
+                                                placeholder="Remarks" required>
                                         </div>
                                     </div>
                                 </div>
@@ -780,49 +843,49 @@
                                 <td class="text-secondary ps-3">
                                     <small>Member’s Name:</small>
                                 </td>
-                                <td class="pe-3"><small>Soumen Das</small></td>
+                                <td class="pe-3"><small id="memberName">Soumen Das</small></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Club Name:</small>
                                 </td>
-                                <td class="pe-3"><small>Soumen Das</small></td>
+                                <td class="pe-3"><small id="memberClubName">Soumen Das</small></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Member’s Id:</small>
                                 </td>
-                                <td class="pe-3"><small>GH231</small></td>
+                                <td class="pe-3"><small id="memberCode">GH231</small></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Card No:</small>
                                 </td>
-                                <td class="pe-3"><small>12345abcd</small></td>
+                                <td class="pe-3"><small id="memberNCardNo">12345abcd</small></td>
                             </tr>
-                            <tr>
+                            {{-- <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Card No:</small>
                                 </td>
                                 <td class="pe-3"><small>12345abcd</small></td>
-                            </tr>
+                            </tr> --}}
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Current Active Plan:</small>
                                 </td>
-                                <td class="pe-3"><small>Gold</small></td>
+                                <td class="pe-3"><small id="memberPlan">Gold</small></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Plan Expiry Date:</small>
                                 </td>
-                                <td class="pe-3"><small>12-31-2006</small></td>
+                                <td class="pe-3"><small id="memberPlanExpiry">12-31-2006</small></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Current Wallet Balance:</small>
                                 </td>
-                                <td class="pe-3"><small>₹2,450.00</small></td>
+                                <td class="pe-3"><small id="memberWallet">₹2,450.00</small></td>
                             </tr>
                         </tbody>
                     </table>
@@ -1244,31 +1307,84 @@
                 // "user_id": userId
                 // },
                 success: function(response) {
-                    console.log(response);
-                    // if (response.statusCode == 200) {
-                    //     toastr.success("Balance added successfully.");
-                    //     document.activeElement.blur();//removes focus from modal
-                    //     $('#kt_modal_create_api_key').modal('hide');
-                    //     $("#balanceAmount").val("");
-                    //     setTimeout(function() {
-                    //         location.reload();
-                    //     }, 1500);
-                    // } else {
-                    //     if(response.message){
-                    //         toastr.error(response.message);
-                    //     }
-                    //     else{
-                    //         toastr.error("Something went wrong, Please try again.");
-                    //     }
-                    // }
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        setTimeout(() => location.reload(), 1500);
+
+                    } else {
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                            console.log(response)
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error("Something went wrong, Please try again.");
+
+                    let responseError = xhr.responseJSON?.error
+                        ?? "Something went wrong, Please try again.";
+                    console.error(responseError);
+                }
+            });
+
+        });
+
+        $('.plan-type').on('change', function () {
+
+            let planTypeId = $(this).val();
+            let gstPercentage = $('#gstPercentage').val();
+
+            $.ajax({
+                url: "{{ route('swimming-member.plan-price') }}",
+                type: "GET",
+                data: {
+                    planTypeId: planTypeId
+                },
+                success: function (response) {
+                    if (response.statusCode == 200) {
+                        $('#taxable_amount').val(response.data.plan.price);
+                        let price = parseFloat(response.data.plan.price);
+                        let gstAmt = ((price * gstPercentage)/100).toFixed(2);
+                        let receiptAmt = (price + parseFloat(gstAmt)).toFixed(2);
+
+                        $('#gstAmt').val(gstAmt);
+                        $('#receiptAmt').val(receiptAmt);
+
+                    } else {
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                        }
+                    }
                 },
                 error: function(xhr, status, error) {
                     // Handle errors
+                    toastr.error("Something went wrong, Please try again.");
                     console.error(xhr.responseText);
                 }
             });
 
         });
+
+        $('#viewProfileBtn').on('click', ()=>{
+            let memberId = $(this).data('id');
+
+            $.ajax({
+                url: '{{route("swimming-member.view", ":memberId")}}'.replace(':memberId', memberId);
+                type: 'GET',
+                success: function(response){
+                    alert("success");
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+        })
 
     });
 </script>

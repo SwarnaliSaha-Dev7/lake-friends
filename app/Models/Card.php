@@ -10,14 +10,20 @@ class Card extends Model
     use SoftDeletes;
 
     protected $fillable = [
-    'card_no',
-    'status',
-    'issued_at',
-    'club_id',
-    'card_type_id',
+        'card_no',
+        'status',
+        'issued_at',
+        'club_id',
+        'card_type_id',
     ];
 
-    public static function statuses(){
+    public static function statuses()
+    {
         return ['pending', 'active', 'blocked', 'lost', 'damaged'];
+    }
+
+    public function memberMapping()
+    {
+        return $this->hasOne(MemberCardMapping::class, 'card_id');
     }
 }
