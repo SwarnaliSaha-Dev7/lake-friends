@@ -10,7 +10,7 @@
             <div class="col-12">
                 <div class="member-list-part position-relative">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">GST Rate List</h2>
+                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Fine Rules</h2>
                         <div class="d-flex gap-2">
                             <div class="d-flex justify-content-end">
                                 <select id="statusFilter"
@@ -30,26 +30,23 @@
                             width="100%">
                             <thead>
                                 <tr>
-                                    <th class="text-white fw-medium align-middle text-nowrap">Sl No.</th>
-                                    <th class="text-white fw-medium align-middle text-nowrap">GST Type</th>
-                                    <th class="text-white fw-medium align-middle text-nowrap">GST Percentage</th>
+                                    <!-- <th class="text-white fw-medium align-middle text-nowrap">Sl No.</th> -->
+                                    <th class="text-white fw-medium align-middle text-nowrap">Per Day Fine Amount</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($gstList as $gst)
+                                @foreach($fineRulesList as $rules)
                                 <tr>
 
-                                    <td class="text-nowrap">{{ $loop->iteration }}</td>
+                                    <!-- <td class="text-nowrap">{{ $loop->iteration }}</td> -->
 
-                                    <td class="text-nowrap">{{ ucwords(str_replace('_', ' ', $gst->gst_type)) }}</td>
-
-                                    <td class="text-nowrap">{{ $gst->gst_percentage }}</td>
+                                    <td class="text-nowrap">{{ ucwords(str_replace('_', ' ', $rules->per_day_fine_amount)) }}</td>
 
                                     <!-- <td class="text-success text-nowrap">No</td> -->
                                     <td class="text-nowrap">
 
-                                        <a href="{{ route('manage-gst-rates.edit', $gst->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
+                                        <a href="{{ route('manage-fine-rules.edit', $rules->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
                                             <small>
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </small>

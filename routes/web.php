@@ -6,8 +6,12 @@ use App\Http\Controllers\ClubMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
+use App\Http\Controllers\Master\FineRulesManageController;
+use App\Http\Controllers\Master\FoodCategoryManageController;
 use App\Http\Controllers\Master\GstRatesManageController;
+use App\Http\Controllers\Master\LiquorCategoryManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
+use App\Http\Controllers\Master\MinimumSpendRuleManageController;
 use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +41,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('manage-card-types', CardTypesManageController::class);
     Route::resource('manage-cards', CardsManageController::class);
     Route::resource('manage-gst-rates', GstRatesManageController::class);
+    Route::resource('manage-fine-rules', FineRulesManageController::class);
+    Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
+    Route::resource('manage-food-categories', FoodCategoryManageController::class);
+    Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
     // master manage end
 
     Route::prefix('club-member')->group(function () {

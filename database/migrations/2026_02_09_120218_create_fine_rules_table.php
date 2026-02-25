@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('fine_rules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('club_id')->nullable()->constrained('clubs')->nullOnDelete();
-            $table->enum('rule_type',['membership_expiry'])->nullable();
+            $table->enum('rule_type',['membership_expiry']);
             $table->decimal('per_day_fine_amount', 12, 2)->nullable();
             $table->string('grace_days')->nullable();
             $table->decimal('max_fine_cap', 10, 2)->nullable();

@@ -3,27 +3,27 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-use App\Models\GstRates;
+use App\Models\FineRule;
 use Illuminate\Http\Request;
 
-class GstRatesManageController extends Controller
+class FineRulesManageController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $page_title = 'Manage GST Rates';
-        $title      = 'GST Rates List';
+        $page_title     = 'Manage Fine Rules';
+        $title          = 'Fine Rules';
 
-        $user       = auth()->user();
-        $club_id    = $user->club_id;
+        $user           = auth()->user();
+        $club_id        = $user->club_id;
 
-        $gstList    = GstRates::where('club_id', $club_id)
-                             ->latest()
-                              ->get();
+        $fineRulesList  = FineRule::where('club_id', $club_id)
+                                  ->latest()
+                                  ->get();
 
-        return view('master_manage.gst_rates.list', compact('gstList','page_title','title'));
+        return view('master_manage.fine_rules.list', compact('fineRulesList','page_title','title'));
     }
 
     /**
@@ -55,17 +55,17 @@ class GstRatesManageController extends Controller
      */
     public function edit(string $id)
     {
-        $page_title = 'Edit GST Rates';
-        $title      = 'Edit GST Rates';
+        $page_title = 'Edit Fine Rules';
+        $title      = 'Edit Fine Rules';
 
         $user       = auth()->user();
         $club_id    = $user->club_id;
 
-        $gst        = GstRates::where('club_id', $club_id)
+        $fineRules  = FineRule::where('club_id', $club_id)
                               ->where('id', $id)
                               ->firstOrFail();
 
-        return view('master_manage.gst_rates.edit', compact('gst', 'page_title', 'title'));
+        return view('master_manage.fine_rules.edit', compact('fineRules', 'page_title', 'title'));
     }
 
     /**
@@ -76,19 +76,19 @@ class GstRatesManageController extends Controller
         $user    = auth()->user();
         $club_id = $user->club_id;
 
-        $gst     = GstRates::where('club_id', $club_id)
-                             ->where('id', $id)
-                             ->firstOrFail();
+        $fineRules     = FineRule::where('club_id', $club_id)
+                                 ->where('id', $id)
+                                 ->firstOrFail();
 
-        $data    = $request->validate([
-            'gst_percentage' => 'required|numeric|between:0,100|decimal:0,2'
+        $data = $request->validate([
+            'per_day_fine_amount' => 'required|numeric|min:0|max:9999999999|decimal:0,2'
         ]);
 
-        $gst->update(['gst_percentage' => $request->gst_percentage]);
+        $fineRules->update(['per_day_fine_amount' => $request->per_day_fine_amount]);
 
         return redirect()
-              ->route('manage-gst-rates.index')
-              ->with('success', 'GST Rate updated successfully!');
+              ->route('manage-fine-rules.index')
+              ->with('success', 'Fine Rules updated successfully!');
     }
 
     /**

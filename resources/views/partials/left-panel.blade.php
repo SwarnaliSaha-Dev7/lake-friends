@@ -10,6 +10,11 @@
                 <ul class="list-unstyled" style="{{ request()->routeIs('manage-*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('manage-operators.*') ? 'active' : '' }}"><a href="{{ route('manage-operators.index') }}">Operator</a></li>
                     <li class="{{ request()->routeIs('manage-gst-rates.*') ? 'active' : '' }}"><a href="{{ route('manage-gst-rates.index') }}">GST Rate</a></li>
+                    <li class="{{ request()->routeIs('manage-fine-rules.*') ? 'active' : '' }}"><a href="{{ route('manage-fine-rules.index') }}">Fine Rules</a></li>
+                    <li class="{{ request()->routeIs('manage-minimum-spend-rules.*') ? 'active' : '' }}"><a href="{{ route('manage-minimum-spend-rules.index') }}">Minimum Spend Rules</a></li>
+                    <li class="{{ request()->routeIs('manage-food-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-food-categories.index') }}">Food Categories</a></li>
+                    <li class="{{ request()->routeIs('manage-liquor-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-liquor-categories.index') }}">Liquor Categories</a></li>
+
                     
                     {{-- <li><a href="#">Drinks</a></li>
                     <li><a href="#">Item1</a></li>
@@ -23,7 +28,7 @@
             <li class="{{ request()->routeIs('club-member.list') ? 'active' : '' }}"><a href="{{ route('club-member.list') }}"><i class="fa-regular fa-user"></i> Club Member</a></li>
             <li><a href="swimming-member.html"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
             <li class="{{ request()->routeIs('manage-cards.index') ? 'active' : '' }}"><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
-            <li><a href="liqueur-manage.html"><i class="fa-solid fa-wine-bottle"></i> Liqueur Manage</a>
+            <li><a href="liqueur-manage.html"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a>
                 <ul class="list-unstyled">
                     <li><a href="current-stock-inventory.html">Current Stock Inventory</a></li>
                     <li><a href="#">Liquor Stock Report</a></li>
