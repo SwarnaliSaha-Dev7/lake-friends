@@ -46,9 +46,9 @@
                                     <td class="text-nowrap">{{$member->name}}</td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
                                     <td class="text-nowrap">{{$member->member_code}}</td>
-                                    <td class="text-nowrap">₹ 0</td>
-                                    <td class="text-nowrap">12/31/2026</td>
-                                    <td class="text-nowrap">Admin</td>
+                                    <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
+                                    <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
+                                    <td class="text-nowrap">Null</td>
                                     @if ($member->status == 'active')
                                         <td class="text-success text-nowrap">Active</td>
                                     @elseif ($member->status == 'pending_approval')
@@ -60,27 +60,24 @@
                                     @endif
 
                                     <td class="text-nowrap">
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
-                                            data-bs-toggle="modal" data-bs-target="#viewprofile"
-                                            title="View Profile" data-id={{$member->id}} id="viewProfileBtn"><small><i
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn viewProfileBtn"
+                                            title="View Profile" data-id="{{$member->id}}" id=""><small><i
                                                     class="fa-regular fa-eye"></i></small></button>
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
-                                            data-bs-toggle="modal" data-bs-target="#membershipplan"
-                                            title="Membership Plan"><small><i
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn membershipPlanBtn"
+                                            title="Membership Plan" data-id="{{$member->id}}"><small><i
                                                     class="fa-sharp fa-clock-rotate-left"></i></small></button>
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
-                                            data-bs-toggle="modal" data-bs-target="#walletrecharge"
-                                            title="Wallet Recharge"><small><i
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
+                                            title="Wallet Recharge" data-id="{{$member->id}}"><small><i
                                                     class="fa-solid fa-wallet"></i></small></button>
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
                                             data-bs-toggle="modal" data-bs-target="#planrenewal"
-                                            title="Plan Renewal"><small><i
+                                            title="Plan Renewal" data-id="{{$member->id}}"><small><i
                                                     class="fa-solid fa-rotate-right"></i></small></button>
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
-                                            title="Edit"><small><i
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn memberEditBtn"
+                                            title="Edit" data-id="{{$member->id}}"><small><i
                                                     class="fa-solid fa-pen-to-square"></i></small></button>
                                         <button
-                                            class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row"
+                                            class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row memberDeleteBtn" data-id="{{$member->id}}"
                                             title="Delete"><small><i
                                                     class="fa-solid fa-trash"></i></small></button>
 
@@ -583,7 +580,7 @@
                                     </div>
                                     <div class="col-md-12">
                                         <div class="form-check mb-3">
-                                            <input class="form-check-input" type="checkbox" value="swim_i_agree" name="" id="flexCheck1" required>
+                                            <input class="form-check-input" type="checkbox" value="" name="swim_i_agree" id="flexCheck1" required>
                                             <label class="form-check-label" for="flexCheck1">
                                                 <small>I have gone through the rules & Regulations overleaf and undertake to abide by the same at my risk and cost.</small>
                                             </label>
@@ -827,6 +824,328 @@
     </div>
     <!-- add Club Member Modal end  -->
 
+    <!-- edit Club Member Modal start -->
+    <div class="modal fade" id="editswimmingmember" tabindex="-1" aria-labelledby="editswimmingmemberModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h2 class="modal-title fs-5 fw-semibold" id="addswimmingmemberModalLabel">Edit membership
+                    </h2>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form action="" id="swimmingMemberEditForm">
+                        @csrf
+                        <input type="hidden" name="member_id" value="" id="swim_member_id">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <label for="" class="form-label fw-semibold text-dark mb-3"><span
+                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
+                                            class="fa-regular fa-user"></i></span> Personal Details</label>
+                                <div class="row">
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Full Name</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_name" id="swim_member_name"
+                                                placeholder="Full Name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
+                                            <input type="email" class="form-control py-2 shadow-none" name="swim_email" id="swim_member_email"
+                                                placeholder="Email" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input" name="swim_phone" id="swim_member_phone"
+                                                placeholder="Phone" required>
+                                            <span class="error-div text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
+
+                                            <textarea class="form-control py-2 shadow-none" id="swim_member_address" name="swim_address" rows="3"
+                                                placeholder="Address" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Age</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_age" id="swim_member_age"
+                                                placeholder="Age" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
+                                            <select name="swim_sex" id="swim_member_sex" class="form-select py-2 shadow-none" required>
+                                                <option value="">Sex</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Height</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_height" id="swim_member_height"
+                                                placeholder="Height" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Weight</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_weight" id="swim_member_weight"
+                                                placeholder="Weight" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Pulse Rate</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_pulse_rate" id="swim_member_pulse_rate"
+                                                placeholder="Pulse Rate" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Batch</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_batch" id="swim_member_batch"
+                                                placeholder="Batch" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Vaccination</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_vaccination" id="swim_member_vaccination"
+                                                placeholder="Vaccination" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" value="1" name="swim_i_agree" id="swim_member_i_agree" required>
+                                            <label class="form-check-label" for="swim_member_i_agree">
+                                                <small>I have gone through the rules & Regulations overleaf and undertake to abide by the same at my risk and cost.</small>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-8">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100"><small>I am not suffering
+                                                    from</small></label>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox1"
+                                                    value="occational_faint" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox1"><small>Any sudden
+                                                        or
+                                                        occasional faint</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox2"
+                                                    value="lung_heart_trouble" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox2"><small>Lung/Heart
+                                                        trouble</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox3"
+                                                    value="skin_disease" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox3"><small>Skin
+                                                        disease</small></label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="inlineCheckbox4"
+                                                    value="other_disease" name="swim_disease[]">
+                                                <label class="form-check-label" for="inlineCheckbox4"><small>Any other
+                                                        disease</small></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
+                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image" required>
+                                                <div class="upload-content">
+                                                    <i class="upload-icon"><i
+                                                            class="fa-solid fa-arrow-up-from-bracket"></i></i>
+                                                    <p class="upload-text mb-0">
+                                                        Upload Passport size Image & Signature
+                                                    </p>
+                                                    <small class="text-muted">
+                                                        Image format, PNG & JPEG, max file size 10kb
+                                                    </small>
+                                                </div>
+                                            </label>
+                                            <span class="error-div text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-lg-12">
+                                <label for="" class="form-label fw-semibold text-dark my-3"><span
+                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
+                                            class="fa-regular fa-user"></i></span> Family Details</label>
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Full Name</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_guardian_name"
+                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Occupation</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_guardian_occupation"
+                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
+                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image" required>
+                                                <div class="upload-content">
+                                                    <i class="upload-icon"><i
+                                                            class="fa-solid fa-arrow-up-from-bracket"></i></i>
+                                                    <p class="upload-text mb-0">
+                                                        Upload Passport size Image & Signature
+                                                    </p>
+                                                    <small class="text-muted">
+                                                        Image format, PNG & JPEG, max file size 10kb
+                                                    </small>
+                                                </div>
+                                            </label>
+                                            <span class="error-div text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-lg-12">
+                                <label for="" class="form-label fw-semibold text-dark my-3"><span
+                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
+                                            class="fa-regular fa-regular fa-credit-card"></i></span> Card
+                                    Details</label>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100"><small>Plan type</small></label>
+
+                                            @foreach ($membershipPlanList as $membershipPlan)
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input plan-type" type="radio" name="swim_membership_plan_type"
+                                                        id="inlineRadio{{$loop->iteration}}" value="{{$membershipPlan->id}}" required>
+                                                    <label class="form-check-label"
+                                                        for="inlineRadio{{$loop->iteration}}"><small>{{$membershipPlan->name}}</small></label>
+                                                </div>
+                                            @endforeach
+
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
+                                            <select name="swim_card_id" id="swim_card_no" class="form-select py-2 shadow-none" required>
+                                                <option value="">Card No.</option>
+                                                @foreach ($cards as $card)
+                                                    <option value="{{$card->id}}">{{$card->card_no}}</option>
+                                                @endforeach
+
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Current Card No.</small></label>
+                                            <p id="current_card_no"></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Payment Mode</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_payment_mode" name="swim_payment_mode"
+                                                placeholder="Payment Mode" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_ac_head" name="swim_ac_head"
+                                                placeholder="A/C Head" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_taxable_amount" name="swim_taxable_amt"
+                                                placeholder="Taxable Amt. (Min 500)" readonly required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_gstPercentage" name="swim_gst_percent"
+                                                placeholder="GST%" value="{{$gstPercentage}}" readonly required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>GST Amt</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_gstAmt" name="swim_gst_amt"
+                                                placeholder="GST Amt" readonly required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Receipt Amt</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_receiptAmt" name="swim_receipt_amt"
+                                                placeholder="Receipt Amt" readonly required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
+                                            <select name="swim_bank_id" id="swim_bank_name" class="form-select py-2 shadow-none" required>
+                                                <option value="">Bank Name</option>
+                                                @foreach ($bankList as $bank)
+                                                    <option value="{{$bank->id}}">{{$bank->name}}</option>
+                                                @endforeach
+
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" id="swim_remarks" name="swim_remarks"
+                                                placeholder="Remarks" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="text-end mod-footer mt-3">
+                            <button type="button" class="btn btn-info fw-semibold"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <input type="submit" class="btn btn-primary fw-semibold" value="Update Swimming-membership" id="swim_edit_submit">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- add Club Member Modal end  -->
+
     <!-- View Profile Modal -->
     <div class="modal fade" id="viewprofile" tabindex="-1" aria-labelledby="viewprofileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-md">
@@ -861,7 +1180,7 @@
                                 <td class="text-secondary ps-3">
                                     <small>Card No:</small>
                                 </td>
-                                <td class="pe-3"><small id="memberNCardNo">12345abcd</small></td>
+                                <td class="pe-3"><small id="memberCardNo">12345abcd</small></td>
                             </tr>
                             {{-- <tr>
                                 <td class="text-secondary ps-3">
@@ -1015,10 +1334,12 @@
                     <div class="card current-balance border-0 p-1 mb-4">
                         <div class="card-body">
                             <p class="card-text fw-semibold mb-2 text-white">Current Balance</p>
-                            <h5 class="card-title fs-4 fw-semibold text-white mb-0">₹2,450.00</h5>
+                            <h5 class="card-title fs-4 fw-semibold text-white mb-0" id="walletBalance"></h5>
                         </div>
                     </div>
-                    <form action="">
+                    <form action="" id="walletRechargeForm">
+                        @csrf
+                        <input type="hidden" name="wallet_member_id" id="walletMemberId" value="">
                         <div class="row">
                             <div class="col-12">
                                 <div class="input-group mb-3">
@@ -1038,7 +1359,7 @@
                                                 type="radio" name="inlineRadioOptions" id="inlineRadio1"
                                                 value="option1">
                                             <label class="form-check-label w-100 border p-2 rounded-3"
-                                                for="inlineRadio1"><small>₹ 1000</small></label>
+                                                for="inlineRadio1"><small>₹ 500</small></label>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
@@ -1048,7 +1369,7 @@
                                                 type="radio" name="inlineRadioOptions" id="inlineRadio2"
                                                 value="option1">
                                             <label class="form-check-label w-100 border p-2 rounded-3"
-                                                for="inlineRadio2"><small>₹ 2000</small></label>
+                                                for="inlineRadio2"><small>₹ 1000</small></label>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
@@ -1058,7 +1379,7 @@
                                                 type="radio" name="inlineRadioOptions" id="inlineRadio3"
                                                 value="option1">
                                             <label class="form-check-label w-100 border p-2 rounded-3"
-                                                for="inlineRadio3"><small>₹ 800</small></label>
+                                                for="inlineRadio3"><small>₹ 2000</small></label>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
@@ -1068,7 +1389,7 @@
                                                 type="radio" name="inlineRadioOptions" id="inlineRadio4"
                                                 value="option1">
                                             <label class="form-check-label w-100 border p-2 rounded-3"
-                                                for="inlineRadio4"><small>₹ 9000</small></label>
+                                                for="inlineRadio4"><small>₹ 5000</small></label>
                                         </div>
                                     </div>
                                 </div>
@@ -1086,7 +1407,7 @@
                         <span><a href="#" class="text-dark"><i class="fa-regular fa-calendar fs-4"></i></a></span>
                     </div>
                     <div class="bg-light p-2">
-                        <table class="table border-0 m-0 wallet-table">
+                        <table class="table border-0 m-0 wallet-table" id="walletTransactionTbody">
                             <tbody>
                                 <tr>
                                     <td class="border-secondary bg-transparent align-middle lh-sm">
@@ -1134,8 +1455,8 @@
                 <div class="modal-body">
                     <div class="table-responsive">
                         <table class="table border-0 membership-plan-table">
-                            <tbody>
-                                <tr class="active-member">
+                            <tbody id="membershipPlanTbody">
+                                {{-- <tr class="active-member">
                                     <td class="bg-info align-middle p-3 text-nowrap">
                                         <small class="fw-semibold">From Date</small> <br>
                                         <small class="text-black-50">01.01.2026</small>
@@ -1186,7 +1507,7 @@
                                         <img src="{{ asset('assets/images/expire-tag.svg') }}" alt="" class="position-absolute end-0"
                                             style="top: 10px;" width="73" height="24" style="min-width: 73px;">
                                     </td>
-                                </tr>
+                                </tr> --}}
                             </tbody>
                         </table>
                     </div>
@@ -1210,7 +1531,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn" data-id="">
                         Yes, Delete
                     </button>
                 </div>
@@ -1371,20 +1692,359 @@
 
         });
 
-        $('#viewProfileBtn').on('click', ()=>{
+        $(document).on('click', '.viewProfileBtn', function() {
             let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML'); // save original button
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
 
             $.ajax({
-                url: '{{route("swimming-member.view", ":memberId")}}'.replace(':memberId', memberId);
+                url: '{{route("swimming-member.view", ":memberId")}}'.replace(':memberId', memberId),
                 type: 'GET',
                 success: function(response){
-                    alert("success");
+                    if (response.statusCode == 200) {
+                        console.log(response);
+                        $('#memberName').text(response.data.name);
+                        $('#memberClubName').text(response.data.club_details.name)
+                        $('#memberCode').text(response.data.member_code)
+                        $('#memberCardNo').text(response.data.card_details.card_no)
+                        $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
+                        let expiryDate = response.data.purchase_history[0].expiry_date;
+                        let formatted = new Date(expiryDate).toLocaleDateString('en-IN'); // d/m/y format
+                        $('#memberPlanExpiry').text(formatted);
+                        $('#memberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                        $('#viewprofile').modal('show');
+                    }
+                    else{
+                        // toastr.error('Something Went Wrong').
+                        console.log(response);
+                    }
+
                 },
                 error: function(){
                     toastr.error('Something Went Wrong.');
                 }
             });
-        })
+        });
+
+        $('.memberDeleteBtn').on('click', function(){
+            $('#confirmDeleteBtn').data('id', $(this).data('id'));
+        });
+
+        $('#confirmDeleteBtn').on('click', function(){
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML'); // save original button
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
+
+            $.ajax({
+                url: '{{route("swimming-member.delete", ":memberId")}}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                    }
+                    else{
+                        toastr.error('Something Went Wrong').
+                        console.log(response);
+                    }
+
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+        });
+
+        $(document).on('click', '.memberEditBtn', function() {
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML'); // save original button
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
+
+            $.ajax({
+                url: '{{route("swimming-member.view", ":memberId")}}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200) {
+                        console.log(response);
+                        $('#swim_member_id').val(memberId)
+                        $('#swim_member_name').val(response.data.name);
+                        $('#swim_member_email').val(response.data.email);
+                        $('#swim_member_phone').val(response.data.phone);
+                        $('#swim_member_address').val(response.data.address);
+                        $('#swim_member_age').val(response.data.member_details.details['age']);
+                        $('#swim_member_sex').val(response.data.member_details.details['sex']);
+                        $('#swim_member_height').val(response.data.member_details.details['height']);
+                        $('#swim_member_weight').val(response.data.member_details.details['weight']);
+                        $('#swim_member_pulse_rate').val(response.data.member_details.details['pulse_rate']);
+                        $('#swim_member_batch').val(response.data.member_details.details['batch']);
+                        $('#swim_member_vaccination').val(response.data.member_details.details['vaccination']);
+                        $('#swim_member_i_agree').val(response.data.member_details.details['i_agree']);
+                        let diseases = response.data.member_details.details['disease'];
+                        $('input[name="swim_disease[]"]').prop('checked', false);
+                        if(diseases && diseases.length > 0){
+                            diseases.forEach(function(disease) {
+                                $('input[name="swim_disease[]"][value="' + disease + '"]').prop('checked', true);
+                            });
+                        }
+                        $('#swim_guardian_name').val(response.data.member_details.details['guardian_name']);
+                        $('#swim_guardian_occupation').val(response.data.member_details.details['guardian_occupation']);
+                        let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
+                        $('input[name="swim_membership_plan_type"]').prop('checked', false);
+                        $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
+                        $('#current_card_no').text(response.data.card_details.card_no);
+                        $('#swim_payment_mode').val(response.data.payment_history[0].payment_mode);
+                        $('#swim_ac_head').val(response.data.payment_history[0].ac_head);
+                        $('#swim_taxable_amount').val(response.data.payment_history[0].taxable_amount);
+                        $('#swim_gstAmt').val(response.data.payment_history[0].gst_amount);
+                        $('#swim_receiptAmt').val(response.data.payment_history[0].net_amount);
+                        $('#swim_bank_name').val(response.data.payment_history[0].bank_id);
+                        $('#swim_remarks').val(response.data.payment_history[0].remarks);
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                        $('#editswimmingmember').modal('show');
+                    }
+                    else{
+                        // toastr.error('Something Went Wrong').
+                        console.log(response);
+                    }
+
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+
+
+        });
+
+        $(document).on('click', '.membershipPlanBtn', function() {
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML'); // save original button
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
+
+            $.ajax({
+                url: '{{route("swimming-member.membership-plan", ":memberId")}}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200) {
+                        let tbody = $('#membershipPlanTbody');
+                        tbody.empty();
+
+                        response.data.forEach(function(plan) {
+                            let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                            let toDate = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                            let today = new Date();
+                            let expiryDate = new Date(plan.expiry_date);
+                            let isActive = expiryDate >= today;
+
+                            let row = `
+                                <tr>
+                                    <td class="bg-info align-middle p-3 text-nowrap">
+                                        <small class="fw-semibold">From Date</small> <br>
+                                        <small class="text-black-50">${fromDate}</small>
+                                    </td>
+                                    <td class="bg-info align-middle p-3 text-nowrap">
+                                        <small class="fw-semibold">To Date</small> <br>
+                                        <small class="text-black-50">${toDate}</small>
+                                    </td>
+                                    <td class="bg-info align-middle p-3 text-nowrap">
+                                        <small class="fw-semibold">Plan Type</small> <br>
+                                        <small class="text-black-50">${plan.membership_plan_type.name}</small>
+                                    </td>
+                                    <td class="bg-info align-middle p-3 text-nowrap">
+                                        <small class="fw-semibold">Fine</small> <br>
+                                        <small class="text-black-50">Rs ${plan.fine_amount}</small>
+                                    </td>
+                                    <td class="bg-info align-middle p-3 text-nowrap">
+                                        <small class="fw-semibold">Price</small> <br>
+                                        <small class="text-black-50">Rs ${plan.net_amount}</small>
+                                    </td>
+                                    <td class="bg-info align-middle text-end p-3">
+                                        <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}" alt="" width="${isActive ? 76 : 73}" height="${isActive ? 67 : 24}">
+                                    </td>
+                                </tr>`;
+
+                            tbody.append(row);
+                        });
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                        $('#membershipplan').modal('show')
+                    }
+                    else{
+                        // toastr.error('Something Went Wrong').
+                        console.log(response);
+                    }
+
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+
+        });
+
+        $(document).on('click', '.walletRechargeBtn', function() {
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML'); // save original button
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
+
+            $.ajax({
+                url: '{{route("swimming-member.fetch-wallet-balance", ":memberId")}}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200) {
+                        console.log(response);
+                        $('#walletMemberId').val(memberId);
+                        $('#walletBalance').text('₹' + (response.data.walletBalance ?? 0));
+
+                        let tbody = $('#walletTransactionTbody');
+                        tbody.empty();
+
+                        if(response.data.walletTransactionHistory.length > 0){
+                            response.data.walletTransactionHistory.forEach(function(transaction) {
+                                let amount = transaction.amount;
+                                let direction = transaction.direction;
+                                let date = new Date(transaction.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                                let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
+                                let sign = direction == 'credit' ? '+' : '-';
+                                let label = direction == 'credit' ? 'Added' : 'Used';
+
+                                let row = `
+                                    <tr>
+                                        <td class="border-secondary bg-transparent align-middle lh-sm">
+                                            <small class="fw-semibold">${label}</small> <br>
+                                            <small class="text-black-50">${date}</small>
+                                        </td>
+                                        <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
+                                            ${sign}₹${amount}
+                                        </td>
+                                    </tr>`;
+
+                                tbody.append(row);
+                            });
+                        } else {
+                            tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
+                        }
+
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                        $('#walletrecharge').modal('show');
+                    }
+                    else{
+                        // toastr.error('Something Went Wrong').
+                        console.log(response);
+                    }
+
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+
+        });
+
+        $('#walletRechargeForm').on('submit', function (e) {
+            e.preventDefault();
+
+            let isValid = true;
+            let balance = 1;
+            $('.phone-input').each(function () {
+
+                let phone = $(this).val();
+                let errorDiv = $(this).next('.error-div');
+
+                if (phone !== '' && !/^\d{10}$/.test(phone)) {
+                    errorDiv.text('Phone number must be 10 digits.');
+                    $(this).addClass('is-invalid');
+                    isValid = false;
+
+                } else {
+                    $(this).removeClass('is-invalid');
+                    errorDiv.text('');
+                }
+            });
+
+            $('.profile-image').each(function () {
+
+                let fileInput = this;
+                let errorDiv = $(this).closest('.form-part').find('.error-div');
+
+                if (fileInput.files.length > 0) {
+
+                    let file = fileInput.files[0];
+                    let allowedTypes = ['image/jpeg', 'image/png'];
+                    let maxSize = 2 * 1024 * 1024; // 2MB
+
+                    let errors = [];
+
+                    if (!allowedTypes.includes(file.type)) {
+                        errors.push('Only JPG, JPEG and PNG images are allowed.');
+                    }
+
+                    if (file.size > maxSize) {
+                        errors.push('Image must be less than 2MB.');
+                    }
+
+                    if (errors.length > 0) {
+                        isValid = false;
+                        errorDiv.html(errors.join('<br>'));
+                        $(this).addClass('is-invalid');
+                    } else {
+                        errorDiv.text('');
+                        $(this).removeClass('is-invalid');
+                    }
+                } else {
+                    // If optional field → clear error
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+
+            });
+
+            if (!isValid) {
+                return isValid;
+            }
+
+            let swimmingMemberformData = new FormData($("#swimmingMemberForm")[0]);
+            $.ajax({
+                url: "{{ route('swimming-member.store') }}",
+                type: "POST",
+                data: swimmingMemberformData,
+                processData: false,
+                contentType: false,
+                // data:{
+                // "_token": "{{ csrf_token() }}",
+                // "balance": balance,
+                // "user_id": userId
+                // },
+                success: function(response) {
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        setTimeout(() => location.reload(), 1500);
+
+                    } else {
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                            console.log(response)
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error("Something went wrong, Please try again.");
+
+                    let responseError = xhr.responseJSON?.error
+                        ?? "Something went wrong, Please try again.";
+                    console.error(responseError);
+                }
+            });
+
+        });
 
     });
 </script>

@@ -49,7 +49,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/list', [SwimmingMemberController::class, 'list'])->name('swimming-member.list');
         Route::post('store', [SwimmingMemberController::class, 'store'])->name('swimming-member.store');
         Route::get('plan-price', [SwimmingMemberController::class, 'getPlanPrice'])->name('swimming-member.plan-price');
-        Route::get('view/{$id}', [SwimmingMemberController::class, 'view'])->name('swimming-member.view');
+        Route::get('/view/{id}', [SwimmingMemberController::class, 'view'])->name('swimming-member.view');
+        Route::get('/edit/{id}', [SwimmingMemberController::class, 'edit'])->name('swimming-member.edit');
+        Route::get('/membership-plan/{id}', [SwimmingMemberController::class, 'membershipPlan'])->name('swimming-member.membership-plan');
+        Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
+        Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
     });
 });
 

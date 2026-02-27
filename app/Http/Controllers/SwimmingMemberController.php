@@ -12,6 +12,8 @@ use App\Models\MembershipPlanType;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
 use App\Models\PaymentHistory;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,10 +51,16 @@ class SwimmingMemberController extends Controller
 
 
             $members = Member::where('club_id', $clubId)
-                ->with(['memberDetails', 'cardDetails', 'purchaseHistory'])
+                ->with([
+                    'memberDetails',
+                    'cardDetails',
+                    'purchaseHistory',
+                    'walletDetails'
+                ])
                 ->whereHas('memberDetails', function ($query) use ($membershipTypeId) {
                     $query->where('membership_type_id', $membershipTypeId);
                 })
+                ->orderBy('created_at', 'DESC')
                 ->get();
 
             // dd($members);
@@ -116,15 +124,7 @@ class SwimmingMemberController extends Controller
 
             $memberCode = 'LF-' . time();
 
-            $member = Member::create([
-                'club_id'     => $clubId,
-                'member_code' => $memberCode,
-                'name'        => $request->swim_name,
-                'email'       => $request->swim_email,
-                'phone'       => $request->swim_phone,
-                'address'     => $request->swim_address
-                // 'status'      => 'pending_approval'
-            ]);
+
 
             $membershipType = MembershipType::where('name', 'Swimming Membership')
                 ->where('club_id', $clubId)
@@ -142,6 +142,16 @@ class SwimmingMemberController extends Controller
                 $image_path = 'storage/' . $path;
             }
 
+            $member = Member::create([
+                'club_id'     => $clubId,
+                'member_code' => $memberCode,
+                'name'        => $request->swim_name,
+                'email'       => $request->swim_email,
+                'phone'       => $request->swim_phone,
+                'address'     => $request->swim_address,
+                'image'       => $request->$image_path
+                // 'status'      => 'pending_approval'
+            ]);
             $guardian_image_path = null;
             if ($request->hasFile('swim_guardian_image')) {
 
@@ -161,7 +171,9 @@ class SwimmingMemberController extends Controller
                     'weight' => $request->swim_weight,
                     'pulse_rate' => $request->swim_pulse_rate,
                     'batch' => $request->swim_batch,
-                    'i_agree' => $request->i_agree,
+                    'vaccination' => $request->swim_vaccination,
+                    'i_agree' => $request->input('swim_i_agree'),
+                    'disease' => $request->input('swim_disease', []),
                     'image' => $image_path,
                     'guardian_name' => $request->swim_guardian_name,
                     'guardian_occupation' => $request->swim_guardian_occupation,
@@ -255,10 +267,6 @@ class SwimmingMemberController extends Controller
                 'error' => $th->getMessage(),
             ]);
         }
-
-
-
-        return "coming from controller";
     }
 
     public function view($id)
@@ -266,14 +274,112 @@ class SwimmingMemberController extends Controller
         try {
             $clubId = club_id();
 
-            $members = Member::where('club_id', $clubId)
-                ->with(['memberDetails', 'cardDetails', 'purchaseHistory'])
-                ->find('id', $id);
+            $member = Member::where('club_id', $clubId)
+                ->with([
+                    'memberDetails',
+                    'cardDetails',
+                    'purchaseHistory.membershipPlanType',
+                    'clubDetails',
+                    'walletDetails',
+                    'paymentHistory'
+                ])
+                ->find($id);
 
             return response()->json([
-                // 'data' => $data,
+                'data' => $member,
                 'statusCode' => 200,
                 'message' => 'Member Fetched successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function membershipPlan($id)
+    {
+        try {
+            $clubId = club_id();
+
+            $membershipPlans = MembershipPurchaseHistory::where('club_id', $clubId)
+                ->with('membershipPlanType')
+                ->where('member_id', $id)
+                ->get();
+
+            return response()->json([
+                'data' => $membershipPlans,
+                'statusCode' => 200,
+                'message' => 'Member Fetched successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function fetchWalletBalance($id)
+    {
+        try {
+            // $clubId = club_id();
+
+            $walletBalance = Wallet::where('member_id', $id)
+                ->value('current_balance');
+
+            $walletTransactionHistory = WalletTransaction::where('member_id', $id)
+                ->orderBy('created_at', 'DESC')
+                ->get();
+
+            $data = [
+                'walletBalance' => $walletBalance,
+                'walletTransactionHistory' => $walletTransactionHistory
+            ];
+
+            return response()->json([
+                'data' => $data,
+                'statusCode' => 200,
+                'message' => 'Wallet Balance Fetched successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+
+    public function delete($id)
+    {
+        try {
+            // $clubId = club_id();
+
+            $member = Member::find($id);
+
+            if (!$member) {
+                return response()->json([
+                    // 'data' => $data,
+                    'statusCode' => 404,
+                    'message' => 'Member Not Found'
+                ]);
+            }
+
+            $card_mapping = MemberCardMapping::where('member_id', $member->id);
+
+            if ($card_mapping) {
+                $card_mapping->delete();
+            }
+
+            $member->delete();
+
+
+
+            return response()->json([
+                'statusCode' => 200,
+                'message' => 'Member Deleted successfully'
             ]);
         } catch (\Throwable $th) {
             return response()->json([
