@@ -4,12 +4,14 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
 use App\Http\Controllers\ClubMemberController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FoodItemManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
 use App\Http\Controllers\Master\FineRulesManageController;
 use App\Http\Controllers\Master\FoodCategoryManageController;
 use App\Http\Controllers\Master\GstRatesManageController;
 use App\Http\Controllers\Master\LiquorCategoryManageController;
+use App\Http\Controllers\Master\LockerManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\MinimumSpendRuleManageController;
 use App\Http\Controllers\Master\OperatorManageController;
@@ -45,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
     Route::resource('manage-food-categories', FoodCategoryManageController::class);
     Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
+    Route::resource('manage-lockers', LockerManageController::class);
     // master manage end
 
     Route::prefix('club-member')->group(function () {
@@ -52,6 +55,7 @@ Route::middleware('auth')->group(function () {
         Route::post('store', [ClubMemberController::class, 'store'])->name('club-member.store');
     });
 
+    Route::resource('manage-food-items', FoodItemManageController::class);
 
 });
 

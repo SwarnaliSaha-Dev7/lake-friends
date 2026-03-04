@@ -14,6 +14,7 @@
                     <li class="{{ request()->routeIs('manage-minimum-spend-rules.*') ? 'active' : '' }}"><a href="{{ route('manage-minimum-spend-rules.index') }}">Minimum Spend Rules</a></li>
                     <li class="{{ request()->routeIs('manage-food-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-food-categories.index') }}">Food Categories</a></li>
                     <li class="{{ request()->routeIs('manage-liquor-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-liquor-categories.index') }}">Liquor Categories</a></li>
+                    <li class="{{ request()->routeIs('manage-lockers.*') ? 'active' : '' }}"><a href="{{ route('manage-lockers.index') }}">Locker</a></li>
 
                     
                     {{-- <li><a href="#">Drinks</a></li>
@@ -34,7 +35,7 @@
                     <li><a href="#">Liquor Stock Report</a></li>
                 </ul>
             </li>
-            <li><a href="#"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
+            <li class="{{ request()->routeIs('manage-food-items.*') ? 'active' : '' }}"><a href="{{ route('manage-food-items.index') }}"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
         </ul>
     </nav>
     <div class="card-entry mt-5">

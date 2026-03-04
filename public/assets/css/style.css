@@ -262,7 +262,7 @@ body.modal-open .dashboard-wrapper {
 
 
 .nav-menu ul li a:hover,
-.nav-menu ul li.active a  {
+.nav-menu ul li.active a {
     background: var(--menu-Link-Bg-Color);
     color: var(--theme-Blue-Color);
 }
@@ -561,6 +561,7 @@ table.dataTable tbody td {
     padding-top: 14px;
     padding-bottom: 14px;
     color: var(--body-Text-Color);
+    vertical-align: middle;;
 }
 
 div.dataTables_wrapper div.dataTables_filter input {

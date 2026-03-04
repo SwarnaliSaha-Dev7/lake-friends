@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class GstRate extends Model
 {
-    //
+    protected $fillable = [
+        //
+    ];
 }
