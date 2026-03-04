@@ -33,7 +33,7 @@ class ClubMemberController extends Controller
                                                     ->get();
 
         $gstPercentage = GstRate::where('club_id', Auth::user()->club_id)
-                                        ->value('gst_percentage') ?? 0;
+            ->value('gst_percentage') ?? 0;
 
         return view('club_member.list', compact(
                                                 'title',

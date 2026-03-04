@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MembershipPurchaseHistory extends Model
 {
@@ -23,4 +23,9 @@ class MembershipPurchaseHistory extends Model
         'start_date' => 'date',
         'expiry_date' => 'date',
     ];
+
+    public function membershipPlanType(): BelongsTo
+    {
+        return $this->belongsTo(MembershipPlanType::class, 'membership_plan_type_id');
+    }
 }

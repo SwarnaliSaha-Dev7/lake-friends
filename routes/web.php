@@ -10,6 +10,7 @@ use App\Http\Controllers\Master\GstRatesManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SwimmingMemberController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -45,8 +46,17 @@ Route::middleware('auth')->group(function () {
         Route::get('plan-price', [ClubMemberController::class, 'getPlanPrice'])->name('club-member-plan-price');
     });
 
-
+    Route::prefix('swimming-member')->group(function () {
+        Route::get('/list', [SwimmingMemberController::class, 'list'])->name('swimming-member.list');
+        Route::post('store', [SwimmingMemberController::class, 'store'])->name('swimming-member.store');
+        Route::get('plan-price', [SwimmingMemberController::class, 'getPlanPrice'])->name('swimming-member.plan-price');
+        Route::get('/view/{id}', [SwimmingMemberController::class, 'view'])->name('swimming-member.view');
+        Route::post('/update', [SwimmingMemberController::class, 'update'])->name('swimming-member.update');
+        Route::get('/membership-plan/{id}', [SwimmingMemberController::class, 'membershipPlan'])->name('swimming-member.membership-plan');
+        Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
+        Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
+    });
 });
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
