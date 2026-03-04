@@ -8,6 +8,7 @@ class GstRates extends Model
 {
     protected $fillable = [
         'gst_percentage',
-        'club_id',
+        'gst_type',
+        'club_id ',
     ];
 }

@@ -10,7 +10,7 @@
             <div class="col-12">
                 <div class="member-list-part position-relative">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Membership Duration Types list</h2>
+                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Membership Duration Types List</h2>
                         <div class="d-flex gap-2">
                             <div class="d-flex justify-content-end">
                                 <select id="statusFilter"

@@ -4,10 +4,16 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
 use App\Http\Controllers\ClubMemberController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FoodItemManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
+use App\Http\Controllers\Master\FineRulesManageController;
+use App\Http\Controllers\Master\FoodCategoryManageController;
 use App\Http\Controllers\Master\GstRatesManageController;
+use App\Http\Controllers\Master\LiquorCategoryManageController;
+use App\Http\Controllers\Master\LockerManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
+use App\Http\Controllers\Master\MinimumSpendRuleManageController;
 use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SwimmingMemberController;
@@ -38,6 +44,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('manage-card-types', CardTypesManageController::class);
     Route::resource('manage-cards', CardsManageController::class);
     Route::resource('manage-gst-rates', GstRatesManageController::class);
+    Route::resource('manage-fine-rules', FineRulesManageController::class);
+    Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
+    Route::resource('manage-food-categories', FoodCategoryManageController::class);
+    Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
+    Route::resource('manage-lockers', LockerManageController::class);
     // master manage end
 
     Route::prefix('club-member')->group(function () {
@@ -56,6 +67,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
     });
+
+    Route::resource('manage-food-items', FoodItemManageController::class);
+
 });
 
 

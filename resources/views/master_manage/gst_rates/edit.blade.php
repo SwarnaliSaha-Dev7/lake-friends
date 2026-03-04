@@ -9,12 +9,21 @@
         @csrf
         @method('PUT')
         <div class="row">
-        <!-- data type number -->
-        <div class="col-xl-4 col-md-6">
+            
+            <div class="col-xl-6 col-md-6">
                 <div class="form-part mb-3">
-                    <input type="number" name="gst_percentage" class="form-control py-2 shadow-none" placeholder="GST Percentage"  value="{{ old('gst_percentage', $gst->gst_percentage) }}" required>
+                    <label for="" class="form-label w-100 mb-1 w-100"><small>GST Type</small></label>
+                    <input type="text" name="gst_type" class="form-control py-2 shadow-none" value="{{ ucwords(str_replace('_',' ',$gst->gst_type)) }}" readonly>
                 </div>
-        </div>
+            </div>
+
+            <!-- data type number -->
+            <div class="col-xl-6 col-md-6">
+                    <div class="form-part mb-3">
+                        <label for="" class="form-label w-100 mb-1 w-100"><small>GST Percentage</small></label>
+                        <input type="number" name="gst_percentage" class="form-control py-2 shadow-none" placeholder="GST Percentage"  value="{{ old('gst_percentage', $gst->gst_percentage) }}" step="0.01" min="0" max="100" required>
+                    </div>
+            </div>            
 
         </div>
         <!-- <button class="btn btn-primary fw-semibold">Default</button> -->

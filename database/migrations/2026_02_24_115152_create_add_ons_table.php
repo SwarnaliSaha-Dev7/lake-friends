@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fine_rules', function (Blueprint $table) {
+        Schema::create('add_ons', function (Blueprint $table) {
             $table->id();
             $table->foreignId('club_id')->nullable()->constrained('clubs')->nullOnDelete();
-            $table->enum('rule_type',['membership_expiry']);
-            $table->decimal('per_day_fine_amount', 12, 2)->nullable();
-            $table->string('grace_days')->nullable();
-            $table->decimal('max_fine_cap', 10, 2)->nullable();
+            $table->string('name',255)->nullable();
+            $table->decimal('price',10,2)->default(0);
+            $table->boolean('is_active')->default(false);
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fine_rules');
+        Schema::dropIfExists('add_ons');
     }
 };

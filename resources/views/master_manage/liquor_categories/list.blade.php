@@ -10,7 +10,7 @@
             <div class="col-12">
                 <div class="member-list-part position-relative">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Cards List</h2>
+                        <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Liquor Categories List</h2>
                         <div class="d-flex gap-2">
                             <div class="d-flex justify-content-end">
                                 <select id="statusFilter"
@@ -22,7 +22,7 @@
                                     <option value="Blocked">Blocked</option>
                                 </select>
                             </div>
-                            <a href="{{ route('manage-cards.create') }}" class="btn btn-info">+ Add</a>
+                            <a href="{{ route('manage-liquor-categories.create') }}" class="btn btn-info">+ Add</a>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -31,50 +31,33 @@
                             <thead>
                                 <tr>
                                     <th class="text-white fw-medium align-middle text-nowrap">Sl No.</th>
-                                    <th class="text-white fw-medium align-middle text-nowrap">Card No.</th>
-                                    <th class="text-white fw-medium align-middle text-nowrap">Status</th>
-                                    <th class="text-white fw-medium align-middle text-nowrap">Availability</th>
+                                    <th class="text-white fw-medium align-middle text-nowrap">Name</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($cardsList as $cards)
+                                @foreach($liquorCatList as $liquors)
                                 <tr>
-                                    
+
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
-                                    <td class="text-nowrap">{{ $cards->card_no }}</td>
-
-                                    <td class="text-nowrap">{{ ucfirst($cards->status) }}</td>
-
-                                    <td class="text-nowrap">
-                                        @if(is_null($cards->issued_at))
-                                            <span class="badge bg-success">
-                                                Available
-                                            </span>
-                                        @else
-                                            <span class="badge bg-danger">
-                                                Assigned
-                                            </span>
-                                        @endif
-                                    </td>
-
+                                    <td class="text-nowrap">{{ $liquors->name }}</td>
                                     <!-- <td class="text-success text-nowrap">No</td> -->
                                     <td class="text-nowrap">
 
-                                        <a href="{{ route('manage-cards.edit', $cards->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
+                                        <a href="{{ route('manage-liquor-categories.edit', $liquors->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
                                             <small>
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </small>
                                         </a>
 
-                                        <form id="delete-form-{{ $cards->id }}" action="{{ route('manage-cards.destroy', $cards->id) }}" method="POST">
+                                        <form id="delete-form-{{ $liquors->id }}" action="{{ route('manage-liquor-categories.destroy', $liquors->id) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
 
                                             <button type="submit"
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn  delete-row" id="delete-btn"
-                                            data-id="{{ $cards->id }}" title="Delete">
+                                            data-id="{{ $liquors->id }}" title="Delete">
                                                 <small>
                                                     <i class="fa-solid fa-trash"></i>
                                                 </small>
@@ -84,6 +67,7 @@
                                     </td>
                                 </tr>
                                 @endforeach
+                                
                             </tbody>
                         </table>
                     </div>
@@ -140,14 +124,14 @@ $(document).ready(function(){
     $(document).on("click", "#delete-btn", function(e){
         e.preventDefault(); // stop form submit
 
-        let cardId = $(this).data("id");
-        $('#delete_user_id').val(cardId);
+        let liquorCatId = $(this).data("id");
+        $('#delete_user_id').val(liquorCatId);
     });
 
     $('#confirmDeleteBtn').click(function(event){
 
-        let cardId = $("#delete_user_id").val();
-        $(`#delete-form-${cardId}`).submit();
+        let liquorCatId = $("#delete_user_id").val();
+        $(`#delete-form-${liquorCatId}`).submit();
     });
 });
 </script>
