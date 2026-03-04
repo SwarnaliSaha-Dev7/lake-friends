@@ -15,6 +15,7 @@ class Card extends Model
         'issued_at',
         'club_id',
         'card_type_id',
+        'is_assigned'
     ];
 
     public static function statuses()

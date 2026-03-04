@@ -971,7 +971,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -1012,7 +1012,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
                                             <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -1040,21 +1040,14 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Plan type</small></label>
 
-                                            @foreach ($membershipPlanList as $membershipPlan)
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input plan-type" type="radio" name="swim_membership_plan_type"
-                                                        id="inlineRadio{{$loop->iteration}}" value="{{$membershipPlan->id}}" required>
-                                                    <label class="form-check-label"
-                                                        for="inlineRadio{{$loop->iteration}}"><small>{{$membershipPlan->name}}</small></label>
-                                                </div>
-                                            @endforeach
+                                            <p id="current_membership"></p>
 
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
-                                            <select name="swim_card_id" id="swim_card_no" class="form-select py-2 shadow-none" required>
+                                            <select name="swim_card_id" id="swim_card_no" class="form-select py-2 shadow-none">
                                                 <option value="">Card No.</option>
                                                 @foreach ($cards as $card)
                                                     <option value="{{$card->id}}">{{$card->card_no}}</option>
@@ -1067,67 +1060,6 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Current Card No.</small></label>
                                             <p id="current_card_no"></p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Payment Mode</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_payment_mode" name="swim_payment_mode"
-                                                placeholder="Payment Mode" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_ac_head" name="swim_ac_head"
-                                                placeholder="A/C Head" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_taxable_amount" name="swim_taxable_amt"
-                                                placeholder="Taxable Amt. (Min 500)" readonly required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_gstPercentage" name="swim_gst_percent"
-                                                placeholder="GST%" value="{{$gstPercentage}}" readonly required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>GST Amt</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_gstAmt" name="swim_gst_amt"
-                                                placeholder="GST Amt" readonly required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Receipt Amt</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_receiptAmt" name="swim_receipt_amt"
-                                                placeholder="Receipt Amt" readonly required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
-                                            <select name="swim_bank_id" id="swim_bank_name" class="form-select py-2 shadow-none" required>
-                                                <option value="">Bank Name</option>
-                                                @foreach ($bankList as $bank)
-                                                    <option value="{{$bank->id}}">{{$bank->name}}</option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="swim_remarks" name="swim_remarks"
-                                                placeholder="Remarks" required>
                                         </div>
                                     </div>
                                 </div>
@@ -1781,7 +1713,7 @@
                         $('#swim_member_pulse_rate').val(response.data.member_details.details['pulse_rate']);
                         $('#swim_member_batch').val(response.data.member_details.details['batch']);
                         $('#swim_member_vaccination').val(response.data.member_details.details['vaccination']);
-                        $('#swim_member_i_agree').val(response.data.member_details.details['i_agree']);
+                        $('#swim_member_i_agree').prop('checked', response.data.member_details.details['i_agree'] == 1);
                         let diseases = response.data.member_details.details['disease'];
                         $('input[name="swim_disease[]"]').prop('checked', false);
                         if(diseases && diseases.length > 0){
@@ -1795,13 +1727,8 @@
                         $('input[name="swim_membership_plan_type"]').prop('checked', false);
                         $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
                         $('#current_card_no').text(response.data.card_details.card_no);
-                        $('#swim_payment_mode').val(response.data.payment_history[0].payment_mode);
-                        $('#swim_ac_head').val(response.data.payment_history[0].ac_head);
-                        $('#swim_taxable_amount').val(response.data.payment_history[0].taxable_amount);
-                        $('#swim_gstAmt').val(response.data.payment_history[0].gst_amount);
-                        $('#swim_receiptAmt').val(response.data.payment_history[0].net_amount);
-                        $('#swim_bank_name').val(response.data.payment_history[0].bank_id);
-                        $('#swim_remarks').val(response.data.payment_history[0].remarks);
+                        // console.log(response.purchase_history);
+                        $('#current_membership').text(response.data.purchase_history[0].membership_plan_type.name)
 
                         $('.spinner-border').replaceWith(originalBtn);
                         $('#editswimmingmember').modal('show');
@@ -2021,6 +1948,106 @@
                 // "user_id": userId
                 // },
                 success: function(response) {
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        setTimeout(() => location.reload(), 1500);
+
+                    } else {
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                            console.log(response)
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error("Something went wrong, Please try again.");
+
+                    let responseError = xhr.responseJSON?.error
+                        ?? "Something went wrong, Please try again.";
+                    console.error(responseError);
+                }
+            });
+
+        });
+
+        $('#swimmingMemberEditForm').on('submit', function (e) {
+            e.preventDefault();
+
+            let isValid = true;
+            $('.phone-input').each(function () {
+
+                let phone = $(this).val();
+                let errorDiv = $(this).next('.error-div');
+
+                if (phone !== '' && !/^\d{10}$/.test(phone)) {
+                    errorDiv.text('Phone number must be 10 digits.');
+                    $(this).addClass('is-invalid');
+                    isValid = false;
+
+                } else {
+                    $(this).removeClass('is-invalid');
+                    errorDiv.text('');
+                }
+            });
+
+            $('.profile-image').each(function () {
+
+                let fileInput = this;
+                let errorDiv = $(this).closest('.form-part').find('.error-div');
+
+                if (fileInput.files.length > 0) {
+
+                    let file = fileInput.files[0];
+                    let allowedTypes = ['image/jpeg', 'image/png'];
+                    let maxSize = 2 * 1024 * 1024; // 2MB
+
+                    let errors = [];
+
+                    if (!allowedTypes.includes(file.type)) {
+                        errors.push('Only JPG, JPEG and PNG images are allowed.');
+                    }
+
+                    if (file.size > maxSize) {
+                        errors.push('Image must be less than 2MB.');
+                    }
+
+                    if (errors.length > 0) {
+                        isValid = false;
+                        errorDiv.html(errors.join('<br>'));
+                        $(this).addClass('is-invalid');
+                    } else {
+                        errorDiv.text('');
+                        $(this).removeClass('is-invalid');
+                    }
+                } else {
+                    // If optional field → clear error
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+
+            });
+
+            if (!isValid) {
+                return isValid;
+            }
+
+            let swimmingMemberEditformData = new FormData($("#swimmingMemberEditForm")[0]);
+            $.ajax({
+                url: "{{ route('swimming-member.update') }}",
+                type: "POST",
+                data: swimmingMemberEditformData,
+                processData: false,
+                contentType: false,
+                // data:{
+                // "_token": "{{ csrf_token() }}",
+                // "balance": balance,
+                // "user_id": userId
+                // },
+                success: function(response) {
+                    // console.log(response);
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
                         setTimeout(() => location.reload(), 1500);
