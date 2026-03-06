@@ -338,33 +338,33 @@ class ClubMemberController extends Controller
     public function update(Request $request)
     {
         try {
-
+ 
             $clubId = club_id();
             $memberId = $request->member_id;
             // $exists = Member::where('email', $request->email)
             //     ->where('club_id', $clubId)
             //     ->where('id', '!=', $memberId)
             //     ->exists();
-
+ 
             // if ($exists) {
             //     return response()->json([
             //         'statusCode' => 409,
             //         'message' => 'Email already exists'
             //     ]);
             // }
-
+ 
             // DB::beginTransaction();
-
+ 
             $member = Member::find($memberId);
-
+ 
             $dest_path = 'uploads/images';
             $image_path = null;
             if ($request->hasFile('image')) {
-
+ 
                 // if ($member->image && file_exists(public_path($member->image))) {
                 //     unlink(public_path($member->image));
                 // }
-
+ 
                 $file = $request->file('image');
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
@@ -372,36 +372,36 @@ class ClubMemberController extends Controller
             } else {
                 $image_path = $member->image;
             }
-
+ 
             $memberDetail = MembershipFormDetail::where('member_id', $memberId)->first();
-
+ 
             $spouse_image_path = null;
             if ($request->hasFile('spouse_image')) {
-
+ 
                 // if ($memberDetail->details['spouse_image'] && file_exists(public_path($memberDetail->details['spouse_image']))) {
                 //     unlink(public_path($memberDetail->details['spouse_image']));
                 // }
-
+ 
                 $file = $request->file('spouse_image');
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
                 $spouse_image_path = 'storage/' . $path;
             } else {
-                $spouse_image_path = $memberDetail->details['spouse_image'];
+                $spouse_image_path = $memberDetail->details['spouse_image'] ?? '';
             }
-
+ 
             $data = $request->except(
                 'image',
                 'spouse_image'
             );
-
+ 
             $data['image'] = $image_path;
             $data['spouse_image'] = $spouse_image_path;
-
+ 
             $card_no = $request->card_id;
-
+ 
             if ($card_no) {
-
+ 
                 $newCard = Card::find($card_no);
                 if ($newCard) {
                     $newCard->update([
@@ -409,7 +409,7 @@ class ClubMemberController extends Controller
                     ]);
                 }
             }
-
+ 
             $approval = ActionApproval::create([
                 'club_id' => $clubId,
                 'module' => 'member_edit',
@@ -419,15 +419,15 @@ class ClubMemberController extends Controller
                 'maker_user_id' => Auth::id(),
                 'request_payload' => json_encode($data)
             ]);
-
+ 
             $approvers = User::role(['operator', 'admin'])
                 ->where('id', '!=', Auth::id())
                 ->get();
-
-
+ 
+ 
             Notification::send($approvers, new ApprovalNotification($approval));
-
-
+ 
+ 
             // $member->update([
             //     'name'        => $request->name,
             //     'email'       => $request->email,
@@ -436,8 +436,8 @@ class ClubMemberController extends Controller
             //     'image'       => $image_path
             //     // 'status'      => 'pending_approval'
             // ]);
-
-
+ 
+ 
             // $memberDetail->update([
             //     'details' => [
             //         'blood_grp' => $request->blood_grp,
@@ -449,37 +449,37 @@ class ClubMemberController extends Controller
             //         'spouse_image' => $spouse_image_path,
             //     ]
             // ]);
-
-
-
-
+ 
+ 
+ 
+ 
             // $card_no = $request->card_id;
-
+ 
             // if ($card_no) {
             //     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
-
+ 
             //     $currentCard = Card::find($currentCardMapping->card_id);
             //     if ($currentCard) {
             //         $currentCard->update([
             //             'is_assigned' => 0
             //         ]);
             //     }
-
+ 
             //     $newCard = Card::find($card_no);
             //     if ($newCard) {
             //         $newCard->update([
             //             'is_assigned' => 1
             //         ]);
-
+ 
             //         $currentCardMapping->update([
             //             'card_id' => $card_no
             //         ]);
             //     }
             // }
-
-
+ 
+ 
             DB::commit();
-
+ 
             return response()->json([
                 // 'data' => $data,
                 'statusCode' => 200,
@@ -487,7 +487,7 @@ class ClubMemberController extends Controller
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
-
+ 
             return response()->json([
                 'statusCode' => 500,
                 'error' => $th->getMessage(),

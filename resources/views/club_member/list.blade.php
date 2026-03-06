@@ -1701,7 +1701,7 @@
                     }else{
                         $btn.html(originalText);
                         $btn.prop('disabled', false);
-
+console.log(response)
                         toastr.error(response.message ?? "Something went wrong");
 
                     }

@@ -75,7 +75,7 @@ class ActionApprovalController extends Controller
 
                 $member = Member::find($memberId);
 
-                if ($member->image && $payload->swim_image != $member->image && file_exists(public_path($member->image))) {
+                if ($member->image && $payload->image != $member->image && file_exists(public_path($member->image))) {
                     unlink(public_path($member->image));
                 }
 
@@ -89,16 +89,16 @@ class ActionApprovalController extends Controller
 
 
                 if ($membershipTypeName == 'Club Membership') {
-                    if ($member->spouse_image && $payload->spouse_image != $memberDetail->details['spouse_image'] && file_exists(public_path($memberDetail->details['spouse_image']))) {
+                    if ($member->spouse_image && isset($memberDetail->details['spouse_image']) && $payload->spouse_image != $memberDetail->details['spouse_image'] && file_exists(public_path($memberDetail->details['spouse_image']))) {
                         unlink(public_path($memberDetail->details['spouse_image']));
                     }
 
                     $member->update([
-                        'name'        => $payload->swim_name,
-                        'email'       => $payload->swim_email,
-                        'phone'       => $payload->swim_phone,
-                        'address'     => $payload->swim_address,
-                        'image'       => $payload->swim_image,
+                        'name'        => $payload->name,
+                        'email'       => $payload->email,
+                        'phone'       => $payload->phone,
+                        'address'     => $payload->address,
+                        'image'       => $payload->image,
                         'status'      => $payload->club_status
                     ]);
 
@@ -165,7 +165,16 @@ class ActionApprovalController extends Controller
 
 
 
-                $card_no = $payload->swim_card_id ?? $payload->card_id;
+                // $card_no = $payload->swim_card_id ?? $payload->card_id;
+                if(isset($payload->swim_card_id)){
+                    $card_no = $payload->swim_card_id;
+                }
+                elseif(isset($payload->card_id)){
+                    $card_no = $payload->card_id;
+                }
+                else{
+                    $card_no = 0;
+                }
 
                 if ($card_no) {
                     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();

@@ -44,11 +44,14 @@
                                         $payload = json_decode($payloadJson);
                                         // echo "<pre>"; print_r($payload); echo "</pre>";
                                         // $detail = "";
-                                        if ($payload->swim_name) {
+                                        if (isset($payload->swim_name)) {
                                             $detail = $payload?->swim_name ?? '';
                                         }
-                                        elseif ($payload->swim_member_name) {
+                                        elseif (isset($payload->swim_member_name)) {
                                             $detail = $payload?->swim_member_name ?? '';
+                                        }
+                                        elseif (isset($payload->name)) {
+                                            $detail = $payload?->name ?? '';
                                         }
                                     @endphp
                                 <tr>
