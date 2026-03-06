@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActionApprovalController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
 use App\Http\Controllers\ClubMemberController;
@@ -65,11 +66,21 @@ Route::middleware('auth')->group(function () {
         Route::post('/update', [SwimmingMemberController::class, 'update'])->name('swimming-member.update');
         Route::get('/membership-plan/{id}', [SwimmingMemberController::class, 'membershipPlan'])->name('swimming-member.membership-plan');
         Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
+        Route::post('/recharge-wallet-balance', [SwimmingMemberController::class, 'rechargeWalletBalance'])->name('swimming-member.recharge-wallet-balance');
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
     });
 
-    Route::resource('manage-food-items', FoodItemManageController::class);
+    Route::prefix('manage-approval-status')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list', 'index')->name('actionApproval.list');
+        Route::get('reject/{id}', 'reject')->name('actionApproval.reject');
+        Route::get('approve/{id}', 'approve')->name('actionApproval.approve');
+    });
 
+    Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');
+
+    Route::get('get-member-details/{cardNo}', [DashboardController::class, 'fetchMemberDetailsByCard'])->name('getMemberDetails');
+
+    Route::resource('manage-food-items', FoodItemManageController::class);
 });
 
 

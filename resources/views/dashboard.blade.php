@@ -85,7 +85,7 @@
                 </a>
             </div>
             <div class="col-xl-3 col-md-6 my-xl-0 my-2">
-                <a href="#"
+                <a href="{{ route('actionApproval.list')}}"
                     class="action-box card bg-white border-0 d-flex align-items-center justify-content-between flex-row-reverse h-100">
                     <div class="card-header bg-transparent border-0">
                         <i class="fa-regular fa-circle-check fs-4 text-success"></i>
@@ -209,7 +209,7 @@
 
 @section('modalComponent')
     <!-- card entry Modal start -->
-    <div class="modal fade" id="cardentry" tabindex="-1" aria-labelledby="cardEntryModalLabel" aria-hidden="true">
+    {{-- <div class="modal fade" id="cardentry" tabindex="-1" aria-labelledby="cardEntryModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-md">
             <div class="modal-content">
                 <div class="modal-header border-0">
@@ -289,7 +289,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
     <!-- card entry Modal end  -->
 
     <!-- add Club Member Modal start -->
@@ -345,8 +345,8 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -403,8 +403,8 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -652,8 +652,8 @@
                                     </div>
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -689,8 +689,8 @@
                                     </div>
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>

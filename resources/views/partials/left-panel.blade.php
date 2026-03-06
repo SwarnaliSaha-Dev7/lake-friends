@@ -40,7 +40,7 @@
     </nav>
     <div class="card-entry mt-5">
         <a href="#" class="d-flex align-items-center gap-3 fw-medium ps-2" data-bs-toggle="modal"
-            data-bs-target="#cardentryswipe">
+            data-bs-target="#cardentryswipe" id="openBtn">
             <span
                 class="d-inline-flex align-items-center justify-content-center rounded-circle border border-warning"><img
                     src="{{ asset('assets/images/card-hand.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="35"

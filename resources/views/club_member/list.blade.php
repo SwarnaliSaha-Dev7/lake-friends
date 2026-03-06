@@ -482,8 +482,8 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="image" accept=".jpg,.jpeg,.png" required>
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="image" accept=".jpg,.jpeg,.png" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -554,8 +554,8 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>

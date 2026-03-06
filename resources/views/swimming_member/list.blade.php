@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="member-list-part position-relative">
                 <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                    <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Club Member list</h2>
+                    <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Swimming Member list</h2>
                     <div class="d-flex gap-2">
                         <div class="d-flex justify-content-end">
                             <select id="statusFilter"
@@ -46,7 +46,7 @@
                                     <td class="text-nowrap">{{$member->name}}</td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
                                     <td class="text-nowrap">{{$member->member_code}}</td>
-                                    <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
+                                    <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0.00}}</td>
                                     <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
                                     <td class="text-nowrap">Null</td>
                                     @if ($member->status == 'active')
@@ -621,8 +621,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image" required>
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -630,7 +630,7 @@
                                                         Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
-                                                        Image format, PNG & JPEG, max file size 10kb
+                                                        Image format, PNG & JPEG, max file size 5MB
                                                     </small>
                                                 </div>
                                             </label>
@@ -662,8 +662,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image" required>
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -671,7 +671,7 @@
                                                         Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
-                                                        Image format, PNG & JPEG, max file size 10kb
+                                                        Image format, PNG & JPEG, max file size 5MB
                                                     </small>
                                                 </div>
                                             </label>
@@ -970,8 +970,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -979,7 +979,7 @@
                                                         Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
-                                                        Image format, PNG & JPEG, max file size 10kb
+                                                        Image format, PNG & JPEG, max file size 5MB
                                                     </small>
                                                 </div>
                                             </label>
@@ -1011,8 +1011,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -1020,7 +1020,7 @@
                                                         Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
-                                                        Image format, PNG & JPEG, max file size 10kb
+                                                        Image format, PNG & JPEG, max file size 5MB
                                                     </small>
                                                 </div>
                                             </label>
@@ -1269,17 +1269,20 @@
                             <h5 class="card-title fs-4 fw-semibold text-white mb-0" id="walletBalance"></h5>
                         </div>
                     </div>
-                    <form action="" id="walletRechargeForm">
+                    <form action="" id="walletRechargeForm" method="post">
                         @csrf
                         <input type="hidden" name="wallet_member_id" id="walletMemberId" value="">
                         <div class="row">
                             <div class="col-12">
                                 <div class="input-group mb-3">
+                                    <label for="" class="form-label w-100 mb-1 w-100"><small>Balance</small></label>
                                     <span
                                         class="input-group-text bg-transparent border-end-0 bg-white"><small>₹</small></span>
-                                    <input id="amountInput" type="text" class="form-control border-start-0 shadow-none"
-                                        aria-label="Amount" placeholder="0">
+                                    <input id="amountInput" type="number" class="form-control border-start-0 shadow-none"
+                                        aria-label="Amount" name="wallet_recharge_amount" placeholder="0" min="500" step="1" required>
+
                                 </div>
+                                <span class="error-div text-danger" id="amountErrorDiv"></span>
                             </div>
                             <div class="col-12">
                                 <label for="" class="form-label fw-semibold text-dark mb-3">Quick Select</label>
@@ -1327,16 +1330,49 @@
                                 </div>
 
                             </div>
+                            <div class="col-md-6 col-xl-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label w-100 mb-1 w-100"><small>Payment Mode</small></label>
+                                    <input type="text" class="form-control py-2 shadow-none" id="" name="wallet_payment_mode"
+                                        placeholder="Payment Mode" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
+                                    <input type="text" class="form-control py-2 shadow-none" id="" name="wallet_ac_head"
+                                        placeholder="A/C Head" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
+                                    <select name="wallet_bank_id" id="" class="form-select py-2 shadow-none" required>
+                                        <option value="">Bank Name</option>
+                                        @foreach ($bankList as $bank)
+                                            <option value="{{$bank->id}}">{{$bank->name}}</option>
+                                        @endforeach
+
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
+                                    <input type="text" class="form-control py-2 shadow-none" id="" name="wallet_remarks"
+                                        placeholder="Remarks" required>
+                                </div>
+                            </div>
                         </div>
                         <div class="text-end">
-                            <button class="btn btn-primary fw-semibold">Recharge Wallet</button>
+                            <button class="btn btn-primary fw-semibold" id="rechargeSubmitBtn">Recharge Wallet</button>
                         </div>
                     </form>
                     <div class="d-flex justify-content-between align-items-center gap-3 my-4">
                         <div class="form-label fw-semibold text-dark mb-3"><span
                                 class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
                                     class="fa-solid fa-wallet"></i></span> Recent Transactions</div>
-                        <span><a href="#" class="text-dark"><i class="fa-regular fa-calendar fs-4"></i></a></span>
+                        <span><a class="text-dark"><i class="fa-regular fa-calendar fs-4"></i></a></span>
                     </div>
                     <div class="bg-light p-2">
                         <table class="table border-0 m-0 wallet-table" id="walletTransactionTbody">
@@ -1515,7 +1551,7 @@
 
                     let file = fileInput.files[0];
                     let allowedTypes = ['image/jpeg', 'image/png'];
-                    let maxSize = 2 * 1024 * 1024; // 2MB
+                    let maxSize = 5 * 1024 * 1024; // 2MB
 
                     let errors = [];
 
@@ -1524,7 +1560,7 @@
                     }
 
                     if (file.size > maxSize) {
-                        errors.push('Image must be less than 2MB.');
+                        errors.push('Image must be less than 5MB.');
                     }
 
                     if (errors.length > 0) {
@@ -1660,14 +1696,16 @@
             });
         });
 
-        $('.memberDeleteBtn').on('click', function(){
+        $(document).on('click', '.memberDeleteBtn', function() {
+        // $('.memberDeleteBtn').on('click', function(){
             $('#confirmDeleteBtn').data('id', $(this).data('id'));
         });
 
-        $('#confirmDeleteBtn').on('click', function(){
+        $(document).on('click', '#confirmDeleteBtn', function() {
+        // $('#confirmDeleteBtn').on('click', function(){
             let memberId = $(this).data('id');
-            let originalBtn = $(this).prop('outerHTML'); // save original button
-            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
+            // let originalBtn = $(this).prop('outerHTML'); // save original button
+            // $(this).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
 
             $.ajax({
                 url: '{{route("swimming-member.delete", ":memberId")}}'.replace(':memberId', memberId),
@@ -1676,10 +1714,10 @@
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
 
-                        $('.spinner-border').replaceWith(originalBtn);
+                        // $('.spinner-border').replaceWith(originalBtn);
                     }
                     else{
-                        toastr.error('Something Went Wrong').
+                        toastr.error('Something Went Wrong');
                         console.log(response);
                     }
 
@@ -1825,7 +1863,7 @@
                     if (response.statusCode == 200) {
                         console.log(response);
                         $('#walletMemberId').val(memberId);
-                        $('#walletBalance').text('₹' + (response.data.walletBalance ?? 0));
+                        $('#walletBalance').text('₹' + (response.data.walletBalance ?? 0.00));
 
                         let tbody = $('#walletTransactionTbody');
                         tbody.empty();
@@ -1875,71 +1913,28 @@
 
         $('#walletRechargeForm').on('submit', function (e) {
             e.preventDefault();
+            // $('#rechargeSubmitBtn').prop('disabled', true);
+            $('#rechargeSubmitBtn')
+            .prop('disabled', true)
+            .html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
 
-            let isValid = true;
-            let balance = 1;
-            $('.phone-input').each(function () {
+            // let isValid = true;
+            // let balance = $('#amountInput').val();
+            // let errorDiv = $(this).next('.error-div');
 
-                let phone = $(this).val();
-                let errorDiv = $(this).next('.error-div');
 
-                if (phone !== '' && !/^\d{10}$/.test(phone)) {
-                    errorDiv.text('Phone number must be 10 digits.');
-                    $(this).addClass('is-invalid');
-                    isValid = false;
 
-                } else {
-                    $(this).removeClass('is-invalid');
-                    errorDiv.text('');
-                }
-            });
 
-            $('.profile-image').each(function () {
 
-                let fileInput = this;
-                let errorDiv = $(this).closest('.form-part').find('.error-div');
+            // if (!isValid) {
+            //     return isValid;
+            // }
 
-                if (fileInput.files.length > 0) {
-
-                    let file = fileInput.files[0];
-                    let allowedTypes = ['image/jpeg', 'image/png'];
-                    let maxSize = 2 * 1024 * 1024; // 2MB
-
-                    let errors = [];
-
-                    if (!allowedTypes.includes(file.type)) {
-                        errors.push('Only JPG, JPEG and PNG images are allowed.');
-                    }
-
-                    if (file.size > maxSize) {
-                        errors.push('Image must be less than 2MB.');
-                    }
-
-                    if (errors.length > 0) {
-                        isValid = false;
-                        errorDiv.html(errors.join('<br>'));
-                        $(this).addClass('is-invalid');
-                    } else {
-                        errorDiv.text('');
-                        $(this).removeClass('is-invalid');
-                    }
-                } else {
-                    // If optional field → clear error
-                    errorDiv.text('');
-                    $(this).removeClass('is-invalid');
-                }
-
-            });
-
-            if (!isValid) {
-                return isValid;
-            }
-
-            let swimmingMemberformData = new FormData($("#swimmingMemberForm")[0]);
+            let walletRechargeMemberformData = new FormData($("#walletRechargeForm")[0]);
             $.ajax({
-                url: "{{ route('swimming-member.store') }}",
+                url: "{{ route('swimming-member.recharge-wallet-balance') }}",
                 type: "POST",
-                data: swimmingMemberformData,
+                data: walletRechargeMemberformData,
                 processData: false,
                 contentType: false,
                 // data:{
@@ -1950,14 +1945,22 @@
                 success: function(response) {
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
+                        $('#rechargeSubmitBtn').hide();
                         setTimeout(() => location.reload(), 1500);
+
 
                     } else {
                         if(response.message){
                             toastr.error(response.message);
+                            $('#rechargeSubmitBtn')
+                            .prop('disabled', false)
+                            .html('Recharge Wallet');
                         }
                         else{
                             toastr.error("Something went wrong, Please try again.");
+                            $('#rechargeSubmitBtn')
+                            .prop('disabled', false)
+                            .html('Recharge Wallet');
                             console.log(response)
                         }
                     }
@@ -1968,6 +1971,9 @@
                     let responseError = xhr.responseJSON?.error
                         ?? "Something went wrong, Please try again.";
                     console.error(responseError);
+                    $('#rechargeSubmitBtn')
+                    .prop('disabled', false)
+                    .html('Recharge Wallet');
                 }
             });
 
@@ -2002,7 +2008,7 @@
 
                     let file = fileInput.files[0];
                     let allowedTypes = ['image/jpeg', 'image/png'];
-                    let maxSize = 2 * 1024 * 1024; // 2MB
+                    let maxSize = 5 * 1024 * 1024; // 2MB
 
                     let errors = [];
 
@@ -2011,7 +2017,7 @@
                     }
 
                     if (file.size > maxSize) {
-                        errors.push('Image must be less than 2MB.');
+                        errors.push('Image must be less than 5MB.');
                     }
 
                     if (errors.length > 0) {

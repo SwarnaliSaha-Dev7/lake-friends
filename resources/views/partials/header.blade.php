@@ -5,9 +5,9 @@
     </div>
     <div class="item-right d-flex align-items-center position-relative">
         <div class="notification position-relative">
-            <a href="#" class="position-relative"><i class="fa-regular fa-bell"></i>
+            <a href="#" class="position-relative" id="notification"><i class="fa-regular fa-bell"></i>
                 <span
-                    class="position-absolute translate-middle badge border border-light rounded-circle bg-danger p-1">4</span>
+                    class="position-absolute translate-middle badge border border-light rounded-circle bg-danger p-1">{{auth()->check() ? auth()->user()->unreadNotifications->count() : 0}}</span>
             </a>
             <div
                 class="notification-dropdown position-absolute top-100 end-0 rounded-3 text-white overflow-hidden">
@@ -18,10 +18,26 @@
                                 class="fa-regular fa-circle-xmark"></i></button>
                     </div>
                     <button class="btn btn-primary"><small class="fw-medium">All</small><span
-                            class="badge border border-danger rounded-circle bg-danger p-1 ms-2">4</span></button>
+                            class="badge border border-danger rounded-circle bg-danger p-1 ms-2">{{auth()->check() ? auth()->user()->unreadNotifications->count() : 0}}</span></button>
                 </div>
                 <div class="pt-3 pb-4 px-3 noti-body overflow-auto">
-                    <div class="card text-white mb-2">
+                    @foreach(auth()->user()->unreadNotifications as $notification)
+                    {{-- <a href="{{ route('notification.read', $notification->id) }}">
+                        {{ $notification->data['message'] }} --}}
+                         <div class="card text-white mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title fs-6 fw-semibold"><span
+                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"
+                                        style="background: #F1F0FF1A;"><i class="fa-regular fa-credit-card"></i></span>{{ $notification->data['title'] ?? 'Notification' }}</h5>
+                                <p class="card-text fw-medium"><small>{{ $notification->data['message'] ?? '' }}</small></p>
+                                <p class="card-text fw-medium post-time"><small><i
+                                            class="fa-regular fa-clock"></i> {{ $notification->created_at->diffForHumans() }}</small></p>
+                            </div>
+                        </div>
+                    {{-- </a> --}}
+                    @endforeach
+
+                    {{-- <div class="card text-white mb-2">
                         <div class="card-body">
                             <h5 class="card-title fs-6 fw-semibold"><span
                                     class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"
@@ -53,7 +69,7 @@
                             <p class="card-text fw-medium post-time"><small><i
                                         class="fa-regular fa-clock"></i> 5 min ago</small></p>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
                 <div class="notific-view-all position-absolute bottom-0 w-100">
                     <button class="btn border-0 fw-semibold lh-0 rounded-0 p-1 w-100 text-primary">View

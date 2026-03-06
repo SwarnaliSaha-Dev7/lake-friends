@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActionApproval;
 use App\Models\Bank;
 use App\Models\Card;
 use App\Models\GstRate;
@@ -12,12 +13,15 @@ use App\Models\MembershipPlanType;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
 use App\Models\PaymentHistory;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Notifications\ApprovalNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 
 class SwimmingMemberController extends Controller
@@ -226,7 +230,7 @@ class SwimmingMemberController extends Controller
             ]);
 
 
-            $card_no = $request->swim_card_no;
+            // $card_no = $request->swim_card_no;
 
             $payment_history = PaymentHistory::create([
                 'member_id' => $member->id,
@@ -234,8 +238,8 @@ class SwimmingMemberController extends Controller
                 'purpose' => 'plan_purchase',
                 'membership_purchase_history_id' => $purchase_history->id,
                 'wallet_transaction_id' => null,
-                'mr_no' => null,
-                'bill_no' => null,
+                'mr_no' => generateMrNo(),
+                'bill_no' => generateBillNo(),
                 'ac_head' => $request->swim_ac_head,
                 'taxable_amount' => $fee,
                 'gst_percentage' => $gstPercentage,
@@ -247,10 +251,40 @@ class SwimmingMemberController extends Controller
                 'remarks' => $request->swim_remarks
             ]);
 
+            $currentCard = Card::find($request->swim_card_id);
+            if ($currentCard) {
+                $currentCard->update([
+                    'is_assigned' => 1
+                ]);
+            }
+
             $card_mapping = MemberCardMapping::create([
                 'card_id' => $request->swim_card_id,
                 'member_id' => $member->id
             ]);
+
+            Wallet::create([
+                'member_id' => $member->id,
+                'current_balance' => 0
+            ]);
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'member_create',
+                'action_type' => 'create',
+                'entity_model' => 'Member',
+                'entity_id' => $member->id,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($request->all())
+            ]);
+
+            $approvers = User::role(['operator', 'admin'])
+                ->where('id', '!=', Auth::id())
+                ->get();
+
+
+            Notification::send($approvers, new ApprovalNotification($approval));
+
 
             DB::commit();
 
@@ -275,18 +309,19 @@ class SwimmingMemberController extends Controller
 
             $clubId = club_id();
             $memberId = $request->member_id;
-            $exists = Member::where('email', $request->email)
-                ->where('club_id', $clubId)
-                ->exists();
 
-            if ($exists) {
-                return response()->json([
-                    'statusCode' => 409,
-                    'message' => 'Email already exists'
-                ]);
-            }
+            // $exists = Member::where('email', $request->email)
+            //     ->where('club_id', $clubId)
+            //     ->exists();
 
-            DB::beginTransaction();
+            // if ($exists) {
+            //     return response()->json([
+            //         'statusCode' => 409,
+            //         'message' => 'Email already exists'
+            //     ]);
+            // }
+
+            // DB::beginTransaction();
 
             $member = Member::find($memberId);
 
@@ -308,12 +343,12 @@ class SwimmingMemberController extends Controller
 
             $memberDetail = MembershipFormDetail::where('member_id', $memberId)->first();
 
-            $guardian_image_path = null;
+            // $guardian_image_path = null;
             if ($request->hasFile('swim_guardian_image')) {
 
-                if ($memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
-                    unlink(public_path($memberDetail->details['guardian_image']));
-                }
+                // if ($memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
+                //     unlink(public_path($memberDetail->details['guardian_image']));
+                // }
 
                 $file = $request->file('swim_guardian_image');
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
@@ -323,63 +358,89 @@ class SwimmingMemberController extends Controller
                 $guardian_image_path = $memberDetail->details['guardian_image'];
             }
 
+            $data = $request->except(
+                'swim_guardian_image',
+                'swim_image'
+            );
 
-            $member->update([
-                'name'        => $request->swim_name,
-                'email'       => $request->swim_email,
-                'phone'       => $request->swim_phone,
-                'address'     => $request->swim_address,
-                'image'       => $image_path
-                // 'status'      => 'pending_approval'
+            $data['swim_image'] = $image_path;
+            $data['swim_guardian_image'] = $guardian_image_path;
+
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'member_edit',
+                'action_type' => 'update',
+                'entity_model' => 'Member',
+                'entity_id' => $memberId,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($data)
             ]);
 
-
-            $memberDetail->update([
-                'details' => [
-                    'age' => $request->swim_age,
-                    'sex' => $request->swim_sex,
-                    'height' => $request->swim_height,
-                    'weight' => $request->swim_weight,
-                    'pulse_rate' => $request->swim_pulse_rate,
-                    'batch' => $request->swim_batch,
-                    'vaccination' => $request->swim_vaccination,
-                    'i_agree' => 1,
-                    'disease' => $request->input('swim_disease', []),
-                    'guardian_name' => $request->swim_guardian_name,
-                    'guardian_occupation' => $request->swim_guardian_occupation,
-                    'guardian_image' => $guardian_image_path
-                ]
-            ]);
+            $approvers = User::role(['operator', 'admin'])
+                // ->where('id', '!=', Auth::id())
+                ->get();
 
 
+            Notification::send($approvers, new ApprovalNotification($approval));
 
 
-            $card_no = $request->swim_card_id;
-
-            if ($card_no) {
-                $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
-
-                $currentCard = Card::find($currentCardMapping->card_id);
-                if ($currentCard) {
-                    $currentCard->update([
-                        'is_assigned' => 0
-                    ]);
-                }
-
-                $newCard = Card::find($card_no);
-                if ($newCard) {
-                    $newCard->update([
-                        'is_assigned' => 1
-                    ]);
-
-                    $currentCardMapping->update([
-                        'card_id' => $card_no
-                    ]);
-                }
-            }
+            // $member->update([
+            //     'name'        => $request->swim_name,
+            //     'email'       => $request->swim_email,
+            //     'phone'       => $request->swim_phone,
+            //     'address'     => $request->swim_address,
+            //     'image'       => $image_path
+            //     // 'status'      => 'pending_approval'
+            // ]);
 
 
-            DB::commit();
+            // $memberDetail->update([
+            //     'details' => [
+            //         'age' => $request->swim_age,
+            //         'sex' => $request->swim_sex,
+            //         'height' => $request->swim_height,
+            //         'weight' => $request->swim_weight,
+            //         'pulse_rate' => $request->swim_pulse_rate,
+            //         'batch' => $request->swim_batch,
+            //         'vaccination' => $request->swim_vaccination,
+            //         'i_agree' => 1,
+            //         'disease' => $request->input('swim_disease', []),
+            //         'guardian_name' => $request->swim_guardian_name,
+            //         'guardian_occupation' => $request->swim_guardian_occupation,
+            //         'guardian_image' => $guardian_image_path
+            //     ]
+            // ]);
+
+
+
+
+            // $card_no = $request->swim_card_id;
+
+            // if ($card_no) {
+            //     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
+
+            //     $currentCard = Card::find($currentCardMapping->card_id);
+            //     if ($currentCard) {
+            //         $currentCard->update([
+            //             'is_assigned' => 0
+            //         ]);
+            //     }
+
+            //     $newCard = Card::find($card_no);
+            //     if ($newCard) {
+            //         $newCard->update([
+            //             'is_assigned' => 1
+            //         ]);
+
+            //         $currentCardMapping->update([
+            //             'card_id' => $card_no
+            //         ]);
+            //     }
+            // }
+
+
+            // DB::commit();
 
             return response()->json([
                 // 'data' => $data,
@@ -478,6 +539,70 @@ class SwimmingMemberController extends Controller
         }
     }
 
+    public function rechargeWalletBalance(Request $request)
+    {
+        try {
+            $clubId = club_id();
+            $memberId = $request->wallet_member_id;
+            $rechargeAmount = $request->wallet_recharge_amount;
+            $paymentMode = $request->wallet_payment_mode;
+            $acHead = $request->wallet_ac_head;
+            $bank = $request->wallet_bank_id;
+            $remarks = $request->wallet_remarks;
+
+            $purpose = 'recharge';
+
+            $wallet = Wallet::where('member_id', $memberId)->first();
+
+            if (!$wallet) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'error' => "Wallet Not Found",
+                ]);
+            }
+
+            $currentBalance = $wallet->current_balance + $rechargeAmount;
+            $wallet->update([
+                'current_balance' => $currentBalance
+            ]);
+
+            $walletTransactionHistory = WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'member_id' => $memberId,
+                'amount' => $rechargeAmount,
+                'direction' => 'credit',
+                'txn_type' => $purpose
+            ]);
+
+            $paymentHistory = PaymentHistory::create([
+                'member_id' => $memberId,
+                'club_id' => $clubId,
+                'purpose' => $purpose,
+                'wallet_transaction_id' => $walletTransactionHistory->id,
+                'mr_no' => generateMrNo(),
+                'bill_no' => generateBillNo(),
+                'bank_id' => $bank,
+                'ac_head' => $acHead,
+                'taxable_amount' => $rechargeAmount,
+                'net_amount' => $rechargeAmount,
+                'payment_mode' => $paymentMode,
+                'payment_status' => 'success',
+                'remarks' => $remarks
+            ]);
+
+            return response()->json([
+                'data' => $currentBalance,
+                'statusCode' => 200,
+                'message' => 'Wallet Balance added successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
 
     public function delete($id)
     {
@@ -494,10 +619,18 @@ class SwimmingMemberController extends Controller
                 ]);
             }
 
-            $card_mapping = MemberCardMapping::where('member_id', $member->id);
+            $card_mapping = MemberCardMapping::where('member_id', $member->id)->latest()->first();
+
+            $card = Card::find($card_mapping->card_id);
 
             if ($card_mapping) {
                 $card_mapping->delete();
+            }
+
+            if ($card) {
+                $card->update([
+                    'is_assigned' => 0
+                ]);
             }
 
             $member->delete();
