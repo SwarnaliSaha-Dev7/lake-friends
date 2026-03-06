@@ -7,7 +7,11 @@
         <div class="notification position-relative">
             <a href="#" class="position-relative" id="notification"><i class="fa-regular fa-bell"></i>
                 <span
-                    class="position-absolute translate-middle badge border border-light rounded-circle bg-danger p-1">{{auth()->check() ? auth()->user()->unreadNotifications->count() : 0}}</span>
+                    class="position-absolute translate-middle badge border border-light rounded-circle bg-danger p-1">@auth
+@if(auth()->user()->unreadNotifications()->count() > 0)
+{{ auth()->user()->unreadNotifications()->count() }}
+@endif
+@endauth</span>
             </a>
             <div
                 class="notification-dropdown position-absolute top-100 end-0 rounded-3 text-white overflow-hidden">
@@ -17,11 +21,19 @@
                         <button type="button" class="close-notific border-0 bg-transparent fs-6 lh-1"><i
                                 class="fa-regular fa-circle-xmark"></i></button>
                     </div>
-                    <button class="btn btn-primary"><small class="fw-medium">All</small><span
-                            class="badge border border-danger rounded-circle bg-danger p-1 ms-2">{{auth()->check() ? auth()->user()->unreadNotifications->count() : 0}}</span></button>
+                    <button class="btn btn-primary"><small class="fw-medium">All</small>
+                        @auth
+                            @if(auth()->user()->unreadNotifications()->count() > 0)
+                                <span
+                                    class="badge border border-danger rounded-circle bg-danger p-1 ms-2">
+                                        {{ auth()->user()->unreadNotifications()->count() }}
+                                </span>
+                            @endif
+                        @endauth
+                    </button>
                 </div>
                 <div class="pt-3 pb-4 px-3 noti-body overflow-auto">
-                    @foreach(auth()->user()->unreadNotifications as $notification)
+                    @forelse(auth()->user()->unreadNotifications as $notification)
                     {{-- <a href="{{ route('notification.read', $notification->id) }}">
                         {{ $notification->data['message'] }} --}}
                          <div class="card text-white mb-2">
@@ -35,7 +47,11 @@
                             </div>
                         </div>
                     {{-- </a> --}}
-                    @endforeach
+                    @empty
+                        <div class="text-center py-4">
+                            <small>No new notifications</small>
+                        </div>
+                    @endforelse
 
                     {{-- <div class="card text-white mb-2">
                         <div class="card-body">
@@ -71,10 +87,10 @@
                         </div>
                     </div> --}}
                 </div>
-                <div class="notific-view-all position-absolute bottom-0 w-100">
+                {{-- <div class="notific-view-all position-absolute bottom-0 w-100">
                     <button class="btn border-0 fw-semibold lh-0 rounded-0 p-1 w-100 text-primary">View
                         all</button>
-                </div>
+                </div> --}}
             </div>
         </div>
         <div class="login-user border-start ps-2 ms-2">
@@ -84,7 +100,7 @@
         </div>
         <div class="login-dropdown p-3 rounded-3">
             <ul class="m-0 list-unstyled">
-                <li><a href="#"><i class="fa-solid fa-gear me-2"></i>Settings</a></li>
+                <li><a href="javascript:void(0)"><i class="fa-solid fa-gear me-2"></i>Settings</a></li>
                 {{-- <li><a href="login.html"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout</a></li> --}}
                 <li>
                     <form method="POST" action="{{ route('logout') }}">

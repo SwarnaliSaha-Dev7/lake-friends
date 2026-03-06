@@ -23,6 +23,20 @@ class DashboardController extends Controller
                 ->where('card_no', $cardNo)
                 ->first();
 
+            if (!$card) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'error' => 'Card Not Found.'
+                ]);
+            }
+
+            if (!$card->memberMapping) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'error' => 'Card is not assigned.'
+                ]);
+            }
+
             $cardStatus = $card->status;
             // return $card;
 
@@ -37,11 +51,18 @@ class DashboardController extends Controller
                 ])
                 ->find($card->memberMapping->member_id);
 
+            if (!$member) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'error' => 'Member Not Found..'
+                ]);
+            }
+
             return response()->json([
                 'data' => $member,
                 'statusCode' => 200,
                 'cardStatus' => $cardStatus,
-                'message' => 'Member Fetched successfully'
+                'message' => 'Member Fetched successfully.'
             ]);
         } catch (\Throwable $th) {
             return response()->json([

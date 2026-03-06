@@ -35,6 +35,10 @@
         // cardInput.focus();
     });
 
+    openBtn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") e.preventDefault();
+    });
+
     cardInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -57,6 +61,13 @@
                             if (response.status) {
                                 toastr.error('Card is ' + response.status);
                             }
+                            const statusMap = {
+                                'active': 'Active',
+                                'pending': 'Pending',
+                                'rejected': 'Rejected',
+                            };
+                            let statusCode = response.data.status; // e.g., "pending_approval"
+                            let humanStatus = statusMap[statusCode]
                             $('#cardMemberName').text(response.data.name);
                             $('#cardMemberClubName').text(response.data.club_details.name)
                             $('#cardMemberCode').text(response.data.member_code)
@@ -67,6 +78,7 @@
                             $('#cardMemberPlanExpiry').text(formatted);
                             $('#cardMemberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
                             $('#cardStatus').text(response.cardStatus);
+                            $('#memberStatus').text(humanStatus);
                             $('#cardentry').modal('show');
 
                             $('.swipe-animation').show();
@@ -75,12 +87,16 @@
                             // $('#viewprofile').modal('show');
                         }
                         else{
-                            // toastr.error('Something Went Wrong').
+                            $('#cardLoader').hide();
+                            $('.swipe-animation').show();
+                            toastr.error(response.error ?? 'Something Went Wrong.').
                             console.log(response);
                         }
 
                     },
                     error: function(){
+                        $('#cardLoader').hide();
+                        $('.swipe-animation').show();
                         toastr.error('Something Went Wrong.');
                     }
                 });

@@ -74,7 +74,7 @@
                 </a>
             </div>
             <div class="col-xl-3 col-md-6 my-xl-0 my-2">
-                <a href="#"
+                <a href="{{ route('swimming-member.list', ['type' => 'addMember']) }}"
                     class="action-box card bg-white border-0 d-flex align-items-center justify-content-between flex-row-reverse h-100">
                     <div class="card-header bg-transparent border-0">
                         <i class="fa-solid fa-user-plus text-info fs-4"></i>
@@ -161,8 +161,9 @@
                     <div
                         class="d-flex flex-wrap align-items-center justify-content-between gap-2 gap-lg-3 mb-2">
                         <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Club Swimmer list</h2>
-                        <button class="btn btn-info" data-bs-toggle="modal"
-                            data-bs-target="#addswimmingmember">+ Add Swimming member</button>
+                        <a href="{{ route('swimming-member.list', ['type' => 'addMember']) }}" class="btn btn-info">+ Add Swimming member</a>
+                        {{-- <button class="btn btn-info" data-bs-toggle="modal"
+                            data-bs-target="#addswimmingmember">+ Add Swimming member</button> --}}
                     </div>
                     <div class="table-responsive">
                         <table class="table rounded-3 overflow-hidden clubmemberlist" cellspacing="0"
@@ -198,7 +199,7 @@
                         </table>
                     </div>
                     <div class="text-end">
-                        <a href="swimming-member.html" class="fw-semibold"><small><u>View
+                        <a href="{{ route('swimming-member.list') }}" class="fw-semibold"><small><u>View
                                     All</u></small></a>
                     </div>
                 </div>

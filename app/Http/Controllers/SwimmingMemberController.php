@@ -48,7 +48,11 @@ class SwimmingMemberController extends Controller
 
             $bankList = Bank::where('club_id', $clubId)->get();
 
-            $cards = Card::doesntHave('memberMapping')
+            // $cards = Card::doesntHave('memberMapping')
+            //     ->where('club_id', $clubId)
+            //     ->where('status', 'active')
+            //     ->get();
+            $cards = Card::where('is_assigned', 0)
                 ->where('club_id', $clubId)
                 ->where('status', 'active')
                 ->get();
@@ -169,6 +173,7 @@ class SwimmingMemberController extends Controller
                 'member_id' => $member->id,
                 'membership_type_id' => $membershipTypeId,
                 'details' => [
+                    'police_station' => $request->swim_police_station,
                     'age' => $request->swim_age,
                     'sex' => $request->swim_sex,
                     'height' => $request->swim_height,
@@ -329,9 +334,9 @@ class SwimmingMemberController extends Controller
             $image_path = null;
             if ($request->hasFile('swim_image')) {
 
-                if ($member->image && file_exists(public_path($member->image))) {
-                    unlink(public_path($member->image));
-                }
+                // if ($member->image && file_exists(public_path($member->image))) {
+                //     unlink(public_path($member->image));
+                // }
 
                 $file = $request->file('swim_image');
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
@@ -366,6 +371,19 @@ class SwimmingMemberController extends Controller
             $data['swim_image'] = $image_path;
             $data['swim_guardian_image'] = $guardian_image_path;
 
+            $card_no = $request->swim_card_id;
+
+            if ($card_no) {
+                $newCard = Card::find($card_no);
+
+                if ($newCard) {
+                    $newCard->update([
+                        'is_assigned' => 1
+                    ]);
+                }
+            }
+
+
 
             $approval = ActionApproval::create([
                 'club_id' => $clubId,
@@ -378,7 +396,7 @@ class SwimmingMemberController extends Controller
             ]);
 
             $approvers = User::role(['operator', 'admin'])
-                // ->where('id', '!=', Auth::id())
+                ->where('id', '!=', Auth::id())
                 ->get();
 
 

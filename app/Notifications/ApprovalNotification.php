@@ -57,24 +57,28 @@ class ApprovalNotification extends Notification
 
     public function toDatabase($notifiable)
     {
-        // switch ($this->approval->approval_type) {
+        switch ($this->approval->module) {
 
-        //     case 'member':
-        //         $message = "New member created and waiting for approval";
-        //         break;
+            case 'member_create':
+                $message = "New member created and waiting for approval";
+                break;
 
-        //     case 'user':
-        //         $message = "New user registration waiting for approval";
-        //         break;
+            case 'member_edit':
+                $message = "A member is edited and waiting for approval";
+                break;
 
-        //     case 'transaction':
-        //         $message = "Transaction waiting for approval";
-        //         break;
-        // }
+                // case 'user':
+                //     $message = "New user registration waiting for approval";
+                //     break;
+
+                // case 'transaction':
+                //     $message = "Transaction waiting for approval";
+                //     break;
+        }
 
         return [
             'title' => 'Approval Request',
-            'message' => "hiiiiii",
+            'message' => $message,
         ];
     }
 }

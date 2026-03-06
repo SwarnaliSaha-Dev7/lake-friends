@@ -126,6 +126,12 @@
                                 </td>
                                 <td class="pe-3"><strong><small id="cardStatus" style="text-transform: capitalize;"></small></strong></td>
                             </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Member Status:</small>
+                                </td>
+                                <td class="pe-3"><strong><small id="memberStatus" style="text-transform: capitalize;"></small></strong></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

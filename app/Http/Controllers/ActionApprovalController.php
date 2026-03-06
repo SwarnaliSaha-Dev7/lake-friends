@@ -7,6 +7,7 @@ use App\Models\Card;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
+use App\Models\MembershipType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -82,42 +83,89 @@ class ActionApprovalController extends Controller
 
                 $memberDetail = MembershipFormDetail::where('member_id', $memberId)->first();
 
-                if ($member->swim_guardian_image && $payload->swim_guardian_image != $memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
-                    unlink(public_path($memberDetail->details['guardian_image']));
+                $membershipType = MembershipType::find($memberDetail->membership_type_id);
+
+                $membershipTypeName = $membershipType->name;
+
+
+                if ($membershipTypeName == 'Club Membership') {
+                    if ($member->spouse_image && $payload->spouse_image != $memberDetail->details['spouse_image'] && file_exists(public_path($memberDetail->details['spouse_image']))) {
+                        unlink(public_path($memberDetail->details['spouse_image']));
+                    }
+
+                    $member->update([
+                        'name'        => $payload->swim_name,
+                        'email'       => $payload->swim_email,
+                        'phone'       => $payload->swim_phone,
+                        'address'     => $payload->swim_address,
+                        'image'       => $payload->swim_image,
+                        'status'      => $payload->club_status
+                    ]);
+
+
+                    $memberDetail->update([
+                        'details' => [
+
+                            'blood_grp' => $payload->blood_grp,
+                            'spouse_name' => $payload->spouse_name,
+                            'spouse_email' => $payload->spouse_email,
+                            'spouse_phone' => $payload->spouse_phone,
+                            'spouse_blood_grp' => $payload->spouse_blood_grp,
+                            'spouse_address' => $payload->spouse_address,
+                            'spouse_image' => $payload->spouse_image,
+
+                        ]
+                    ]);
                 }
 
-                $member->update([
-                    'name'        => $payload->swim_name,
-                    'email'       => $payload->swim_email,
-                    'phone'       => $payload->swim_phone,
-                    'address'     => $payload->swim_address,
-                    'image'       => $payload->swim_image
-                    // 'status'      => 'pending_approval'
-                ]);
+                if ($membershipTypeName == 'Swimming Membership') {
+                    if ($member->swim_guardian_image && $payload->swim_guardian_image != $memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
+                        unlink(public_path($memberDetail->details['guardian_image']));
+                    }
+
+                    $member->update([
+                        'name'        => $payload->swim_name,
+                        'email'       => $payload->swim_email,
+                        'phone'       => $payload->swim_phone,
+                        'address'     => $payload->swim_address,
+                        'image'       => $payload->swim_image,
+                        'status'      => $payload->swim_status
+                    ]);
 
 
-                $memberDetail->update([
-                    'details' => [
-                        'age' => $payload->swim_age,
-                        'sex' => $payload->swim_sex,
-                        'height' => $payload->swim_height,
-                        'weight' => $payload->swim_weight,
-                        'pulse_rate' => $payload->swim_pulse_rate,
-                        'batch' => $payload->swim_batch,
-                        'vaccination' => $payload->swim_vaccination,
-                        'i_agree' => 1,
-                        // 'disease' => $payload['swim_disease'] ?? [],
-                        'disease' => $payload->swim_disease,
-                        'guardian_name' => $payload->swim_guardian_name,
-                        'guardian_occupation' => $payload->swim_guardian_occupation,
-                        'guardian_image' => $payload->swim_guardian_image
-                    ]
-                ]);
+                    $memberDetail->update([
+                        'details' => [
+                            'police_station' => $payload->swim_member_police_station,
+                            'age' => $payload->swim_age,
+                            'sex' => $payload->swim_sex,
+                            'height' => $payload->swim_height,
+                            'weight' => $payload->swim_weight,
+                            'pulse_rate' => $payload->swim_pulse_rate,
+                            'batch' => $payload->swim_batch,
+                            'vaccination' => $payload->swim_vaccination,
+                            'i_agree' => 1,
+                            // 'disease' => $payload['swim_disease'] ?? [],
+                            'guardian_name' => $payload->swim_guardian_name,
+                            'guardian_occupation' => $payload->swim_guardian_occupation,
+                            'guardian_image' => $payload->swim_guardian_image
+                        ]
+                    ]);
+
+                    if (isset($payload->swim_disease)) {
+                        $memberDetail->update([
+                            'details' => [
+                                'disease' => $payload->swim_disease,
+                            ]
+                        ]);
+                    }
+                }
 
 
 
 
-                $card_no = $payload->swim_card_id;
+
+
+                $card_no = $payload->swim_card_id ?? $payload->card_id;
 
                 if ($card_no) {
                     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
@@ -131,9 +179,9 @@ class ActionApprovalController extends Controller
 
                     $newCard = Card::find($card_no);
                     if ($newCard) {
-                        $newCard->update([
-                            'is_assigned' => 1
-                        ]);
+                        // $newCard->update([
+                        //     'is_assigned' => 1
+                        // ]);
 
                         $currentCardMapping->update([
                             'card_id' => $card_no
@@ -143,6 +191,21 @@ class ActionApprovalController extends Controller
 
 
                 DB::commit();
+            }
+
+            if ($data->module == 'member_create') {
+
+                $clubId = club_id();
+                $memberId = $data->entity_id;
+
+                // DB::beginTransaction();
+
+                $member = Member::find($memberId);
+
+
+                $member->update([
+                    'status'      => 'active'
+                ]);
             }
 
             $data->update([
@@ -190,6 +253,14 @@ class ActionApprovalController extends Controller
 
                     $cardMapping->delete();
                 }
+
+                $memberId = $data->entity_id;
+                $member = Member::find($memberId);
+
+
+                $member->update([
+                    'status'      => 'rejected'
+                ]);
             } elseif ($data->module == 'member_edit') {
                 $payloadJson = $data->request_payload;
                 $payload = json_decode($payloadJson);

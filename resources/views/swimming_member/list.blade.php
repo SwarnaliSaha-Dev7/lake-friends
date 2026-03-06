@@ -14,13 +14,13 @@
                             <select id="statusFilter"
                                 class="form-select form-select-sm w-auto fs-6 rounded-2 ps-3 shadow-none">
                                 <option value="" selected disabled hidden>Status filter</option>
-                                <option value="">All</option>
+                                <option value="" hidden disabled selected>All</option>
                                 <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                                <option value="Blocked">Blocked</option>
+                                <option value="Inactive">Pending</option>
+                                <option value="Blocked">Rejected</option>
                             </select>
                         </div>
-                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addswimmingmember">+ Add swimming member</button>
+                        <button class="btn btn-info" data-bs-toggle="modal" id="addSwimmingMemberBtn" data-bs-target="#addswimmingmember">+ Add swimming member</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -51,12 +51,10 @@
                                     <td class="text-nowrap">Null</td>
                                     @if ($member->status == 'active')
                                         <td class="text-success text-nowrap">Active</td>
-                                    @elseif ($member->status == 'pending_approval')
+                                    @elseif ($member->status == 'pending')
                                         <td class="text-warning text-nowrap">Pending</td>
-                                    @elseif ($member->status == 'suspended')
-                                        <td class="text-secondary text-nowrap">Suspended</td>
-                                    @elseif ($member->status == 'terminated')
-                                        <td class="text-danger text-nowrap">Terminated</td>
+                                    @elseif ($member->status == 'rejected')
+                                        <td class="text-danger text-nowrap">Rejected</td>
                                     @endif
 
                                     <td class="text-nowrap">
@@ -511,6 +509,13 @@
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Police Station</small></label>
+                                            <input type="number" class="form-control py-2 shadow-none" name="swim_police_station" id="swim_police_station"
+                                                placeholder="Police Station" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Age</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_age" id=""
                                                 placeholder="Age" required>
@@ -520,7 +525,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
                                             <select name="swim_sex" id="" class="form-select py-2 shadow-none" required>
-                                                <option value="">Sex</option>
+                                                <option value="" hidden disabled selected>Sex</option>
                                                 <option value="male">Male</option>
                                                 <option value="female">Female</option>
                                             </select>
@@ -550,17 +555,17 @@
                                     {{-- <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <select name="" id="" class="form-select py-2 shadow-none">
-                                                <option value="">Batch</option>
-                                                <option value="">Batch1</option>
-                                                <option value="">Batch2</option>
+                                                <option value="" hidden disabled selected>Batch</option>
+                                                <option value="" hidden disabled selected>Batch1</option>
+                                                <option value="" hidden disabled selected>Batch2</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <select name="" id="" class="form-select py-2 shadow-none">
-                                                <option value="">Vaccination</option>
-                                                <option value="">vaccination1</option>
+                                                <option value="" hidden disabled selected>Vaccination</option>
+                                                <option value="" hidden disabled selected>vaccination1</option>
                                             </select>
                                         </div>
                                     </div> --}}
@@ -722,9 +727,9 @@
                                     {{-- <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <select name="" id="" class="form-select py-2 shadow-none">
-                                                <option value="">Card Type</option>
-                                                <option value="">Card Type1</option>
-                                                <option value="">Card Type2</option>
+                                                <option value="" hidden disabled selected>Card Type</option>
+                                                <option value="" hidden disabled selected>Card Type1</option>
+                                                <option value="" hidden disabled selected>Card Type2</option>
                                             </select>
                                         </div>
                                     </div> --}}
@@ -739,7 +744,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
                                             <select name="swim_card_id" id="" class="form-select py-2 shadow-none" required>
-                                                <option value="">Card No.</option>
+                                                <option value="" hidden disabled selected>Card No.</option>
                                                 @foreach ($cards as $card)
                                                     <option value="{{$card->id}}">{{$card->card_no}}</option>
                                                 @endforeach
@@ -793,7 +798,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
                                             <select name="swim_bank_id" id="" class="form-select py-2 shadow-none" required>
-                                                <option value="">Bank Name</option>
+                                                <option value="" hidden disabled selected>Bank Name</option>
                                                 @foreach ($bankList as $bank)
                                                     <option value="{{$bank->id}}">{{$bank->name}}</option>
                                                 @endforeach
@@ -856,7 +861,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
                                             <input type="email" class="form-control py-2 shadow-none" name="swim_email" id="swim_member_email"
-                                                placeholder="Email" required>
+                                                placeholder="Email" required readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
@@ -877,6 +882,13 @@
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Police Station</small></label>
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_member_police_station" id="swim_member_police_station"
+                                                placeholder="Police Station" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Age</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_age" id="swim_member_age"
                                                 placeholder="Age" required>
@@ -886,7 +898,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
                                             <select name="swim_sex" id="swim_member_sex" class="form-select py-2 shadow-none" required>
-                                                <option value="">Sex</option>
+                                                <option value="" hidden disabled selected>Sex</option>
                                                 <option value="male">Male</option>
                                                 <option value="female">Female</option>
                                             </select>
@@ -906,21 +918,21 @@
                                                 placeholder="Weight" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Pulse Rate</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_pulse_rate" id="swim_member_pulse_rate"
                                                 placeholder="Pulse Rate" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Batch</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_batch" id="swim_member_batch"
                                                 placeholder="Batch" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Vaccination</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_vaccination" id="swim_member_vaccination"
@@ -986,6 +998,18 @@
                                             <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
+
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Status</small></label>
+                                            <select name="swim_status" id="swim_status" class="form-select py-2 shadow-none">
+                                                <option value="" hidden disabled selected>Status</option>
+                                                <option value="active">Active</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="rejected">Rejected</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>
@@ -1048,7 +1072,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
                                             <select name="swim_card_id" id="swim_card_no" class="form-select py-2 shadow-none">
-                                                <option value="">Card No.</option>
+                                                <option value="" hidden disabled selected>Card No.</option>
                                                 @foreach ($cards as $card)
                                                     <option value="{{$card->id}}">{{$card->card_no}}</option>
                                                 @endforeach
@@ -1348,7 +1372,7 @@
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label w-100 mb-1 w-100"><small>Bank Name</small></label>
                                     <select name="wallet_bank_id" id="" class="form-select py-2 shadow-none" required>
-                                        <option value="">Bank Name</option>
+                                        <option value="" hidden disabled selected>Bank Name</option>
                                         @foreach ($bankList as $bank)
                                             <option value="{{$bank->id}}">{{$bank->name}}</option>
                                         @endforeach
@@ -1512,6 +1536,18 @@
 <script>
     $(document).ready(function() {
 
+        // const params = new URLSearchParams(window.location.search);
+
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('type');
+
+        // Check if 'type' parameter is 'addMember'
+        if (type === 'addMember') {
+            $('#addSwimmingMemberBtn').trigger('click');
+        }
+
+
+
         //name validation
         $('.text-only').on('input', function () {
             this.value = this.value.replace(/[^A-Za-z\s]/g, '');
@@ -1524,6 +1560,9 @@
 
         $('#swimmingMemberForm').on('submit', function (e) {
             e.preventDefault();
+
+            const $btn = $('#swim_submit');
+            const originalText = $btn.val();
 
             let isValid = true;
             $('.phone-input').each(function () {
@@ -1583,6 +1622,9 @@
                 return isValid;
             }
 
+            $btn.prop('disabled', true);
+            $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
+
             let swimmingMemberformData = new FormData($("#swimmingMemberForm")[0]);
             $.ajax({
                 url: "{{ route('swimming-member.store') }}",
@@ -1597,10 +1639,14 @@
                 // },
                 success: function(response) {
                     if (response.statusCode == 200) {
+                        $btn.html(originalText);
                         toastr.success(response.message);
                         setTimeout(() => location.reload(), 1500);
 
                     } else {
+                        $btn.html(originalText);
+                        $btn.prop('disabled', false);
+
                         if(response.message){
                             toastr.error(response.message);
                         }
@@ -1611,6 +1657,8 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    $btn.html(originalText);
+                    $btn.prop('disabled', false);
                     toastr.error("Something went wrong, Please try again.");
 
                     let responseError = xhr.responseJSON?.error
@@ -1744,6 +1792,7 @@
                         $('#swim_member_email').val(response.data.email);
                         $('#swim_member_phone').val(response.data.phone);
                         $('#swim_member_address').val(response.data.address);
+                        $('#swim_member_police_station').val(response.data.member_details.details['police_station']);
                         $('#swim_member_age').val(response.data.member_details.details['age']);
                         $('#swim_member_sex').val(response.data.member_details.details['sex']);
                         $('#swim_member_height').val(response.data.member_details.details['height']);
@@ -1759,6 +1808,7 @@
                                 $('input[name="swim_disease[]"][value="' + disease + '"]').prop('checked', true);
                             });
                         }
+                        $('#swim_status').val(response.data.status);
                         $('#swim_guardian_name').val(response.data.member_details.details['guardian_name']);
                         $('#swim_guardian_occupation').val(response.data.member_details.details['guardian_occupation']);
                         let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
@@ -1981,6 +2031,8 @@
 
         $('#swimmingMemberEditForm').on('submit', function (e) {
             e.preventDefault();
+            const $btn = $('#swim_edit_submit');
+            const originalText = $btn.val(); // store original button text
 
             let isValid = true;
             $('.phone-input').each(function () {
@@ -2040,6 +2092,9 @@
                 return isValid;
             }
 
+            $btn.prop('disabled', true);
+            $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
+
             let swimmingMemberEditformData = new FormData($("#swimmingMemberEditForm")[0]);
             $.ajax({
                 url: "{{ route('swimming-member.update') }}",
@@ -2055,10 +2110,13 @@
                 success: function(response) {
                     // console.log(response);
                     if (response.statusCode == 200) {
+                        $btn.html(originalText);
                         toastr.success(response.message);
                         setTimeout(() => location.reload(), 1500);
 
                     } else {
+                        $btn.html(originalText);
+                        $btn.prop('disabled', false);
                         if(response.message){
                             toastr.error(response.message);
                         }
@@ -2069,6 +2127,8 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    $btn.html(originalText);
+                    $btn.prop('disabled', false);
                     toastr.error("Something went wrong, Please try again.");
 
                     let responseError = xhr.responseJSON?.error

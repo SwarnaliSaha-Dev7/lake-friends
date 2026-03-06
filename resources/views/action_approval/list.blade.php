@@ -28,6 +28,7 @@
                         width="100%">
                         <thead>
                             <tr>
+                                <th class="text-white fw-medium align-middle text-nowrap">Details</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Type</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Maker
@@ -38,8 +39,22 @@
                         </thead>
                         <tbody>
                             @foreach ($data as $data)
+                                    @php
+                                        $payloadJson = $data->request_payload;
+                                        $payload = json_decode($payloadJson);
+                                        // echo "<pre>"; print_r($payload); echo "</pre>";
+                                        // $detail = "";
+                                        if ($payload->swim_name) {
+                                            $detail = $payload?->swim_name ?? '';
+                                        }
+                                        elseif ($payload->swim_member_name) {
+                                            $detail = $payload?->swim_member_name ?? '';
+                                        }
+                                    @endphp
                                 <tr>
-                                    <td class="text-nowrap">{{$data->module}}</td>
+
+                                    <td class="text-nowrap">{{ $detail }}</td>
+                                    <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                     <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
                                     <td class="text-nowrap">{{$data->status ?? 'Pending'}}</td>
