@@ -28,15 +28,23 @@
                                         <h4 class="fw-semibold text-dark mb-lg-4">Login</h4>
                                         <div class="row">
                                             <div class="col-12">
+                                                @if ($errors->any())
+                                                    {{-- <div class="text-danger">{{ $message }}</div> --}}
+                                                    <div class="alert alert-danger">
+                                                        {{ $errors->first() }}
+                                                    </div>
+                                                @endif
                                                 <div class="form-part mb-3">
                                                     <input type="email" class="form-control py-2 shadow-none"
-                                                        id="loginInputEmail1" name="email" placeholder="Email" required>
+                                                        id="loginInputEmail1" name="email" placeholder="Email" required value="{{ old('email') }}">
+                                                    {{-- <x-input-error :messages="$errors->get('email')" class="mt-2" /> --}}
                                                 </div>
                                             </div>
                                             <div class="col-12">
                                                 <div class="form-part mb-3">
                                                     <input type="password" class="form-control py-2 shadow-none"
                                                         id="loginInputPassword1" name="password" placeholder="Password" required>
+                                                    {{-- <x-input-error :messages="$errors->get('password')" class="mt-2" /> --}}
                                                 </div>
                                             </div>
                                             <div class="col-12">

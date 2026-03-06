@@ -19,7 +19,7 @@
                                     <option value="">All</option>
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
-                                    <option value="Blocked">Blocked</option>
+                                    {{-- <option value="Blocked">Blocked</option> --}}
                                 </select>
                             </div>
                             <a href="{{ route('manage-lockers.create') }}" class="btn btn-info">+ Add</a>
@@ -40,7 +40,7 @@
                             <tbody>
                                 @foreach($lockersList as $lockers)
                                 <tr>
-                                    
+
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
                                     <td class="text-nowrap">{{ $lockers->locker_number }}</td>
@@ -53,14 +53,14 @@
                                         @else
                                             <span class="text-secondary text-nowrap">
                                                 Inactive
-                                            </span>                                                
+                                            </span>
                                         @endif
                                     </td>
 
                                     <td class="text-nowrap">{{ ucfirst($lockers->status) }}</td>
 
                                     <!-- <td class="text-success text-nowrap">No</td> -->
-                                    <td class="text-nowrap">
+                                    <td class="text-nowrap d-flex gap-1 flex-wrap">
 
                                         <a href="{{ route('manage-lockers.edit', $lockers->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
                                             <small>
@@ -78,7 +78,7 @@
                                                 <small>
                                                     <i class="fa-solid fa-trash"></i>
                                                 </small>
-                                            </button>    
+                                            </button>
 
                                         </form>
                                     </td>
@@ -121,7 +121,7 @@
 
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     Yes, Delete
-                    </button>      
+                    </button>
 
                 </div>
             </div>

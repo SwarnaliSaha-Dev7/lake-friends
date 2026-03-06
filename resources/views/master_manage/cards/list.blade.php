@@ -18,8 +18,10 @@
                                     <option value="" selected disabled hidden>Status filter</option>
                                     <option value="">All</option>
                                     <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
+                                    <option value="Pending">Pending</option>
                                     <option value="Blocked">Blocked</option>
+                                    <option value="Lost">Lost</option>
+                                    <option value="Damaged">Damaged</option>
                                 </select>
                             </div>
                             <a href="{{ route('manage-cards.create') }}" class="btn btn-info">+ Add</a>
@@ -40,7 +42,7 @@
                             <tbody>
                                 @foreach($cardsList as $cards)
                                 <tr>
-                                    
+
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
                                     <td class="text-nowrap">{{ $cards->card_no }}</td>
@@ -48,7 +50,7 @@
                                     <td class="text-nowrap">{{ ucfirst($cards->status) }}</td>
 
                                     <td class="text-nowrap">
-                                        @if(is_null($cards->issued_at))
+                                        @if(!$cards->is_assigned)
                                             <span class="badge bg-success">
                                                 Available
                                             </span>
@@ -60,7 +62,7 @@
                                     </td>
 
                                     <!-- <td class="text-success text-nowrap">No</td> -->
-                                    <td class="text-nowrap">
+                                    <td class="text-nowrap d-flex gap-1 flex-wrap">
 
                                         <a href="{{ route('manage-cards.edit', $cards->id) }}" class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit">
                                             <small>
@@ -78,7 +80,7 @@
                                                 <small>
                                                     <i class="fa-solid fa-trash"></i>
                                                 </small>
-                                            </button>    
+                                            </button>
 
                                         </form>
                                     </td>
@@ -121,7 +123,7 @@
 
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     Yes, Delete
-                    </button>      
+                    </button>
 
                 </div>
             </div>

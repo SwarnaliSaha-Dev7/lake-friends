@@ -1,5 +1,4 @@
 <?php
-
 use App\Models\PaymentHistory;
 
 if (!function_exists('club_id')) {
