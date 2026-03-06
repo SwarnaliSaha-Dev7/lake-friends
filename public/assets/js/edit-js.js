@@ -115,7 +115,7 @@ jQuery(function ($) {
     $('.file-input').on('change', function () {
         let fileName = this.files[0]?.name;
         let textElement = $(this)
-            .closest('.file-upload-box')
+            .closest('.file-upload-box position-relative')
             .find('.upload-text');
 
         if (fileName) {
@@ -170,6 +170,8 @@ jQuery(function ($) {
         ]
     });
 
+    // status start
+
     // 2️ Detect Status column dynamically (Status / Satus)
     var statusColumnIndex = -1;
 
@@ -180,70 +182,84 @@ jQuery(function ($) {
         }
     });
 
-    // Safety check
-    if (statusColumnIndex === -1) {
-        console.warn('Status column not found');
-        return;
+    // 3️ Custom status filter (register only if column exists)
+    if (statusColumnIndex !== -1) {
+
+        $.fn.dataTable.ext.search.push(function (settings, data) {
+
+            // Apply only to this table
+            if (settings.nTable !== table.table().node()) {
+                return true;
+            }
+
+            var selectedStatus = $('#statusFilter').val();
+
+            // Show all if "All" or placeholder
+            if (!selectedStatus) return true;
+
+            var statusText = data[statusColumnIndex].trim();
+            return statusText === selectedStatus;
+        });
+
+        // 4️ Redraw table on dropdown change
+        $('#statusFilter').on('change', function () {
+            table.draw();
+        });
+
     }
-
-    // 3️ Custom status filter (register ONCE)
-    $.fn.dataTable.ext.search.push(function (settings, data) {
-
-        // Apply only to this table
-        if (settings.nTable !== table.table().node()) {
-            return true;
-        }
-
-        var selectedStatus = $('#statusFilter').val();
-
-        // Show all if "All" or placeholder
-        if (!selectedStatus) return true;
-
-        var statusText = data[statusColumnIndex].trim();
-        return statusText === selectedStatus;
-    });
-
-    // 4️ Redraw table on dropdown change
-    $('#statusFilter').on('change', function () {
-        table.draw();
-    });
 
     // datatable js end
 
 
+
     // input radio select js start
     $('.custom-radio input[type="radio"]').on('change', function () {
-        // get label text (₹ 1000)
+
         let amountText = $(this).next('label').text();
-        // remove ₹ and spaces → get number only
+
         let amountValue = amountText.replace(/[^\d]/g, '');
-        // set value in input
+
         $('#amountInput').val(amountValue);
+
     });
     // input radio select js end
 
+
+
     // Delete each row table js start
     $(function () {
+
+        // Prevent DataTable reinitialise error
         var table = $('.clubmemberlist2').DataTable();
+
         let rowToDelete = null;
+
         $('.clubmemberlist2').on('click', '.delete-row', function (e) {
+
             e.preventDefault();
+
             rowToDelete = $(this).closest('tr');
+
             $('#deleteConfirmModal').modal('show');
+
         });
 
         // Confirm delete
         $('#confirmDeleteBtn').on('click', function () {
+
             if (rowToDelete) {
+
                 table
                     .row(rowToDelete)
                     .remove()
                     .draw(false);
 
                 rowToDelete = null;
+
             }
 
             $('#deleteConfirmModal').modal('hide');
+
         });
 
     });

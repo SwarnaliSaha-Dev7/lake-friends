@@ -735,10 +735,10 @@ small.text-muted {
 }
 
 
-@media (min-width: 992px) {
+/* @media (min-width: 992px) {
 
     #addclubmember .modal-lg,
     #addswimmingmember .modal-lg {
         --bs-modal-width: 1000px;
     }
-}
+} */

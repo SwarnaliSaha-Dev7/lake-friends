@@ -18,7 +18,7 @@
                                     <option value="">All</option>
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
-                                    <option value="Blocked">Blocked</option>
+                                    {{-- <option value="Blocked">Blocked</option> --}}
                                 </select>
                             </div>
                             <a href="{{ route('manage-operators.create') }}"><button class="btn btn-info">+ Add</button></a>
@@ -48,7 +48,7 @@
                                             <td class="text-danger text-nowrap">Inactive</td>
                                         @endif
 
-                                        <td class="text-nowrap">
+                                        <td class="text-nowrap d-flex gap-1 flex-wrap">
 
                                             <a href="{{ route('manage-operators.edit', $operator->id) }}"><button
                                                 class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Edit"><small><i
