@@ -45,7 +45,7 @@
                                 <tr>
                                     <td class="text-nowrap">{{$member->name}}</td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
-                                    <td class="text-nowrap">{{$member->member_code}}</td>
+                                    <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
                                     <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
                                     <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
                                     <td class="text-nowrap">Null</td>
@@ -78,7 +78,7 @@
                                                     class="fa-solid fa-pen-to-square"></i></small></button>
                                         <button
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row memberDeleteBtn" data-id="{{$member->id}}"
-                                            title="Delete"><small><i
+                                            title="Delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"><small><i
                                                     class="fa-solid fa-trash"></i></small></button>
 
                                     </td>
@@ -621,8 +621,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image" required>
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -662,8 +662,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image" required>
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" required>
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -970,8 +970,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_image">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -1011,8 +1011,8 @@
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
-                                            <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute profile-image" name="swim_guardian_image">
+                                            <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -1679,7 +1679,7 @@
                         $('.spinner-border').replaceWith(originalBtn);
                     }
                     else{
-                        toastr.error('Something Went Wrong').
+                        toastr.error('Something Went Wrong');
                         console.log(response);
                     }
 

@@ -40,7 +40,7 @@
                             <tbody>
                                 @foreach($cardsList as $cards)
                                 <tr>
-                                    
+
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
                                     <td class="text-nowrap">{{ $cards->card_no }}</td>
@@ -78,7 +78,7 @@
                                                 <small>
                                                     <i class="fa-solid fa-trash"></i>
                                                 </small>
-                                            </button>    
+                                            </button>
 
                                         </form>
                                     </td>
@@ -121,7 +121,7 @@
 
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     Yes, Delete
-                    </button>      
+                    </button>
 
                 </div>
             </div>

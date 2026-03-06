@@ -56,17 +56,17 @@
                                         @else
                                             <span class="text-secondary text-nowrap">
                                                 Inactive
-                                            </span>                                                
+                                            </span>
                                         @endif
                                     </td>
-                                    <td class="text-nowrap">&#8377;{{ $items->foodItemprice->price ?? '0' }}</td>
+                                    <td class="text-nowrap">&#8377;{{ $items->foodItemPrice->price ?? '0' }}</td>
                                     <td class="text-nowrap">
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn editFoodItem" data-id="{{ $items->id }}" 
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn editFoodItem" data-id="{{ $items->id }}"
                                             title="Edit">
                                             <small>
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </small>
-                                        <button>
+                                        </button>
                                         <button
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row"
                                             title="Delete"><small><i
@@ -130,8 +130,8 @@
                             <div class="col-lg-6">
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Image</small></label>
-                                    <label class="file-upload-box text-center border rounded-3 w-100 p-2">
-                                    <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute item-image" placeholder="Item Image" required>
+                                    <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
+                                    <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image" placeholder="Item Image" required>
                                     <div class="upload-content">
                                         <i class="upload-icon"><i
                                                 class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -169,7 +169,7 @@
                                     <select name="itemstatus" id="itemstatus" class="form-select py-2 shadow-none">
                                         <option value="" selected="" hidden="" disabled="">Select Status
                                         </option>
-                                        
+
                                         <option value="1">Active</option>
                                         <option value="0">Inactive</option>
                                     </select>
@@ -204,7 +204,7 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" id="edit_item_id">
-                        
+
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
@@ -270,7 +270,7 @@
                                     <select name="edit_itemstatus" id="edit_itemstatus" class="form-select py-2 shadow-none">
                                         <option value="" selected="" hidden="" disabled="">Select Status
                                         </option>
-                                        
+
                                         <option value="1">Active</option>
                                         <option value="0">Inactive</option>
                                     </select>
@@ -356,7 +356,7 @@
                         if(file.size > maxSize){
                             errors.push('Image must be less than 5MB.');
                         }
-                            
+
                         if(erroes.length > 0){
 
                         isValid = false;
@@ -370,9 +370,10 @@
                     }
 
                     else{
-
+                        errorDiv.text('');
+                        $(this).removeClass('is-invalid');
                     }
-                });                
+                });
 
                 //PRICE VALIDATION
                 let itemPrice  = $('#itemPrice').val();
@@ -484,7 +485,7 @@
                 let isValid = true;
 
                 $('.item-image').each(function() {
-                    
+
                 })
             });
 

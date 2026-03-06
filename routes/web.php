@@ -55,6 +55,12 @@ Route::middleware('auth')->group(function () {
         Route::get('list', [ClubMemberController::class, 'list'])->name('club-member.list');
         Route::post('store', [ClubMemberController::class, 'store'])->name('club-member.store');
         Route::get('plan-price', [ClubMemberController::class, 'getPlanPrice'])->name('club-member-plan-price');
+        Route::get('/view/{id}', [ClubMemberController::class, 'view'])->name('club-member.view');
+        Route::post('/update', [ClubMemberController::class, 'update'])->name('club-member.update');
+        Route::get('/membership-plan/{id}', [ClubMemberController::class, 'membershipPlan'])->name('club-member.membership-plan');
+        Route::get('/fetch-wallet-balance/{id}', [ClubMemberController::class, 'fetchWalletBalance'])->name('club-member.fetch-wallet-balance');
+        Route::post('/recharge-wallet-balance', [ClubMemberController::class, 'rechargeWalletBalance'])->name('club-member.recharge-wallet-balance');
+        Route::delete('/club-member/{id}', [ClubMemberController::class, 'delete'])->name('club-member.delete');
     });
 
     Route::prefix('swimming-member')->group(function () {

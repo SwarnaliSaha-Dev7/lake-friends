@@ -115,7 +115,7 @@ jQuery(function ($) {
     $('.file-input').on('change', function () {
         let fileName = this.files[0]?.name;
         let textElement = $(this)
-            .closest('.file-upload-box')
+            .closest('.file-upload-box position-relative')
             .find('.upload-text');
 
         if (fileName) {

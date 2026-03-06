@@ -71,7 +71,7 @@ class FoodCategoryManageController extends Controller
 
         return redirect()
              ->route('manage-food-categories.index')
-             ->with('status', 'Food Category added successfully!');
+             ->with('success', 'Food Category added successfully!');
     }
 
     /**
@@ -113,7 +113,7 @@ class FoodCategoryManageController extends Controller
                                   ->where('item_type','food')
                                   ->where('id', $id)
                                   ->firstOrFail();
-        
+
         $data       = $request->validate([
             'name' => ['required','string','max:255',
                            Rule::unique('food_categories')
