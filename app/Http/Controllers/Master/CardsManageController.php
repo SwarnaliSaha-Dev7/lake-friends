@@ -70,7 +70,7 @@ class CardsManageController extends Controller
 
         return redirect()
              ->route('manage-cards.index')
-             ->with('status', 'Card added successfully!');
+             ->with('success', 'Card added successfully!');
     }
 
     /**
@@ -110,7 +110,7 @@ class CardsManageController extends Controller
         $cards      = Card::where('club_id', $club_id)
                           ->where('id', $id)
                           ->firstOrFail();
-        
+
         $data       = $request->validate([
             'card_no' => ['required','string','max:255',
                            Rule::unique('cards')

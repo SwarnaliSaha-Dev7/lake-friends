@@ -69,7 +69,7 @@ class LockerManageController extends Controller
 
         return redirect()
              ->route('manage-lockers.index')
-             ->with('status', 'Locker added successfully!');
+             ->with('success', 'Locker added successfully!');
     }
 
     /**
@@ -109,7 +109,7 @@ class LockerManageController extends Controller
         $lockers    = Locker::where('club_id', $club_id)
                             ->where('id', $id)
                             ->firstOrFail();
-        
+
         $data       = $request->validate([
             'locker_number' => ['required','string','max:255',
                            Rule::unique('lockers')

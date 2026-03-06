@@ -117,7 +117,7 @@ class SwimmingMemberController extends Controller
         try {
 
             $clubId = club_id();
-            $exists = Member::where('email', $request->email)
+            $exists = Member::where('email', $request->swim_email)
                 ->where('club_id', $clubId)
                 ->exists();
 

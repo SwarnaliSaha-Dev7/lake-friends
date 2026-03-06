@@ -4,15 +4,65 @@ namespace App\Http\Controllers;
 
 use App\Models\Card;
 use App\Models\Member;
+use App\Models\MembershipType;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function dashboard(Request $request)
     {
-        $page_title = 'Dashboard';
-        $title = 'Dashboard';
-        return view('dashboard', compact('title', 'page_title'));
+        try {
+
+            $page_title = 'Dashboard';
+            $title = 'Dashboard';
+
+            $clubId     = club_id();
+
+            $clubMembershipType = MembershipType::where('name', 'Club Membership')
+                                            ->where('club_id', $clubId)
+                                            ->first();
+            $clubMembershipTypeId = $clubMembershipType->id;
+
+            $clubMembers = Member::where('club_id', $clubId)
+                ->with([
+                    'memberDetails',
+                ])
+                ->whereHas('memberDetails', function ($query) use ($clubMembershipTypeId) {
+                    $query->where('membership_type_id', $clubMembershipTypeId);
+                })
+                ->orderBy('created_at', 'DESC')
+                ->take(3)
+                ->get();
+
+            $swimMembershipType = MembershipType::where('name', 'Swimming Membership')
+                                            ->where('club_id', $clubId)
+                                            ->first();
+            $swimMembershipTypeId = $swimMembershipType->id;
+
+            $swimMembers = Member::where('club_id', $clubId)
+                ->with([
+                    'memberDetails',
+                ])
+                ->whereHas('memberDetails', function ($query) use ($swimMembershipTypeId) {
+                    $query->where('membership_type_id', $swimMembershipTypeId);
+                })
+                ->orderBy('created_at', 'DESC')
+                ->take(3)
+                ->get();
+
+            return view('dashboard', compact(
+                'title',
+                'page_title',
+                'clubMembers',
+                'swimMembers'
+                ));
+
+
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+
+        }
+
     }
 
     public function fetchMemberDetailsByCard($cardNo)

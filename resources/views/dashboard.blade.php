@@ -6,7 +6,7 @@
 @section('content')
     <div class="repeat-holder">
         <div class="box-grid">
-            <a href="#"
+            <a href="javascript:void(0)"
                 class="card text-white bg-info border-0 d-flex justify-content-between flex-row-reverse">
                 <div class="card-header bg-transparent border-0"><i class="fa-solid fa-users"></i></div>
                 <div class="card-body">
@@ -14,7 +14,7 @@
                     <h2 class="card-title fs-4">120</h2>
                 </div>
             </a>
-            <a href="#"
+            <a href="javascript:void(0)"
                 class="card text-white bg-success border-0 d-flex justify-content-between flex-row-reverse">
                 <div class="card-header bg-transparent border-0"><i class="fa-solid fa-user-check"></i>
                 </div>
@@ -23,7 +23,7 @@
                     <h2 class="card-title fs-4">120</h2>
                 </div>
             </a>
-            <a href="#"
+            <a href="javascript:void(0)"
                 class="card text-white bg-secondary border-0 d-flex justify-content-between flex-row-reverse">
                 <div class="card-header bg-transparent border-0"><i class="fa-solid fa-user-minus"></i>
                 </div>
@@ -32,7 +32,7 @@
                     <h2 class="card-title fs-4">120</h2>
                 </div>
             </a>
-            <a href="#"
+            <a href="javascript:void(0)"
                 class="card text-white bg-warning border-0 d-flex justify-content-between flex-row-reverse">
                 <div class="card-header bg-transparent border-0"><i class="fa-solid fa-user-plus"></i></div>
                 <div class="card-body">
@@ -40,7 +40,7 @@
                     <h2 class="card-title fs-4">120</h2>
                 </div>
             </a>
-            <a href="#"
+            <a href="javascript:void(0)"
                 class="card text-white bg-primary border-0 d-flex justify-content-between flex-row-reverse">
                 <div class="card-header bg-transparent border-0"><i
                         class="fa-solid fa-arrow-right-to-bracket"></i></div>
@@ -49,7 +49,7 @@
                     <h2 class="card-title fs-4">120</h2>
                 </div>
             </a>
-            <a href="#"
+            <a href="javascript:void(0)"
                 class="card text-white bg-danger border-0 d-flex justify-content-between flex-row-reverse">
                 <div class="card-header bg-transparent border-0"><i class="fa-regular fa-clock"></i></div>
                 <div class="card-body">
@@ -63,13 +63,13 @@
         <h2 class="fs-5 common-heading mb-4 fw-semibold">Quick Actions</h2>
         <div class="row">
             <div class="col-xl-3 col-md-6 my-xl-0 my-2">
-                <a href="#"
+                <a href="{{ route('club-member.list', ['type' => 'addMember']) }}"
                     class="action-box card bg-white border-0 d-flex align-items-center justify-content-between flex-row-reverse h-100">
                     <div class="card-header bg-transparent border-0">
                         <i class="fa-solid fa-user-plus text-warning fs-4"></i>
                     </div>
                     <div class="card-body">
-                        <p class="card-text">Add Member</p>
+                        <p class="card-text">Add Club Member</p>
                     </div>
                 </a>
             </div>
@@ -96,7 +96,7 @@
                 </a>
             </div>
             <div class="col-xl-3 col-md-6 my-xl-0 my-2">
-                <a href="#"
+                <a href="javascript:void(0)"
                     class="action-box card bg-white border-0 d-flex align-items-center justify-content-between flex-row-reverse h-100">
                     <div class="card-header bg-transparent border-0">
                         <i class="fa-regular fa-file text-secondary fs-4"></i>
@@ -115,8 +115,9 @@
                     <div
                         class="d-flex flex-wrap align-items-center justify-content-between gap-2 gap-lg-3 mb-2">
                         <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Club Member list</h2>
-                        <button class="btn btn-info" data-bs-toggle="modal"
-                            data-bs-target="#addclubmember">+ Add club member</button>
+                        <a href="{{ route('club-member.list', ['type' => 'addMember']) }}" class="btn btn-info">+ Add Club member</a>
+                        {{-- <button class="btn btn-info" data-bs-toggle="modal"
+                            data-bs-target="#addclubmember">+ Add club member</button> --}}
                     </div>
                     <div class="table-responsive">
                         <table class="table rounded-3 overflow-hidden clubmemberlist" cellspacing="0"
@@ -130,7 +131,21 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @foreach ( $clubMembers as $clubMember)
                                 <tr>
+                                    <td class="text-nowrap">{{ $clubMember->name }}</td>
+                                    <td class="text-nowrap">{{ $clubMember->cardDetails?->card_no ?? '-' }}</td>
+                                    <td class="text-nowrap">₹ {{$clubMember->walletDetails?->current_balance ?? 0}}</td>
+                                    @if ($clubMember->status == 'active')
+                                        <td class="text-success text-nowrap">Active</td>
+                                    @elseif ($clubMember->status == 'pending')
+                                        <td class="text-warning text-nowrap">Pending</td>
+                                    @elseif ($clubMember->status == 'rejected')
+                                        <td class="text-danger text-nowrap">Rejected</td>
+                                    @endif
+                                </tr>
+                                @endforeach
+                                {{-- <tr>
                                     <td class="text-nowrap">Soumen Das</td>
                                     <td class="text-nowrap">12345abcd</td>
                                     <td class="text-nowrap">Rs 2000</td>
@@ -147,12 +162,12 @@
                                     <td class="text-nowrap">12345abcd</td>
                                     <td class="text-nowrap">Rs 2000</td>
                                     <td class="text-danger text-nowrap">Blocked</td>
-                                </tr>
+                                </tr> --}}
                             </tbody>
                         </table>
                     </div>
                     <div class="text-end">
-                        <a href="club-member.html" class="fw-semibold"><small><u>View All</u></small></a>
+                        <a href="{{ route('club-member.list') }}" class="fw-semibold"><small><u>View All</u></small></a>
                     </div>
                 </div>
             </div>
@@ -177,7 +192,21 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @foreach ( $swimMembers as $swimMember)
                                 <tr>
+                                    <td class="text-nowrap">{{ $swimMember->name }}</td>
+                                    <td class="text-nowrap">{{ $swimMember->cardDetails?->card_no ?? '-' }}</td>
+                                    <td class="text-nowrap">₹ {{$swimMember->walletDetails?->current_balance ?? 0}}</td>
+                                    @if ($swimMember->status == 'active')
+                                        <td class="text-success text-nowrap">Active</td>
+                                    @elseif ($swimMember->status == 'pending')
+                                        <td class="text-warning text-nowrap">Pending</td>
+                                    @elseif ($swimMember->status == 'rejected')
+                                        <td class="text-danger text-nowrap">Rejected</td>
+                                    @endif
+                                </tr>
+                                @endforeach
+                                {{-- <tr>
                                     <td class="text-nowrap">Soumen Das</td>
                                     <td class="text-nowrap">12345abcd</td>
                                     <td class="text-nowrap">Rs 2000</td>
@@ -194,7 +223,7 @@
                                     <td class="text-nowrap">12345abcd</td>
                                     <td class="text-nowrap">Rs 2000</td>
                                     <td class="text-danger text-nowrap">Blocked</td>
-                                </tr>
+                                </tr> --}}
                             </tbody>
                         </table>
                     </div>

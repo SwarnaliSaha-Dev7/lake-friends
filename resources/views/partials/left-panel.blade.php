@@ -29,13 +29,13 @@
             <li class="{{ request()->routeIs('club-member.list') ? 'active' : '' }}"><a href="{{ route('club-member.list') }}"><i class="fa-regular fa-user"></i> Club Member</a></li>
             <li class="{{ request()->routeIs('swimming-member.list') ? 'active' : '' }}"><a href="{{ route('swimming-member.list') }}"><i class="fa-regular fa-user"></i> Swimming Member</a></li>
             <li class="{{ request()->routeIs('manage-cards.index') ? 'active' : '' }}"><a href="{{ route('manage-cards.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Manage</a></li>
-            <li><a href="liqueur-manage.html"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a>
+            <li><a href="javascript:void(0)"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a>
                 <ul class="list-unstyled">
-                    <li><a href="current-stock-inventory.html">Current Stock Inventory</a></li>
-                    <li><a href="#">Liquor Stock Report</a></li>
+                    <li><a href="javascript:void(0)">Current Stock Inventory</a></li>
+                    <li><a href="javascript:void(0)">Liquor Stock Report</a></li>
                 </ul>
             </li>
-            <li class="{{ request()->routeIs('manage-food-items.*') ? 'active' : '' }}"><a href="{{ route('manage-food-items.index') }}"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
+            <li><a href="javascript:void(0)"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
         </ul>
     </nav>
     <div class="card-entry mt-5">

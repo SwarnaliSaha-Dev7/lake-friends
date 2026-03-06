@@ -59,14 +59,14 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="text-nowrap">&#8377;{{ $items->foodItemprice->price ?? '0' }}</td>
+                                    <td class="text-nowrap">&#8377;{{ $items->foodItemPrice->price ?? '0' }}</td>
                                     <td class="text-nowrap">
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn editFoodItem" data-id="{{ $items->id }}"
                                             title="Edit">
                                             <small>
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </small>
-                                        <button>
+                                        </button>
                                         <button
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row"
                                             title="Delete"><small><i
@@ -370,7 +370,8 @@
                     }
 
                     else{
-
+                        errorDiv.text('');
+                        $(this).removeClass('is-invalid');
                     }
                 });
 

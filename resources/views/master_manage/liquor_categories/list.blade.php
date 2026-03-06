@@ -32,6 +32,7 @@
                                 <tr>
                                     <th class="text-white fw-medium align-middle text-nowrap">Sl No.</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Name</th>
+                                    <th class="text-white fw-medium align-middle text-nowrap">Status</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 </tr>
                             </thead>
@@ -42,6 +43,7 @@
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
                                     <td class="text-nowrap">{{ $liquors->name }}</td>
+                                    <td class="text-nowrap">Active</td>
                                     <!-- <td class="text-success text-nowrap">No</td> -->
                                     <td class="text-nowrap d-flex gap-1 flex-wrap">
 

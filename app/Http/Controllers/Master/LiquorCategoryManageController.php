@@ -71,7 +71,7 @@ class LiquorCategoryManageController extends Controller
 
         return redirect()
              ->route('manage-liquor-categories.index')
-             ->with('status', 'Liquor Category added successfully!');
+             ->with('success', 'Liquor Category added successfully!');
     }
 
     /**
@@ -113,7 +113,7 @@ class LiquorCategoryManageController extends Controller
                                   ->where('item_type','liquor')
                                   ->where('id', $id)
                                   ->firstOrFail();
-        
+
         $data       = $request->validate([
             'name' => ['required','string','max:255',
                            Rule::unique('food_categories')

@@ -45,8 +45,8 @@
                                 <tr>
                                     <td class="text-nowrap">{{$member->name}}</td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
-                                    <td class="text-nowrap">{{$member->member_code}}</td>
-                                    <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0.00}}</td>
+                                    <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
+                                    <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
                                     <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
                                     <td class="text-nowrap">Null</td>
                                     @if ($member->status == 'active')
@@ -76,7 +76,7 @@
                                                     class="fa-solid fa-pen-to-square"></i></small></button>
                                         <button
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row memberDeleteBtn" data-id="{{$member->id}}"
-                                            title="Delete"><small><i
+                                            title="Delete" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"><small><i
                                                     class="fa-solid fa-trash"></i></small></button>
 
                                     </td>
