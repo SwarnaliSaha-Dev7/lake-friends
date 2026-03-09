@@ -94,7 +94,7 @@
             </div>
         </div>
         <div class="login-user border-start ps-2 ms-2">
-            <span class="auth-user fw-medium">{{ Auth::user()->name }}</span> <span
+            <span class="auth-user fw-medium">{{ ucwords(Auth::user()->name) }}</span> <span
                 class="d-inline-flex justify-content-center align-items-center rounded-3 text-white ms-2 log-user-icon"><i
                     class="fa-regular fa-user"></i></span>
         </div>
