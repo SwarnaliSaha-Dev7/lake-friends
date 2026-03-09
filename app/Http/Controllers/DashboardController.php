@@ -19,8 +19,8 @@ class DashboardController extends Controller
             $clubId     = club_id();
 
             $clubMembershipType = MembershipType::where('name', 'Club Membership')
-                                            ->where('club_id', $clubId)
-                                            ->first();
+                ->where('club_id', $clubId)
+                ->first();
             $clubMembershipTypeId = $clubMembershipType->id;
 
             $clubMembers = Member::where('club_id', $clubId)
@@ -35,8 +35,8 @@ class DashboardController extends Controller
                 ->get();
 
             $swimMembershipType = MembershipType::where('name', 'Swimming Membership')
-                                            ->where('club_id', $clubId)
-                                            ->first();
+                ->where('club_id', $clubId)
+                ->first();
             $swimMembershipTypeId = $swimMembershipType->id;
 
             $swimMembers = Member::where('club_id', $clubId)
@@ -55,14 +55,10 @@ class DashboardController extends Controller
                 'page_title',
                 'clubMembers',
                 'swimMembers'
-                ));
-
-
+            ));
         } catch (\Throwable $th) {
             return $th->getMessage();
-
         }
-
     }
 
     public function fetchMemberDetailsByCard($cardNo)

@@ -7,6 +7,7 @@ use App\Models\Card;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
+use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -75,9 +76,9 @@ class ActionApprovalController extends Controller
 
                 $member = Member::find($memberId);
 
-                if ($member->image && $payload->image != $member->image && file_exists(public_path($member->image))) {
-                    unlink(public_path($member->image));
-                }
+                // if ($member->image && $payload->image != $member->image && file_exists(public_path($member->image))) {
+                //     unlink(public_path($member->image));
+                // }
 
 
 
@@ -89,6 +90,11 @@ class ActionApprovalController extends Controller
 
 
                 if ($membershipTypeName == 'Club Membership') {
+
+                    if ($member->image && $payload->image != $member->image && file_exists(public_path($member->image))) {
+                        unlink(public_path($member->image));
+                    }
+
                     if ($member->spouse_image && isset($memberDetail->details['spouse_image']) && $payload->spouse_image != $memberDetail->details['spouse_image'] && file_exists(public_path($memberDetail->details['spouse_image']))) {
                         unlink(public_path($memberDetail->details['spouse_image']));
                     }
@@ -119,6 +125,11 @@ class ActionApprovalController extends Controller
                 }
 
                 if ($membershipTypeName == 'Swimming Membership') {
+
+                    if ($member->image && $payload->swim_image != $member->image && file_exists(public_path($member->image))) {
+                        unlink(public_path($member->image));
+                    }
+
                     if ($member->swim_guardian_image && $payload->swim_guardian_image != $memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
                         unlink(public_path($memberDetail->details['guardian_image']));
                     }
@@ -166,24 +177,24 @@ class ActionApprovalController extends Controller
 
 
                 // $card_no = $payload->swim_card_id ?? $payload->card_id;
-                if(isset($payload->swim_card_id)){
+                if (isset($payload->swim_card_id)) {
                     $card_no = $payload->swim_card_id;
-                }
-                elseif(isset($payload->card_id)){
+                } elseif (isset($payload->card_id)) {
                     $card_no = $payload->card_id;
-                }
-                else{
+                } else {
                     $card_no = 0;
                 }
 
                 if ($card_no) {
                     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
 
-                    $currentCard = Card::find($currentCardMapping->card_id);
-                    if ($currentCard) {
-                        $currentCard->update([
-                            'is_assigned' => 0
-                        ]);
+                    if ($currentCardMapping) {
+                        $currentCard = Card::find($currentCardMapping->card_id);
+                        if ($currentCard) {
+                            $currentCard->update([
+                                'is_assigned' => 0
+                            ]);
+                        }
                     }
 
                     $newCard = Card::find($card_no);
@@ -191,10 +202,16 @@ class ActionApprovalController extends Controller
                         // $newCard->update([
                         //     'is_assigned' => 1
                         // ]);
-
-                        $currentCardMapping->update([
-                            'card_id' => $card_no
-                        ]);
+                        if ($currentCardMapping) {
+                            $currentCardMapping->update([
+                                'card_id' => $card_no
+                            ]);
+                        } else {
+                            $card_mapping = MemberCardMapping::create([
+                                'card_id' => $card_no,
+                                'member_id' => $member->id
+                            ]);
+                        }
                     }
                 }
 
@@ -211,6 +228,16 @@ class ActionApprovalController extends Controller
 
                 $member = Member::find($memberId);
 
+                $membershipPlanPurchase = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->where('member_id', $id)
+                    ->where('status', 'pending')
+                    ->first();
+
+                if ($membershipPlanPurchase) {
+                    $membershipPlanPurchase->update([
+                        'status' => 'active'
+                    ]);
+                }
 
                 $member->update([
                     'status'      => 'active'
@@ -218,6 +245,7 @@ class ActionApprovalController extends Controller
             }
 
             $data->update([
+                'checker_user_id' => Auth::id(),
                 'status' => 'approved'
             ]);
 
@@ -236,6 +264,7 @@ class ActionApprovalController extends Controller
     public function reject($id)
     {
         try {
+            $clubId = club_id();
 
             $data = ActionApproval::find($id);
 
@@ -270,18 +299,39 @@ class ActionApprovalController extends Controller
                 $member->update([
                     'status'      => 'rejected'
                 ]);
+
+
+                $membershipPlanPurchase = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->where('member_id', $id)
+                    ->where('status', 'pending')
+                    ->first();
+
+                if ($membershipPlanPurchase) {
+                    $membershipPlanPurchase->update([
+                        'status' => 'cancelled'
+                    ]);
+                }
             } elseif ($data->module == 'member_edit') {
                 $payloadJson = $data->request_payload;
                 $payload = json_decode($payloadJson);
 
-                $card_id = $payload->swim_card_id;
+                if (isset($payload->swim_card_id)) {
+                    $card_id = $payload->swim_card_id;
+                } elseif (isset($payload->card_id)) {
+                    $card_id = $payload->card_id;
+                } else {
+                    $card_id = 0;
+                }
 
-                $card = Card::find($card_id);
+                // $card_id = $payload->swim_card_id;
+                if ($card_id) {
+                    $card = Card::find($card_id);
 
-                if ($card) {
-                    $card->update([
-                        'is_assigned' => 0
-                    ]);
+                    if ($card) {
+                        $card->update([
+                            'is_assigned' => 0
+                        ]);
+                    }
                 }
                 // return $payload;
             }

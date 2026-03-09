@@ -512,6 +512,7 @@ class SwimmingMemberController extends Controller
             $membershipPlans = MembershipPurchaseHistory::where('club_id', $clubId)
                 ->with('membershipPlanType')
                 ->where('member_id', $id)
+                ->where('status', '!=', 'pending')
                 ->get();
 
             return response()->json([
@@ -625,7 +626,7 @@ class SwimmingMemberController extends Controller
     public function delete($id)
     {
         try {
-            // $clubId = club_id();
+            $clubId = club_id();
 
             $member = Member::find($id);
 
@@ -652,6 +653,11 @@ class SwimmingMemberController extends Controller
             }
 
             $member->delete();
+
+            $approvalRequests = ActionApproval::where('club_id', $clubId)
+                ->where('entity_id', $id)
+                ->where('status', 'pending')
+                ->delete();
 
 
 

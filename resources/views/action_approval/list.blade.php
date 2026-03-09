@@ -28,6 +28,7 @@
                         width="100%">
                         <thead>
                             <tr>
+                                <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Details</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Type</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Date</th>
@@ -55,12 +56,12 @@
                                         }
                                     @endphp
                                 <tr>
-
+                                    <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">{{ $detail }}</td>
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                     <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
-                                    <td class="text-nowrap">{{$data->status ?? 'Pending'}}</td>
+                                    <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->status ?? 'Pending')) }}</td>
 
                                     {{-- @if ($member->status == 'active')
                                         <td class="text-success text-nowrap">Active</td>

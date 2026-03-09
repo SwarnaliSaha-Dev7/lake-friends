@@ -28,6 +28,7 @@
                         width="100%">
                         <thead>
                             <tr>
+                                <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Name</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Phone</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Card Number
@@ -43,6 +44,7 @@
                         <tbody>
                             @foreach ($members as $member)
                                 <tr>
+                                    <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">{{$member->name}}</td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
                                     <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
@@ -510,7 +512,7 @@
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Police Station</small></label>
-                                            <input type="number" class="form-control py-2 shadow-none" name="swim_police_station" id="swim_police_station"
+                                            <input type="text" class="form-control py-2 shadow-none" name="swim_police_station" id="swim_police_station"
                                                 placeholder="Police Station" required>
                                         </div>
                                     </div>
@@ -1722,10 +1724,23 @@
                         $('#memberName').text(response.data.name);
                         $('#memberClubName').text(response.data.club_details.name)
                         $('#memberCode').text(response.data.member_code)
-                        $('#memberCardNo').text(response.data.card_details.card_no)
-                        $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
-                        let expiryDate = response.data.purchase_history[0].expiry_date;
-                        let formatted = new Date(expiryDate).toLocaleDateString('en-IN'); // d/m/y format
+                        $('#memberCardNo').text(response.data.card_details?.card_no || '-')
+                        // $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
+                        // let expiryDate = response.data.purchase_history[0].expiry_date;
+                        // let formatted = new Date(expiryDate).toLocaleDateString('en-IN'); // d/m/y format
+                        // $('#memberPlanExpiry').text(formatted);
+                        const purchase = response.data.purchase_history?.[0];
+
+                        $('#memberPlan').text(
+                            purchase?.status === 'active'
+                                ? purchase?.membership_plan_type?.name ?? 'No Active Plan'
+                                : 'No Active Plan'
+                        );
+                        // $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
+                        let formatted = 'NA';
+                        if (purchase?.status === 'active' && purchase?.expiry_date) {
+                            formatted = new Date(purchase.expiry_date).toLocaleDateString('en-IN');
+                        }
                         $('#memberPlanExpiry').text(formatted);
                         $('#memberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
 
