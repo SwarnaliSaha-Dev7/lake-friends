@@ -338,12 +338,13 @@ class ClubMemberController extends Controller
     public function update(Request $request)
     {
         try {
+            // return $request;
 
             $clubId = club_id();
             $memberId = $request->member_id;
+
             // $exists = Member::where('email', $request->email)
             //     ->where('club_id', $clubId)
-            //     ->where('id', '!=', $memberId)
             //     ->exists();
 
             // if ($exists) {
@@ -357,15 +358,74 @@ class ClubMemberController extends Controller
 
             $member = Member::find($memberId);
 
+            $membershipType = MembershipType::where('name', 'Swimming Membership')
+                ->where('club_id', $clubId)
+                ->first();
+
+            $membershipTypeId = $membershipType->id;
+            $formDetail = MembershipFormDetail::where('member_id', $memberId)
+                                                ->where('membership_type_id', $membershipTypeId)
+                                                ->first();
+            $currentDetails = $formDetail->details ?? [];
+            unset($currentDetails['image'], $currentDetails['guardian_image']);
+            // return $currentDetails;
+
+            $newDetails = [
+                'police_station' => $request->swim_member_police_station,
+                'age' => $request->swim_age,
+                'sex' => $request->swim_sex,
+                'height' => $request->swim_height,
+                'weight' => $request->swim_weight,
+                'pulse_rate' => $request->swim_pulse_rate,
+                'batch' => $request->swim_batch,
+                'vaccination' => $request->swim_vaccination,
+                'i_agree' => 1,
+                'disease' => $request->input('swim_disease', []),
+                'guardian_name' => $request->swim_guardian_name,
+                'guardian_occupation' => $request->swim_guardian_occupation
+            ];
+
+            ksort($currentDetails);
+            ksort($newDetails);
+            // return $detailsChanged = json_encode($currentDetails) !== json_encode($newDetails);
+            $detailsChanged = $currentDetails != $newDetails;
+
+            //need give it last
+            $member->fill([
+                'name' => $request->swim_name,
+                'email' => $request->swim_email,
+                'phone' => $request->swim_phone,
+                'address' => $request->swim_address,
+            ]);
+
+            // if (
+            //     !$member->isDirty() &&
+            //     !$detailsChanged &&
+            //     !$request->hasFile('swim_image') &&
+            //     !$request->hasFile('swim_guardian_image') &&
+            //     !$request->filled('swim_card_id')
+            // ) {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'No changes detected'
+            //     ]);
+            // }
+            // else{
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'changes detected'
+            //     ]);
+            // }
+
             $dest_path = 'uploads/images';
             $image_path = null;
-            if ($request->hasFile('image')) {
+            if ($request->hasFile('swim_image')) {
 
                 // if ($member->image && file_exists(public_path($member->image))) {
                 //     unlink(public_path($member->image));
                 // }
 
-                $file = $request->file('image');
+                $file = $request->file('swim_image');
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
                 $image_path = 'storage/' . $path;
@@ -375,34 +435,34 @@ class ClubMemberController extends Controller
 
             $memberDetail = MembershipFormDetail::where('member_id', $memberId)->first();
 
-            $spouse_image_path = null;
-            if ($request->hasFile('spouse_image')) {
+            // $guardian_image_path = null;
+            if ($request->hasFile('swim_guardian_image')) {
 
-                // if ($memberDetail->details['spouse_image'] && file_exists(public_path($memberDetail->details['spouse_image']))) {
-                //     unlink(public_path($memberDetail->details['spouse_image']));
+                // if ($memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
+                //     unlink(public_path($memberDetail->details['guardian_image']));
                 // }
 
-                $file = $request->file('spouse_image');
+                $file = $request->file('swim_guardian_image');
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
-                $spouse_image_path = 'storage/' . $path;
+                $guardian_image_path = 'storage/' . $path;
             } else {
-                $spouse_image_path = $memberDetail->details['spouse_image'] ?? '';
+                $guardian_image_path = $memberDetail->details['guardian_image'];
             }
 
             $data = $request->except(
-                'image',
-                'spouse_image'
+                'swim_guardian_image',
+                'swim_image'
             );
 
-            $data['image'] = $image_path;
-            $data['spouse_image'] = $spouse_image_path;
+            $data['swim_image'] = $image_path;
+            $data['swim_guardian_image'] = $guardian_image_path;
 
-            $card_no = $request->card_id;
+            $card_no = $request->swim_card_id;
 
             if ($card_no) {
-
                 $newCard = Card::find($card_no);
+
                 if ($newCard) {
                     $newCard->update([
                         'is_assigned' => 1
@@ -410,29 +470,39 @@ class ClubMemberController extends Controller
                 }
             }
 
-            $approval = ActionApproval::create([
-                'club_id' => $clubId,
-                'module' => 'member_edit',
-                'action_type' => 'update',
-                'entity_model' => 'Member',
-                'entity_id' => $memberId,
-                'maker_user_id' => Auth::id(),
-                'request_payload' => json_encode($data)
-            ]);
 
-            $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+            if (
+                $member->isDirty() ||
+                $detailsChanged ||
+                $request->hasFile('swim_image') ||
+                $request->hasFile('swim_guardian_image') ||
+                $request->filled('swim_card_id')
+            ){
+                $approval = ActionApproval::create([
+                    'club_id' => $clubId,
+                    'module' => 'member_edit',
+                    'action_type' => 'update',
+                    'entity_model' => 'Member',
+                    'entity_id' => $memberId,
+                    'maker_user_id' => Auth::id(),
+                    'request_payload' => json_encode($data)
+                ]);
+
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
 
 
-            Notification::send($approvers, new ApprovalNotification($approval));
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
 
 
             // $member->update([
-            //     'name'        => $request->name,
-            //     'email'       => $request->email,
-            //     'phone'       => $request->phone,
-            //     'address'     => $request->address,
+            //     'name'        => $request->swim_name,
+            //     'email'       => $request->swim_email,
+            //     'phone'       => $request->swim_phone,
+            //     'address'     => $request->swim_address,
             //     'image'       => $image_path
             //     // 'status'      => 'pending_approval'
             // ]);
@@ -440,20 +510,25 @@ class ClubMemberController extends Controller
 
             // $memberDetail->update([
             //     'details' => [
-            //         'blood_grp' => $request->blood_grp,
-            //         'spouse_name' => $request->spouse_name,
-            //         'spouse_email' => $request->spouse_email,
-            //         'spouse_phone' => $request->spouse_phone,
-            //         'spouse_blood_grp' => $request->spouse_blood_grp,
-            //         'spouse_address' => $request->spouse_address,
-            //         'spouse_image' => $spouse_image_path,
+            //         'age' => $request->swim_age,
+            //         'sex' => $request->swim_sex,
+            //         'height' => $request->swim_height,
+            //         'weight' => $request->swim_weight,
+            //         'pulse_rate' => $request->swim_pulse_rate,
+            //         'batch' => $request->swim_batch,
+            //         'vaccination' => $request->swim_vaccination,
+            //         'i_agree' => 1,
+            //         'disease' => $request->input('swim_disease', []),
+            //         'guardian_name' => $request->swim_guardian_name,
+            //         'guardian_occupation' => $request->swim_guardian_occupation,
+            //         'guardian_image' => $guardian_image_path
             //     ]
             // ]);
 
 
 
 
-            // $card_no = $request->card_id;
+            // $card_no = $request->swim_card_id;
 
             // if ($card_no) {
             //     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
@@ -478,7 +553,7 @@ class ClubMemberController extends Controller
             // }
 
 
-            DB::commit();
+            // DB::commit();
 
             return response()->json([
                 // 'data' => $data,
