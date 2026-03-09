@@ -17,7 +17,7 @@ class FoodItemManageController extends Controller
     public function index()
     {
         try {
-        
+
             $page_title     = 'Manage Food Items';
             $title          = 'Food Items List';
 
@@ -37,7 +37,7 @@ class FoodItemManageController extends Controller
             return view('food_items.list', compact('foodItemsList','foodCatList','page_title','title'));
 
         }
-        
+
         catch (\Throwable $th) {
             return $th->getMessage();
         }
@@ -60,7 +60,7 @@ class FoodItemManageController extends Controller
         //dd($request->all());
 
         try {
-            
+
             $user           = auth()->user();
             $club_id        = $user->club_id;
 
@@ -97,8 +97,8 @@ class FoodItemManageController extends Controller
                                 Rule::unique('food_items','code')
                                     ->where(function ($query) use ($club_id) {
                                         return $query->where('club_id', $club_id)
-                                                    ->where('item_type','food')
-                                                    ->whereNull('deleted_at');
+                                                     ->where('item_type','food')
+                                                     ->whereNull('deleted_at');
                                                 }),
                             ],
 
@@ -147,8 +147,8 @@ class FoodItemManageController extends Controller
 
             ]);
 
-        } 
-        
+        }
+
         catch (\Throwable $th) {
             DB::rollBack();
 
@@ -157,7 +157,7 @@ class FoodItemManageController extends Controller
                 'error'      => $th->getMessage(),
             ]);
         }
-        
+
 
     }
 
@@ -190,10 +190,10 @@ class FoodItemManageController extends Controller
                 'data'       => $item,
                 'statusCode' => 200,
                 'message'    => 'Food item Fetched successfully'
-            ]);    
+            ]);
 
-        } 
-        
+        }
+
         catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,
@@ -208,109 +208,142 @@ class FoodItemManageController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user    = auth()->user();
-        $club_id = $user->club_id;
+        try {
 
-        $exists = FoodItem::where('name', $request->itemName)
-                        ->where('club_id', $club_id)
-                        ->where('item_type','food')
-                        ->where('id','!=',$id)
-                        ->whereNull('deleted_at')
-                        ->exists();
+            $user    = auth()->user();
+            $club_id = $user->club_id;
 
-        if($exists){
+
+            $exists = FoodItem::where('name', $request->itemName)
+                              ->where('club_id', $club_id)
+                              ->where('item_type','food')
+                              ->where('id','!=',$id)
+                              ->whereNull('deleted_at')
+                              ->exists();
+
+            if($exists){
+
+                return response()->json([
+
+                    'statusCode'=>409,
+
+                    'message'=>'Food item already exists'
+
+                ]);
+
+            }
+
+            DB::beginTransaction();
+
+            $foodItem = FoodItem::find($memberId);
+
+            $request->validate([
+
+                'itemName' => ['required', 'string', 'max:255',
+                                Rule::unique('food_items','name')
+                                ->where(function ($query) use ($club_id) {
+                                    return $query->where('club_id', $club_id)
+                                                    ->where('item_type','food')
+                                                    ->whereNull('deleted_at');
+                                            }),
+                            ],
+
+                'itemCat' => 'required',
+
+                'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',
+
+                'itemimage' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+
+                'itemCode'   => ['required','string','max:255',
+                                Rule::unique('food_items','code')
+                                    ->where(function ($query) use ($club_id) {
+                                        return $query->where('club_id', $club_id)
+                                                     ->where('item_type','food')
+                                                     ->whereNull('deleted_at');
+                                                }),
+                                ],
+
+                'itemLow' => 'required|numeric|min:0|',
+
+                'itemstatus' => 'required|boolean',
+
+            ]);
+
+            $item = FoodItem::where('club_id',$club_id)
+                    ->where('id',$id)
+                    ->firstOrFail();
+
+            $image_path = $item->image;
+
+            if($request->hasFile('itemImage')){
+
+                $dest_path = 'uploads/images';
+
+                $file = $request->file('itemImage');
+
+                $filename = time().rand(1000,9999).'_'.$file->getClientOriginalName();
+
+                $path = $file->storeAs($dest_path,$filename,'public');
+
+                $image_path = 'storage/'.$path;
+
+            }
+
+            $item->update([
+
+                'name' => $request->itemName,
+
+                'category_id' => $request->itemCat,
+
+                'image' => $image_path,
+
+                'code' => $request->code,
+
+                'is_active' => $request->itemstatus
+
+            ]);
+
+            $priceRow = FoodItemPrice::where('item_id',$item->id)->first();
+
+
+            if($priceRow){
+
+                $priceRow->update([
+
+                    'price'=>$request->itemPrice
+
+                ]);
+
+            }
+            else{
+
+                FoodItemPrice::create([
+
+                    'item_id'=>$item->id,
+
+                    'price'=>$request->itemPrice,
+
+                    'approval_status'=>'pending'
+
+                ]);
+
+            }
 
             return response()->json([
 
-                'statusCode'=>409,
+                'statusCode'=>200,
 
-                'message'=>'Food item already exists'
-
-            ]);
-
-        }
-
-        $request->validate([
-
-            'itemName' => 'required|string|max:255',
-
-            'itemCat' => 'required',
-
-            'itemPrice' => 'required|numeric|min:0',
-
-            'itemstatus' => 'required|boolean'
-
-        ]);
-
-        $item = FoodItem::where('club_id',$club_id)
-                ->where('id',$id)
-                ->firstOrFail();
-
-        $image_path = $item->image;
-
-        if($request->hasFile('itemImage')){
-
-            $dest_path = 'uploads/images';
-
-            $file = $request->file('itemImage');
-
-            $filename = time().rand(1000,9999).'_'.$file->getClientOriginalName();
-
-            $path = $file->storeAs($dest_path,$filename,'public');
-
-            $image_path = 'storage/'.$path;
-
-        }
-
-        $item->update([
-
-            'name' => $request->itemName,
-
-            'category_id' => $request->itemCat,
-
-            'image' => $image_path,
-
-            'code' => $request->code,
-            
-            'is_active' => $request->itemstatus
-
-        ]);
-
-        $priceRow = FoodItemPrice::where('item_id',$item->id)->first();
-
-
-        if($priceRow){
-
-            $priceRow->update([
-
-                'price'=>$request->itemPrice
+                'message'=>'Food item updated successfully'
 
             ]);
 
-        }
-        else{
 
-            FoodItemPrice::create([
+            } catch (\Throwable $th) {
+            //throw $th;
+            }
 
-                'item_id'=>$item->id,
-
-                'price'=>$request->itemPrice,
-
-                'approval_status'=>'pending'
-
-            ]);
 
         }
-
-        return response()->json([
-
-            'statusCode'=>200,
-
-            'message'=>'Food item updated successfully'
-
-        ]);
-
-    }
 
     /**
      * Remove the specified resource from storage.

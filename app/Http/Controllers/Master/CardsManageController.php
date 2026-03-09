@@ -145,6 +145,10 @@ class CardsManageController extends Controller
                     ->where('id', $id)
                     ->firstOrFail();
 
+        if( $cards->is_assigned == 1){
+            return redirect()->route('manage-cards.index')->with('error', 'This card is already assigned to a member and cannot be deleted.');
+        }
+
         $cards->delete();
 
         return redirect()

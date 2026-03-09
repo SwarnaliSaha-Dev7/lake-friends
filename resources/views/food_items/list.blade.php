@@ -29,6 +29,7 @@
                         width="100%">
                         <thead>
                             <tr>
+                                <th class="text-white fw-medium text-nowrap">Sl. No.</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Name</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Code</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Category
@@ -42,6 +43,7 @@
                         <tbody>
                             @foreach($foodItemsList as $items)
                                 <tr>
+                                    <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">{{ $items->name }}</td>
                                     <td class="text-nowrap">{{ $items->code }}</td>
                                     <td class="text-nowrap">{{ $items->foodItemCat->name }}</td>
@@ -303,6 +305,9 @@
 
             $('#foodItemForm').on('submit', function(e){
                 e.preventDefault();
+                const $btn = $('#submit');
+                const originalText = $btn.val();
+
 
                 let isValid = true;
 
@@ -359,9 +364,9 @@
 
                         if(erroes.length > 0){
 
-                        isValid = false;
-                        errorDiv.html(errors.join('<br>'));
-                        $(this).addClass('is-invalid');
+                            isValid = false;
+                            errorDiv.html(errors.join('<br>'));
+                            $(this).addClass('is-invalid');
                         }
                         else{
                             errorDiv.text('');
@@ -439,6 +444,10 @@
                     return isValid;
                 }
 
+                $btn.prop('disabled', true);
+                $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
+
+
                 //AJAX SUBMIT
                 let formData = new FormData($('#foodItemForm')[0]);
 
@@ -454,21 +463,31 @@
                     success:function(response){
 
                         if(response.statusCode == 200){
-
+                            $btn.html(originalText);
                             toastr.success(response.message);
+
+                            $('#foodItemForm')[0].reset();
+
                             setTimeout(() =>location.reload(),1500);
+
                         }
                         else{
+                            $btn.html(originalText);
+                            $btn.prop('disabled', false);
+
                             if(response.message){
                                 toastr.error(error.message);
                             }
                             else{
                                 toastr.error("Something went wrong. Please try again.");
-                                console.log(response);
+                                //console.log(response);
                             }
                         }
                     },
                     error:function(xhr, status, error){
+
+                        $btn.html(originalText);
+                        $btn.prop('disabled', false);
                         toastr.error("Something went wrong, Please try again.");
 
                         let responseError = xhr.responseJSON?.error
