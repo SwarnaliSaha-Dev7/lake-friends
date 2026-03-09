@@ -1641,7 +1641,10 @@
                     if (response.statusCode == 200) {
                         $btn.html(originalText);
                         toastr.success(response.message);
-                        setTimeout(() => location.reload(), 1500);
+                        // setTimeout(() => location.reload(), 1500);
+                        setTimeout(() => {
+                            window.location.href = "{{ route('swimming-member.list') }}";
+                        }, 1500);
 
                     } else {
                         $btn.html(originalText);
@@ -1652,7 +1655,7 @@
                         }
                         else{
                             toastr.error("Something went wrong, Please try again.");
-                            console.log(response)
+                            // console.log(response)
                         }
                     }
                 },
@@ -1718,7 +1721,7 @@
                 type: 'GET',
                 success: function(response){
                     if (response.statusCode == 200) {
-                        console.log(response);
+                        // console.log(response);
                         $('#memberName').text(response.data.name);
                         $('#memberClubName').text(response.data.club_details.name)
                         $('#memberCode').text(response.data.member_code)
@@ -1734,7 +1737,7 @@
                     }
                     else{
                         // toastr.error('Something Went Wrong').
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1766,7 +1769,7 @@
                     }
                     else{
                         toastr.error('Something Went Wrong');
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1786,7 +1789,7 @@
                 type: 'GET',
                 success: function(response){
                     if (response.statusCode == 200) {
-                        console.log(response);
+                        // console.log(response);
                         $('#swim_member_id').val(memberId)
                         $('#swim_member_name').val(response.data.name);
                         $('#swim_member_email').val(response.data.email);
@@ -1823,7 +1826,7 @@
                     }
                     else{
                         // toastr.error('Something Went Wrong').
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1890,7 +1893,7 @@
                     }
                     else{
                         // toastr.error('Something Went Wrong').
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1911,7 +1914,7 @@
                 type: 'GET',
                 success: function(response){
                     if (response.statusCode == 200) {
-                        console.log(response);
+                        // console.log(response);
                         $('#walletMemberId').val(memberId);
                         $('#walletBalance').text('₹' + (response.data.walletBalance ?? 0.00));
 
@@ -1950,7 +1953,7 @@
                     }
                     else{
                         // toastr.error('Something Went Wrong').
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1996,7 +1999,10 @@
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
                         $('#rechargeSubmitBtn').hide();
-                        setTimeout(() => location.reload(), 1500);
+                        // setTimeout(() => location.reload(), 1500);
+                        setTimeout(() => {
+                            window.location.href = "{{ route('swimming-member.list') }}";
+                        }, 1500);
 
 
                     } else {
@@ -2011,7 +2017,7 @@
                             $('#rechargeSubmitBtn')
                             .prop('disabled', false)
                             .html('Recharge Wallet');
-                            console.log(response)
+                            // console.log(response)
                         }
                     }
                 },
@@ -2112,7 +2118,10 @@
                     if (response.statusCode == 200) {
                         $btn.html(originalText);
                         toastr.success(response.message);
-                        setTimeout(() => location.reload(), 1500);
+                        // setTimeout(() => location.reload(), 1500);
+                        setTimeout(() => {
+                            window.location.href = "{{ route('swimming-member.list') }}";
+                        }, 1500);
 
                     } else {
                         $btn.html(originalText);
@@ -2122,7 +2131,7 @@
                         }
                         else{
                             toastr.error("Something went wrong, Please try again.");
-                            console.log(response)
+                            // console.log(response)
                         }
                     }
                 },

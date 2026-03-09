@@ -1242,7 +1242,8 @@
 
                         // Optional: reload after 1.5s
                         setTimeout(function() {
-                            location.reload();
+                            // location.reload();
+                            window.location.href = "{{ route('club-member.list') }}";
                         }, 1500);
 
                     } else {
@@ -1252,7 +1253,7 @@
                             toastr.error(response.message);
                         } else {
                             toastr.error("Something went wrong, Please try again.");
-                            console.log(response)
+                            // console.log(response)
                         }
                     }
 
@@ -1281,7 +1282,7 @@
                 type: 'GET',
                 success: function(response){
                     if (response.statusCode == 200) {
-                        console.log(response);
+                        // console.log(response);
                         $('#memberName').text(response.data.name);
                         $('#memberClubName').text(response.data.club_details.name)
                         $('#memberCode').text(response.data.member_code)
@@ -1297,7 +1298,7 @@
                     }
                     else{
                         // toastr.error('Something Went Wrong').
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1362,7 +1363,7 @@
                     }
                     else{
                         // toastr.error('Something Went Wrong').
-                        console.log(response);
+                        // console.log(response);
                     }
 
                 },
@@ -1469,7 +1470,10 @@
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
                         $('#rechargeSubmitBtn').hide();
-                        setTimeout(() => location.reload(), 1500);
+                        // setTimeout(() => location.reload(), 1500);
+                        setTimeout(() => {
+                            window.location.href = "{{ route('club-member.list') }}";
+                        }, 1500);
 
 
                     } else {
@@ -1696,12 +1700,15 @@
                         $btn.html(originalText);
 
                         toastr.success(response.message);
-                        setTimeout(()=>location.reload(),1500);
+                        // setTimeout(()=>location.reload(),1500);
+                        setTimeout(() => {
+                            window.location.href = "{{ route('club-member.list') }}";
+                        }, 1500);
 
                     }else{
                         $btn.html(originalText);
                         $btn.prop('disabled', false);
-console.log(response)
+                        // console.log(response)
                         toastr.error(response.message ?? "Something went wrong");
 
                     }
