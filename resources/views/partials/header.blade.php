@@ -34,8 +34,11 @@
                 </div>
                 <div class="pt-3 pb-4 px-3 noti-body overflow-auto">
                     @forelse(auth()->user()->unreadNotifications as $notification)
-                    {{-- <a href="{{ route('notification.read', $notification->id) }}">
-                        {{ $notification->data['message'] }} --}}
+                    {{-- <a href="{{ route('notification.read', $notification->id) }}"> --}}
+                    <a href="{{ in_array($notification->data['notification_type'] ?? '', ['member_create','member_edit','member_delete'])
+                        ? route('memberActionApproval.list')
+                        : 'javascript:void(0)' }}">
+                        {{-- {{ $notification->data['message'] }} --}}
                          <div class="card text-white mb-2">
                             <div class="card-body">
                                 <h5 class="card-title fs-6 fw-semibold"><span
@@ -46,7 +49,7 @@
                                             class="fa-regular fa-clock"></i> {{ $notification->created_at->diffForHumans() }}</small></p>
                             </div>
                         </div>
-                    {{-- </a> --}}
+                    </a>
                     @empty
                         <div class="text-center py-4">
                             <small>No new notifications</small>

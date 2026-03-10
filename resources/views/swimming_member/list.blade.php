@@ -772,14 +772,14 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="taxable_amount" name="swim_taxable_amt"
-                                                placeholder="Taxable Amt. (Min 500)" readonly required>
+                                                placeholder="Taxable Amt. (Min 500)" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="gstPercentage" name="swim_gst_percent"
-                                                placeholder="GST%" value="{{$gstPercentage}}" readonly required>
+                                                placeholder="GST%" value="{{$gstPercentage}}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
@@ -1560,6 +1560,25 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
+        function calculateGST() {
+            // Get values from inputs
+            let taxable = parseFloat($('#taxable_amount').val()) || 0;
+            let gstPercent = parseFloat($('#gstPercentage').val()) || 0;
+
+            // Calculate GST Amount
+            let gstAmount = (taxable * gstPercent) / 100;
+
+            // Calculate Receipt Amount (Taxable + GST)
+            let receiptAmount = taxable + gstAmount;
+
+            // Update the readonly inputs
+            $('#gstAmt').val(gstAmount.toFixed(2));
+            $('#receiptAmt').val(receiptAmount.toFixed(2));
+        }
+
+        // Bind calculation on keyup/change for Taxable Amt and GST%
+        $('#taxable_amount, #gstPercentage').on('keyup change', calculateGST);
+
         $('#swimmingMemberForm').on('submit', function (e) {
             e.preventDefault();
 
@@ -1619,6 +1638,29 @@
                 }
 
             });
+
+            let taxableAmt = $('#taxable_amount').val();
+            let errorDiv = $(this).next('.error-div');
+
+            if (taxableAmt === '' || isNaN(taxableAmt) || parseFloat(taxableAmt) <= 0) {
+                errorDiv.text('Please enter a valid taxable amount.');
+                $('#taxable_amount').addClass('is-invalid');
+                isValid = false;
+            } else {
+                errorDiv.text('');
+                $('#taxable_amount').removeClass('is-invalid');
+            }
+
+            let gstPercentage = $('#gstPercentage').val();
+
+            if (gstPercentage === '' || isNaN(gstPercentage) || parseFloat(gstPercentage) <= 0) {
+                errorDiv.text('Please enter a valid gst percentage.');
+                $('#gstPercentage').addClass('is-invalid');
+                isValid = false;
+            } else {
+                errorDiv.text('');
+                $('#gstPercentage').removeClass('is-invalid');
+            }
 
             if (!isValid) {
                 return isValid;

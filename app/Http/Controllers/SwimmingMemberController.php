@@ -130,6 +130,11 @@ class SwimmingMemberController extends Controller
 
             DB::beginTransaction();
 
+            $requestData = $request->except(
+                'image',
+                'spouse_image'
+            );
+
             $memberCode = 'LF-' . time();
 
 
@@ -148,6 +153,7 @@ class SwimmingMemberController extends Controller
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
                 $image_path = 'storage/' . $path;
+                $requestData['swim_image'] = $image_path;
             }
 
             $member = Member::create([
@@ -167,6 +173,7 @@ class SwimmingMemberController extends Controller
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
                 $guardian_image_path = 'storage/' . $path;
+                $requestData['swim_guardian_image'] = $guardian_image_path;
             }
 
             MembershipFormDetail::create([
@@ -210,12 +217,15 @@ class SwimmingMemberController extends Controller
                 $expiryDate = $startDate->copy()->addMonths($plan->duration_months);
             }
 
-            $fee = $plan->price;
+            // $fee = $plan->price;
+            $fee = $request->swim_taxable_amt;
             $fineAmount = 0;
 
-            $gstPercentage = GstRate::where('club_id', $clubId)
-                ->where('gst_type', 'plan_purchase')
-                ->value('gst_percentage') ?? 0;
+            // $gstPercentage = GstRate::where('club_id', $clubId)
+            //     ->where('gst_type', 'plan_purchase')
+            //     ->value('gst_percentage') ?? 0;
+
+            $gstPercentage = $request->swim_gst_percent;
 
             $gst_amt = ($fee * $gstPercentage) / 100;
 
@@ -231,7 +241,7 @@ class SwimmingMemberController extends Controller
                 'net_amount'              => $netAmount,
                 'start_date'              => $startDate,
                 'expiry_date'             => $expiryDate,
-                'status'                  => 1
+                // 'status'                  => 1
             ]);
 
 
@@ -278,17 +288,35 @@ class SwimmingMemberController extends Controller
                 'module' => 'member_create',
                 'action_type' => 'create',
                 'entity_model' => 'Member',
+                'membership_type_id' => $membershipTypeId,
                 'entity_id' => $member->id,
                 'maker_user_id' => Auth::id(),
                 'request_payload' => json_encode($request->all())
             ]);
 
-            $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+            if (Auth::user()->hasRole('admin')) {
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
 
+                $member->update([
+                    'status' => 'active'
+                ]);
 
-            Notification::send($approvers, new ApprovalNotification($approval));
+                $purchase_history->update([
+                    'status' => 'active'
+                ]);
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
 
 
             DB::commit();
@@ -315,16 +343,16 @@ class SwimmingMemberController extends Controller
             $clubId = club_id();
             $memberId = $request->member_id;
 
-            // $exists = Member::where('email', $request->email)
-            //     ->where('club_id', $clubId)
-            //     ->exists();
+            $exists = ActionApproval::where('club_id', $clubId)
+                ->where('entity_id', $memberId)
+                ->exists();
 
-            // if ($exists) {
-            //     return response()->json([
-            //         'statusCode' => 409,
-            //         'message' => 'Email already exists'
-            //     ]);
-            // }
+            if ($exists) {
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'An edit request is already pending.'
+                ]);
+            }
 
             // DB::beginTransaction();
 
@@ -390,17 +418,83 @@ class SwimmingMemberController extends Controller
                 'module' => 'member_edit',
                 'action_type' => 'update',
                 'entity_model' => 'Member',
+                'membership_type_id' => $memberDetail->membership_type_id,
                 'entity_id' => $memberId,
                 'maker_user_id' => Auth::id(),
                 'request_payload' => json_encode($data)
             ]);
 
-            $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+            if (Auth::user()->hasRole('admin')) {
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+
+                $member->update([
+                    'name'        => $request->swim_name,
+                    'email'       => $request->swim_email,
+                    'phone'       => $request->swim_phone,
+                    'address'     => $request->swim_address,
+                    'image'       => $image_path
+                    // 'status'      => 'pending_approval'
+                ]);
 
 
-            Notification::send($approvers, new ApprovalNotification($approval));
+                $memberDetail->update([
+                    'details' => [
+                        'age' => $request->swim_age,
+                        'sex' => $request->swim_sex,
+                        'height' => $request->swim_height,
+                        'weight' => $request->swim_weight,
+                        'pulse_rate' => $request->swim_pulse_rate,
+                        'batch' => $request->swim_batch,
+                        'vaccination' => $request->swim_vaccination,
+                        'i_agree' => 1,
+                        'disease' => $request->input('swim_disease', []),
+                        'guardian_name' => $request->swim_guardian_name,
+                        'guardian_occupation' => $request->swim_guardian_occupation,
+                        'guardian_image' => $guardian_image_path,
+                        'police_station' => $request->swim_member_police_station,
+                    ]
+                ]);
+
+
+
+
+                $card_no = $request->swim_card_id;
+
+                if ($card_no) {
+                    $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
+
+                    $currentCard = Card::find($currentCardMapping->card_id);
+                    if ($currentCard) {
+                        $currentCard->update([
+                            'is_assigned' => 0
+                        ]);
+                    }
+
+                    $newCard = Card::find($card_no);
+                    if ($newCard) {
+                        $newCard->update([
+                            'is_assigned' => 1
+                        ]);
+
+                        $currentCardMapping->update([
+                            'card_id' => $card_no
+                        ]);
+                    }
+                }
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
+
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
 
 
             // $member->update([

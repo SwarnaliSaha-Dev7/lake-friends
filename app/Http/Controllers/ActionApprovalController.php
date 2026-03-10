@@ -24,17 +24,36 @@ class ActionApprovalController extends Controller
 
             $clubId = club_id();
 
-            $data = ActionApproval::with('operatorDetails')
+            $swimmingMembershipId = MembershipType::where('name', 'Swimming Membership')->value('id');
+
+            $clubMembershipId = MembershipType::where('name', 'Club Membership')->value('id');
+
+            $swimmingMembershipData = ActionApproval::with('operatorDetails')
                 ->where('maker_user_id', '!=', Auth::id())
+                ->where('membership_type_id', $swimmingMembershipId)
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            $clubMembershipData = ActionApproval::with('operatorDetails')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('membership_type_id', $clubMembershipId)
                 ->where('status', 'pending')
                 ->latest()
                 ->get();
             // dd($data);
 
+            $cards = Card::where('is_assigned', 0)
+                ->where('club_id', $clubId)
+                ->where('status', 'active')
+                ->get();
+
             return view('action_approval.list', compact(
                 'title',
                 'page_title',
-                'data',
+                'swimmingMembershipData',
+                'clubMembershipData',
+                'cards'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -143,32 +162,37 @@ class ActionApprovalController extends Controller
                         'status'      => $payload->swim_status
                     ]);
 
-
-                    $memberDetail->update([
-                        'details' => [
-                            'police_station' => $payload->swim_member_police_station,
-                            'age' => $payload->swim_age,
-                            'sex' => $payload->swim_sex,
-                            'height' => $payload->swim_height,
-                            'weight' => $payload->swim_weight,
-                            'pulse_rate' => $payload->swim_pulse_rate,
-                            'batch' => $payload->swim_batch,
-                            'vaccination' => $payload->swim_vaccination,
-                            'i_agree' => 1,
-                            // 'disease' => $payload['swim_disease'] ?? [],
-                            'guardian_name' => $payload->swim_guardian_name,
-                            'guardian_occupation' => $payload->swim_guardian_occupation,
-                            'guardian_image' => $payload->swim_guardian_image
-                        ]
-                    ]);
+                    $details = [
+                        'police_station' => $payload->swim_member_police_station,
+                        'age' => $payload->swim_age,
+                        'sex' => $payload->swim_sex,
+                        'height' => $payload->swim_height,
+                        'weight' => $payload->swim_weight,
+                        'pulse_rate' => $payload->swim_pulse_rate,
+                        'batch' => $payload->swim_batch,
+                        'vaccination' => $payload->swim_vaccination,
+                        'i_agree' => 1,
+                        'guardian_name' => $payload->swim_guardian_name,
+                        'guardian_occupation' => $payload->swim_guardian_occupation,
+                        'guardian_image' => $payload->swim_guardian_image,
+                    ];
 
                     if (isset($payload->swim_disease)) {
-                        $memberDetail->update([
-                            'details' => [
-                                'disease' => $payload->swim_disease,
-                            ]
-                        ]);
+                        $details['disease'] = $payload->swim_disease;
                     }
+
+
+                    $memberDetail->update([
+                        'details' => $details
+                    ]);
+
+                    // if (isset($payload->swim_disease)) {
+                    //     $memberDetail->update([
+                    //         'details' => [
+                    //             'disease' => $payload->swim_disease,
+                    //         ]
+                    //     ]);
+                    // }
                 }
 
 
@@ -246,7 +270,8 @@ class ActionApprovalController extends Controller
 
             $data->update([
                 'checker_user_id' => Auth::id(),
-                'status' => 'approved'
+                'status' => 'approved',
+                'approved_or_rejected_at' => now(),
             ]);
 
 
@@ -302,7 +327,7 @@ class ActionApprovalController extends Controller
 
 
                 $membershipPlanPurchase = MembershipPurchaseHistory::where('club_id', $clubId)
-                    ->where('member_id', $id)
+                    ->where('member_id', $memberId)
                     ->where('status', 'pending')
                     ->first();
 
@@ -337,7 +362,9 @@ class ActionApprovalController extends Controller
             }
 
             $data->update([
-                'status' => 'rejected'
+                'status' => 'rejected',
+                'checker_user_id' => Auth::id(),
+                'approved_or_rejected_at' => now(),
             ]);
 
 
@@ -349,6 +376,29 @@ class ActionApprovalController extends Controller
             ]);
         } catch (\Throwable $th) {
             return $th->getMessage();
+        }
+    }
+
+    public function view($id)
+    {
+        try {
+            $clubId = club_id();
+
+            $approval = ActionApproval::where('club_id', $clubId)
+                ->find($id);
+
+            $details = json_decode($approval->request_payload);
+
+            return response()->json([
+                'data' => $details,
+                'statusCode' => 200,
+                'message' => 'Approval Details Fetched successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
         }
     }
 }
