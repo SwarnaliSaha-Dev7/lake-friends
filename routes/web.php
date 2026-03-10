@@ -83,6 +83,8 @@ Route::middleware('auth')->group(function () {
         Route::get('view/{id}', 'view')->name('memberActionApproval.view');
     });
 
+    Route::get('/all-action-approval-list', [ActionApprovalController::class, 'allApprovalList'])->name('all-action-approval-list');
+
     Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');
 
     Route::get('get-member-details/{cardNo}', [DashboardController::class, 'fetchMemberDetailsByCard'])->name('getMemberDetails');

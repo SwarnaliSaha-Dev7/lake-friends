@@ -44,6 +44,7 @@
                     <li class=""><a href="javascript:void(0)">Liquor</a></li>
                 </ul>
             </li>
+            <li><a class="{{ request()->routeIs('all-action-approval-list') ? 'active' : '' }}" href="{{ route('all-action-approval-list') }}"><i class="fa-regular fa-regular fa-credit-card"></i> All Approval List</a></li>
 
         </ul>
     </nav>

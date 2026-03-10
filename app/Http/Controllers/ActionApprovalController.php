@@ -400,4 +400,48 @@ class ActionApprovalController extends Controller
             ]);
         }
     }
+
+    public function allApprovalList()
+    {
+        try {
+
+            $title = 'All Action Approval list';
+            $page_title = 'All Action Approval Member';
+
+            $clubId = club_id();
+
+            // $swimmingMembershipId = MembershipType::where('name', 'Swimming Membership')->value('id');
+
+            // $clubMembershipId = MembershipType::where('name', 'Club Membership')->value('id');
+
+            return $actionApprovalList = ActionApproval::with(['operatorDetails','entity'])
+                // ->where('maker_user_id', '!=', Auth::id())
+                // ->where('membership_type_id', $swimmingMembershipId)
+                // ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            // $clubMembershipData = ActionApproval::with('operatorDetails')
+            //     ->where('maker_user_id', '!=', Auth::id())
+            //     ->where('membership_type_id', $clubMembershipId)
+            //     ->where('status', 'pending')
+            //     ->latest()
+            //     ->get();
+            // dd($data);
+
+            // $cards = Card::where('club_id', $clubId)
+            //     ->where('status', 'active')
+            //     ->get();
+
+            return view('all-action-approval-list', compact(
+                'title',
+                'page_title',
+                'actionApprovalList',
+                // 'clubMembershipData',
+                // 'cards'
+            ));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
 }

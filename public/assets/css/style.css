@@ -248,7 +248,7 @@ body.modal-open .dashboard-wrapper {
     display: block;
 }
 
-.arw-nav {
+/* .arw-nav {
     position: absolute;
     right: 10px;
     top: 17px;
@@ -258,8 +258,25 @@ body.modal-open .dashboard-wrapper {
     background-repeat: no-repeat;
     background-position: center;
     cursor: pointer;
-}
+} */
 
+.arw-nav {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><g fill="%23a99fb3"><path d="m15.68 7.116l-6 5l.64.768l6-5z"/><path d="m16.32 7.884l-6 5c-.512.427-1.152-.341-.64-.768l6-5c.512-.427 1.152.341.64.768"/><path d="m3.68 7.884l6 5l.64-.768l-6-5z"/><path d="m4.32 7.116l6 5c.512.427-.128 1.195-.64.768l-6-5c-.512-.427.128-1.195.64-.768"/></g></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    background-size: 18px;
+    background-position: top 17px right 10px;
+}
+.nav-menu ul li:has(.arw-nav):hover>a{
+    background: var(--menu-Link-Bg-Color);
+    color: var(--theme-Blue-Color);
+}
 
 .nav-menu ul li a:hover,
 .nav-menu ul li.active a {
