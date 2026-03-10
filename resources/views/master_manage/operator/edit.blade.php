@@ -21,7 +21,7 @@
             <div class="col-md-6">
                 <div class="form-part mb-3">
                     <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                    <input type="email" class="form-control py-2 shadow-none" id="" name="email" placeholder="Email" value="{{ old('email', $operator->email) }}" required>
+                    <input type="email" class="form-control py-2 shadow-none" id="" name="email" placeholder="Email" value="{{ old('email', $operator->email) }}" required readonly>
                     @error('email')
                         <div class="text-danger">{{ $message }}</div>
                     @enderror

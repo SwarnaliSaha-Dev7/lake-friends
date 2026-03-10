@@ -160,7 +160,7 @@ class SwimmingMemberController extends Controller
             $member = Member::create([
                 'club_id'     => $clubId,
                 'member_code' => $memberCode,
-                'name'        => $request->swim_name,
+                'name'        => ucwords($request->swim_name),
                 'email'       => $request->swim_email,
                 'phone'       => $request->swim_phone,
                 'address'     => $request->swim_address,
@@ -192,7 +192,7 @@ class SwimmingMemberController extends Controller
                     'i_agree' => 1,
                     'disease' => $request->input('swim_disease', []),
                     'image' => $image_path,
-                    'guardian_name' => $request->swim_guardian_name,
+                    'guardian_name' => ucwords($request->swim_guardian_name),
                     'guardian_occupation' => $request->swim_guardian_occupation,
                     'guardian_image' => $guardian_image_path
                 ]

@@ -118,7 +118,7 @@ class ActionApprovalController extends Controller
                     }
 
                     $member->update([
-                        'name'        => $payload->name,
+                        'name'        => ucwords($payload->name),
                         'email'       => $payload->email,
                         'phone'       => $payload->phone,
                         'address'     => $payload->address,
@@ -131,7 +131,7 @@ class ActionApprovalController extends Controller
                         'details' => [
 
                             'blood_grp' => $payload->blood_grp,
-                            'spouse_name' => $payload->spouse_name,
+                            'spouse_name' => ucwords($payload->spouse_name),
                             'spouse_email' => $payload->spouse_email,
                             'spouse_phone' => $payload->spouse_phone,
                             'spouse_blood_grp' => $payload->spouse_blood_grp,
@@ -153,7 +153,7 @@ class ActionApprovalController extends Controller
                     }
 
                     $member->update([
-                        'name'        => $payload->swim_name,
+                        'name'        => ucwords($payload->swim_name),
                         'email'       => $payload->swim_email,
                         'phone'       => $payload->swim_phone,
                         'address'     => $payload->swim_address,
@@ -171,7 +171,7 @@ class ActionApprovalController extends Controller
                         'batch' => $payload->swim_batch,
                         'vaccination' => $payload->swim_vaccination,
                         'i_agree' => 1,
-                        'guardian_name' => $payload->swim_guardian_name,
+                        'guardian_name' => ucwords($payload->swim_guardian_name),
                         'guardian_occupation' => $payload->swim_guardian_occupation,
                         'guardian_image' => $payload->swim_guardian_image,
                     ];

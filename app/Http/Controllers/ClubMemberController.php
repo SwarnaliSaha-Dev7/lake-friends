@@ -137,7 +137,7 @@ class ClubMemberController extends Controller
             $member = Member::create([
                 'club_id'     => $clubId,
                 'member_code' => $memberCode,
-                'name'        => $request->name,
+                'name'        => ucwords($request->name),
                 'email'       => $request->email,
                 'phone'       => $request->phone,
                 'address'     => $request->address,
@@ -162,7 +162,7 @@ class ClubMemberController extends Controller
                 'membership_type_id' => $membershipTypeId,
                 'details' => [
                     'blood_grp' => $request->blood_grp,
-                    'spouse_name' => $request->spouse_name,
+                    'spouse_name' => ucwords($request->spouse_name),
                     'spouse_email' => $request->spouse_email,
                     'spouse_phone' => $request->spouse_phone,
                     'spouse_blood_grp' => $request->spouse_blood_grp,
