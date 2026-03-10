@@ -100,13 +100,8 @@ class ClubMemberController extends Controller
             );
 
             // Check if email already exists in same club
-            $exists = Member::where('email', $request->email)
+            $exists = Member::where('email', $request->swim_email)
                 ->where('club_id', $clubId)
-                ->where(function ($query) {
-                    $query->where('module', 'member_create')
-                        ->orWhere('module', 'member_edit');
-                })
-                ->where('status', 'pending')
                 ->exists();
 
             if ($exists) {
@@ -384,6 +379,11 @@ class ClubMemberController extends Controller
 
             $exists = ActionApproval::where('club_id', $clubId)
                 ->where('entity_id', $memberId)
+                ->where(function ($query) {
+                    $query->where('module', 'member_create')
+                        ->orWhere('module', 'member_edit');
+                })
+                ->where('status', 'pending')
                 ->exists();
 
             if ($exists) {
@@ -677,7 +677,7 @@ class ClubMemberController extends Controller
             $walletTransactionHistory = WalletTransaction::with([
                 'creator:id,name',
                 'payment:id,wallet_transaction_id,remarks'
-                ])
+            ])
                 ->where('member_id', $id)
                 ->orderBy('created_at', 'DESC')
                 ->get();
