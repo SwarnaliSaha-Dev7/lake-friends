@@ -311,6 +311,7 @@ class SwimmingMemberController extends Controller
     public function update(Request $request)
     {
         try {
+            // return $request;
 
             $clubId = club_id();
             $memberId = $request->member_id;
@@ -383,24 +384,83 @@ class SwimmingMemberController extends Controller
                 }
             }
 
+            //check if any update happend start
+            $membershipType = MembershipType::where('name', 'Swimming Membership')
+                ->where('club_id', $clubId)
+                ->first();
 
+            $membershipTypeId = $membershipType->id;
 
-            $approval = ActionApproval::create([
-                'club_id' => $clubId,
-                'module' => 'member_edit',
-                'action_type' => 'update',
-                'entity_model' => 'Member',
-                'entity_id' => $memberId,
-                'maker_user_id' => Auth::id(),
-                'request_payload' => json_encode($data)
+            $formDetail = MembershipFormDetail::where('member_id', $memberId)
+                                                ->where('membership_type_id', $membershipTypeId)
+                                                ->first();
+            $currentDetails = $formDetail->details ?? [];
+            unset($currentDetails['image'], $currentDetails['guardian_image']);
+
+            // normalize disease field
+            $currentDetails['disease'] = $currentDetails['disease'] ?? [];
+            sort($currentDetails['disease']);
+
+            // return $currentDetails;
+            $newDetails = [
+                'police_station' => $request->swim_member_police_station,
+                'age' => $request->swim_age,
+                'sex' => $request->swim_sex,
+                'height' => $request->swim_height,
+                'weight' => $request->swim_weight,
+                'pulse_rate' => $request->swim_pulse_rate,
+                'batch' => $request->swim_batch,
+                'vaccination' => $request->swim_vaccination,
+                'i_agree' => 1,
+                'disease' => $request->input('swim_disease', []),
+                'guardian_name' => $request->swim_guardian_name,
+                'guardian_occupation' => $request->swim_guardian_occupation
+            ];
+
+            // normalize disease field
+            sort($newDetails['disease']);
+
+            ksort($currentDetails);
+            ksort($newDetails);
+
+            // return [$currentDetails , $newDetails];
+
+            $detailsChanged = $currentDetails != $newDetails;
+
+            $member->fill([
+                'name' => $request->swim_name,
+                'email' => $request->swim_email,
+                'phone' => $request->swim_phone,
+                'address' => $request->swim_address,
+                'status' => $request->swim_status,
             ]);
 
-            $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+            if (
+                $member->isDirty() ||
+                $detailsChanged ||
+                $request->hasFile('swim_image') ||
+                $request->hasFile('swim_guardian_image') ||
+                $request->filled('swim_card_id')
+            ){
+                // return "changed";
+                $approval = ActionApproval::create([
+                    'club_id' => $clubId,
+                    'module' => 'member_edit',
+                    'action_type' => 'update',
+                    'entity_model' => 'Member',
+                    'entity_id' => $memberId,
+                    'maker_user_id' => Auth::id(),
+                    'request_payload' => json_encode($data)
+                ]);
+
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
 
 
-            Notification::send($approvers, new ApprovalNotification($approval));
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+            //check if any update happend end
 
 
             // $member->update([
