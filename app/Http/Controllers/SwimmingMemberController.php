@@ -559,6 +559,21 @@ class SwimmingMemberController extends Controller
 
                     Notification::send($approvers, new ApprovalNotification($approval));
                 }
+
+                DB::commit();
+                return response()->json([
+                    // 'data' => $data,
+                    'statusCode' => 200,
+                    'message' => 'Member updated successfully'
+                ]);
+            }
+            else{
+                DB::commit();
+                return response()->json([
+                    // 'data' => $data,
+                    'statusCode' => 200,
+                    'message' => 'No changes were made'
+                ]);
             }
             //check if any update happend end
 
@@ -617,14 +632,6 @@ class SwimmingMemberController extends Controller
             //     }
             // }
 
-
-            // DB::commit();
-
-            return response()->json([
-                // 'data' => $data,
-                'statusCode' => 200,
-                'message' => 'Member updated successfully'
-            ]);
         } catch (\Throwable $th) {
             DB::rollBack();
 
