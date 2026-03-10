@@ -77,9 +77,9 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('manage-approval-status')->controller(ActionApprovalController::class)->group(function () {
-        Route::get('list', 'index')->name('actionApproval.list');
-        Route::get('reject/{id}', 'reject')->name('actionApproval.reject');
-        Route::get('approve/{id}', 'approve')->name('actionApproval.approve');
+        Route::get('list', 'index')->name('memberActionApproval.list');
+        Route::get('reject/{id}', 'reject')->name('memberActionApproval.reject');
+        Route::get('approve/{id}', 'approve')->name('memberActionApproval.approve');
     });
 
     Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');

@@ -36,6 +36,15 @@
                 </ul>
             </li>
             <li><a href="javascript:void(0)"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
+
+            <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Approval</a>
+                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') ? 'display: block;' : 'display: none;' }}">
+                    <li class="{{ request()->routeIs('memberActionApproval.*') ? 'active' : '' }}"><a href="{{ route('memberActionApproval.list') }}">Members</a></li>
+                    <li class=""><a href="javascript:void(0)">Food Item</a></li>
+                    <li class=""><a href="javascript:void(0)">Liquor</a></li>
+                </ul>
+            </li>
+
         </ul>
     </nav>
     <div class="card-entry mt-5">

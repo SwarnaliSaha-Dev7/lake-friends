@@ -157,7 +157,7 @@
             $(this).prop('disabled', true).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
 
             $.ajax({
-                url: '{{route("actionApproval.reject", ":id")}}'.replace(':id', id),
+                url: '{{route("memberActionApproval.reject", ":id")}}'.replace(':id', id),
                 type: 'GET',
                 success: function(response){
                     console.log(response)
@@ -191,7 +191,7 @@
             $(this).prop('disabled', true).replaceWith('<span class="spinner-border spinner-border-sm text-success"></span>');
 
             $.ajax({
-                url: '{{route("actionApproval.approve", ":id")}}'.replace(':id', id),
+                url: '{{route("memberActionApproval.approve", ":id")}}'.replace(':id', id),
                 type: 'GET',
                 success: function(response){
                     console.log(response)

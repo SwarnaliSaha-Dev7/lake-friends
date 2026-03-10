@@ -60,4 +60,11 @@ class Member extends Model
     {
         return $this->hasOne(Wallet::class, 'member_id');
     }
+
+    public function latestApproval(){
+        return $this->hasOne(ActionApproval::class, 'entity_id')
+                    ->where('club_id', auth()->user()->club_id)
+                    ->whereIn('module', ['member_create', 'member_edit'])
+                    ->latestOfMany();
+    }
 }
