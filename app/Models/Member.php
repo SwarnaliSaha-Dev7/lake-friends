@@ -66,6 +66,6 @@ class Member extends Model
                     ->where('club_id', auth()->user()->club_id)
                     ->whereIn('module', ['member_create', 'member_edit'])
                     ->where('status', 'approved')
-                    ->latestOfMany();
+                    ->orderByDesc('created_at');
     }
 }
