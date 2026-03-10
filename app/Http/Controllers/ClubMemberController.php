@@ -375,7 +375,7 @@ class ClubMemberController extends Controller
             $clubId = club_id();
             $memberId = $request->member_id;
 
-            $memberId = $request->member_id;
+            // $memberId = $request->member_id;
 
             $exists = ActionApproval::where('club_id', $clubId)
                 ->where('entity_id', $memberId)

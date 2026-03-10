@@ -43,8 +43,7 @@ class ActionApprovalController extends Controller
                 ->get();
             // dd($data);
 
-            $cards = Card::where('is_assigned', 0)
-                ->where('club_id', $clubId)
+            $cards = Card::where('club_id', $clubId)
                 ->where('status', 'active')
                 ->get();
 

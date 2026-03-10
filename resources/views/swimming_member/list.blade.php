@@ -773,14 +773,14 @@
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="taxable_amount" name="swim_taxable_amt"
+                                            <input type="number" class="form-control py-2 shadow-none" id="taxable_amount" name="swim_taxable_amt"
                                                 placeholder="Taxable Amt. (Min 500)" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="gstPercentage" name="swim_gst_percent"
+                                            <input type="number" class="form-control py-2 shadow-none" id="gstPercentage" name="swim_gst_percent"
                                                 placeholder="GST%" value="{{$gstPercentage}}" required>
                                         </div>
                                     </div>
