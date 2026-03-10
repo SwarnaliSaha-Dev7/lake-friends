@@ -61,10 +61,12 @@ class ApprovalNotification extends Notification
 
             case 'member_create':
                 $message = "New member created and waiting for approval";
+                $notificationType = "member_create";
                 break;
 
             case 'member_edit':
                 $message = "A member is edited and waiting for approval";
+                $notificationType = "member_edit";
                 break;
 
                 // case 'user':
@@ -79,6 +81,7 @@ class ApprovalNotification extends Notification
         return [
             'title' => 'Approval Request',
             'message' => $message,
+            'notification_type' => $notificationType
         ];
     }
 }

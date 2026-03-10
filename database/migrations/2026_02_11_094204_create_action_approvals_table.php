@@ -25,14 +25,15 @@ return new class extends Migration
                 'stock_adjustment'
             ])->nullable();
 
-            $table->enum('action_type', ['create','update','delete'])->nullable();
-            $table->string('entity_model',255)->nullable();
+            $table->enum('action_type', ['create', 'update', 'delete'])->nullable();
+            $table->string('entity_model', 255)->nullable();
             $table->unsignedBigInteger('entity_id')->nullable();
+            $table->foreignId('membership_type_id')->constrained('membership_types')->cascadeOnDelete()->nullable();
             $table->unsignedBigInteger('maker_user_id')->nullable();
             $table->unsignedBigInteger('checker_user_id')->nullable();
-            $table->enum('status', ['pending','approved','rejected'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->json('request_payload')->nullable();
-            $table->timestamp('approved_at')->nullable();
+            $table->timestamp('approved_or_rejected_at')->nullable();
             $table->longText('rejection_reason')->nullable();
             $table->timestamps();
         });

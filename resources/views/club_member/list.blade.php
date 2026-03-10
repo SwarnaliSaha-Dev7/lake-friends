@@ -317,15 +317,17 @@
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Taxable Amt.</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="taxable_amount" name="taxable_amount"
-                                                placeholder="Taxable Amt." readonly>
+                                            <input type="number" class="form-control py-2 shadow-none" id="taxable_amount" name="taxable_amount"
+                                                placeholder="Taxable Amt.">
+                                            <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>GST%</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none" id="gstPercentage" name="gstPercentage"
-                                                placeholder="GST%" value="{{ $gstPercentage }}" readonly>
+                                            <input type="number" class="form-control py-2 shadow-none" id="gstPercentage" name="gstPercentage"
+                                                placeholder="GST%" value="{{ $gstPercentage }}">
+                                            <span class="error-div text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-md-6">
@@ -838,7 +840,7 @@
         </div>
     </div>
 
-<!-- wallet Modal -->
+    <!-- wallet Modal -->
     <div class="modal fade" id="walletrecharge" tabindex="-1" aria-labelledby="walletrechargeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -1119,6 +1121,25 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
+        function calculateGST() {
+            // Get values from inputs
+            let taxable = parseFloat($('#taxable_amount').val()) || 0;
+            let gstPercent = parseFloat($('#gstPercentage').val()) || 0;
+
+            // Calculate GST Amount
+            let gstAmount = (taxable * gstPercent) / 100;
+
+            // Calculate Receipt Amount (Taxable + GST)
+            let receiptAmount = taxable + gstAmount;
+
+            // Update the readonly inputs
+            $('#gstAmt').val(gstAmount.toFixed(2));
+            $('#receiptAmt').val(receiptAmount.toFixed(2));
+        }
+
+        // Bind calculation on keyup/change for Taxable Amt and GST%
+        $('#taxable_amount, #gstPercentage').on('keyup change', calculateGST);
+
         $('.plan-type').on('change', function () {
 
             let planTypeId = $(this).val();
@@ -1216,6 +1237,31 @@
                 }
 
             });
+
+            let taxableAmt = $('#taxable_amount').val();
+            let errorDiv = $(this).next('.error-div');
+
+            if (taxableAmt === '' || isNaN(taxableAmt) || parseFloat(taxableAmt) <= 0) {
+                errorDiv.text('Please enter a valid taxable amount.');
+                $('#taxable_amount').addClass('is-invalid');
+                isValid = false;
+            } else {
+                errorDiv.text('');
+                $('#taxable_amount').removeClass('is-invalid');
+            }
+
+            let gstPercentage = $('#gstPercentage').val();
+
+            if (gstPercentage === '' || isNaN(gstPercentage) || parseFloat(gstPercentage) <= 0) {
+                errorDiv.text('Please enter a valid gst percentage.');
+                $('#gstPercentage').addClass('is-invalid');
+                isValid = false;
+            } else {
+                errorDiv.text('');
+                $('#gstPercentage').removeClass('is-invalid');
+            }
+
+
 
             if (!isValid) {
                 return isValid;
@@ -1338,6 +1384,9 @@
                             let today = new Date();
                             let expiryDate = new Date(plan.expiry_date);
                             let isActive = expiryDate >= today;
+                            if (plan.status == 'cancelled') {
+                                isActive = 0;
+                            }
 
                             let row = `
                                 <tr>

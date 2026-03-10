@@ -76,10 +76,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
     });
 
-    Route::prefix('manage-approval-status')->controller(ActionApprovalController::class)->group(function () {
-        Route::get('list', 'index')->name('actionApproval.list');
-        Route::get('reject/{id}', 'reject')->name('actionApproval.reject');
-        Route::get('approve/{id}', 'approve')->name('actionApproval.approve');
+    Route::prefix('manage-member-approval-status')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list', 'index')->name('memberActionApproval.list');
+        Route::get('reject/{id}', 'reject')->name('memberActionApproval.reject');
+        Route::get('approve/{id}', 'approve')->name('memberActionApproval.approve');
+        Route::get('view/{id}', 'view')->name('memberActionApproval.view');
     });
 
     Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');

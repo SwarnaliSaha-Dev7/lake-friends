@@ -85,7 +85,7 @@
                 </a>
             </div>
             <div class="col-xl-3 col-md-6 my-xl-0 my-2">
-                <a href="{{ route('actionApproval.list')}}"
+                <a href="{{ route('memberActionApproval.list')}}"
                     class="action-box card bg-white border-0 d-flex align-items-center justify-content-between flex-row-reverse h-100">
                     <div class="card-header bg-transparent border-0">
                         <i class="fa-regular fa-circle-check fs-4 text-success"></i>

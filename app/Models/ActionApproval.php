@@ -12,12 +12,13 @@ class ActionApproval extends Model
         'module',
         'action_type',
         'entity_model',
+        'membership_type_id',
         'entity_id',
         'maker_user_id',
         'checker_user_id',
         'status',
         'request_payload',
-        'approved_at',
+        'approved_or_rejected_at',
         'rejection_reason'
     ];
 

@@ -45,6 +45,7 @@ class ClubMemberController extends Controller
                 ->get();
 
             $gstPercentage = GstRate::where('club_id', Auth::user()->club_id)
+                ->where('gst_type', 'plan_purchase')
                 ->value('gst_percentage') ?? 0;
 
             $bankList = Bank::where('club_id', $clubId)->get();
@@ -92,9 +93,19 @@ class ClubMemberController extends Controller
 
             $clubId = club_id();
 
+            $requestData = $request->except(
+                'image',
+                'spouse_image'
+            );
+
             // Check if email already exists in same club
             $exists = Member::where('email', $request->email)
                 ->where('club_id', $clubId)
+                ->where(function ($query) {
+                    $query->where('module', 'member_create')
+                        ->orWhere('module', 'member_edit');
+                })
+                ->where('status', 'pending')
                 ->exists();
 
             if ($exists) {
@@ -124,6 +135,7 @@ class ClubMemberController extends Controller
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
                 $image_path = 'storage/' . $path;
+                $requestData['image'] = $image_path;
             }
 
             $member = Member::create([
@@ -145,6 +157,7 @@ class ClubMemberController extends Controller
                 $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs($dest_path, $filename, 'public');
                 $spouse_image_path = 'storage/' . $path;
+                $requestData['spouse_image'] = $spouse_image_path;
             }
 
 
@@ -182,13 +195,16 @@ class ClubMemberController extends Controller
                 $expiryDate = $startDate->copy()->addMonths($plan->duration_months);
             }
 
-            $fee = $plan->price;
+            // $fee = $plan->price;
+            $fee = $request->taxable_amount;
             $fineAmount = 0;
             //$netAmount = $fee + $fineAmount;
 
-            $gstPercentage = GstRate::where('club_id', $clubId)
-                ->where('gst_type', 'plan_purchase')
-                ->value('gst_percentage') ?? 0;
+            // $gstPercentage = GstRate::where('club_id', $clubId)
+            //     ->where('gst_type', 'plan_purchase')
+            //     ->value('gst_percentage') ?? 0;
+
+            $gstPercentage = $request->gstPercentage;
 
 
             $gst_amt = ($fee * $gstPercentage) / 100;
@@ -252,17 +268,37 @@ class ClubMemberController extends Controller
                 'module' => 'member_create',
                 'action_type' => 'create',
                 'entity_model' => 'Member',
+                'membership_type_id' => $membershipTypeId,
                 'entity_id' => $member->id,
                 'maker_user_id' => Auth::id(),
-                'request_payload' => json_encode($request->all())
+                'request_payload' => json_encode($requestData)
             ]);
 
-            $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+            if (Auth::user()->hasRole('admin')) {
+
+                $member->update([
+                    'status' => 'active'
+                ]);
+
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+
+                $purchase_history->update([
+                    'status' => 'active'
+                ]);
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
 
 
-            Notification::send($approvers, new ApprovalNotification($approval));
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
 
             DB::commit();
 
@@ -341,6 +377,19 @@ class ClubMemberController extends Controller
 
             $clubId = club_id();
             $memberId = $request->member_id;
+
+            $memberId = $request->member_id;
+
+            $exists = ActionApproval::where('club_id', $clubId)
+                ->where('entity_id', $memberId)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'An edit request is already pending.'
+                ]);
+            }
             // $exists = Member::where('email', $request->email)
             //     ->where('club_id', $clubId)
             //     ->where('id', '!=', $memberId)
@@ -415,13 +464,13 @@ class ClubMemberController extends Controller
             unset($currentDetails['image'], $currentDetails['spouse_image']);
 
             $newDetails = [
-                            'blood_grp' => $request->blood_grp,
-                            'spouse_name' => $request->spouse_name,
-                            'spouse_email' => $request->spouse_email,
-                            'spouse_phone' => $request->spouse_phone,
-                            'spouse_blood_grp' => $request->spouse_blood_grp,
-                            'spouse_address' => $request->spouse_address,
-                        ];
+                'blood_grp' => $request->blood_grp,
+                'spouse_name' => $request->spouse_name,
+                'spouse_email' => $request->spouse_email,
+                'spouse_phone' => $request->spouse_phone,
+                'spouse_blood_grp' => $request->spouse_blood_grp,
+                'spouse_address' => $request->spouse_address,
+            ];
 
             ksort($currentDetails);
             ksort($newDetails);
@@ -442,24 +491,84 @@ class ClubMemberController extends Controller
                 $request->hasFile('image') ||
                 $request->hasFile('spouse_image') ||
                 $request->filled('card_id')
-            ){
+            ) {
                 // return "changed";
                 $approval = ActionApproval::create([
                     'club_id' => $clubId,
                     'module' => 'member_edit',
                     'action_type' => 'update',
                     'entity_model' => 'Member',
+                    'membership_type_id' => $memberDetail->membership_type_id,
                     'entity_id' => $memberId,
                     'maker_user_id' => Auth::id(),
                     'request_payload' => json_encode($data)
                 ]);
 
-                $approvers = User::role(['operator', 'admin'])
-                    ->where('id', '!=', Auth::id())
-                    ->get();
+                if (Auth::user()->hasRole('admin')) {
+                    $approval->update([
+                        'checker_user_id' => Auth::id(),
+                        'approved_or_rejected_at' => now(),
+                        'status' => 'approved'
+                    ]);
+
+                    $member->update([
+                        'name'        => $request->name,
+                        'email'       => $request->email,
+                        'phone'       => $request->phone,
+                        'address'     => $request->address,
+                        'image'       => $image_path,
+                        // 'status'      => 'active'
+                    ]);
 
 
-                Notification::send($approvers, new ApprovalNotification($approval));
+                    $memberDetail->update([
+                        'details' => [
+                            'blood_grp' => $request->blood_grp,
+                            'spouse_name' => $request->spouse_name,
+                            'spouse_email' => $request->spouse_email,
+                            'spouse_phone' => $request->spouse_phone,
+                            'spouse_blood_grp' => $request->spouse_blood_grp,
+                            'spouse_address' => $request->spouse_address,
+                            'spouse_image' => $spouse_image_path,
+                        ]
+                    ]);
+
+
+
+
+                    $card_no = $request->card_id;
+
+                    if ($card_no) {
+                        $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
+
+                        $currentCard = Card::find($currentCardMapping->card_id);
+                        if ($currentCard) {
+                            $currentCard->update([
+                                'is_assigned' => 0
+                            ]);
+                        }
+
+                        $newCard = Card::find($card_no);
+                        if ($newCard) {
+                            $newCard->update([
+                                'is_assigned' => 1
+                            ]);
+
+                            $currentCardMapping->update([
+                                'card_id' => $card_no
+                            ]);
+                        }
+                    }
+                }
+
+                if (Auth::user()->hasRole('operator')) {
+                    $approvers = User::role(['operator', 'admin'])
+                        ->where('id', '!=', Auth::id())
+                        ->get();
+
+
+                    Notification::send($approvers, new ApprovalNotification($approval));
+                }
             }
             //check if any update happend end
 
