@@ -64,7 +64,8 @@ class ClubMemberController extends Controller
                     'memberDetails',
                     'cardDetails',
                     'purchaseHistory',
-                    'walletDetails'
+                    'walletDetails',
+                    'latestApproval.checker:id,name'
                 ])
                 ->whereHas('memberDetails', function ($query) use ($membershipTypeId) {
                     $query->where('membership_type_id', $membershipTypeId);
@@ -354,7 +355,8 @@ class ClubMemberController extends Controller
                     'purchaseHistory.membershipPlanType',
                     'clubDetails',
                     'walletDetails',
-                    'paymentHistory'
+                    'paymentHistory',
+                    'latestApproval.checker:id,name'
                 ])
                 ->find($id);
 
@@ -672,7 +674,11 @@ class ClubMemberController extends Controller
             $walletBalance = Wallet::where('member_id', $id)
                 ->value('current_balance');
 
-            $walletTransactionHistory = WalletTransaction::where('member_id', $id)
+            $walletTransactionHistory = WalletTransaction::with([
+                'creator:id,name',
+                'payment:id,wallet_transaction_id,remarks'
+                ])
+                ->where('member_id', $id)
                 ->orderBy('created_at', 'DESC')
                 ->get();
 
@@ -726,7 +732,8 @@ class ClubMemberController extends Controller
                 'member_id' => $memberId,
                 'amount' => $rechargeAmount,
                 'direction' => 'credit',
-                'txn_type' => $purpose
+                'txn_type' => $purpose,
+                'created_by' => auth()->id(),
             ]);
 
             $paymentHistory = PaymentHistory::create([

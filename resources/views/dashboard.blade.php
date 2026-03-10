@@ -91,7 +91,7 @@
                         <i class="fa-regular fa-circle-check fs-4 text-success"></i>
                     </div>
                     <div class="card-body">
-                        <p class="card-text">Approval</p>
+                        <p class="card-text">Member Approval</p>
                     </div>
                 </a>
             </div>

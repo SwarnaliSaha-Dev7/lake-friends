@@ -30,4 +30,9 @@ class ActionApproval extends Model
     {
         return $this->belongsTo(User::class, 'maker_user_id');
     }
+
+    public function checker()
+    {
+        return $this->belongsTo(User::class, 'checker_user_id');
+    }
 }

@@ -50,7 +50,9 @@
                                     <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
                                     <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
                                     <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
-                                    <td class="text-nowrap">Null</td>
+                                    <td class="text-nowrap">
+                                        {{ ucwords($member->latestApproval?->checker?->name ?? '-') }}
+                                    </td>
                                     @if ($member->status == 'active')
                                         <td class="text-success text-nowrap">Active</td>
                                     @elseif ($member->status == 'pending')
@@ -1164,6 +1166,12 @@
                                 </td>
                                 <td class="pe-3"><small id="memberWallet">₹2,450.00</small></td>
                             </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Approved By:</small>
+                                </td>
+                                <td class="pe-3"><small id="memberApprovedBy">₹2,450.00</small></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1532,6 +1540,33 @@
             </div>
         </div>
     </div>
+
+    <!-- Wallet Recharge Confirm Modal -->
+    <div class="modal fade" id="walletRechargeConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-3">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Confirm Wallet Recharge</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to recharge this wallet?</p>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-success" id="confirmRechargeBtn">
+                        Yes, Recharge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @section('customJS')
@@ -1770,6 +1805,9 @@
                         $('#memberClubName').text(response.data.club_details.name)
                         $('#memberCode').text(response.data.member_code)
                         $('#memberCardNo').text(response.data.card_details?.card_no || '-')
+
+                        $('#memberApprovedBy').text(response.data.latest_approval?.checker?.name ?? '-');
+
                         // $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
                         // let expiryDate = response.data.purchase_history[0].expiry_date;
                         // let formatted = new Date(expiryDate).toLocaleDateString('en-IN'); // d/m/y format
@@ -1805,12 +1843,12 @@
         });
 
         $(document).on('click', '.memberDeleteBtn', function() {
-        // $('.memberDeleteBtn').on('click', function(){
+            // $('.memberDeleteBtn').on('click', function(){
             $('#confirmDeleteBtn').data('id', $(this).data('id'));
         });
 
         $(document).on('click', '#confirmDeleteBtn', function() {
-        // $('#confirmDeleteBtn').on('click', function(){
+            // $('#confirmDeleteBtn').on('click', function(){
             let memberId = $(this).data('id');
             // let originalBtn = $(this).prop('outerHTML'); // save original button
             // $(this).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
@@ -1985,14 +2023,23 @@
                                 let date = new Date(transaction.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
                                 let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
                                 let sign = direction == 'credit' ? '+' : '-';
-                                let label = direction == 'credit' ? 'Added' : 'Used';
+                                let label = direction == 'credit' ? 'Added By' : 'Used';
+                                let maker = transaction.creator?.name ?? '-';
+                                let remarks = transaction.payment?.remarks ?? '';
 
                                 let row = `
                                     <tr>
                                         <td class="border-secondary bg-transparent align-middle lh-sm">
-                                            <small class="fw-semibold">${label}</small> <br>
-                                            <small class="text-black-50">${date}</small>
+                                            <small class="fw-semibold">${label}:</small>
+                                            <small class="text-black-50">${maker}</small>
+
+                                            ${remarks ? `<br>
+                                            <small class="fw-semibold">Remarks:</small>
+                                            <small class="text-black-50">${remarks}</small>` : ''}
+
                                         </td>
+
+
                                         <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
                                             ${sign}₹${amount}
                                         </td>
@@ -2023,70 +2070,54 @@
 
         $('#walletRechargeForm').on('submit', function (e) {
             e.preventDefault();
-            // $('#rechargeSubmitBtn').prop('disabled', true);
+
+            $('#walletRechargeConfirmModal').modal('show');
+        });
+
+        $(document).on('click', '#confirmRechargeBtn', function () {
+
+            $('#walletRechargeConfirmModal').modal('hide');
+
             $('#rechargeSubmitBtn')
-            .prop('disabled', true)
-            .html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
-
-            // let isValid = true;
-            // let balance = $('#amountInput').val();
-            // let errorDiv = $(this).next('.error-div');
-
-
-
-
-
-            // if (!isValid) {
-            //     return isValid;
-            // }
+                .prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
 
             let walletRechargeMemberformData = new FormData($("#walletRechargeForm")[0]);
+
             $.ajax({
                 url: "{{ route('swimming-member.recharge-wallet-balance') }}",
                 type: "POST",
                 data: walletRechargeMemberformData,
                 processData: false,
                 contentType: false,
-                // data:{
-                // "_token": "{{ csrf_token() }}",
-                // "balance": balance,
-                // "user_id": userId
-                // },
+
                 success: function(response) {
+
                     if (response.statusCode == 200) {
+
                         toastr.success(response.message);
-                        $('#rechargeSubmitBtn').hide();
-                        // setTimeout(() => location.reload(), 1500);
+
                         setTimeout(() => {
                             window.location.href = "{{ route('swimming-member.list') }}";
                         }, 1500);
 
-
                     } else {
-                        if(response.message){
-                            toastr.error(response.message);
-                            $('#rechargeSubmitBtn')
+
+                        toastr.error(response.message ?? "Something went wrong");
+
+                        $('#rechargeSubmitBtn')
                             .prop('disabled', false)
                             .html('Recharge Wallet');
-                        }
-                        else{
-                            toastr.error("Something went wrong, Please try again.");
-                            $('#rechargeSubmitBtn')
-                            .prop('disabled', false)
-                            .html('Recharge Wallet');
-                            // console.log(response)
-                        }
                     }
                 },
-                error: function(xhr, status, error) {
+
+                error: function() {
+
                     toastr.error("Something went wrong, Please try again.");
 
-                    let responseError = xhr.responseJSON?.error
-                        ?? "Something went wrong, Please try again.";
-                    console.error(responseError);
                     $('#rechargeSubmitBtn')
-                    .prop('disabled', false)
-                    .html('Recharge Wallet');
+                        .prop('disabled', false)
+                        .html('Recharge Wallet');
                 }
             });
 
