@@ -64,13 +64,15 @@
                                         <div class="row">
                                             <div class="col-12">
                                                 <div class="form-part mb-3">
-                                                    <input type="email" class="form-control py-2 shadow-none"
+                                                    <input class="form-control py-2 shadow-none"
                                                         id="loginInputEmail2" placeholder="Enter your email">
+                                                        <span id="sendOtpEmailError" class="text-danger small"></span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="submit" class="btn btn-primary w-100 mt-4 mb-1 fw-semibold py-2"
-                                            data-bs-toggle="modal" data-bs-target="#otpModal">Send
+                                        {{-- <button type="submit" id="sendOtpBtn" class="btn btn-primary w-100 mt-4 mb-1 fw-semibold py-2">Send
+                                            OTP</button> --}}
+                                        <button type="button" id="sendOtpBtn" class="btn btn-primary w-100 mt-4 mb-1 fw-semibold py-2">Send
                                             OTP</button>
                                     </div>
                                     <!-- step 2 end -->
@@ -126,7 +128,7 @@
                         <div class="form-part mb-3">
                             <input type="text" class="form-control py-2 shadow-none" id="loginInputotp"
                                 placeholder="Enter your OTP" required>
-                            <button type="submit" class="btn btn-primary mt-4 fw-semibold py-2">Send</button>
+                            <button type="submit" id="verifyOTP" class="btn btn-primary mt-4 fw-semibold py-2">Send</button>
                         </div>
                     </form>
                 </div>
@@ -136,4 +138,100 @@
 @endsection
 
 @section('customJS')
+<script>
+    $(document).ready(function () {
+
+        $('#sendOtpBtn').click(function () {
+
+            let btn = $(this); // button reference
+            let email = $('#loginInputEmail2').val().trim();
+            let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            $('#sendOtpEmailError').text(''); // clear old error
+
+            if (email === '') {
+                $('#sendOtpEmailError').text('Email is required');
+                return;
+            }
+
+            if (!emailPattern.test(email)) {
+                $('#sendOtpEmailError').text('Enter a valid email');
+                return;
+            }
+
+            //disable button
+            btn.prop('disabled', true).text('Sending...');
+
+            $.ajax({
+                url: "{{ route('sendOTP') }}",
+                type: "POST",
+                    data:{
+                    "_token": "{{ csrf_token() }}",
+                    "email": email
+                    },
+                success: function(response) {
+                    // console.log(response);
+                    if (response.statusCode == 200) {
+                        toastr.success("OTP sent successfully.");
+                        $('#otpModal').modal('show');
+
+                        // setTimeout(function() {
+                        //     location.reload();
+                        // }, 1500);
+                    } else {
+                        // toastr.error("Failed to send OTP, Please try again.");
+                        toastr.error(response.error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Handle errors
+                    toastr.error("Failed to send OTP, Please try again.");
+                    // console.error(xhr.responseText);
+                },
+                complete: function () {
+                    //enable again (runs for success + error)
+                    btn.prop('disabled', false).text('Send OTP');
+                }
+            });
+        });
+
+        $('#verifyOTP').on('click', function (e) {
+            e.preventDefault();
+            let otp = $('#loginInputotp').val();
+            let email = $('#loginInputEmail2').val().trim();
+
+            if (otp === '') {
+                toastr.error('Please enter the complete OTP.')
+            }
+            else{
+                $.ajax({
+                    url: "{{ route('verifyOTP') }}",
+                    type: "POST",
+                    data:{
+                        "_token": "{{ csrf_token() }}",
+                        "email": email,
+                        "otp": otp
+                        },
+                    success: function(response) {
+                        // console.log(response);
+                        if (response.statusCode == 200) {
+                            toastr.success("OTP verified successfully.");
+                        }
+                        else if ((response.statusCode == 500) && response.message){
+                            toastr.error(response.message);
+                        }
+                        else {
+                            toastr.error("Something went wrong, Please try again.");
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // Handle errors
+                        console.error(xhr.responseText);
+                    }
+                });
+            }
+        });
+
+    });
+</script>
 @endsection

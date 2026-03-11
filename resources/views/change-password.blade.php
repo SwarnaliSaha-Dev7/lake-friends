@@ -1,42 +1,75 @@
-<x-app-layout>
+@extends('base.app')
 
-<h2>Change Password</h2>
+@section('title', 'Change Password')
+{{-- @section('page_title', $page_title) --}}
 
-@if (session('status'))
-    <div style="color:green;">
-        {{ session('status') }}
-    </div>
-@endif
+@section('content')
+    <form action="{{ route('password.update') }}" method="POST">
+        @csrf
+        @method('PUT')
 
-{{-- Show Validation Errors --}}
-@if ($errors->any())
-    <div style="color:red;">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+        <div class="row">
 
-<form method="POST" action="{{ route('password.update') }}">
-    @csrf
-    @method('PUT')
+            {{-- Current Password --}}
+            <div class="col-md-8">
+                <div class="form-part mb-3">
+                    <label class="form-label w-100 mb-1">
+                        <small>Current Password</small>
+                    </label>
+                    <input type="password"
+                        class="form-control py-2 shadow-none"
+                        name="current_password"
+                        placeholder="Current Password"
+                        required>
 
-    <input type="password" name="current_password" placeholder="Current Password" autocomplete="current-password" required>
-    <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
-    <br><br>
+                    @error('current_password', 'updatePassword')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+            </div>
+        </div>
 
-    <input type="password" name="password" placeholder="New Password" autocomplete="new-password" required>
-    <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
-    <br><br>
+        <div class="row">
+            {{-- New Password --}}
+            <div class="col-md-8">
+                <div class="form-part mb-3">
+                    <label class="form-label w-100 mb-1">
+                        <small>New Password</small>
+                    </label>
+                    <input type="password"
+                        class="form-control py-2 shadow-none"
+                        name="password"
+                        placeholder="New Password"
+                        required>
+                    @error('password', 'updatePassword')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+            </div>
+        </div>
 
-    <input type="password" name="password_confirmation" placeholder="Confirm Password" autocomplete="new-password" required>
-    <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
-    <br><br>
+        <div class="row">
+            {{-- Confirm Password --}}
+            <div class="col-md-8">
+                <div class="form-part mb-3">
+                    <label class="form-label w-100 mb-1">
+                        <small>Confirm Password</small>
+                    </label>
+                    <input type="password"
+                        class="form-control py-2 shadow-none"
+                        name="password_confirmation"
+                        placeholder="Confirm Password"
+                        required>
+                    @error('password_confirmation', 'updatePassword')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+            </div>
+        </div>
 
-    <button type="submit">Update Password</button>
+        <button type="submit" class="btn btn-primary fw-semibold">Submit</button>
+    </form>
+@endsection
 
-</form>
-
-</x-app-layout>
+@section('customJS')
+@endsection

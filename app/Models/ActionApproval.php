@@ -40,4 +40,9 @@ class ActionApproval extends Model
     {
         return $this->morphTo(null, 'entity_model', 'entity_id');
     }
+
+    public function membershipType(): BelongsTo
+    {
+        return $this->belongsTo(MembershipType::class);
+    }
 }

@@ -118,16 +118,37 @@ class SwimmingMemberController extends Controller
         try {
 
             $clubId = club_id();
+
+            $membershipType = MembershipType::where('name', 'Swimming Membership')
+            ->where('club_id', $clubId)
+            ->first();
+
             $exists = Member::where('email', $request->swim_email)
                 ->where('club_id', $clubId)
-                ->exists();
+                // ->exists();
+                ->first();
 
             if ($exists) {
-                return response()->json([
-                    'statusCode' => 409,
-                    'message' => 'Email already exists'
-                ]);
+
+                //check if this member had this membership Type before
+                $alreadyTaken = MembershipFormDetail::where('member_id', $exists->id)
+                                                    ->where('membership_type_id1', $membershipType->id)
+                                                    ->first();
+
+                if ($alreadyTaken) {
+                    return response()->json([
+                        'statusCode' => 409,
+                        'message' => 'Member already registered with this membership type'
+                    ]);
+                }
+
+                // return response()->json([
+                //     'statusCode' => 409,
+                //     'message' => 'Email already exists'
+                // ]);
             }
+
+
 
             DB::beginTransaction();
 
@@ -140,9 +161,7 @@ class SwimmingMemberController extends Controller
 
 
 
-            $membershipType = MembershipType::where('name', 'Swimming Membership')
-                ->where('club_id', $clubId)
-                ->first();
+
 
             $membershipTypeId = $membershipType->id;
 

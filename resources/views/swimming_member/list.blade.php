@@ -68,9 +68,9 @@
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn membershipPlanBtn"
                                             title="Membership Plan" data-id="{{$member->id}}"><small><i
                                                     class="fa-sharp fa-clock-rotate-left"></i></small></button>
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
+                                        {{-- <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
                                             title="Wallet Recharge" data-id="{{$member->id}}"><small><i
-                                                    class="fa-solid fa-wallet"></i></small></button>
+                                                    class="fa-solid fa-wallet"></i></small></button> --}}
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
                                             data-bs-toggle="modal" data-bs-target="#planrenewal"
                                             title="Plan Renewal" data-id="{{$member->id}}"><small><i

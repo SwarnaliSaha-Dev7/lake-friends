@@ -410,35 +410,15 @@ class ActionApprovalController extends Controller
 
             $clubId = club_id();
 
-            // $swimmingMembershipId = MembershipType::where('name', 'Swimming Membership')->value('id');
-
-            // $clubMembershipId = MembershipType::where('name', 'Club Membership')->value('id');
-
-            return $actionApprovalList = ActionApproval::with(['operatorDetails','entity'])
-                // ->where('maker_user_id', '!=', Auth::id())
-                // ->where('membership_type_id', $swimmingMembershipId)
-                // ->where('status', 'pending')
-                ->latest()
+            $actionApprovalList = ActionApproval::with(['operatorDetails','entity','membershipType:id,name'])
+                ->where('club_id', $clubId)
+                ->latest('id')
                 ->get();
-
-            // $clubMembershipData = ActionApproval::with('operatorDetails')
-            //     ->where('maker_user_id', '!=', Auth::id())
-            //     ->where('membership_type_id', $clubMembershipId)
-            //     ->where('status', 'pending')
-            //     ->latest()
-            //     ->get();
-            // dd($data);
-
-            // $cards = Card::where('club_id', $clubId)
-            //     ->where('status', 'active')
-            //     ->get();
 
             return view('all-action-approval-list', compact(
                 'title',
                 'page_title',
                 'actionApprovalList',
-                // 'clubMembershipData',
-                // 'cards'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();

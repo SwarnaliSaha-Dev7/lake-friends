@@ -6,6 +6,8 @@
     <nav class="nav-menu">
         <ul class="list-unstyled">
             <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><a href="{{ route('dashboard') }}"><i class="fa-solid fa-table-cells"></i> Dashboard</a></li>
+
+            @role('admin')
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Master Manage</a>
                 <ul class="list-unstyled" style="{{ request()->routeIs('manage-*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('manage-operators.*') ? 'active' : '' }}"><a href="{{ route('manage-operators.index') }}">Operator</a></li>
@@ -22,8 +24,9 @@
                     <li><a href="#">Item2</a></li> --}}
                 </ul>
             </li>
-            <!-- <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li> -->
-            <!-- <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li> -->
+            @endrole
+            {{-- <li><a href="{{ route('manage-membership-duration-types.index') }}"><i class="fa-regular fa-user"></i> Membership Duration Types</a></li> --}}
+            {{-- <li><a href="{{ route('manage-card-types.index') }}"><i class="fa-regular fa-regular fa-credit-card"></i> Card Types</a></li> --}}
 
 
             <li class="{{ request()->routeIs('club-member.list') ? 'active' : '' }}"><a href="{{ route('club-member.list') }}"><i class="fa-regular fa-user"></i> Club Member</a></li>
@@ -44,8 +47,10 @@
                     <li class=""><a href="javascript:void(0)">Liquor</a></li>
                 </ul>
             </li>
+            @role('admin')
             <li><a class="{{ request()->routeIs('all-action-approval-list') ? 'active' : '' }}" href="{{ route('all-action-approval-list') }}"><i class="fa-regular fa-regular fa-credit-card"></i> All Approval List</a></li>
-
+            @endrole
+            
         </ul>
     </nav>
     <div class="card-entry mt-5">

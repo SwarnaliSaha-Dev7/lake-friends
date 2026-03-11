@@ -103,7 +103,8 @@
         </div>
         <div class="login-dropdown p-3 rounded-3">
             <ul class="m-0 list-unstyled">
-                <li><a href="javascript:void(0)"><i class="fa-solid fa-gear me-2"></i>Settings</a></li>
+                {{-- <li><a href="{{ route('profile.edit') }}"><i class="fa-solid fa-gear me-2"></i>Settings</a></li> --}}
+                <li><a href="{{ route('change.password') }}"><i class="fa-solid fa-gear me-2"></i>Settings</a></li>
                 {{-- <li><a href="login.html"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout</a></li> --}}
                 <li>
                     <form method="POST" action="{{ route('logout') }}">

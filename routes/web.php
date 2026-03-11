@@ -18,6 +18,7 @@ use App\Http\Controllers\Master\MinimumSpendRuleManageController;
 use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SwimmingMemberController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -29,27 +30,30 @@ Route::get('/', [AuthenticatedSessionController::class, 'create'])->middleware('
 
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::post('send-otp', [UserController::class, 'sendOTP'])->name('sendOTP');
+Route::post('verify-otp', [UserController::class, 'verifyOTP'])->name('verifyOTP');//verify OTP
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/change-password', function () {
-        return view('change-password');
-    })->name('change.password');
+    Route::get('/change-password', [UserController::class, 'changePassword'])->name('change.password');
 
 
     // master manage start
-    Route::resource('manage-operators', OperatorManageController::class);
-    Route::resource('manage-membership-duration-types', MembershipDurationTypesManageController::class);
-    Route::resource('manage-card-types', CardTypesManageController::class);
-    Route::resource('manage-cards', CardsManageController::class);
-    Route::resource('manage-gst-rates', GstRatesManageController::class);
-    Route::resource('manage-fine-rules', FineRulesManageController::class);
-    Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
-    Route::resource('manage-food-categories', FoodCategoryManageController::class);
-    Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
-    Route::resource('manage-lockers', LockerManageController::class);
+    Route::middleware(['role:admin'])->group(function () {
+        Route::resource('manage-operators', OperatorManageController::class);
+        Route::resource('manage-membership-duration-types', MembershipDurationTypesManageController::class);
+        Route::resource('manage-card-types', CardTypesManageController::class);
+        Route::resource('manage-cards', CardsManageController::class);
+        Route::resource('manage-gst-rates', GstRatesManageController::class);
+        Route::resource('manage-fine-rules', FineRulesManageController::class);
+        Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
+        Route::resource('manage-food-categories', FoodCategoryManageController::class);
+        Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
+        Route::resource('manage-lockers', LockerManageController::class);
+    });
     // master manage end
 
     Route::prefix('club-member')->group(function () {
@@ -83,7 +87,9 @@ Route::middleware('auth')->group(function () {
         Route::get('view/{id}', 'view')->name('memberActionApproval.view');
     });
 
-    Route::get('/all-action-approval-list', [ActionApprovalController::class, 'allApprovalList'])->name('all-action-approval-list');
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/all-action-approval-list', [ActionApprovalController::class, 'allApprovalList'])->name('all-action-approval-list');
+    });
 
     Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');
 
