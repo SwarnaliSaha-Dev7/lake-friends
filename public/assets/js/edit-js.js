@@ -50,7 +50,7 @@ jQuery(function ($) {
 
     // OTP submit → go to step 4
     $('#otpModal form').on('submit', function (e) {
-        e.preventDefault(); // stop page reload
+        e.preventDefault(); // stop page reload)
 
         // Close modal
         $('#otpModal').modal('hide');

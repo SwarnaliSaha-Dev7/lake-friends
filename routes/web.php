@@ -32,6 +32,9 @@ Route::get('/dashboard', [DashboardController::class, 'dashboard'])->middleware(
 
 Route::post('send-otp', [UserController::class, 'sendOTP'])->name('sendOTP');
 Route::post('verify-otp', [UserController::class, 'verifyOTP'])->name('verifyOTP');//verify OTP
+Route::post('reset-new-password', [UserController::class, 'resetNewPassword'])->name('resetNewPassword');
+// Route::post('reset-password', [UserController::class, 'resetPassword'])->name('resetPassword');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

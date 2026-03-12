@@ -85,6 +85,7 @@
                                                 <div class="form-part mb-3">
                                                     <input type="password" class="form-control py-2 shadow-none"
                                                         id="loginInputPassword3" placeholder="New password">
+                                                    <span class="text-danger small error-text"></span>
                                                 </div>
                                             </div>
                                             <div class="col-12">
@@ -92,10 +93,12 @@
                                                     <input type="password" class="form-control py-2 shadow-none"
                                                         id="loginInputPassword4" placeholder="Confirm password"
                                                         >
+                                                    <span class="text-danger small error-text"></span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="submit"
+                                        {{-- <button type="submit" --}}
+                                        <button type="button" id="reset-password"
                                             class="btn btn-primary w-100 mt-4 mb-1 fw-semibold py-2">Reset
                                             password</button>
                                         <div class="text-center fw-semibold mt-3"><a href="#"><i
@@ -195,9 +198,22 @@
             });
         });
 
+        // $('#verifyOTP').on('click', function (e) {
+        //     e.preventDefault();
+        //     let otp = $('#loginInputotp').val().trim();
+        //     // let email = $('#loginInputEmail2').val().trim();
+
+        //     if (otp === '') {
+        //         toastr.error('Please enter the OTP.')
+        //     }
+        //     else{
+        //         $('#otpModal form').submit();
+        //     }
+        // });
+
         $('#verifyOTP').on('click', function (e) {
             e.preventDefault();
-            let otp = $('#loginInputotp').val();
+            let otp = $('#loginInputotp').val().trim();
             let email = $('#loginInputEmail2').val().trim();
 
             if (otp === '') {
@@ -216,6 +232,7 @@
                         // console.log(response);
                         if (response.statusCode == 200) {
                             toastr.success("OTP verified successfully.");
+                            $('#otpModal form').submit();
                         }
                         else if ((response.statusCode == 500) && response.message){
                             toastr.error(response.message);
@@ -230,6 +247,83 @@
                     }
                 });
             }
+        });
+
+        $('#reset-password').on('click', function (e) {
+            e.preventDefault();
+            let btn = $(this);   // button reference
+            btn.prop('disabled', true); // disable button
+            // remove old errors
+            $('.error-text').text('');
+            // let otp = $('#loginInputotp').val().trim();
+            let email = $('#loginInputEmail2').val().trim();
+            let newPassword = $('#loginInputPassword3').val();
+            let confirmPassword = $('#loginInputPassword4').val();
+
+            let isValid = true;
+
+            // New Password
+            if (newPassword === '') {
+                $('#loginInputPassword3').next('.error-text').text('Enter new password');
+                isValid = false;
+            } else if (newPassword.length < 6) {
+                $('#loginInputPassword3').next('.error-text').text('Minimum 8 characters required');
+                isValid = false;
+            }
+
+            // Confirm Password
+            if (confirmPassword === '') {
+                $('#loginInputPassword4').next('.error-text').text('Confirm your password');
+                isValid = false;
+            } else if (newPassword !== confirmPassword) {
+                $('#loginInputPassword4').next('.error-text').text('Passwords do not match');
+                isValid = false;
+            }
+
+            // if (otp === '') {
+            //     toastr.error('Please enter the OTP.')
+            //     $('#otpModal').modal('show');
+            //     isValid = false;
+            // }
+
+            if (!isValid) {
+                btn.prop('disabled', false);
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('resetNewPassword') }}",
+                type: "POST",
+                data:{
+                    "_token": "{{ csrf_token() }}",
+                    "email": email,
+                    // "otp": otp,
+                    "newPassword": newPassword,
+                    "confirmPassword": confirmPassword
+                },
+                success: function(response) {
+                    // console.log(response);
+                    if (response.statusCode == 200) {
+                        toastr.success("Password reset successfully. Please Login");
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1500);
+                    }
+                    else {
+                        toastr.error(response.message);
+                    }
+
+                },
+                error: function(xhr, status, error) {
+                    // Handle errors
+                    console.error(xhr.responseText);
+                },
+                complete: function () {
+                    // always enable again (success or error)
+                    btn.prop('disabled', false);
+                }
+            });
+
         });
 
     });

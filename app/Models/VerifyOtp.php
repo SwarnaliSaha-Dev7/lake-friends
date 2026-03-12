@@ -10,5 +10,6 @@ class VerifyOtp extends Model
         'email',
         'otp',
         'otp_expire',
+        'is_verified'
     ];
 }

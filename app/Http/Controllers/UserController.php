@@ -45,11 +45,12 @@ class UserController extends Controller
                 "otp" => $otp
             ];
 
-            Mail::send('email.otpVerificationMail', $data, function ($message) use ($toEmail) {
-                $message->to($toEmail) // Use the recipient's email
-                    ->subject('Email Verification OTP');
-                $message->from(env('MAIL_FROM_ADDRESS'), "Lake Friends Club");
-            });
+            //**open this code
+            // Mail::send('email.otpVerificationMail', $data, function ($message) use ($toEmail) {
+            //     $message->to($toEmail) // Use the recipient's email
+            //         ->subject('Email Verification OTP');
+            //     $message->from(env('MAIL_FROM_ADDRESS'), "Lake Friends Club");
+            // });
 
 
             // $email = $request->email;
@@ -135,11 +136,63 @@ class UserController extends Controller
         }
 
         //delete the verified otp
-        $verify_otp->delete();
+        // $verify_otp->delete();
+        $verify_otp->update([
+            'is_verified' => 1
+        ]);
 
         //Log In Or Register
         $verifyBy = $request->verifyBy;
         $contactInfo = $request->contactInfo;
         return response()->json(['statusCode' => 200, 'message' => $message]);
     }
+
+    public function resetNewPassword(Request $request)
+    {
+        // user check
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'statusCode' => 404,
+                'message' => 'User not found'
+            ]);
+        }
+
+        // check OTP verified
+        $verifyOtp = VerifyOtp::where('email', $request->email)
+                                ->where('is_verified', 1)
+                                ->latest()
+                                ->first();
+
+        if (!$verifyOtp) {
+            return response()->json([
+                'statusCode' => 403,
+                'message' => 'OTP verification required'
+            ]);
+        }
+
+        // // password match
+        // if ($request->newPassword !== $request->confirmPassword) {
+        //     return response()->json([
+        //         'statusCode' => 422,
+        //         'message' => 'Passwords do not match'
+        //     ]);
+        // }
+
+        // update password
+        $user->update([
+            'password' => bcrypt($request->newPassword)
+        ]);
+
+        // delete otp after success
+        $verifyOtp->delete();
+
+        return response()->json([
+            'statusCode' => 200,
+            'message' => 'Password reset successfully'
+        ]);
+    }
+
+
 }
