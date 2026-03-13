@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\LogsModelChanges;
 
 class ActionApproval extends Model
 {
+    use LogsModelChanges;
     protected $fillable = [
         'club_id',
         'module',

@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletes;   
+use App\Traits\LogsModelChanges;
 
 class Card extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes,LogsModelChanges;
 
     protected $fillable = [
         'card_no',

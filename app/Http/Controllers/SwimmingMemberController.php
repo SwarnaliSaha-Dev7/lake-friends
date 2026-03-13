@@ -123,31 +123,21 @@ class SwimmingMemberController extends Controller
             ->where('club_id', $clubId)
             ->first();
 
+            $membershipTypeId = $membershipType->id;
+
             $exists = Member::where('email', $request->swim_email)
+                ->where('membership_type_id', $membershipTypeId)
                 ->where('club_id', $clubId)
-                // ->exists();
-                ->first();
+                ->exists();
+                // ->first();
 
             if ($exists) {
-
-                //check if this member had this membership Type before
-                $alreadyTaken = MembershipFormDetail::where('member_id', $exists->id)
-                                                    ->where('membership_type_id1', $membershipType->id)
-                                                    ->first();
-
-                if ($alreadyTaken) {
-                    return response()->json([
-                        'statusCode' => 409,
-                        'message' => 'Member already registered with this membership type'
-                    ]);
-                }
-
-                // return response()->json([
-                //     'statusCode' => 409,
-                //     'message' => 'Email already exists'
-                // ]);
+                return response()->json([
+                    'statusCode' => 409,
+                    // 'message' => 'Email already exists'
+                    'message' => 'Member already registered with this membership type'
+                ]);
             }
-
 
 
             DB::beginTransaction();
@@ -157,13 +147,8 @@ class SwimmingMemberController extends Controller
                 'spouse_image'
             );
 
-            $memberCode = 'LF-' . time();
+            // $memberCode = 'LF-' . time();
 
-
-
-
-
-            $membershipTypeId = $membershipType->id;
 
             $dest_path = 'uploads/images';
             $image_path = null;
@@ -178,7 +163,8 @@ class SwimmingMemberController extends Controller
 
             $member = Member::create([
                 'club_id'     => $clubId,
-                'member_code' => $memberCode,
+                'membership_type_id' => $membershipTypeId,
+                // 'member_code' => $memberCode, 
                 'name'        => $request->swim_name,
                 'email'       => $request->swim_email,
                 'phone'       => $request->swim_phone,

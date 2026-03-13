@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LogsModelChanges;
 
 class Member extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes,LogsModelChanges;
     protected $fillable = [
         'club_id',
+        'membership_type_id',
         'member_code',
         'name',
         'email',

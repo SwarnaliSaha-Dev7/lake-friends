@@ -132,6 +132,17 @@
                                 </td>
                                 <td class="pe-3"><strong><small id="memberStatus" style="text-transform: capitalize;"></small></strong></td>
                             </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Action:</small>
+                                </td>
+                                <td class="pe-3"><strong><small id="action" style="text-transform: capitalize;">
+                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Membership Plan">
+                                        <small>
+                                            <i class="fa-sharp fa-clock-rotate-left"></i>
+                                        </small>
+                                    </button> <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn" title="Wallet Recharge"><small><i class="fa-solid fa-wallet"></i></small></button> <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"  title="Plan Renewal"><small><i class="fa-solid fa-rotate-right"></i></small></button></small></strong></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

@@ -99,29 +99,35 @@ class ClubMemberController extends Controller
                 'spouse_image'
             );
 
-            // Check if email already exists in same club
-            $exists = Member::where('email', $request->swim_email)
-                ->where('club_id', $clubId)
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'statusCode' => 409,
-                    'message' => 'Email already exists'
-                ]);
-            }
-
-            DB::beginTransaction();
-
-            // Generate Member Code (example)
-            $memberCode = 'LF-' . time();
-
             //fetch the membership type id
             $membershipType = MembershipType::where('name', 'Club Membership')
                 ->where('club_id', $clubId)
                 ->first();
 
             $membershipTypeId = $membershipType->id;
+
+            // Check if email already exists in same club
+            $exists = Member::where('email', $request->email)
+                ->where('membership_type_id', $membershipTypeId)
+                ->where('club_id', $clubId)
+                ->exists();
+                // ->first();
+
+            if ($exists) {
+                return response()->json([
+                    'statusCode' => 409,
+                    // 'message' => 'Email already exists'
+                    'message' => 'Member already registered with this membership type'
+                ]);
+            }
+
+            
+            DB::beginTransaction();
+
+            // Generate Member Code (example)
+            // $memberCode = 'LF-' . time();
+
+            
 
             $dest_path = 'uploads/images';
             $image_path = null;
@@ -136,7 +142,8 @@ class ClubMemberController extends Controller
 
             $member = Member::create([
                 'club_id'     => $clubId,
-                'member_code' => $memberCode,
+                'membership_type_id' => $membershipTypeId,
+                // 'member_code' => $memberCode,
                 'name'        => $request->name,
                 'email'       => $request->email,
                 'phone'       => $request->phone,

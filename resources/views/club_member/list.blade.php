@@ -692,12 +692,12 @@
                                 </td>
                                 <td class="pe-3"><small id="memberClubName">Soumen Das</small></td>
                             </tr>
-                            <tr>
+                            <!-- <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Member’s Id:</small>
                                 </td>
                                 <td class="pe-3"><small id="memberCode">GH231</small></td>
-                            </tr>
+                            </tr> -->
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Card No:</small>
@@ -1369,7 +1369,7 @@
                         // console.log(response);
                         $('#memberName').text(response.data.name);
                         $('#memberClubName').text(response.data.club_details.name)
-                        $('#memberCode').text(response.data.member_code)
+                        // $('#memberCode').text(response.data.member_code)
                         $('#memberCardNo').text(response.data.card_details?.card_no || '-')
                         const purchase = response.data.purchase_history?.[0];
 
