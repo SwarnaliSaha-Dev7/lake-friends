@@ -1862,9 +1862,16 @@
 
                         // $('.spinner-border').replaceWith(originalBtn);
                     }
-                    else{
-                        toastr.error('Something Went Wrong');
-                        // console.log(response);
+                    else {
+                        // $btn.html(originalText);
+                        // $btn.prop('disabled', false);
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                            // console.log(response)
+                        }
                     }
 
                 },

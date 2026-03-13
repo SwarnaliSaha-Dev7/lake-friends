@@ -388,7 +388,8 @@ class ClubMemberController extends Controller
                 ->where('entity_id', $memberId)
                 ->where(function ($query) {
                     $query->where('module', 'member_create')
-                        ->orWhere('module', 'member_edit');
+                        ->orWhere('module', 'member_edit')
+                        ->orWhere('module', 'member_delete');
                 })
                 ->where('status', 'pending')
                 ->exists();
@@ -795,6 +796,25 @@ class ClubMemberController extends Controller
                 ]);
             }
 
+            $memberId = $member->id;
+
+            $exists = ActionApproval::where('club_id', $clubId)
+                ->where('entity_id', $memberId)
+                ->where(function ($query) {
+                    $query->where('module', 'member_create')
+                        ->orWhere('module', 'member_edit')
+                        ->orWhere('module', 'member_delete');
+                })
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'A request is already pending.'
+                ]);
+            }
+
             //ADMIN → skip approval
             if(Auth::user()->hasRole('admin')){
 
@@ -843,28 +863,37 @@ class ClubMemberController extends Controller
 
             // If operator → send approval request
 
-            $existingRequest = ActionApproval::where('entity_id', $member->id)
-                            ->where('module', 'member_delete')
-                            ->where('status', 'pending')
-                            ->first();
+            // $existingRequest = ActionApproval::where('entity_id', $member->id)
+            //                 ->where('module', 'member_delete')
+            //                 ->where('status', 'pending')
+            //                 ->first();
 
-            if ($existingRequest) {
-                return response()->json([
-                    'statusCode' => 409,
-                    'message' => 'Delete request already pending'
-                ]);
-            }
+            // if ($existingRequest) {
+            //     return response()->json([
+            //         'statusCode' => 409,
+            //         'message' => 'Delete request already pending'
+            //     ]);
+            // }
 
             $memberDetail = $member->memberDetails;
+
+            $payload = [
+                'member_id' => $member->id,
+                // 'name' => $member->name,
+                'email' => $member->email,
+                'phone' => $member->phone,
+            ];
 
             ActionApproval::create([
                             'club_id' => $clubId,
                             'module' => 'member_delete',
+                            'action_type' => 'delete',
                             'membership_type_id' => $memberDetail->membership_type_id,
                             'entity_model' => 'Member',
                             'entity_id' => $member->id,
                             'maker_user_id' => Auth::id(),
-                            'status' => 'pending'
+                            'status' => 'pending',
+                            'request_payload' => json_encode($payload)
                         ]);
 
             return response()->json([
