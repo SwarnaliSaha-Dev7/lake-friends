@@ -45,7 +45,15 @@
                                         $payload = json_decode($payloadJson);
                                         // echo "<pre>"; print_r($payload); echo "</pre>";
                                         // $detail = "";
-                                        if (isset($payload->swim_name)) {
+
+                                        $detail = '';
+
+                                        if ($data->module == 'member_delete') {
+                                            $member = \App\Models\Member::find($data->entity_id);
+                                            $detail = $member->name ?? '';
+                                        }
+
+                                        elseif (isset($payload->swim_name)) {
                                             $detail = $payload?->swim_name ?? '';
                                         }
                                         elseif (isset($payload->swim_member_name)) {
@@ -131,7 +139,12 @@
                                         $payload = json_decode($payloadJson);
                                         // echo "<pre>"; print_r($payload); echo "</pre>";
                                         // $detail = "";
-                                        if (isset($payload->swim_name)) {
+                                        if ($data->module == 'member_delete') {
+                                            $member = \App\Models\Member::find($data->entity_id);
+                                            $detail = $member->name ?? '';
+                                        }
+
+                                        elseif (isset($payload->swim_name)) {
                                             $detail = $payload?->swim_name ?? '';
                                         }
                                         elseif (isset($payload->swim_member_name)) {
@@ -709,9 +722,17 @@
         });
 
         $('#confirmRejectBtn').on('click', function(){
-            let id = $(this).data('id');
-            let originalBtn = $(this).prop('outerHTML'); // save original button
-            $(this).prop('disabled', true).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
+            // let id = $(this).data('id');
+            // let originalBtn = $(this).prop('outerHTML'); // save original button
+            // $(this).prop('disabled', true).replaceWith('<span class="spinner-border spinner-border-sm text-danger"></span>');
+
+            let btn = $(this);
+            let id = btn.data('id');
+
+            btn.prop('disabled', true).css({
+                'opacity':'1',
+                'cursor':'not-allowed'
+            });
 
             $.ajax({
                 url: '{{route("memberActionApproval.reject", ":id")}}'.replace(':id', id),
@@ -722,17 +743,29 @@
                         toastr.success(response.message);
 
                         // $('.spinner-border').replaceWith(originalBtn);
-                        $('.spinner-border').hide();
+                        // $('.spinner-border').hide();
                         setTimeout(() => location.reload(), 1500);
                     }
                     else{
                         toastr.error('Something Went Wrong').
                         console.log(response);
+
+                        btn.prop('disabled', false).css({
+                            'opacity':'',
+                            'cursor':''
+                        });
+
                     }
 
                 },
                 error: function(){
                     toastr.error('Something Went Wrong.');
+
+                    btn.prop('disabled', false).css({
+                    'opacity':'',
+                    'cursor':''
+                    });
+
                 }
             });
         });
@@ -743,9 +776,17 @@
         });
 
         $('#confirmApproveBtn').on('click', function(){
-            let id = $(this).data('id');
-            let originalBtn = $(this).prop('outerHTML'); // save original button
-            $(this).prop('disabled', true).replaceWith('<span class="spinner-border spinner-border-sm text-success"></span>');
+            // let id = $(this).data('id');
+            // let originalBtn = $(this).prop('outerHTML'); // save original button
+            // $(this).prop('disabled', true).replaceWith('<span class="spinner-border spinner-border-sm text-success"></span>');
+
+            let btn = $(this);
+            let id = btn.data('id');
+
+            btn.prop('disabled', true).css({
+                'opacity':'1',
+                'cursor':'not-allowed'
+            });
 
             $.ajax({
                 url: '{{route("memberActionApproval.approve", ":id")}}'.replace(':id', id),
@@ -756,17 +797,27 @@
                         toastr.success(response.message);
 
                         // $('.spinner-border').replaceWith(originalBtn);
-                        $('.spinner-border').hide();
+                        //$('.spinner-border').hide();
                         setTimeout(() => location.reload(), 1500);
                     }
                     else{
                         toastr.error('Something Went Wrong').
                         console.log(response);
+
+                        btn.prop('disabled', false).css({
+                            'opacity':'',
+                            'cursor':''
+                        });
                     }
 
                 },
                 error: function(){
                     toastr.error('Something Went Wrong.');
+
+                    btn.prop('disabled', false).css({
+                        'opacity':'',
+                        'cursor':''
+                    });
                 }
             });
         });

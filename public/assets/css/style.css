@@ -262,7 +262,7 @@ body.modal-open .dashboard-wrapper {
 
 
 .nav-menu ul li a:hover,
-.nav-menu ul li.active a {
+.nav-menu>ul>li.active>a {
     background: var(--menu-Link-Bg-Color);
     color: var(--theme-Blue-Color);
 }
@@ -735,10 +735,10 @@ small.text-muted {
 }
 
 
-/* @media (min-width: 992px) {
+@media (min-width: 992px) {
 
     #addclubmember .modal-lg,
     #addswimmingmember .modal-lg {
         --bs-modal-width: 1000px;
     }
-} */
+}

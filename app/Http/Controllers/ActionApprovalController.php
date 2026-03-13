@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
 use App\Models\Card;
+use App\Models\FoodItemPrice;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
@@ -35,12 +36,76 @@ class ActionApprovalController extends Controller
                 ->latest()
                 ->get();
 
+            // $swimmingMembershipData = ActionApproval::with('operatorDetails')
+            //     ->where('maker_user_id', '!=', Auth::id())
+            //     ->where(function ($q) use ($swimmingMembershipId) {
+
+            //         $q->where('membership_type_id', $swimmingMembershipId)
+            //         ->orWhere('module', 'member_delete');
+
+            //     })
+            //     ->where('status', 'pending')
+            //     ->latest()
+            //     ->get();
+
+            // $swimmingMembershipData = ActionApproval::with('operatorDetails')
+            //     ->where('maker_user_id', '!=', Auth::id())
+            //     ->where('status', 'pending')
+            //     ->where(function ($q) use ($swimmingMembershipId) {
+
+            //         $q->where('membership_type_id', $swimmingMembershipId)
+
+            //         ->orWhere(function ($sub) use ($swimmingMembershipId) {
+
+            //             $sub->where('module', 'member_delete')
+            //                 ->whereHas('entity.memberDetail', function ($m) use ($swimmingMembershipId) {
+            //                     $m->where('membership_type_id', $swimmingMembershipId);
+            //                 });
+
+            //         });
+
+            //     })
+            //     ->latest()
+            //     ->get();
+
             $clubMembershipData = ActionApproval::with('operatorDetails')
                 ->where('maker_user_id', '!=', Auth::id())
                 ->where('membership_type_id', $clubMembershipId)
                 ->where('status', 'pending')
                 ->latest()
                 ->get();
+
+            // $clubMembershipData = ActionApproval::with('operatorDetails')
+            //     ->where('maker_user_id', '!=', Auth::id())
+            //     ->where(function ($q) use ($clubMembershipId) {
+
+            //         $q->where('membership_type_id', $clubMembershipId)
+            //         ->orWhere('module', 'member_delete');
+
+            //     })
+            //     ->where('status', 'pending')
+            //     ->latest()
+            //     ->get();
+
+            // $clubMembershipData = ActionApproval::with('operatorDetails')
+            //     ->where('maker_user_id', '!=', Auth::id())
+            //     ->where('status', 'pending')
+            //     ->where(function ($q) use ($clubMembershipId) {
+
+            //         $q->where('membership_type_id', $clubMembershipId)
+
+            //         ->orWhere(function ($sub) use ($clubMembershipId) {
+
+            //             $sub->where('module', 'member_delete')
+            //                 ->whereHas('entity.memberDetail', function ($m) use ($clubMembershipId) {
+            //                     $m->where('membership_type_id', $clubMembershipId);
+            //                 });
+
+            //         });
+
+            //     })
+            //     ->latest()
+            //     ->get();
             // dd($data);
 
             $cards = Card::where('club_id', $clubId)
@@ -59,11 +124,37 @@ class ActionApprovalController extends Controller
         }
     }
 
+    public function foodItemPriceList()
+    {
+        try {
+                $title = 'Food Item Price Approval List';
+                $page_title = 'Food Item Price Approval';
+
+                $clubId = club_id();
+                // return 68736;
+
+                $foodPriceData = ActionApproval::with('operatorDetails','entity')
+                                            ->where('club_id', $clubId)
+                                            ->where('module', 'food_price_update')
+                                            ->where('status', 'pending')
+                                            ->where('maker_user_id', '!=', Auth::id())
+                                            ->latest()
+                                            ->get();
+
+                return view('action_approval.food_item_price.list',compact('title','page_title','foodPriceData'));
+        }
+
+        catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+
+    }
+
     public function approve($id)
     {
         try {
 
-            $data = ActionApproval::find($id);
+            $data = ActionApproval::findOrFail($id);
 
             if ($data->status != "pending") {
                 return response()->json([
@@ -265,6 +356,73 @@ class ActionApprovalController extends Controller
                 $member->update([
                     'status'      => 'active'
                 ]);
+            }
+
+            if ($data->module == 'member_delete') {
+
+                DB::beginTransaction();
+
+                $member = Member::find($data->entity_id);
+
+                if ($member) {
+
+                    $cardMapping = MemberCardMapping::where('member_id', $member->id)->first();
+
+                    if ($cardMapping) {
+
+                        $card = Card::find($cardMapping->card_id);
+
+                        if ($card) {
+                            $card->update([
+                                'is_assigned' => 0
+                            ]);
+                        }
+
+                        $cardMapping->delete();
+                    }
+
+                    $member->delete();
+
+                    // $approvalRequests = ActionApproval::where('club_id', $clubId)
+                    //                                   ->where('entity_id', $id)
+                    //                                   ->where('status', 'pending')
+                    //                                   ->delete();
+                }
+
+                DB::commit();
+            }
+
+            if($data->module == 'food_price_update'){
+
+                $payloadJson = $data->request_payload;
+
+                $payload = json_decode($payloadJson);
+
+                $itemId = $data->entity_id;
+                $newPrice = $payload->new_price;
+
+                DB::beginTransaction();
+
+                $currentPrice = FoodItemPrice::where('item_id', $itemId)
+                                             ->where('is_active', 1)
+                                             ->first();
+
+                if ($currentPrice) {
+
+                    $currentPrice->update([
+                        'is_active' => 0,
+                        'effective_to' => now()
+                    ]);
+                }
+
+                FoodItemPrice::create([
+                    'item_id' => $itemId,
+                    'price' => $newPrice,
+                    'effective_from' => now(),
+                    'is_active' => 1
+                ]);
+
+                DB::commit();
             }
 
             $data->update([

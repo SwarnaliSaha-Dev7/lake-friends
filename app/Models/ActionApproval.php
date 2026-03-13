@@ -35,4 +35,9 @@ class ActionApproval extends Model
     {
         return $this->belongsTo(User::class, 'checker_user_id');
     }
+
+    public function entity()
+    {
+        return $this->morphTo(null, 'entity_model', 'entity_id');
+    }
 }
