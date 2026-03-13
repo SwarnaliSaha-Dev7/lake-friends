@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FoodItemPrice extends Model
 {
@@ -14,4 +15,9 @@ class FoodItemPrice extends Model
         'approval_status',
         'is_active',
     ];
+
+    public function foodItem(): BelongsTo
+    {
+        return $this->belongsTo(FoodItem::class, 'item_id');
+    }
 }

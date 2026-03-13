@@ -41,7 +41,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($foodItemsList as $items)
+                            @foreach($liquorItemsList as $items)
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">{{ $items->name }}</td>
@@ -89,16 +89,16 @@
 
 @section('modalComponent')
     <!-- Add Food Item Modal Start-->
-    <div class="modal fade" id="addfooditem" tabindex="-1" aria-labelledby="addfooditemModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addliquoritem" tabindex="-1" aria-labelledby="addfooditemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="addfooditemModalLabel">Add Food Item</h5>
+                    <h5 class="modal-title fs-5 fw-semibold" id="addfooditemModalLabel">Add Liquor Item</h5>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
-                    <form action="" id="foodItemForm" enctype="multipart/form-data">
+                    <form action="" id="liquorItemForm" enctype="multipart/form-data">
                         @csrf
                         <div class="row">
                             <div class="col-12">
@@ -123,9 +123,9 @@
                                     <select name="itemCat" id="itemCat" class="form-select py-2 shadow-none" required>
                                         <option value="" selected="" hidden="" disabled="">Select Food Category
                                         </option>
-                                        @foreach($foodCatList as $foodCat)
-                                            <option value="{{ $foodCat->id }}" {{ old('itemCat') == $foodCat->id ? 'selected' : '' }}>
-                                                {{ $foodCat->name }}
+                                        @foreach($liquorCatList as $liquorCat)
+                                            <option value="{{ $liquorCat->id }}" {{ old('itemCat') == $liquorCat->id ? 'selected' : '' }}>
+                                                {{ $liquorCat->name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -151,7 +151,7 @@
                             <div class="col-lg-6">
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Price</small></label>
-                                    <input type="number" name="itemPrice" id="itemPrice" class="form-control py-2 shadow-none" placeholder="Item Price" value="{{ old('itemPrice') }}" min="0" max="9999999999" step="0.01" required>
+                                    <input type="number" name="itemPrice" id="itemPrice" class="form-control py-2 shadow-none" placeholder="Item Price" value="{{ old('itemPrice') }}" min="0" max="9999999999" step="0.01">
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
@@ -178,7 +178,7 @@
                             </div>
                             <div class="col-12">
                                 <div class="text-end mod-footer">
-                                    <button type="submit" class="btn btn-primary fw-semibold" value="submit" id="foodItem_submit">Submit</button>
+                                    <button type="submit" class="btn btn-primary fw-semibold" value="submit" id="liquorItem_submit">Submit</button>
                                 </div>
                             </div>
                         </div>
@@ -190,16 +190,16 @@
     <!-- Add Food Item Modal End-->
 
     <!-- Edit Food Item Modal Start-->
-    <div class="modal fade" id="editfooditem" tabindex="-1" aria-labelledby="addfooditemModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editliquoritem" tabindex="-1" aria-labelledby="addfooditemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="addfooditemModalLabel">Edit Food Item</h5>
+                    <h5 class="modal-title fs-5 fw-semibold" id="addfooditemModalLabel">Edit Liquor Item</h5>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
-                    <form action="" id="editfoodItemForm" enctype="multipart/form-data">
+                    <form action="" id="editliquorItemForm" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="edit_item_id" id="edit_item_id">
@@ -227,8 +227,8 @@
                                     <select name="itemCat" id="edit_itemCat" class="form-select py-2 shadow-none" required>
                                         <option value="" selected="" hidden="" disabled="">Select Food Category
                                         </option>
-                                        @foreach($foodCatList as $foodCat)
-                                            <option value="{{ $foodCat->id }}">{{ $foodCat->name }}</option>
+                                        @foreach($liquorCatList as $liquorCat)
+                                            <option value="{{ $liquorCat->id }}">{{ $liquorCat->name }}</option>
                                         @endforeach
                                     </select>
 
@@ -265,6 +265,13 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-part mb-3">
+                                    <label for="" class="form-label"><small>Item Price</small></label>
+                                    <input type="number" name="itemPrice" id="edit_itemPrice" class="form-control py-2 shadow-none" placeholder="Item Price"  min="0" max="9999999999" step="0.01" required>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Code</small></label>
                                     <input type="text" name="itemCode" id="edit_itemCode" class="form-control py-2 shadow-none " placeholder="Item Code"   required>
                                     <div class="error-div text-danger small"></div>
@@ -286,36 +293,8 @@
                             </div>
                             <div class="col-12">
                                 <div class="text-end mod-footer">
-                                    <input type="submit" class="btn btn-primary fw-semibold" value="Update" id="editFoodItem_submit">
+                                    <input type="submit" class="btn btn-primary fw-semibold" value="Update" id="editLiquorItem_submit">
                                 </div>
-                            </div>
-                        </div>
-                    </form>
-                    <form id="">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <div class="form-label fw-semibold text-dark mb-3"><span
-                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
-                                            class="fa-regular fa-user"></i></span> Price Manage
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-part mb-3 d-flex align-items-center gap-2 mod-footer">
-
-                                <label for="" class="form-label"><small>Current Price</small></label>
-
-                                <input type="hidden" id="price_item_id" name="item_id">
-
-                                <input type="number" name="itemPrice" id="edit_itemPrice" class="form-control py-2 shadow-none" placeholder="Current price" readonly>
-
-                                <div class="error-div text-danger small"></div>
-
-                                <button type="button" class="btn btn-info fw-semibold changePriceBtn" data-bs-toggle="modal" data-bs-target="#changeprice">Change Price</button>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div id="pendingPriceMessage" class="mb-3 d-flex align-items-center gap-2 justify-content-between text-warning fw-semibold" style="display:none;">
                             </div>
                         </div>
                     </form>
@@ -324,47 +303,6 @@
         </div>
     </div>
     <!-- Edit Food Item Modal End-->
-
-    <!-- Change Price Modal -->
-    <div class="modal fade" id="changeprice" tabindex="-1" aria-labelledby="changepriceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="changepriceModalLabel">Edit Food Price</h5>
-                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
-                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <form id="changePriceForm">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <div class="form-label fw-semibold text-dark mb-3">
-                                        <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
-                                            <i class="fa-regular fa-user"></i>
-                                        </span>
-                                        Change Item Price
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-part mb-3">
-                                    <label for="" class="form-label"><small>New Price</small></label>
-                                    <input type="number" name="newPrice" id="newPrice"  class="form-control py-2 shadow-none" placeholder="New Price"  min="0" max="9999999999" step="0.01" required>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="text-end mod-footer">
-                                    <input type="submit" class="btn btn-primary fw-semibold" value="Submit for approval" >
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Change Price Modal End-->
 
     <!-- Delete row table Modal -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
@@ -582,18 +520,6 @@
 
                 let id = $(this).data('id');
 
-                // RESET pending message and button state
-                $('#pendingPriceMessage').hide().text('');
-                let btn = $('.changePriceBtn');
-
-                btn.prop('disabled', false).removeClass('disabled').css({
-                    'opacity': '',
-                    'background-color': '',
-                    'border-color': '',
-                    'color': '',
-                    'cursor': ''
-                });
-
                 $.ajax({
                     url: "/manage-food-items/" + id + "/edit",
                     type: "GET",
@@ -602,7 +528,6 @@
                         let data = response.data;
 
                         $('#edit_item_id').val(data.id);
-                        $('#price_item_id').val(data.id);
 
                         $('#edit_itemName').val(data.name);
                         $('#edit_itemCat').val(data.category_id);
@@ -615,46 +540,6 @@
                             $('#edit_itemPreview')
                                 .attr('src', '/' + data.image)
                                 .removeClass('d-none');
-                        }
-
-                        // CHECK PENDING PRICE REQUEST
-                        if(response.pendingApproval && response.pendingApproval.request_payload){
-
-                            let payload = response.pendingApproval.request_payload;
-
-                            if (typeof payload === "string") {
-                                payload = JSON.parse(payload);
-                            }
-
-                            let message =
-                                `Price change request is pending : ₹${payload.old_price} → ₹${payload.new_price} awaiting approval`;
-
-                            $('#pendingPriceMessage')
-                                .text(message)
-                                .show();
-
-                            let btn = $('.changePriceBtn');
-
-                            let originalStyles = {
-                                background: btn.css('background-color'),
-                                border: btn.css('border-color'),
-                                color: btn.css('color')
-                            };
-
-                            btn.prop('disabled', true).css({
-                                'opacity': '1',
-                                'background-color': originalStyles.background,
-                                'border-color': originalStyles.border,
-                                'color': originalStyles.color,
-                                'cursor': 'not-allowed'
-                            });
-
-                        } else {
-
-                            $('#pendingPriceMessage').hide();
-                            $('.changePriceBtn')
-                                .prop('disabled', false)
-                                .removeClass('disabled');
                         }
 
                         $('#editfooditem').modal('show');
@@ -731,46 +616,6 @@
 
                 reader.readAsDataURL(this.files[0]);
 
-            });
-
-            $('#changePriceForm').on('submit', function(e){
-                e.preventDefault();
-
-                let formData = {
-                    item_id: $('#price_item_id').val(),
-                    new_price: $('#newPrice').val(),
-                    _token: "{{ csrf_token() }}"
-                };
-
-                $.ajax({
-                    url: "{{ route('foodItemPriceApproval.request') }}",
-
-                    type: "POST",
-
-                    data: formData,
-
-                    success:function(response){
-
-                        if(response.statusCode == 200){
-
-                            toastr.success(response.message);
-
-                            $('#changeprice').modal('hide');
-
-                            setTimeout(function(){
-                                location.reload();
-                            },1500);
-
-                        }
-                        else{
-                            toastr.error(response.error);
-                        }
-                },
-
-                error:function(){
-                    toastr.error("Something went wrong");
-                }
-                });
             });
 
             $(document).on("click", ".delete-row", function () {

@@ -121,13 +121,13 @@ class ClubMemberController extends Controller
                 ]);
             }
 
-            
+
             DB::beginTransaction();
 
             // Generate Member Code (example)
             // $memberCode = 'LF-' . time();
 
-            
+
 
             $dest_path = 'uploads/images';
             $image_path = null;
@@ -144,7 +144,7 @@ class ClubMemberController extends Controller
                 'club_id'     => $clubId,
                 'membership_type_id' => $membershipTypeId,
                 // 'member_code' => $memberCode,
-                'name'        => $request->name,
+                'name'        => ucwords($request->name),
                 'email'       => $request->email,
                 'phone'       => $request->phone,
                 'address'     => $request->address,
@@ -169,7 +169,7 @@ class ClubMemberController extends Controller
                 'membership_type_id' => $membershipTypeId,
                 'details' => [
                     'blood_grp' => $request->blood_grp,
-                    'spouse_name' => $request->spouse_name,
+                    'spouse_name' => ucwords($request->spouse_name),
                     'spouse_email' => $request->spouse_email,
                     'spouse_phone' => $request->spouse_phone,
                     'spouse_blood_grp' => $request->spouse_blood_grp,
@@ -795,37 +795,114 @@ class ClubMemberController extends Controller
                 ]);
             }
 
-            $card_mapping = MemberCardMapping::where('member_id', $member->id)->first();
+            //ADMIN → skip approval
+            if(Auth::user()->hasRole('admin')){
 
-            $card = null;
+                try {
 
-            if ($card_mapping) {
-                $card = Card::find($card_mapping->card_id);
+                    DB::beginTransaction();
+
+                    $card_mapping = MemberCardMapping::where('member_id', $member->id)->first();
+
+                    $card = null;
+
+                    if ($card_mapping) {
+                        $card = Card::find($card_mapping->card_id);
+                    }
+
+                    if ($card_mapping) {
+                        $card_mapping->delete();
+                    }
+
+                    if ($card) {
+                        $card->update([
+                            'is_assigned' => 0
+                        ]);
+                    }
+
+                    $member->delete();
+
+                    // $approvalRequests = ActionApproval::where('club_id', $clubId)
+                    //                                   ->where('entity_id', $id)
+                    //                                   ->where('status', 'pending')
+                    //                                   ->delete();
+
+                    DB::commit();
+
+                    return response()->json([
+                        'statusCode' => 200,
+                        'message' => 'Member Deleted successfully'
+                    ]);
+
+
+                } catch (\Throwable $th) {
+                    return $th->getMessage();
+                }
+
             }
 
-            if ($card_mapping) {
-                $card_mapping->delete();
-            }
+            // If operator → send approval request
 
-            if ($card) {
-                $card->update([
-                    'is_assigned' => 0
+            $existingRequest = ActionApproval::where('entity_id', $member->id)
+                            ->where('module', 'member_delete')
+                            ->where('status', 'pending')
+                            ->first();
+
+            if ($existingRequest) {
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'Delete request already pending'
                 ]);
             }
 
-            $member->delete();
+            $memberDetail = $member->memberDetails;
 
-            $approvalRequests = ActionApproval::where('club_id', $clubId)
-                ->where('entity_id', $id)
-                ->where('status', 'pending')
-                ->delete();
-
-
+            ActionApproval::create([
+                            'club_id' => $clubId,
+                            'module' => 'member_delete',
+                            'membership_type_id' => $memberDetail->membership_type_id,
+                            'entity_model' => 'Member',
+                            'entity_id' => $member->id,
+                            'maker_user_id' => Auth::id(),
+                            'status' => 'pending'
+                        ]);
 
             return response()->json([
                 'statusCode' => 200,
-                'message' => 'Member Deleted successfully'
+                'message' => 'Delete request sent for approval'
             ]);
+
+            // $card_mapping = MemberCardMapping::where('member_id', $member->id)->first();
+
+            // $card = null;
+
+            // if ($card_mapping) {
+            //     $card = Card::find($card_mapping->card_id);
+            // }
+
+            // if ($card_mapping) {
+            //     $card_mapping->delete();
+            // }
+
+            // if ($card) {
+            //     $card->update([
+            //         'is_assigned' => 0
+            //     ]);
+            // }
+
+            // $member->delete();
+
+            // $approvalRequests = ActionApproval::where('club_id', $clubId)
+            //     ->where('entity_id', $id)
+            //     ->where('status', 'pending')
+            //     ->delete();
+
+
+
+            // return response()->json([
+            //     'statusCode' => 200,
+            //     'message' => 'Member Deleted successfully'
+            // ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,

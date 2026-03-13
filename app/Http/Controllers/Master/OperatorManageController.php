@@ -56,6 +56,8 @@ class OperatorManageController extends Controller
         $data['password'] = Hash::make($request->password);
         $data['club_id']  = Auth::user()->club_id;
 
+        $data['name'] = ucwords($request->name);
+
         $user = User::create($data);
         $user->assignRole('operator');
 
@@ -120,6 +122,8 @@ class OperatorManageController extends Controller
         } else {
             unset($data['password']);
         }
+
+        $data['name'] = ucwords($request->name);
 
         $operator->update($data);
 

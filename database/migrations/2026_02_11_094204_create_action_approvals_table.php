@@ -20,9 +20,11 @@ return new class extends Migration
                 'member_edit',
                 'card_assign',
                 'card_reassign',
-                'price_update',
+                'food_price_update',
                 'offer',
-                'stock_adjustment'
+                'stock_adjustment',
+                'member_create',
+                'member_delete'
             ])->nullable();
 
             $table->enum('action_type', ['create', 'update', 'delete'])->nullable();

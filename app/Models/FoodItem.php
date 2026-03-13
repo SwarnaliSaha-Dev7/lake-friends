@@ -28,9 +28,11 @@ class FoodItem extends Model
 
     public function foodItemPrice(): HasOne
     {
-        return $this->hasOne(FoodItemPrice::class,'item_id');
+        return $this->hasOne(FoodItemPrice::class,'item_id')
+                    ->where('is_active',1)
+                    ->orderByDesc('created_at');
     }
-    
+
     public function foodItemCat(): BelongsTo
     {
         return $this->belongsTo(FoodCategory::class,'category_id');

@@ -64,7 +64,7 @@ class FoodCategoryManageController extends Controller
         ]);
 
         $store = FoodCategory::create([
-            'name'      => $request->name,
+            'name'      => ucwords($request->name),
             'club_id'   => $club_id,
             'item_type' => 'food'
         ]);
@@ -127,7 +127,7 @@ class FoodCategoryManageController extends Controller
         ]);
 
         $foodCats->update([
-            'name' => $request->name,
+            'name' => ucwords($request->name),
         ]);
 
         return redirect()

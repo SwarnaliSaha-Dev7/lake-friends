@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginPageController;
 use App\Http\Controllers\ClubMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoodItemManageController;
+use App\Http\Controllers\LiquorItemManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
 use App\Http\Controllers\Master\FineRulesManageController;
@@ -99,6 +100,15 @@ Route::middleware('auth')->group(function () {
     Route::get('get-member-details/{cardNo}', [DashboardController::class, 'fetchMemberDetailsByCard'])->name('getMemberDetails');
 
     Route::resource('manage-food-items', FoodItemManageController::class);
+    Route::prefix('manage-food-item-price-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list', 'foodItemPriceLIst')->name('foodItemPriceApproval.list');
+        Route::get('reject/{id}', 'reject')->name('foodItemPriceApproval.reject');
+        Route::get('approve/{id}', 'approve')->name('foodItemPriceApproval.approve');
+        Route::get('view/{id}', 'view')->name('foodItemPriceApproval.view');
+    });
+    Route::post('price-request', [FoodItemManageController::class, 'requestPriceChange'])->name('foodItemPriceApproval.request');
+
+    Route::resource('manage-liquor-items', LiquorItemManageController::class);
 });
 
 

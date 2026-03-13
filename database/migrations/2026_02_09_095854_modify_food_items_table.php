@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->enum('item_type',['food','liquor'])->nullable()->after('category_id');
 
-            $table->enum('unit',['plate','ml'])->nullable()->change();
+            $table->enum('unit',['plate','ml','bottle'])->nullable()->change();
 
         });
     }
@@ -31,7 +31,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('food_items', function (Blueprint $table) {
-            
+
             $table->dropColumn('item_type');
 
             $table->dropForeign(['category_id']);
