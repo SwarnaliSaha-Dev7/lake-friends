@@ -32,7 +32,7 @@ Route::get('/', [AuthenticatedSessionController::class, 'create'])->middleware('
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::post('send-otp', [UserController::class, 'sendOTP'])->name('sendOTP');
-Route::post('verify-otp', [UserController::class, 'verifyOTP'])->name('verifyOTP');//verify OTP
+Route::post('verify-otp', [UserController::class, 'verifyOTP'])->name('verifyOTP'); //verify OTP
 Route::post('reset-new-password', [UserController::class, 'resetNewPassword'])->name('resetNewPassword');
 // Route::post('reset-password', [UserController::class, 'resetPassword'])->name('resetPassword');
 
@@ -108,7 +108,8 @@ Route::middleware('auth')->group(function () {
     });
     Route::post('price-request', [FoodItemManageController::class, 'requestPriceChange'])->name('foodItemPriceApproval.request');
 
-    Route::resource('manage-liquor-items', LiquorItemManageController::class);
+    Route::resource('manage-liquor-items', LiquorItemManageController::class)->names('manage-liquor-items');
+    Route::post('liquor-price-request', [LiquorItemManageController::class, 'requestPriceChange'])->name('liquorItemPriceApproval.request');
 });
 
 

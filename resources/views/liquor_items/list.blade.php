@@ -20,7 +20,7 @@
                                 <option value="Blocked">Blocked</option>
                             </select>
                         </div>
-                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addfooditem">+
+                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addliquoritem">+
                             Add items</button>
                     </div>
                 </div>
@@ -121,7 +121,7 @@
                                 <div class="mb-3 form-part">
                                     <label for="" class="form-label"><small>Category Name</small></label>
                                     <select name="itemCat" id="itemCat" class="form-select py-2 shadow-none" required>
-                                        <option value="" selected="" hidden="" disabled="">Select Food Category
+                                        <option value="" selected="" hidden="" disabled="">Select Liquor Category
                                         </option>
                                         @foreach($liquorCatList as $liquorCat)
                                             <option value="{{ $liquorCat->id }}" {{ old('itemCat') == $liquorCat->id ? 'selected' : '' }}>
@@ -159,6 +159,28 @@
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Code</small></label>
                                     <input type="text" name="itemCode" id="itemCode" class="form-control py-2 shadow-none " placeholder="Item Code"  value="{{ old('itemCode') }}" required>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label"><small>Size in ML</small></label>
+                                    <input type="number" name="size_ml" id="size_ml" class="form-control py-2 shadow-none " placeholder="Size in ML"  value="{{ old('size_ml') }}" required>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" value="" name="is_beer" id="is_beer" required>
+                                    <label class="form-check-label" for="is_beer">
+                                        <small>Is Beer</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label"><small>Low Stock Alert Qty</small></label>
+                                    <input type="number" name="low_stock_alert_qty" id="low_stock_alert_qty" class="form-control py-2 shadow-none " placeholder="Low Stock Alert Qty"  value="{{ old('low_stock_alert_qty') }}" required>
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
@@ -279,6 +301,28 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-part mb-3">
+                                    <label for="" class="form-label"><small>Size in ML</small></label>
+                                    <input type="number" name="size_ml" id="edit_size_ml" class="form-control py-2 shadow-none " placeholder="Size in ML"  value="" required>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" value="" name="is_beer" id="edit_is_beer" required>
+                                    <label class="form-check-label" for="edit_is_beer">
+                                        <small>Is Beer</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label"><small>Low Stock Alert Qty</small></label>
+                                    <input type="number" name="low_stock_alert_qty" id="edit_low_stock_alert_qty" class="form-control py-2 shadow-none " placeholder="Low Stock Alert Qty"  value="" required>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-part mb-3">
                                     <label for="" class="form-label w-100 mb-1 w-100"><small>Select Status</small></label>
                                     <select name="itemstatus" id="edit_itemstatus" class="form-select py-2 shadow-none" required>
                                         <option value="" selected="" hidden="" disabled="">Select Status
@@ -303,6 +347,45 @@
         </div>
     </div>
     <!-- Edit Food Item Modal End-->
+
+    <div class="modal fade" id="changeprice" tabindex="-1" aria-labelledby="changepriceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="changepriceModalLabel">Edit Liquor Price</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePriceForm">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <div class="form-label fw-semibold text-dark mb-3">
+                                        <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                            <i class="fa-regular fa-user"></i>
+                                        </span>
+                                        Change Item Price
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label"><small>New Price</small></label>
+                                    <input type="number" name="newPrice" id="newPrice"  class="form-control py-2 shadow-none" placeholder="New Price"  min="0" max="9999999999" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="text-end mod-footer">
+                                    <input type="submit" class="btn btn-primary fw-semibold" value="Submit for approval" >
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Delete row table Modal -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
@@ -341,7 +424,7 @@
             });
 
 
-            $('#foodItemForm').on('submit', function(e){
+            $('#liquorItemForm').on('submit', function(e){
                 e.preventDefault();
                 const $btn = $('#foodItem_submit');
                 const originalText = $btn.html();
@@ -467,10 +550,10 @@
 
 
                 //AJAX SUBMIT
-                let formData = new FormData($('#foodItemForm')[0]);
+                let formData = new FormData($('#liquorItemForm')[0]);
 
                 $.ajax({
-                    url: "{{ route('manage-food-items.store') }}",
+                    url: "{{ route('manage-liquor-items.store') }}",
 
                     type: "POST",
 
@@ -484,7 +567,7 @@
                             $btn.html(originalText);
                             toastr.success(response.message);
 
-                            $('#foodItemForm')[0].reset();
+                            $('#liquorItemForm')[0].reset();
 
                             setTimeout(() =>location.reload(),1500);
 
@@ -521,7 +604,7 @@
                 let id = $(this).data('id');
 
                 $.ajax({
-                    url: "/manage-food-items/" + id + "/edit",
+                    url: "/manage-liquor-items/" + id + "/edit",
                     type: "GET",
 
                     success:function(response){
@@ -534,7 +617,15 @@
                         $('#edit_itemPrice').val(data.food_item_price?.price);
                         $('#edit_itemCode').val(data.code);
                         $('#edit_itemstatus').val(data.is_active);
+                        $('#edit_size_ml').val(data.size_ml);
+                        $('#edit_low_stock_alert_qty').val(data.low_stock_alert_qty);
 
+                        if(data.is_beer == 1){
+                            $('#edit_is_beer').prop('checked', true);
+                        }else{
+                            $('#edit_is_beer').prop('checked', false);
+                        }
+                        
                          // Show current image
                         if(data.image){
                             $('#edit_itemPreview')
@@ -548,7 +639,7 @@
 
             });
 
-            $('#editfoodItemForm').on('submit', function(e){
+            $('#editliquorItemForm').on('submit', function(e){
 
                 e.preventDefault();
 
@@ -573,7 +664,7 @@
 
                             toastr.success(response.message);
 
-                            $('#editfoodItemForm')[0].reset();
+                            $('#editliquorItemForm')[0].reset();
 
                             $('#editfooditem').modal('hide');
 
@@ -618,6 +709,46 @@
 
             });
 
+            $('#changePriceForm').on('submit', function(e){
+                e.preventDefault();
+
+                let formData = {
+                    item_id: $('#price_item_id').val(),
+                    new_price: $('#newPrice').val(),
+                    _token: "{{ csrf_token() }}"
+                };
+
+                $.ajax({
+                    url: "{{ route('liquorItemPriceApproval.request') }}",
+
+                    type: "POST",
+
+                    data: formData,
+
+                    success:function(response){
+
+                        if(response.statusCode == 200){
+
+                            toastr.success(response.message);
+
+                            $('#changeprice').modal('hide');
+
+                            setTimeout(function(){
+                                location.reload();
+                            },1500);
+
+                        }
+                        else{
+                            toastr.error(response.error);
+                        }
+                    },
+
+                    error:function(){
+                        toastr.error("Something went wrong");
+                    }
+                });
+            });
+
             $(document).on("click", ".delete-row", function () {
 
                 let foodId = $(this).data("id");
@@ -634,7 +765,7 @@
 
                 $.ajax({
 
-                    url: "/manage-food-items/" + foodId,
+                    url: "/manage-liquor-items/" + foodId,
 
                     type: "DELETE",
 

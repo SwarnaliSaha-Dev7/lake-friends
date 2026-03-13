@@ -36,6 +36,7 @@
             @endrole
             <li><a href="javascript:void(0)"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a>
                 <ul class="list-unstyled">
+                    <li><a href="{{ route('manage-liquor-items.index') }}" class="{{ request()->routeIs('manage-liquor-items.index') ? 'active' : '' }}">Liquor List</a></li>
                     <li><a href="javascript:void(0)">Current Stock Inventory</a></li>
                     <li><a href="javascript:void(0)">Liquor Stock Report</a></li>
                 </ul>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FoodItem extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsModelChanges;
 
     protected $fillable = [
         'club_id',
@@ -28,13 +29,13 @@ class FoodItem extends Model
 
     public function foodItemPrice(): HasOne
     {
-        return $this->hasOne(FoodItemPrice::class,'item_id')
-                    ->where('is_active',1)
-                    ->orderByDesc('created_at');
+        return $this->hasOne(FoodItemPrice::class, 'item_id')
+            ->where('is_active', 1)
+            ->orderByDesc('created_at');
     }
 
     public function foodItemCat(): BelongsTo
     {
-        return $this->belongsTo(FoodCategory::class,'category_id');
+        return $this->belongsTo(FoodCategory::class, 'category_id');
     }
 }

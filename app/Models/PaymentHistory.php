@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class PaymentHistory extends Model
 {
+    use LogsModelChanges;
     protected $fillable = [
         'member_id',
         'club_id',
