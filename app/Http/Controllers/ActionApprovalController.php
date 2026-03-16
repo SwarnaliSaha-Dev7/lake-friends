@@ -127,27 +127,47 @@ class ActionApprovalController extends Controller
     public function foodItemPriceList()
     {
         try {
-                $title = 'Food Item Price Approval List';
-                $page_title = 'Food Item Price Approval';
+            $title = 'Food Item Price Approval List';
+            $page_title = 'Food Item Price Approval';
 
-                $clubId = club_id();
-                // return 68736;
+            $clubId = club_id();
+            // return 68736;
 
-                $foodPriceData = ActionApproval::with('operatorDetails','entity')
-                                            ->where('club_id', $clubId)
-                                            ->where('module', 'food_price_update')
-                                            ->where('status', 'pending')
-                                            ->where('maker_user_id', '!=', Auth::id())
-                                            ->latest()
-                                            ->get();
+            $foodPriceData = ActionApproval::with('operatorDetails', 'entity')
+                ->where('club_id', $clubId)
+                ->where('module', 'food_price_update')
+                ->where('status', 'pending')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->latest()
+                ->get();
 
-                return view('action_approval.food_item_price.list',compact('title','page_title','foodPriceData'));
-        }
-
-        catch (\Throwable $th) {
+            return view('action_approval.food_item_price.list', compact('title', 'page_title', 'foodPriceData'));
+        } catch (\Throwable $th) {
             return $th->getMessage();
         }
+    }
 
+    public function liquorItemPriceList()
+    {
+        try {
+            $title = 'Liquor Item Price Approval List';
+            $page_title = 'Liquor Item Price Approval';
+
+            $clubId = club_id();
+            // return 68736;
+
+            $foodPriceData = ActionApproval::with('operatorDetails', 'entity')
+                ->where('club_id', $clubId)
+                ->where('module', 'liquor_price_update')
+                ->where('status', 'pending')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->latest()
+                ->get();
+
+            return view('action_approval.liquor_item_price.list', compact('title', 'page_title', 'foodPriceData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
     }
 
     public function approve($id)
@@ -392,7 +412,7 @@ class ActionApprovalController extends Controller
                 DB::commit();
             }
 
-            if($data->module == 'food_price_update'){
+            if ($data->module == 'food_price_update') {
 
                 $payloadJson = $data->request_payload;
 
@@ -404,8 +424,41 @@ class ActionApprovalController extends Controller
                 DB::beginTransaction();
 
                 $currentPrice = FoodItemPrice::where('item_id', $itemId)
-                                             ->where('is_active', 1)
-                                             ->first();
+                    ->where('is_active', 1)
+                    ->first();
+
+                if ($currentPrice) {
+
+                    $currentPrice->update([
+                        'is_active' => 0,
+                        'effective_to' => now()
+                    ]);
+                }
+
+                FoodItemPrice::create([
+                    'item_id' => $itemId,
+                    'price' => $newPrice,
+                    'effective_from' => now(),
+                    'is_active' => 1
+                ]);
+
+                DB::commit();
+            }
+
+            if ($data->module == 'liquor_price_update') {
+
+                $payloadJson = $data->request_payload;
+
+                $payload = json_decode($payloadJson);
+
+                $itemId = $data->entity_id;
+                $newPrice = $payload->new_price;
+
+                DB::beginTransaction();
+
+                $currentPrice = FoodItemPrice::where('item_id', $itemId)
+                    ->where('is_active', 1)
+                    ->first();
 
                 if ($currentPrice) {
 
@@ -568,7 +621,7 @@ class ActionApprovalController extends Controller
 
             $clubId = club_id();
 
-            $actionApprovalList = ActionApproval::with(['operatorDetails','entity','membershipType:id,name'])
+            $actionApprovalList = ActionApproval::with(['operatorDetails', 'entity', 'membershipType:id,name'])
                 ->where('club_id', $clubId)
                 ->latest('id')
                 ->get();

@@ -137,7 +137,7 @@
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Image</small></label>
                                     <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                    <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image" placeholder="Item Image" required>
+                                    <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image" placeholder="Item Image" accept=".png,.jpg,.jpeg,.webp" required>
                                     <div class="upload-content">
                                         <i class="upload-icon"><i
                                                 class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -163,18 +163,30 @@
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="form-part mb-3">
+                                <div class="mb-3 form-part">
                                     <label for="" class="form-label"><small>Size in ML</small></label>
-                                    <input type="number" name="size_ml" id="size_ml" class="form-control py-2 shadow-none " placeholder="Size in ML"  value="{{ old('size_ml') }}" required>
+                                    <select name="size_ml" id="size_ml" class="form-select py-2 shadow-none" required>
+                                        <option value="" selected="" hidden="" disabled="">Select Size in ML
+                                        </option>
+                                        <option value="330" {{ old('size_ml') == '330' ? 'selected' : '' }}>330</option>
+                                        <option value="375" {{ old('size_ml') == '375' ? 'selected' : '' }}>375</option>
+                                        <option value="650" {{ old('size_ml') == '650' ? 'selected' : '' }}>650</option>
+                                        <option value="700" {{ old('size_ml') == '700' ? 'selected' : '' }}>700</option>
+                                        <option value="750" {{ old('size_ml') == '750' ? 'selected' : '' }}>750</option>
+                                    </select>
+
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" value="" name="is_beer" id="is_beer" required>
-                                    <label class="form-check-label" for="is_beer">
-                                        <small>Is Beer</small>
-                                    </label>
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label w-100"><small>Is Beer</small></label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" value="1" name="is_beer" id="is_beer">
+                                        <label class="form-check-label" for="is_beer">
+                                            <small>Is Beer</small>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -263,7 +275,7 @@
 
                                     <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
 
-                                    <input type="file" name="itemImage" id="edit_itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image-edit" placeholder="Item Image">
+                                    <input type="file" name="itemImage" id="edit_itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image-edit" placeholder="Item Image" accept="image/*">
 
                                     <div class="upload-content" id="edit_uploadContent">
                                         <i class="upload-icon">
@@ -285,13 +297,13 @@
 
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            {{-- <div class="col-lg-6">
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Price</small></label>
                                     <input type="number" name="itemPrice" id="edit_itemPrice" class="form-control py-2 shadow-none" placeholder="Item Price"  min="0" max="9999999999" step="0.01" required>
                                     <div class="error-div text-danger small"></div>
                                 </div>
-                            </div>
+                            </div> --}}
                             <div class="col-lg-6">
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Code</small></label>
@@ -299,19 +311,32 @@
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
+
                             <div class="col-lg-6">
-                                <div class="form-part mb-3">
+                                <div class="mb-3 form-part">
                                     <label for="" class="form-label"><small>Size in ML</small></label>
-                                    <input type="number" name="size_ml" id="edit_size_ml" class="form-control py-2 shadow-none " placeholder="Size in ML"  value="" required>
+                                    <select name="size_ml" id="edit_size_ml" class="form-select py-2 shadow-none" required>
+                                        <option value="" selected="" hidden="" disabled="">Select Size in ML
+                                        </option>
+                                        <option value="330">330</option>
+                                        <option value="375">375</option>
+                                        <option value="650">650</option>
+                                        <option value="700">700</option>
+                                        <option value="750">750</option>
+                                    </select>
+
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" value="" name="is_beer" id="edit_is_beer" required>
-                                    <label class="form-check-label" for="edit_is_beer">
-                                        <small>Is Beer</small>
-                                    </label>
+                                <div class="form-part mb-3">
+                                    <label for="" class="form-label w-100"><small>Is Beer</small></label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" value="1" name="is_beer" id="edit_is_beer" required>
+                                        <label class="form-check-label" for="edit_is_beer">
+                                            <small>Is Beer</small>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -339,6 +364,34 @@
                                 <div class="text-end mod-footer">
                                     <input type="submit" class="btn btn-primary fw-semibold" value="Update" id="editLiquorItem_submit">
                                 </div>
+                            </div>
+                        </div>
+                    </form>
+                    <form id="">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <div class="form-label fw-semibold text-dark mb-3"><span
+                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
+                                            class="fa-regular fa-user"></i></span> Price Manage
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-part mb-3 d-flex align-items-center gap-2 mod-footer">
+
+                                <label for="" class="form-label"><small>Current Price</small></label>
+
+                                <input type="hidden" id="price_item_id" name="item_id">
+
+                                <input type="number" name="itemPrice" id="edit_itemPrice" class="form-control py-2 shadow-none" placeholder="Current price" readonly>
+
+                                <div class="error-div text-danger small"></div>
+
+                                <button type="button" class="btn btn-info fw-semibold changePriceBtn" data-bs-toggle="modal" data-bs-target="#changeprice">Change Price</button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div id="pendingPriceMessage" class="mb-3 d-flex align-items-center gap-2 justify-content-between text-warning fw-semibold" style="display:none;">
                             </div>
                         </div>
                     </form>
@@ -426,8 +479,8 @@
 
             $('#liquorItemForm').on('submit', function(e){
                 e.preventDefault();
-                const $btn = $('#foodItem_submit');
-                const originalText = $btn.html();
+                const btn = $('#foodItem_submit');
+                const originalText = btn.html();
 
 
                 let isValid = true;
@@ -545,9 +598,8 @@
                     return ;
                 }
 
-                $btn.prop('disabled', true);
-                $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
-
+                btn.prop('disabled', true);
+                btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...');
 
                 //AJAX SUBMIT
                 let formData = new FormData($('#liquorItemForm')[0]);
@@ -564,7 +616,7 @@
                     success:function(response){
 
                         if(response.statusCode == 200){
-                            $btn.html(originalText);
+                            btn.html(originalText);
                             toastr.success(response.message);
 
                             $('#liquorItemForm')[0].reset();
@@ -573,8 +625,8 @@
 
                         }
                         else{
-                            $btn.html(originalText);
-                            $btn.prop('disabled', false);
+                            btn.html(originalText);
+                            btn.prop('disabled', false);
 
                             if(response.error){
                                 toastr.error(response.error);
@@ -587,8 +639,8 @@
                     },
                     error:function(xhr, status, error){
 
-                        $btn.html(originalText);
-                        $btn.prop('disabled', false);
+                        btn.html(originalText);
+                        btn.prop('disabled', false);
                         toastr.error("Something went wrong, Please try again.");
 
                         let responseError = xhr.responseJSON?.error
@@ -611,6 +663,7 @@
                         let data = response.data;
 
                         $('#edit_item_id').val(data.id);
+                        $('#price_item_id').val(data.id);
 
                         $('#edit_itemName').val(data.name);
                         $('#edit_itemCat').val(data.category_id);
@@ -633,7 +686,7 @@
                                 .removeClass('d-none');
                         }
 
-                        $('#editfooditem').modal('show');
+                        $('#editliquoritem').modal('show');
                     }
                 });
 
@@ -649,7 +702,7 @@
 
                 $.ajax({
 
-                    url: "/manage-food-items/"+id,
+                    url: "/manage-liquor-items/"+id,
 
                     type: "POST",   // Laravel PUT via method spoofing
 
@@ -666,7 +719,7 @@
 
                             $('#editliquorItemForm')[0].reset();
 
-                            $('#editfooditem').modal('hide');
+                            $('#editliquoritem').modal('hide');
 
                             setTimeout(function(){
                                 location.reload();

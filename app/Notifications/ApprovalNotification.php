@@ -69,6 +69,11 @@ class ApprovalNotification extends Notification
                 $notificationType = "member_edit";
                 break;
 
+            case 'liquor_price_update':
+                $message = "A liquor item price is updated and waiting for approval";
+                $notificationType = "liquor_price_update";
+                break;
+
                 // case 'user':
                 //     $message = "New user registration waiting for approval";
                 //     break;

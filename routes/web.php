@@ -18,6 +18,7 @@ use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\MinimumSpendRuleManageController;
 use App\Http\Controllers\Master\OperatorManageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StockManagementController;
 use App\Http\Controllers\SwimmingMemberController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -106,10 +107,24 @@ Route::middleware('auth')->group(function () {
         Route::get('approve/{id}', 'approve')->name('foodItemPriceApproval.approve');
         Route::get('view/{id}', 'view')->name('foodItemPriceApproval.view');
     });
+    Route::prefix('manage-liquor-item-price-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list', 'liquorItemPriceLIst')->name('liquorItemPriceApproval.list');
+        Route::get('reject/{id}', 'reject')->name('liquorItemPriceApproval.reject');
+        Route::get('approve/{id}', 'approve')->name('liquorItemPriceApproval.approve');
+        Route::get('view/{id}', 'view')->name('liquorItemPriceApproval.view');
+    });
     Route::post('price-request', [FoodItemManageController::class, 'requestPriceChange'])->name('foodItemPriceApproval.request');
 
     Route::resource('manage-liquor-items', LiquorItemManageController::class)->names('manage-liquor-items');
     Route::post('liquor-price-request', [LiquorItemManageController::class, 'requestPriceChange'])->name('liquorItemPriceApproval.request');
+
+    Route::prefix('stock-management')->controller(StockManagementController::class)->group(function () {
+        Route::get('godown-stock-manage', 'godownStockList')->name('godown-stock-manage.list');
+        Route::post('godown-stock-manage', 'godownStockStore')->name('godown-stock-manage.store');
+        Route::get('bar-stock-manage', 'barStockManage')->name('bar-stock-manage.list');
+        Route::get('current-stock-inventory', 'currentStockInventory')->name('current-stock-inventory.list');
+        Route::get('liquor-stock-report', 'liquorStockReport')->name('liquor-stock-report.list');
+    });
 });
 
 

@@ -6,10 +6,13 @@ use App\Models\ActionApproval;
 use App\Models\FoodCategory;
 use App\Models\FoodItem;
 use App\Models\FoodItemPrice;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Notifications\ApprovalNotification;
 
 class LiquorItemManageController extends Controller
 {
@@ -108,7 +111,7 @@ class LiquorItemManageController extends Controller
             ]);
 
             // checkbox handling
-            $isBeer = $request->boolean('is_beer');
+            $isBeer = $request->is_beer ?? 0;
 
             // unit logic
             $unit = $isBeer ? 'bottle' : 'ml';
@@ -135,7 +138,7 @@ class LiquorItemManageController extends Controller
                 'unit'                => $unit,
                 'size_ml'             => $request->size_ml,
                 'is_beer'             => $isBeer,
-                'low_stock_alert_qty' => $request->itemLow,
+                'low_stock_alert_qty' => $request->low_stock_alert_qty,
 
             ]);
 
@@ -220,46 +223,47 @@ class LiquorItemManageController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            $user = auth()->user();
+
+            $user    = auth()->user();
             $club_id = $user->club_id;
 
             DB::beginTransaction();
 
-            $data = $request->validate([
+            $request->validate([
                 'itemName'  => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('food_items', 'name')
+                        ->ignore($id)
                         ->where(function ($query) use ($club_id) {
                             return $query->where('club_id', $club_id)
                                 ->where('item_type', 'liquor')
                                 ->whereNull('deleted_at');
-                        })
-                        ->ignore($id),
+                        }),
                 ],
                 'itemCat' => 'required',
 
-                'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',
+                // 'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',
 
-                'itemImage' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+                // 'itemImage' => 'required|image|mimes:jpeg,png,jpg|max:5120',
 
                 'itemCode' => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('food_items', 'code')
+                        ->ignore($id)
                         ->where(function ($query) use ($club_id) {
                             return $query->where('club_id', $club_id)
                                 ->where('item_type', 'liquor')
                                 ->whereNull('deleted_at');
-                        })
-                        ->ignore($id),
+                        }),
                 ],
 
                 'itemstatus' => 'required|boolean',
 
-                'size_ml' => 'required|numeric|min:0',
+                'size_ml' => 'nullable|numeric|min:0',
 
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
 
@@ -267,25 +271,35 @@ class LiquorItemManageController extends Controller
 
             ]);
 
-            // checkbox handling
-            $isBeer = $request->boolean('is_beer');
+            $foodItem =  FoodItem::where('club_id', $club_id)
+                ->where('id', $id)
+                ->where('item_type', 'liquor')
+                ->firstOrFail();
+
+            $isBeer = $request->is_beer ?? 0;
 
             // unit logic
             $unit = $isBeer ? 'bottle' : 'ml';
 
-            $dest_path  = 'uploads/images';
+            $dest_path = 'uploads/images';
             $image_path = null;
 
             if ($request->hasFile('itemImage')) {
 
-                $file       = $request->file('itemImage');
-                $filename   = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
-                $path       = $file->storeAs($dest_path, $filename, 'public');
+                if ($foodItem->image && file_exists(public_path($foodItem->image))) {
+                    unlink(public_path($foodItem->image));
+                }
+
+                $file = $request->file('itemImage');
+                $filename = time() . rand(1000, 9999) . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs($dest_path, $filename, 'public');
                 $image_path = 'storage/' . $path;
+            } else {
+                $image_path = $foodItem->image;
             }
 
-            $foodItem   = FoodItem::create([
-                'club_id'             => $club_id,
+            $foodItem->update([
+
                 'name'                => $request->itemName,
                 'category_id'         => $request->itemCat,
                 'item_type'           => 'liquor',
@@ -295,16 +309,46 @@ class LiquorItemManageController extends Controller
                 'unit'                => $unit,
                 'size_ml'             => $request->size_ml,
                 'is_beer'             => $isBeer,
-                'low_stock_alert_qty' => $request->itemLow,
+                'low_stock_alert_qty' => $request->low_stock_alert_qty,
 
             ]);
 
-            $foodPrice  = FoodItemPrice::create([
-                'item_id'         => $foodItem->id,
-                'price'           => $request->itemPrice,
-                'effective_from'  => now(),
-                'is_active'       => '1',
-            ]);
+            // Get current active price
+            // $currentPrice = FoodItemPrice::where('item_id',$foodItem->id)
+            //                              ->where('is_active', 1)
+            //                              ->first();
+
+            // if($currentPrice){
+            // If price changed
+            // if($currentPrice->price != $request->itemPrice){
+
+            // Deactivate old price
+            // $currentPrice->update([
+            //     'is_active' => 0,
+            //     'effective_to' => now(),
+            // ]);
+
+            // Insert new price
+            // FoodItemPrice::create([
+            //     'item_id' => $foodItem->id,
+            //     'price' => $request->itemPrice,
+            //     'effective_from' => now(),
+            //     'is_active' => '1'
+            // ]);
+            // }
+            // }
+
+            // else{
+
+            //     // If no price exists yet
+
+            //     FoodItemPrice::create([
+            //         'item_id'        => $foodItem->id,
+            //         'price'          => $request->itemPrice,
+            //         'effective_from' => now(),
+            //         'is_active'      => 1
+            //     ]);
+            // }
 
             DB::commit();
 
@@ -312,7 +356,7 @@ class LiquorItemManageController extends Controller
 
                 'statusCode' => 200,
 
-                'message'   => 'Liquor item added successfully.'
+                'message'   => 'Liquor item updated successfully.'
 
             ]);
         } catch (\Throwable $th) {
@@ -320,7 +364,7 @@ class LiquorItemManageController extends Controller
 
             return response()->json([
                 'statusCode' => 500,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
         }
     }
@@ -341,7 +385,7 @@ class LiquorItemManageController extends Controller
             if ($existingPending) {
                 return response()->json([
                     'statusCode' => 400,
-                    'message' => 'An edit request is already pending.'
+                    'error' => 'An edit request is already pending.'
                 ]);
             }
 
@@ -352,7 +396,7 @@ class LiquorItemManageController extends Controller
 
             $foodItem =  FoodItem::where('club_id', $club_id)
                 ->where('id', $request->item_id)
-                ->where('item_type', 'food')
+                ->where('item_type', 'liquor')
                 ->firstOrFail();
 
             $currentPrice = FoodItemPrice::where('item_id', $foodItem->id)
@@ -408,7 +452,7 @@ class LiquorItemManageController extends Controller
 
             //NORMAL USER → maker checker
 
-            ActionApproval::create([
+            $approval = ActionApproval::create([
                 'club_id' => $club_id,
                 'module' => 'liquor_price_update',
                 'action_type' => 'update',
@@ -418,6 +462,12 @@ class LiquorItemManageController extends Controller
                 'request_payload' => json_encode($payload),
                 'status' => 'pending'
             ]);
+
+            $approvers = User::role(['operator', 'admin'])
+                ->where('id', '!=', Auth::id())
+                ->get();
+
+            Notification::send($approvers, new ApprovalNotification($approval));
 
             return response()->json([
                 'statusCode' => 200,
@@ -442,6 +492,19 @@ class LiquorItemManageController extends Controller
 
             $user = auth()->user();
             $club_id = $user->club_id;
+
+            $existingPending = ActionApproval::where('club_id', $club_id)
+                ->where('module', 'liquor_price_update')
+                ->where('entity_id', $id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($existingPending) {
+                return response()->json([
+                    'statusCode' => 400,
+                    'error' => 'An edit request is already pending.'
+                ]);
+            }
 
             $liquorItem = FoodItem::where('club_id', $club_id)
                 ->where('item_type', 'liquor')

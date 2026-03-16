@@ -37,8 +37,10 @@
             <li><a href="javascript:void(0)"><i class="fa-solid fa-wine-bottle"></i> Liquor Manage</a>
                 <ul class="list-unstyled">
                     <li><a href="{{ route('manage-liquor-items.index') }}" class="{{ request()->routeIs('manage-liquor-items.index') ? 'active' : '' }}">Liquor List</a></li>
-                    <li><a href="javascript:void(0)">Current Stock Inventory</a></li>
-                    <li><a href="javascript:void(0)">Liquor Stock Report</a></li>
+                    <li><a href="{{ route('godown-stock-manage.list') }}" class="{{ request()->routeIs('godown-stock-manage.list') ? 'active' : '' }}">Godown Stock Manage</a></li>
+                    <li><a href="{{ route('bar-stock-manage.list') }}" class="{{ request()->routeIs('bar-stock-manage.list') ? 'active' : '' }}">Bar Stock Manage</a></li>
+                    <li><a href="{{ route('current-stock-inventory.list') }}" class="{{ request()->routeIs('current-stock-inventory.list') ? 'active' : '' }}">Current Stock Inventory</a></li>
+                    <li><a href="{{ route('liquor-stock-report.list') }}" class="{{ request()->routeIs('liquor-stock-report.list') ? 'active' : '' }}">Liquor Stock Report</a></li>
                 </ul>
             </li>
             <li class="{{ request()->routeIs('manage-food-items.*') ? 'active' : '' }}"><a href="{{ route('manage-food-items.index') }}"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
@@ -49,7 +51,9 @@
                     <li class="{{ request()->routeIs('foodItemPriceApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('foodItemPriceApproval.list') }}">Food Item</a>
                     </li>
-                    <li class=""><a href="javascript:void(0)">Liquor</a></li>
+                    <li class="{{ request()->routeIs('liquorItemPriceApproval.*') ? 'active' : '' }}">
+                        <a href="{{ route('liquorItemPriceApproval.list') }}">Liquor</a>
+                    </li>
                 </ul>
             </li>
             @role('admin')

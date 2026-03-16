@@ -1,6 +1,9 @@
 <div class="right-header d-flex align-items-center justify-content-between py-3 ps-lg-5 pe-3 ps-3 bg-white position-fixed top-0">
     <div class="item-left">
         <h1 class="mb-1 fs-3 fw-semibold">@yield('page_title')</h1>
+        @if (isset($sub_title))
+            <p class="m-0">{{$sub_title}}</p>
+        @endif
         {{-- <p class="m-0">Overview of your member management system</p> --}}
     </div>
     <div class="item-right d-flex align-items-center position-relative">
@@ -35,9 +38,16 @@
                 <div class="pt-3 pb-4 px-3 noti-body overflow-auto">
                     @forelse(auth()->user()->unreadNotifications as $notification)
                     {{-- <a href="{{ route('notification.read', $notification->id) }}"> --}}
-                    <a href="{{ in_array($notification->data['notification_type'] ?? '', ['member_create','member_edit','member_delete'])
-                        ? route('memberActionApproval.list')
-                        : 'javascript:void(0)' }}">
+                    @php
+                        if (in_array($notification->data['notification_type'] ?? '', ['member_create','member_edit','member_delete'])) {
+                            $route = route('memberActionApproval.list');
+                        } elseif (in_array($notification->data['notification_type'] ?? '', ['liquor_price_update'])) {
+                            $route = route('liquorItemPriceApproval.list');
+                        } elseif (in_array($notification->data['notification_type'] ?? '', ['food_price_update'])) {
+                            $route = route('foodItemPriceApproval.list');
+                        }
+                    @endphp
+                    <a href="{{ $route }}">
                         {{-- {{ $notification->data['message'] }} --}}
                          <div class="card text-white mb-2">
                             <div class="card-body">

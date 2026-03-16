@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\LogChange;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+
 trait LogsModelChanges
 {
     public static function bootLogsModelChanges()
@@ -42,7 +43,6 @@ trait LogsModelChanges
                 $model->logChange('deleted', $model->getAttributes());
             }
         });
-
     }
 
     public function logChange($action, $changes)
@@ -60,17 +60,16 @@ trait LogsModelChanges
         //     $description = ucfirst($action) . ' ' . class_basename($this);
         // }
 
-        if($user){
+        if ($user) {
             $userRole = $user->getRoleNames()->first();
             if ($userRole) {
-                $description = $userRole.' ' . $action . ' ' . class_basename($this);
-            }else {
+                $description = $userRole . ' ' . $action . ' ' . class_basename($this);
+            } else {
                 $description = ucfirst($action) . ' ' . class_basename($this);
             }
-        }
-        else{
+        } else {
             $userRole = 'System';
-            $description = $userRole.' ' . $action . ' ' . class_basename($this);
+            $description = $userRole . ' ' . $action . ' ' . class_basename($this);
         }
 
         LogChange::create([
