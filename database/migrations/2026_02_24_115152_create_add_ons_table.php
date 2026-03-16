@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('club_id')->nullable()->constrained('clubs')->nullOnDelete();
             $table->string('name',255)->nullable();
+            $table->boolean('is_locker')->default(0)->after('price');
             $table->decimal('price',10,2)->default(0);
             $table->boolean('is_active')->default(false);
             $table->timestamps();

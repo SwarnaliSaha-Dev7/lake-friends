@@ -73,6 +73,12 @@
                                             <i class="fa-sharp fa-clock-rotate-left"></i>
                                         </small>
                                     </button>
+                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn addOnBtn" data-bs-toggle="modal" data-bs-target="#addAddonModal"
+                                        title="Add On" data-id="{{$member->id}}">
+                                        <small>
+                                            <i class="fa-solid fa-puzzle-piece"></i>
+                                        </small>
+                                    </button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
                                             title="Wallet Recharge" data-id="{{$member->id}}"><small><i
                                                     class="fa-solid fa-wallet"></i></small></button>
@@ -1131,6 +1137,82 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Add-On Modal -->
+    <div class="modal fade" id="addAddonModal" tabindex="-1"
+        aria-labelledby="addAddonModalLabel" aria-hidden="true">
+
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- Header -->
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="addAddonModalLabel">
+                        Add Add-On
+                    </h5>
+
+                    <button type="button"
+                        class="btn-close bg-transparent fs-5 lh-1"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                        <i class="fa-regular fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" id="addOnMemberId" value="">
+                        <input type="hidden" id="existingAddonIds" value="">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-part mb-3">
+                                    <label class="form-label w-100"><small>Please Select Add-Ons</small></label>
+
+                                    @foreach ($addonList as $addon)
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input addon-checkbox" type="checkbox" value="{{ $addon->id }}" data-price="{{ $addon->price }}" data-is-locker="{{ $addon->is_locker ?? 0 }}" id="addon{{ $addon->id }}">
+
+                                            <label class="form-check-label" for="addon{{ $addon->id }}">
+                                                <small>{{ $addon->name }} (₹{{ $addon->price }})</small>
+                                                <div class="addon-date small text-muted d-inline ms-1 d-none"
+                                                    id="addonDate{{ $addon->id }}">
+                                                    | Start: <span class="start-date"></span>,
+                                                    End: <span class="end-date"></span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    @endforeach
+
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- Bottom Payment Bar -->
+                        <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
+
+                            <div class="text-end mt-3 d-none" id="addonTotalWrapper">
+                                <small>Total Amount to Pay</small>
+                                <h5 class="fw-semibold mb-0">
+                                    ₹ <span id="addonTotalAmount">0</span>
+                                </h5>
+                            </div>
+
+                            <button class="btn btn-primary fw-semibold px-4"
+                                id="purchaseAddonBtn">
+                                Purchase
+                            </button>
+
+                        </div>
+                        {{-- <div class="text-end">
+                            <button class="btn btn-primary fw-semibold" id="purchaseAddonBtn">Purchase</button>
+                        </div> --}}
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('customJS')
@@ -1822,6 +1904,200 @@
             });
 
         });
+
+        $(document).on('click', '.addOnBtn', function() {
+            let btn = $(this);
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML'); // save original button
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary addon-loader"></span>');
+
+            $('#addOnMemberId').val(memberId);
+            $('#addonTotalAmount').text(0);
+            $('#addonTotalWrapper').addClass('d-none');
+            // reset old selections
+            $('.addon-checkbox').prop('checked', false).prop('disabled', false);
+            $('.addon-date').addClass('d-none');
+
+            $.ajax({
+                url: "{{ route('club-member.member-addon.list') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    member_id: memberId
+                },
+
+                success: function (response) {
+
+                    if (response.statusCode == 200) {
+
+                        let total = 0;
+                        let addonIds = [];
+
+                        // mark already purchased addons
+                        response.data.forEach(function(addon){
+                            // collect addon ids
+                            addonIds.push(addon.add_on_id);
+
+                            let checkbox = $('#addon' + addon.add_on_id);
+                            checkbox.prop('checked', true).prop('disabled', true); // prevent repurchase
+
+                            // SHOW START & END DATE
+                            let dateBox = $('#addonDate' + addon.add_on_id);
+
+                            dateBox.removeClass('d-none');
+                            dateBox.find('.start-date').text(addon.start_date);
+                            dateBox.find('.end-date').text(addon.end_date);
+
+                            // total += parseFloat(addon.price);
+                        });
+
+                        // store in hidden field
+                        $('#existingAddonIds').val(addonIds.join(','));
+
+                        // $('#addonTotalAmount').text(total);
+
+                        // open modal AFTER data load
+                        $('#addAddonModal').modal('show');
+
+                    } else {
+                        toastr.error(response.message ?? "Failed to load add-ons");
+                    }
+                },
+
+                error: function () {
+                    toastr.error("Something went wrong");
+                },
+
+                complete: function () {
+                    // restore button
+                    $('.addon-loader').replaceWith(originalBtn);
+                }
+            });
+
+        });
+
+        $(document).on('click', '#purchaseAddonBtn', function (e) {
+            e.preventDefault();
+            let memberId = $('#addOnMemberId').val();
+            let total = 0;
+            let addons = [];
+            // already taken addons
+            let existingIds = $('#existingAddonIds').val()
+                ? $('#existingAddonIds').val().split(',').map(Number)
+                : [];
+
+            $('.addon-checkbox:checked').each(function () {
+                // addons.push($(this).val());
+                let addonId = parseInt($(this).val());
+                let price = parseFloat($(this).data('price'));
+
+                // push ONLY NEW addons
+                if (!existingIds.includes(addonId)) {
+                    total += price;
+                    addons.push(addonId);
+                }
+            });
+
+            if ((addons.length === 0) || (total <= 0)) {
+                toastr.error('No new add-on selected');
+                return;
+            }
+
+            let btn = $(this);
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
+
+            $.ajax({
+                url: "{{ route('club-member.member-addon.purchase') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    member_id: memberId,
+                    addons: addons,
+                    amount: total
+                },
+                success: function (response) {
+
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        $('#addAddonModal').modal('hide');
+
+                    } else {
+                        toastr.error(response.message ?? "Something went wrong");
+                    }
+                },
+                error: function () {
+                    toastr.error('Something went wrong');
+                },
+                complete: function () {
+                    btn.prop('disabled', false).html('Purchase Add-On');
+                }
+            });
+
+        });
+
+        $(document).on('change', '.addon-checkbox', function () {
+            let total = 0;
+            let existingIds = $('#existingAddonIds').val()
+                            ? $('#existingAddonIds').val().split(',').map(Number)
+                            : [];
+
+            let newAddonSelected = false;
+
+            $('.addon-checkbox:checked').each(function () {
+                // total += parseFloat($(this).data('price'));
+
+                let addonId = parseInt($(this).val());
+                let price = parseFloat($(this).data('price'));
+
+                // check mismatch (NEW addon)
+                if (!existingIds.includes(addonId)) {
+                    total += price;
+                    newAddonSelected = true;
+                }
+            });
+
+            $('#addonTotalAmount').text(total.toFixed(2));
+            // $('#addonTotalAmount').text(total);
+
+            // show only if NEW addon selected
+            if (newAddonSelected && total > 0) {
+                $('#addonTotalWrapper').removeClass('d-none');
+            } else {
+                $('#addonTotalWrapper').addClass('d-none');
+            }
+        });
+
+        function loadAvailableLockers() {
+
+            $.ajax({
+                url: "{{ route('club-member.available-lockers') }}",
+                type: "GET",
+
+                success: function(response){
+
+                    if(response.statusCode == 200){
+
+                        let options = '<option value="">Select Locker</option>';
+
+                        response.data.forEach(function(locker){
+                            options += `<option value="${locker.id}">
+                                            Locker ${locker.locker_number}
+                                        </option>`;
+                        });
+
+                        $('#lockerSelect').html(options);
+                        $('#lockerWrapper').removeClass('d-none');
+
+                    } else {
+                        toastr.error(response.message ?? 'No lockers available');
+                    }
+                },
+
+                error:function(){
+                    toastr.error('Failed to load lockers');
+                }
+            });
+        }
 
     });
 </script>

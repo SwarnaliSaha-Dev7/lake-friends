@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
+use App\Models\AddOn;
 use App\Models\Bank;
 use App\Models\Card;
 use App\Models\GstRate;
 use App\Models\Member;
+use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPlanType;
@@ -15,8 +17,8 @@ use App\Models\MembershipType;
 use App\Models\PaymentHistory;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Notifications\ApprovalNotification;
 use App\Models\WalletTransaction;
+use App\Notifications\ApprovalNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,6 +75,11 @@ class ClubMemberController extends Controller
                 ->orderBy('created_at', 'DESC')
                 ->get();
 
+
+            $addonList = AddOn::where('club_id', $clubId)
+            ->where('is_active', 1)
+            ->get();
+
             return view('club_member.list', compact(
                 'title',
                 'page_title',
@@ -80,7 +87,8 @@ class ClubMemberController extends Controller
                 'gstPercentage',
                 'bankList',
                 'cards',
-                'members'
+                'members',
+                'addonList'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -910,6 +918,94 @@ class ClubMemberController extends Controller
             ]);
         }
     }
+
+    public function purchaseAddOn(Request $request)
+    {
+        try {
+            // return $request;
+
+            DB::beginTransaction();
+            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
+            $amount = $request->amount;
+
+            // $wallet = Wallet::where('member_id', $id)->value('current_balance');
+
+            // CHECK BALANCE
+            if (!$wallet || $wallet->current_balance < $amount) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Insufficient wallet balance'
+                ]);
+            }
+
+             //DEDUCT WALLET
+            $wallet->current_balance -= $amount;
+            $wallet->save();
+
+            $startDate = carbon::now();
+            $endDate   = carbon::now()->addMonths(6);
+
+            foreach ($request->addons as $addonId) {
+
+                $addon = AddOn::find($addonId);
+
+                MemberAddOn::create([
+                        'member_id' => $request->member_id,
+                        'add_on_id' => $addonId,
+                        'price' => $addon->price,
+                        'start_date'=> $startDate,
+                        'end_date'  => $endDate,
+                    ]);
+            }
+
+            // WALLET LOG
+            WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'member_id' => $request->member_id,
+                'amount'    => $amount,
+                'direction' => 'debit',
+                'txn_type'  => 'add_on_purchase',
+                'created_by' => auth()->id(),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'data' => '',
+                'statusCode' => 200,
+                'message' => 'Add-ons purchased successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function memberAddonList(Request $request)
+    {
+        try {
+
+            //fetch the activated add on
+            $addons = MemberAddOn::where('member_id', $request->member_id)
+                ->whereDate('end_date', '>=', carbon::now())
+                ->get();
+
+            return response()->json([
+                'statusCode' => 200,
+                'message'    => 'Add-ons fetched successfully',
+                'data'       => $addons
+            ]);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
     // public function mealPriceEdit(Request $request)
     // {
     //     try {

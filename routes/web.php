@@ -69,6 +69,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/membership-plan/{id}', [ClubMemberController::class, 'membershipPlan'])->name('club-member.membership-plan');
         Route::get('/fetch-wallet-balance/{id}', [ClubMemberController::class, 'fetchWalletBalance'])->name('club-member.fetch-wallet-balance');
         Route::post('/recharge-wallet-balance', [ClubMemberController::class, 'rechargeWalletBalance'])->name('club-member.recharge-wallet-balance');
+        Route::post('member-addon/purchase', [ClubMemberController::class,'purchaseAddOn'])->name('club-member.member-addon.purchase');
+        Route::post('member-addon/list',[ClubMemberController::class, 'memberAddonList'])->name('club-member.member-addon.list');
         Route::delete('/club-member/{id}', [ClubMemberController::class, 'delete'])->name('club-member.delete');
     });
 
