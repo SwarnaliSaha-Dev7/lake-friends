@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\ActionApprovalController;
+use App\Http\Controllers\RestaurantOrderController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
 use App\Http\Controllers\ClubMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoodItemManageController;
 use App\Http\Controllers\LiquorItemManageController;
+use App\Http\Controllers\OfferManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
 use App\Http\Controllers\Master\FineRulesManageController;
@@ -98,8 +100,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');
 
     Route::get('get-member-details/{cardNo}', [DashboardController::class, 'fetchMemberDetailsByCard'])->name('getMemberDetails');
+    Route::get('get-order-items', [DashboardController::class, 'getOrderItems'])->name('getOrderItems');
+    Route::get('restaurant-orders', [RestaurantOrderController::class, 'index'])->name('restaurant-orders.index');
+    Route::get('restaurant-orders-history', [RestaurantOrderController::class, 'history'])->name('restaurant-orders.history');
+    Route::get('restaurant-orders/{id}', [RestaurantOrderController::class, 'show'])->name('restaurant-orders.show');
+    Route::post('restaurant-orders', [RestaurantOrderController::class, 'store'])->name('restaurant-orders.store');
+    Route::get('restaurant-orders/{id}/invoice', [RestaurantOrderController::class, 'downloadInvoice'])->name('restaurant-orders.invoice');
+    Route::patch('restaurant-orders/{id}/delivered', [RestaurantOrderController::class, 'markDelivered'])->name('restaurant-orders.delivered');
+    Route::patch('restaurant-orders/{id}/cancel', [RestaurantOrderController::class, 'cancelOrder'])->name('restaurant-orders.cancel');
 
     Route::resource('manage-food-items', FoodItemManageController::class);
+    Route::prefix('manage-offer-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',        'offerApprovalList')->name('offerApproval.list');
+        Route::get('approve/{id}','approve')->name('offerApproval.approve');
+        Route::get('reject/{id}', 'reject')->name('offerApproval.reject');
+    });
+
     Route::prefix('manage-food-item-price-approval')->controller(ActionApprovalController::class)->group(function () {
         Route::get('list', 'foodItemPriceLIst')->name('foodItemPriceApproval.list');
         Route::get('reject/{id}', 'reject')->name('foodItemPriceApproval.reject');
@@ -109,6 +125,8 @@ Route::middleware('auth')->group(function () {
     Route::post('price-request', [FoodItemManageController::class, 'requestPriceChange'])->name('foodItemPriceApproval.request');
 
     Route::resource('manage-liquor-items', LiquorItemManageController::class);
+
+    Route::resource('manage-offers', OfferManageController::class);
 });
 
 

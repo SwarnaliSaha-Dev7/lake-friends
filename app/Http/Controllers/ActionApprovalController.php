@@ -10,6 +10,8 @@ use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use App\Models\Offer;
+use App\Models\OfferItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -119,6 +121,28 @@ class ActionApprovalController extends Controller
                 'clubMembershipData',
                 'cards'
             ));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function offerApprovalList()
+    {
+        try {
+            $title      = 'Offer Approval List';
+            $page_title = 'Offer Approval';
+
+            $clubId = club_id();
+
+            $offerApprovalData = ActionApproval::with(['operatorDetails', 'entity.offerType', 'entity.offerItems.foodItem'])
+                ->where('club_id', $clubId)
+                ->where('module', 'offer')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.offer.list', compact('title', 'page_title', 'offerApprovalData'));
         } catch (\Throwable $th) {
             return $th->getMessage();
         }
@@ -392,6 +416,39 @@ class ActionApprovalController extends Controller
                 DB::commit();
             }
 
+            if ($data->module == 'offer') {
+                $offer = Offer::find($data->entity_id);
+                if ($offer) {
+                    if ($data->action_type === 'create') {
+                        $offer->update(['status' => 'active']);
+
+                    } elseif ($data->action_type === 'update') {
+                        $payload = is_array($data->request_payload)
+                            ? $data->request_payload
+                            : json_decode($data->request_payload, true);
+                        $new = $payload['new'];
+
+                        $offer->update([
+                            'name'           => $new['name'],
+                            'offer_type_id'  => $new['offer_type_id'],
+                            'applies_to'     => $new['applies_to'],
+                            'discount_value' => $new['discount_value'] ?? 0,
+                            'start_at'       => $new['start_at'],
+                            'end_at'         => $new['end_at'],
+                        ]);
+
+                        OfferItem::where('offer_id', $offer->id)->delete();
+                        foreach ($new['items'] as $itemId) {
+                            OfferItem::create(['offer_id' => $offer->id, 'food_items_id' => $itemId]);
+                        }
+
+                    } elseif ($data->action_type === 'delete') {
+                        OfferItem::where('offer_id', $offer->id)->delete();
+                        $offer->delete();
+                    }
+                }
+            }
+
             if($data->module == 'food_price_update'){
 
                 $payloadJson = $data->request_payload;
@@ -492,6 +549,11 @@ class ActionApprovalController extends Controller
                     $membershipPlanPurchase->update([
                         'status' => 'cancelled'
                     ]);
+                }
+            } elseif ($data->module == 'offer') {
+                $offer = Offer::find($data->entity_id);
+                if ($offer) {
+                    $offer->update(['status' => 'rejected']);
                 }
             } elseif ($data->module == 'member_edit') {
                 $payloadJson = $data->request_payload;

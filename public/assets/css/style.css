@@ -759,3 +759,107 @@ small.text-muted {
         --bs-modal-width: 1000px;
     }
 }
+
+/*Dolan Css*/
+
+.bg-light-yellow {
+    background-color: #fff9e6 !important; 
+    color: #b38600 !important;           
+}
+
+
+.border-warning {
+    border-color: #ffc107 !important;
+}
+
+.delete-row i {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.delete-row:hover i {
+    transform: scale(1.1);
+}
+ .total-section .bg-light {
+    background-color: #E9EFF6 !important;
+ }
+ .total-section .bg-dark{
+    background-color: #5C6268 !important;
+ }
+.member-list-part .createorder-icon {    
+    background: #E6F5FC;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+
+#createOrderModal table thead th,#downloadModal table thead th{
+    background: var(--table-Header-bg-Color);
+    padding-left: 15px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+/* #vieworder table thead th{
+     background: var(--table-Header-bg-Color);
+    padding-left: 15px;
+    padding-top: 14px;
+    padding-bottom: 14px; 
+}
+#vieworde .table-responsive .bg-light-blue{
+    
+  background-color: #E5F0FF !important;
+} */
+ #vieworder .invoice-table thead th{
+    background: var(--table-Header-bg-Color);
+    padding:14px 15px;
+    color:#fff;
+    font-weight:500;
+}
+
+ #downloadModal .download-table thead th{
+    background: var(--table-Header-bg-Color);
+    padding:14px 15px;
+    color:#fff;
+    font-weight:500;
+}
+#vieworder .invoice-table td{
+    padding:10px 15px;
+}
+
+#vieworder .invoice-summary-row td{
+    background:#C4C4C4 !important;
+    font-weight:600;
+}
+
+#vieworder .text-end{
+    text-align:right;
+}
+
+#vieworder .text-center{
+    text-align:center;
+}
+
+#vieworder .table-responsive{
+    overflow-x:auto;
+}
+
+#vieworder .invoice-table{
+    min-width:600px;
+}
+.delivered-btn{
+    color: #0DA2E7;
+    padding:6px 14px;
+    font-size:12px;
+    letter-spacing:0.5px;
+}
+.delete-order-row{
+    color:#FF0004;
+}
+
+/* end dolan css */

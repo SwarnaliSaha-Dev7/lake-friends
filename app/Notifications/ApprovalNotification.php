@@ -69,13 +69,22 @@ class ApprovalNotification extends Notification
                 $notificationType = "member_edit";
                 break;
 
-                // case 'user':
-                //     $message = "New user registration waiting for approval";
-                //     break;
-
-                // case 'transaction':
-                //     $message = "Transaction waiting for approval";
-                //     break;
+            case 'offer':
+                $actionLabel = match($this->approval->action_type) {
+                    'create' => 'created',
+                    'update' => 'edited',
+                    'delete' => 'deleted',
+                    default  => 'updated',
+                };
+                $payload   = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $offerName = $payload['new']['name']   // update payload
+                    ?? $payload['name']                 // create / delete payload
+                    ?? 'an offer';
+                $message          = "Offer \"{$offerName}\" has been {$actionLabel} and is waiting for approval";
+                $notificationType = "offer_{$this->approval->action_type}";
+                break;
         }
 
         return [

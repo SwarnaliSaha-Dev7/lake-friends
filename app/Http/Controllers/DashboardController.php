@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Card;
+use App\Models\FoodItem;
 use App\Models\Member;
 use App\Models\MembershipType;
+use App\Models\Offer;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -115,6 +117,61 @@ class DashboardController extends Controller
                 'statusCode' => 500,
                 'error' => $th->getMessage(),
             ]);
+        }
+    }
+
+    public function getOrderItems()
+    {
+        try {
+            $clubId = club_id();
+            $today  = now()->toDateString();
+
+            // Build a map of food_item_id => first active offer
+            $offerMap = [];
+            $activeOffers = Offer::where('club_id', $clubId)
+                ->where('status', 'active')
+                ->where('start_at', '<=', $today)
+                ->where('end_at', '>=', $today)
+                ->with(['offerType', 'offerItems'])
+                ->get();
+
+            foreach ($activeOffers as $offer) {
+                foreach ($offer->offerItems as $oi) {
+                    if (!isset($offerMap[$oi->food_items_id])) {
+                        $offerMap[$oi->food_items_id] = [
+                            'offer_name'     => $offer->name,
+                            'type_slug'      => $offer->offerType ? $offer->offerType->slug : '',
+                            'discount_value' => (float) $offer->discount_value,
+                            'buy_qty'        => (int) $offer->buy_qty,
+                            'get_qty'        => (int) $offer->get_qty,
+                        ];
+                    }
+                }
+            }
+
+            $foodItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'food')
+                ->where('is_active', 1)
+                ->with('foodItemPrice')
+                ->get(['id', 'name', 'item_type'])
+                ->map(function ($item) use ($offerMap) {
+                    $item->offer = $offerMap[$item->id] ?? null;
+                    return $item;
+                });
+
+            $liquorItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'liquor')
+                ->where('is_active', 1)
+                ->with('foodItemPrice')
+                ->get(['id', 'name', 'item_type'])
+                ->map(function ($item) use ($offerMap) {
+                    $item->offer = $offerMap[$item->id] ?? null;
+                    return $item;
+                });
+
+            return response()->json(['statusCode' => 200, 'foodItems' => $foodItems, 'liquorItems' => $liquorItems]);
+        } catch (\Throwable $th) {
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
         }
     }
 

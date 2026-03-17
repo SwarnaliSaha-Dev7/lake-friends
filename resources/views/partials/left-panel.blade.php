@@ -42,11 +42,16 @@
             </li>
             <li class="{{ request()->routeIs('manage-food-items.*') ? 'active' : '' }}"><a href="{{ route('manage-food-items.index') }}"><i class="fa-solid fa-utensils"></i> Food Manage</a></li>
 
+            <li class="{{ request()->routeIs('manage-offers.*') ? 'active' : '' }}"><a href="{{ route('manage-offers.index') }}"><i class="fa-solid fa-tag"></i> Offer Manage</a></li>
+
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Approval</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') || request()->routeIs('foodItemPriceApproval.*') ? 'display: block;' : 'display: none;' }}">
+                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') || request()->routeIs('foodItemPriceApproval.*') || request()->routeIs('offerApproval.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('memberActionApproval.*') ? 'active' : '' }}"><a href="{{ route('memberActionApproval.list') }}">Members</a></li>
                     <li class="{{ request()->routeIs('foodItemPriceApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('foodItemPriceApproval.list') }}">Food Item</a>
+                    </li>
+                    <li class="{{ request()->routeIs('offerApproval.*') ? 'active' : '' }}">
+                        <a href="{{ route('offerApproval.list') }}">Offer</a>
                     </li>
                     <li class=""><a href="javascript:void(0)">Liquor</a></li>
                 </ul>
@@ -54,6 +59,17 @@
             @role('admin')
             <li><a class="{{ request()->routeIs('all-action-approval-list') ? 'active' : '' }}" href="{{ route('all-action-approval-list') }}"><i class="fa-regular fa-regular fa-credit-card"></i> All Approval List</a></li>
             @endrole
+
+            <li><a href="javascript:void(0)"><i class="fa-brands fa-first-order"></i> Order</a>
+                <ul class="list-unstyled" style="{{ request()->routeIs('restaurant-orders.*') ? 'display: block;' : 'display: none;' }}">
+                    <li class="{{ request()->routeIs('restaurant-orders.index') ? 'active' : '' }}">
+                        <a href="{{ route('restaurant-orders.index') }}">Current Order List</a>
+                    </li>
+                    <li class="{{ request()->routeIs('restaurant-orders.history') ? 'active' : '' }}">
+                        <a href="{{ route('restaurant-orders.history') }}">Order History</a>
+                    </li>
+                </ul>
+            </li>
             
         </ul>
     </nav>
