@@ -73,6 +73,12 @@
                                             <i class="fa-sharp fa-clock-rotate-left"></i>
                                         </small>
                                     </button>
+                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn lockerBtn" data-bs-toggle="modal" data-bs-target="#lockerModal"
+                                        title="Locker Purchase" data-id="{{$member->id}}">
+                                        <small>
+                                            <i class="fa-solid fa-table-cells-row-lock"></i>
+                                        </small>
+                                    </button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn addOnBtn" data-bs-toggle="modal" data-bs-target="#addAddonModal"
                                         title="Add On" data-id="{{$member->id}}">
                                         <small>
@@ -1171,7 +1177,7 @@
 
                                     @foreach ($addonList as $addon)
                                         <div class="form-check mb-2">
-                                            <input class="form-check-input addon-checkbox" type="checkbox" value="{{ $addon->id }}" data-price="{{ $addon->price }}" data-is-locker="{{ $addon->is_locker ?? 0 }}" id="addon{{ $addon->id }}">
+                                            <input class="form-check-input addon-checkbox" type="checkbox" value="{{ $addon->id }}" data-price="{{ $addon->price }}" id="addon{{ $addon->id }}">
 
                                             <label class="form-check-label" for="addon{{ $addon->id }}">
                                                 <small>{{ $addon->name }} (₹{{ $addon->price }})</small>
@@ -1207,6 +1213,65 @@
                         {{-- <div class="text-end">
                             <button class="btn btn-primary fw-semibold" id="purchaseAddonBtn">Purchase</button>
                         </div> --}}
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Locker Purchase Modal -->
+    <div class="modal fade" id="lockerModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+
+                <!-- Header -->
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-semibold">Locker Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">
+                        <i class="fa-regular fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form id="lockerForm">
+                        <input type="hidden" id="lockerMemberId">
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-part mb-3">
+                                    <label class="form-label">
+                                        <small>Select Locker</small>
+                                    </label>
+
+                                    <select class="form-select shadow-none" id="lockerSelect" required>
+                                        <option value="">Select Locker</option>
+                                        @foreach($lockers as $locker)
+                                            <option value="{{ $locker->id }}" data-price="{{ $locker->price }}">
+                                                Locker {{ $locker->locker_number }} (₹{{ $locker->price }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PRICE SECTION HERE -->
+                        <div class="text-end mt-3" id="lockerPriceWrapper">
+                            <small>Amount to Pay</small>
+                            <h5 class="fw-semibold mb-0">
+                                ₹ <span id="lockerPrice">0</span>
+                            </h5>
+                        </div>
+
+                        <!-- Bottom -->
+                        <div class="border-top pt-3 mt-3 d-flex justify-content-end">
+                            <button class="btn btn-primary fw-semibold px-4" id="purchaseLockerBtn">
+                                Purchase
+                            </button>
+                        </div>
+
                     </form>
                 </div>
 
@@ -2066,38 +2131,6 @@
                 $('#addonTotalWrapper').addClass('d-none');
             }
         });
-
-        function loadAvailableLockers() {
-
-            $.ajax({
-                url: "{{ route('club-member.available-lockers') }}",
-                type: "GET",
-
-                success: function(response){
-
-                    if(response.statusCode == 200){
-
-                        let options = '<option value="">Select Locker</option>';
-
-                        response.data.forEach(function(locker){
-                            options += `<option value="${locker.id}">
-                                            Locker ${locker.locker_number}
-                                        </option>`;
-                        });
-
-                        $('#lockerSelect').html(options);
-                        $('#lockerWrapper').removeClass('d-none');
-
-                    } else {
-                        toastr.error(response.message ?? 'No lockers available');
-                    }
-                },
-
-                error:function(){
-                    toastr.error('Failed to load lockers');
-                }
-            });
-        }
 
     });
 </script>

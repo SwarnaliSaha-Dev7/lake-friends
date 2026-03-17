@@ -7,6 +7,7 @@ use App\Models\AddOn;
 use App\Models\Bank;
 use App\Models\Card;
 use App\Models\GstRate;
+use App\Models\Locker;
 use App\Models\Member;
 use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
@@ -80,6 +81,12 @@ class ClubMemberController extends Controller
             ->where('is_active', 1)
             ->get();
 
+            $lockers = Locker::where('is_active', 1)
+                                ->where('club_id', $clubId)
+                                ->where('status', 'available')
+                                ->select('id', 'locker_number')
+                                ->get();
+
             return view('club_member.list', compact(
                 'title',
                 'page_title',
@@ -88,7 +95,8 @@ class ClubMemberController extends Controller
                 'bankList',
                 'cards',
                 'members',
-                'addonList'
+                'addonList',
+                'lockers'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();

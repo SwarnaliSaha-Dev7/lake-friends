@@ -9,7 +9,7 @@ class AddOn extends Model
     protected $fillable = [
         'club_id',
         'name',
-        'is_locker',
+        // 'is_locker',
         'price',
         'is_active'
     ];
