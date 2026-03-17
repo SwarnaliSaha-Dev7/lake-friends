@@ -68,6 +68,26 @@
                             };
                             let statusCode = response.data.status; // e.g., "pending_approval"
                             let humanStatus = statusMap[statusCode]
+
+
+                            let memberId = response.data.id;
+                            let memberType = response.data.member_details?.membership_type?.name?.toLowerCase();
+
+                            if (!memberType) {
+                                toastr.error('Membership type not found');
+                                return;
+                            }
+
+                            if (memberType.includes('club')) {
+                                memberType = 'club';
+                            }
+                            else if (memberType.includes('swimming')) {
+                                memberType = 'swimming';
+                            }
+
+                            $('#cardentry').data('member-id', memberId);
+                            $('#cardentry').data('member-type', memberType);
+
                             $('#cardMemberName').text(response.data.name);
                             $('#cardMemberClubName').text(response.data.club_details.name)
                             $('#cardMemberCode').text(response.data.member_code)
@@ -79,6 +99,7 @@
                             $('#cardMemberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
                             $('#cardStatus').text(response.cardStatus);
                             $('#memberStatus').text(humanStatus);
+
                             $('#cardentry').modal('show');
 
                             $('.swipe-animation').show();
@@ -89,8 +110,8 @@
                         else{
                             $('#cardLoader').hide();
                             $('.swipe-animation').show();
-                            toastr.error(response.error ?? 'Something Went Wrong.').
-                            console.log(response);
+                            toastr.error(response.error ?? 'Something Went Wrong.');
+                            //console.log(response);
                         }
 
                     },
@@ -110,6 +131,211 @@
         if($('#cardentryswipe').hasClass('show')){
             setTimeout(()=>cardInput.focus(),100);
         }
+    });
+
+    $(document).on('click', '#cardentry .gate-membership-btn', function () {
+
+        let memberId = $('#cardentry').data('member-id');
+        let memberType = $('#cardentry').data('member-type');
+
+        // console.log(memberId);
+        // console.log(memberType);
+
+        if (!memberId || !memberType) {
+        toastr.error('Member data missing');
+        return;
+    }
+
+        let url = '';
+
+        if (memberType === 'club') {
+            url = '{{route("club-member.membership-plan", ":id")}}'.replace(':id', memberId);
+        }
+        else if (memberType === 'swimming') {
+            url = '{{route("swimming-member.membership-plan", ":id")}}'.replace(':id', memberId);
+        }
+        else {
+            toastr.error('Invalid member type');
+            return;
+        }
+
+        loadMembershipPlan(url);
+
+    });
+
+    function loadMembershipPlan(url) {
+
+        let tbody = $('#membershipPlanTbody');
+
+        // Show loading state
+        tbody.html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+
+            success: function(response){
+
+                if (response.statusCode == 200) {
+
+                    tbody.empty();
+
+                    response.data.forEach(function(plan) {
+
+                        let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN');
+                        let toDate = new Date(plan.expiry_date).toLocaleDateString('en-IN');
+
+                        let today = new Date();
+                        let expiryDate = new Date(plan.expiry_date);
+
+                        let isActive = expiryDate >= today;
+                        if (plan.status == 'cancelled') isActive = 0;
+
+                        let row = `
+                            <tr>
+                                <td class="bg-info p-3">${fromDate}</td>
+                                <td class="bg-info p-3">${toDate}</td>
+                                <td class="bg-info p-3">${plan.membership_plan_type.name}</td>
+                                <td class="bg-info p-3">Rs ${plan.fine_amount}</td>
+                                <td class="bg-info p-3">Rs ${plan.net_amount}</td>
+                                <td class="bg-info text-end p-3">
+                                    <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}">
+                                </td>
+                            </tr>
+                        `;
+
+                        tbody.append(row);
+                    });
+
+                    //  Close first modal
+                    $('#cardentry').modal('hide');
+
+                    //  Open membership modal
+                    setTimeout(() => {
+                        $('#membershipplan').modal('show');
+                    }, 300);
+
+                } else {
+                    toastr.error('Failed to load membership plans');
+                }
+            },
+
+            error: function(){
+                toastr.error('Something Went Wrong.');
+            }
+        });
+    }
+
+    $(document).on('click', '#cardentry .gate-wallet-btn', function () {
+
+        let memberId = $('#cardentry').data('member-id');
+        let memberType = $('#cardentry').data('member-type');
+
+        if (!memberId || !memberType) {
+            toastr.error('Member data missing');
+            return;
+        }
+
+        let url = '';
+
+        if (memberType === 'club') {
+            url = '{{route("club-member.fetch-wallet-balance", ":id")}}'.replace(':id', memberId);
+        }
+        else if (memberType === 'swimming') {
+            url = '{{route("swimming-member.fetch-wallet-balance", ":id")}}'.replace(':id', memberId);
+        }
+        else {
+            toastr.error('Invalid member type');
+            return;
+        }
+
+        loadWalletData(url, memberId);
+    });
+
+    function loadWalletData(url, memberId) {
+
+        let tbody = $('#walletTransactionTbody');
+
+        tbody.html('<tr><td colspan="2" class="text-center">Loading...</td></tr>');
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+
+            success: function(response){
+
+                if (response.statusCode == 200) {
+
+                    $('#walletMemberId').val(memberId);
+                    $('#walletBalance').text('₹' + (response.data.walletBalance ?? 0.00));
+
+                    tbody.empty();
+
+                    let history = response.data.walletTransactionHistory;
+
+                    if (history.length > 0) {
+
+                        history.forEach(function(transaction) {
+
+                            let amount = transaction.amount;
+                            let direction = transaction.direction;
+
+                            let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
+                            let sign = direction == 'credit' ? '+' : '-';
+                            let label = direction == 'credit' ? 'Added By' : 'Used';
+
+                            let maker = transaction.creator?.name ?? '-';
+                            let remarks = transaction.payment?.remarks ?? '';
+
+                            let row = `
+                                <tr>
+                                    <td class="border-secondary bg-transparent align-middle lh-sm">
+                                        <small class="fw-semibold">${label}:</small>
+                                        <small class="text-black-50">${maker}</small>
+
+                                        ${remarks ? `<br>
+                                        <small class="fw-semibold">Remarks:</small>
+                                        <small class="text-black-50">${remarks}</small>` : ''}
+                                    </td>
+
+                                    <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
+                                        ${sign}₹${amount}
+                                    </td>
+                                </tr>
+                            `;
+
+                            tbody.append(row);
+                        });
+
+                    } else {
+                        tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
+                    }
+
+
+                    document.activeElement.blur();
+
+                    // Close card modal
+                    $('#cardentry').modal('hide');
+
+                    // Open wallet modal
+                    setTimeout(() => {
+                        $('#walletrecharge').modal('show');
+                    }, 300);
+
+                } else {
+                    toastr.error('Failed to load wallet data');
+                }
+            },
+
+            error: function(){
+                toastr.error('Something Went Wrong.');
+            }
+        });
+    }
+
+    $('#walletRechargeForm').on('submit', function (e) {
+        e.preventDefault();
+        $('#confirmRechargeModal').modal('show');
     });
 
     $('#notification').on('click', function(e){

@@ -88,7 +88,7 @@ class DashboardController extends Controller
 
             $member = Member::where('club_id', $clubId)
                 ->with([
-                    'memberDetails',
+                    'memberDetails.membershipType',
                     'cardDetails',
                     'purchaseHistory.membershipPlanType',
                     'clubDetails',

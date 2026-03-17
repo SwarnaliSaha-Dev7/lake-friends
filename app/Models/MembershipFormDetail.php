@@ -15,4 +15,9 @@ class MembershipFormDetail extends Model
     protected $casts = [
         'details' => 'array',
     ];
+
+    public function membershipType()
+    {
+        return $this->belongsTo(MembershipType::class, 'membership_type_id');
+    }
 }

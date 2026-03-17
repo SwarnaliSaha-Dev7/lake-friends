@@ -82,6 +82,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
         Route::post('/recharge-wallet-balance', [SwimmingMemberController::class, 'rechargeWalletBalance'])->name('swimming-member.recharge-wallet-balance');
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
+
+        Route::get('/receipt/{id}', [SwimmingMemberController::class, 'getReceipt'])->name('swimming-member.receipt');
     });
 
     Route::prefix('manage-member-approval-status')->controller(ActionApprovalController::class)->group(function () {

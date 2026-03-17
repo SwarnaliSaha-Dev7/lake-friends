@@ -147,8 +147,21 @@ class SwimmingMemberController extends Controller
                 'spouse_image'
             );
 
-            // $memberCode = 'LF-' . time();
+            $lastMember = Member::where('club_id', $clubId)
+                                ->where('membership_type_id', $membershipTypeId)
+                                ->whereNotNull('member_code')
+                                ->orderBy('id', 'desc')
+                                ->lockForUpdate()
+                                ->first();
 
+            if ($lastMember && $lastMember->member_code) {
+                $lastCode = (int) $lastMember->member_code;
+                $newCode = $lastCode + 1;
+            } else {
+                $newCode = 1;
+            }
+
+            $memberCode = str_pad($newCode, 4, '0', STR_PAD_LEFT);
 
             $dest_path = 'uploads/images';
             $image_path = null;
@@ -164,7 +177,7 @@ class SwimmingMemberController extends Controller
             $member = Member::create([
                 'club_id'     => $clubId,
                 'membership_type_id' => $membershipTypeId,
-                // 'member_code' => $memberCode,
+                'member_code' => $memberCode,
                 'name'        => ucwords($request->swim_name),
                 'email'       => $request->swim_email,
                 'phone'       => $request->swim_phone,
@@ -793,6 +806,58 @@ class SwimmingMemberController extends Controller
                 'statusCode' => 200,
                 'message' => 'Wallet Balance added successfully'
             ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function getReceipt($id)
+    {
+        try {
+            $clubId = club_id();
+
+             $member = Member::where('club_id', $clubId)
+                             ->with([
+                                 'memberDetails',
+                                 ])
+                             ->find($id);
+
+            if (!$member) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Member not found'
+                ]);
+            }
+
+            $details = $member->memberDetails->details ?? [];
+
+            $purchase = $member->purchaseHistory->first();
+
+            $date = $purchase?->start_date?->format('d-m-Y');
+
+            $data = [
+                    'name' => $member->name,
+                    'address' => $member->address,
+                    'phone' => $member->phone,
+                    'member_code' => $member->member_code,
+                    'age' => $details['age'] ?? '-',
+                    'height' => $details['height'] ?? '-',
+                    'weight' => $details['weight'] ?? '-',
+                    'pulse_rate' => $details['pulse_rate'] ?? '-',
+                    'police_station' => $details['police_station'] ?? '-',
+                    'gender' => $details['sex'] ?? '-',
+                    'image' => $details['image'] ?? $member->image,
+                    'date' => $date,
+                ];
+
+            return response()->json([
+                'statusCode' => 200,
+                'data' => $data,
+            ]);
+
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,
