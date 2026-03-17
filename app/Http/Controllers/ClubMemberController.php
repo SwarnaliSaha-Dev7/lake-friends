@@ -8,6 +8,8 @@ use App\Models\Bank;
 use App\Models\Card;
 use App\Models\GstRate;
 use App\Models\Locker;
+use App\Models\LockerAllocation;
+use App\Models\LockerPrice;
 use App\Models\Member;
 use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
@@ -87,6 +89,8 @@ class ClubMemberController extends Controller
                                 ->select('id', 'locker_number')
                                 ->get();
 
+            $lockerPrice = LockerPrice::where('club_id', $clubId)->first();
+
             return view('club_member.list', compact(
                 'title',
                 'page_title',
@@ -96,7 +100,8 @@ class ClubMemberController extends Controller
                 'cards',
                 'members',
                 'addonList',
-                'lockers'
+                'lockers',
+                'lockerPrice'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -1006,6 +1011,109 @@ class ClubMemberController extends Controller
                 'data'       => $addons
             ]);
 
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function purchaseLocker(Request $request)
+    {
+        try {
+            $request->validate([
+                'member_id' => ['required', 'integer'],
+                'locker_id' => ['required', 'integer'],
+            ]);
+
+            $clubId = club_id();
+            $startDate = Carbon::today();
+            $endDate = Carbon::today()->addMonths(6);
+
+            DB::beginTransaction();
+
+            $locker = Locker::where('id', $request->locker_id)
+                ->where('club_id', $clubId)
+                ->where('is_active', 1)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$locker) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Locker not found'
+                ]);
+            }
+
+            $existingLockerAllocation = LockerAllocation::where('locker_id', $request->locker_id)->first();
+            if ($existingLockerAllocation && $existingLockerAllocation->member_id != $request->member_id) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'Locker already allocated'
+                ]);
+            }
+
+            $previousAllocations = LockerAllocation::where('member_id', $request->member_id)
+                                                    ->latest('id')
+                                                    ->first();
+
+            if($previousAllocations){
+                Locker::where('id', $previousAllocations->locker_id)->update([
+                    'status' => 'available'
+                ]);
+
+                $previousAllocations->delete();
+            }
+
+            LockerAllocation::create([
+                'club_id' => $clubId,
+                'locker_id' => $request->locker_id,
+                'member_id' => $request->member_id,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]);
+
+            $locker->update([
+                'status' => 'occupied'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'statusCode' => 200,
+                'message' => 'Locker purchased successfully'
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function getMemberLockerAllocation($memberId)
+    {
+        try {
+            $today = Carbon::today()->toDateString();
+
+            $allocation = LockerAllocation::with('locker:id,locker_number')
+                ->where('member_id', $memberId)
+                ->whereDate('start_date', '<=', $today)
+                ->where(function ($query) use ($today) {
+                    $query->whereNull('end_date')
+                        ->orWhereDate('end_date', '>=', $today);
+                })
+                ->latest()
+                ->first();
+
+            return response()->json([
+                'statusCode' => 200,
+                'data' => $allocation
+            ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,

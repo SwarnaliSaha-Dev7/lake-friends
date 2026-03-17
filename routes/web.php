@@ -71,6 +71,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/recharge-wallet-balance', [ClubMemberController::class, 'rechargeWalletBalance'])->name('club-member.recharge-wallet-balance');
         Route::post('member-addon/purchase', [ClubMemberController::class,'purchaseAddOn'])->name('club-member.member-addon.purchase');
         Route::post('member-addon/list',[ClubMemberController::class, 'memberAddonList'])->name('club-member.member-addon.list');
+        Route::post('locker/purchase', [ClubMemberController::class, 'purchaseLocker'])->name('club-member.locker.purchase');
+        Route::get('locker-allocation/{memberId}', [ClubMemberController::class, 'getMemberLockerAllocation'])->name('club-member.locker-allocation');
         Route::delete('/club-member/{id}', [ClubMemberController::class, 'delete'])->name('club-member.delete');
     });
 

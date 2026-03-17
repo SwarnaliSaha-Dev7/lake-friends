@@ -75,6 +75,7 @@
                                     </button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn lockerBtn" data-bs-toggle="modal" data-bs-target="#lockerModal"
                                         title="Locker Purchase" data-id="{{$member->id}}">
+                                        {{-- title="Locker Purchase" data-id="{{$member->id}}" data-has-locker="{{ $member->has_locker ? 1 : 0 }}"> --}}
                                         <small>
                                             <i class="fa-solid fa-table-cells-row-lock"></i>
                                         </small>
@@ -1248,11 +1249,18 @@
                                     <select class="form-select shadow-none" id="lockerSelect" required>
                                         <option value="">Select Locker</option>
                                         @foreach($lockers as $locker)
-                                            <option value="{{ $locker->id }}" data-price="{{ $locker->price }}">
-                                                Locker {{ $locker->locker_number }} (₹{{ $locker->price }})
+                                            <option value="{{ $locker->id }}" data-price="{{ $lockerPrice->price ?? 0 }}">
+                                                Locker {{ $locker->locker_number }}
                                             </option>
                                         @endforeach
                                     </select>
+                                </div>
+
+                                <div class="d-none" id="lockerAllocationInfo">
+                                    <small class="text-muted">Allocated Duration</small>
+                                    <div class="fw-semibold">
+                                        <span id="lockerAllocationDates">-</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1291,6 +1299,121 @@
         if (type === 'addMember') {
             $('#addClubMemberBtn').trigger('click');
         }
+
+        $(document).on('click', '.lockerBtn', function() {
+            let memberId = $(this).data('id');
+
+            $('#lockerMemberId').val(memberId);
+            $('#lockerSelect option[data-assigned="1"]').remove();
+            $('#lockerSelect').val('').prop('disabled', false);
+            $('#lockerPrice').text(0);
+            $('#lockerAllocationInfo').addClass('d-none');
+            $('#lockerAllocationDates').text('-');
+
+            $('#lockerModal').data('has-locker', false);
+
+            $('#lockerPriceWrapper').addClass('d-none');
+            $('#purchaseLockerBtn').addClass('d-none');
+
+            $.ajax({
+                url: '{{ route("club-member.locker-allocation", ":memberId") }}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200 && response.data) {
+                        let allocation = response.data;
+                        let lockerId = allocation.locker_id;
+                        let lockerNumber = allocation.locker?.locker_number ?? '';
+
+                        let $select = $('#lockerSelect');
+                        if ($select.find(`option[value="${lockerId}"]`).length === 0) {
+                            $select.append(`<option value="${lockerId}" data-assigned="1">Locker ${lockerNumber}</option>`);
+                        }
+
+                        $select.val(lockerId).prop('disabled', true);
+
+                        let startDate = allocation.start_date
+                            ? new Date(allocation.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+                            : '-';
+                        let endDate = allocation.end_date
+                            ? new Date(allocation.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+                            : 'No Expiry';
+
+                        $('#lockerAllocationDates').text(`${startDate} - ${endDate}`);
+                        $('#lockerAllocationInfo').removeClass('d-none');
+
+                        $('#lockerPriceWrapper').addClass('d-none');
+                        $('#purchaseLockerBtn').addClass('d-none');
+                        $('#lockerModal').data('has-locker', true);
+                    } else {
+                        $('#lockerModal').data('has-locker', false);
+                    }
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+        });
+
+        $(document).on('change', '#lockerSelect', function() {
+            let hasLocker = $('#lockerModal').data('has-locker') == 1;
+            let lockerPrice = $(this).find(':selected').data('price') || 0;
+            let hasSelection = $(this).val() !== '';
+
+            if (!hasLocker && hasSelection) {
+                $('#lockerPrice').text(lockerPrice);
+                $('#lockerPriceWrapper').removeClass('d-none');
+                $('#purchaseLockerBtn').removeClass('d-none');
+            } else {
+                $('#lockerPrice').text(0);
+                $('#lockerPriceWrapper').addClass('d-none');
+                $('#purchaseLockerBtn').addClass('d-none');
+            }
+        });
+
+        $(document).on('click', '#purchaseLockerBtn', function(e) {
+            e.preventDefault();
+
+            let memberId = $('#lockerMemberId').val();
+            let lockerId = $('#lockerSelect').val();
+
+            if (!lockerId) {
+                toastr.error('Please select a locker');
+                return;
+            }
+
+            let btn = $(this);
+            btn.prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
+
+            $.ajax({
+                url: "{{ route('club-member.locker.purchase') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    member_id: memberId,
+                    locker_id: lockerId
+                },
+                success: function(response) {
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        $('#lockerModal').modal('hide');
+
+                        setTimeout(() => {
+                            window.location.href = "{{ route('club-member.list') }}";
+                        }, 1200);
+                    } else {
+                        toastr.error(response.message ?? "Something went wrong");
+                    }
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON?.message || xhr.responseJSON?.error || "Something went wrong";
+                    toastr.error(msg);
+                },
+                complete: function() {
+                    btn.prop('disabled', false).html('Purchase');
+                }
+            });
+        });
 
 
 
