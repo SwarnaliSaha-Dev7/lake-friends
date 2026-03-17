@@ -74,6 +74,11 @@ class ApprovalNotification extends Notification
                 $notificationType = "liquor_price_update";
                 break;
 
+            case 'godown_stock_management':
+                $message = "Godown stock is updated and waiting for approval";
+                $notificationType = "godown_stock_management";
+                break;
+
                 // case 'user':
                 //     $message = "New user registration waiting for approval";
                 //     break;

@@ -33,7 +33,7 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text mb-2 fw-medium">Low Stock Items</p>
-                    <h2 class="card-title fs-4">10</h2>
+                    <h2 class="card-title fs-4">{{ $lowStockItemsCount }}</h2>
                 </div>
             </a>
             <a href="#"
@@ -55,26 +55,27 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="mb-3 form-part">
-                                <input type="text" class="form-control py-2 shadow-none" placeholder="Form"
+                                <input type="text" id="filter_from" class="form-control py-2 shadow-none" placeholder="Form"
                                     onfocus="(this.type='date')">
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3 form-part">
-                                <input type="text" class="form-control py-2 shadow-none" placeholder="To"
+                                <input type="text" id="filter_to" class="form-control py-2 shadow-none" placeholder="To"
                                     onfocus="(this.type='date')">
                             </div>
                         </div>
                     </div>
+                    <div id="date_error" class="text-danger small mt-1" style="display:none;"></div>
                 </div>
                 <div class="col-lg-6">
                     <h2 class="fs-5 common-heading mb-3 fw-semibold">Filter by Name</h2>
                     <div class="mb-3 form-part">
-                        <select class="form-select multi-select py-2 shadow-none" single>
-                            <option value="1" selected="" disabled="" hidden="">All</option>
-                            <option value="1">Veg</option>
-                            <option value="2">Nonveg</option>
-                            <option value="3">Drinks</option>
+                        <select id="filter_name" class="form-select multi-select py-2 shadow-none" single>
+                            <option value="all" selected="">All</option>
+                            @foreach ($liquors as $item)
+                                <option value="{{ $item->name }}">{{ $item->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -96,6 +97,7 @@
                             width="100%">
                             <thead>
                                 <tr>
+                                    <th class="text-white fw-medium text-nowrap">Sl No</th>
                                     <th class="text-white fw-medium text-nowrap">Date</th>
                                     <th class="text-white fw-medium text-nowrap">Category</th>
                                     <th class="text-white fw-medium text-nowrap">Item</th>
@@ -108,12 +110,13 @@
                             <tbody>
                                 @foreach ($godownStockList as $stock)
                                     <tr>
-                                        <td class="text-nowrap">{{ $stock->date }}</td>
-                                        <td class="text-nowrap">{{ $stock->category }}</td>
-                                        <td class="text-nowrap">{{ $stock->item }}</td>
-                                        <td class="text-nowrap">{{ $stock->volume }}</td>
-                                        <td class="text-nowrap">{{ $stock->movement_type }}</td>
-                                        <td class="text-nowrap">{{ $stock->direction }}</td>
+                                        <td class="text-nowrap">{{ $loop->iteration }}</td>
+                                        <td class="text-nowrap">{{ $stock->created_at->format('d/m/Y') }}</td>
+                                        <td class="text-nowrap">{{ ucfirst($stock->foodItem?->foodItemCat?->name) }}</td>
+                                        <td class="text-nowrap">{{ ucfirst($stock->foodItem?->name) }}</td>
+                                        <td class="text-nowrap">{{ $stock->quantity }} @if($stock->quantity) @if($stock->quantity == 1) Bottle @else Bottles @endif @endif</td>
+                                        <td class="text-nowrap">{{ ucfirst($stock->movement_type) }}</td>
+                                        <td class="text-nowrap">{{ ucfirst($stock->direction) }}</td>
                                         {{-- <td class="text-nowrap"><a href="#"><i
                                                     class="fa-solid fa-pen-to-square"></i></a></td> --}}
                                     </tr>
@@ -266,6 +269,7 @@
                                         <option value="sale">Sale</option>
                                         <option value="adjustment">Adjustment</option>
                                         <option value="wastage">Wastage</option>
+                                        <option value="transfer_to_bar">Transfer To Bar</option>
                                     </select>
                                 </div>
                             </div>
@@ -317,7 +321,7 @@
                             $('#addinventory').modal('hide');
                             $('#addInventoryForm')[0].reset();
                             toastr.success(response.message);
-                            $('#addInventorySubmit').prop('disabled', false);
+                            // $('#addInventorySubmit').prop('disabled', false);
                             $('#addInventorySubmit').val('Submit');
                             setTimeout(() => {
                                 location.reload();
@@ -337,7 +341,59 @@
                 });
             });
             
+            var table = $('.clubmemberlist2').DataTable();
 
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if ($(settings.nTable).hasClass('clubmemberlist2') === false) return true;
+
+                var filterFrom = $('#filter_from').val();
+                var filterTo = $('#filter_to').val();
+                var filterName = ($('#filter_name').val() && $('#filter_name').val() !== 'all') ? $('#filter_name').val().trim().toLowerCase() : '';
+
+                var rowDate = data[1];
+                var itemName = data[3].toLowerCase();
+
+                // Date matching
+                var dateMatch = true;
+                if (filterFrom && filterTo) {
+                    var parts = rowDate.split('/');
+                    var rowDateFormatted = parts[2] + '-' + parts[1] + '-' + parts[0];
+
+                    if (rowDateFormatted < filterFrom) dateMatch = false;
+                    if (rowDateFormatted > filterTo) dateMatch = false;
+                }
+
+                // Name matching
+                var nameMatch = !filterName || itemName.includes(filterName);
+
+                return dateMatch && nameMatch;
+            });
+
+            $('#filter_from, #filter_to, #filter_name').on('change', function() {
+                var filterFrom = $('#filter_from').val();
+                var filterTo = $('#filter_to').val();
+
+                $('#date_error').hide().text('');
+
+                if (filterFrom && !filterTo) {
+                    $('#date_error').text('Please select an end date.').show();
+                    return;
+                }
+
+                if (filterTo && !filterFrom) {
+                    $('#date_error').text('Please select a start date.').show();
+                    return;
+                }
+
+                if (filterFrom && filterTo && filterFrom > filterTo) {
+                    $('#date_error').text('Start date cannot be greater than end date.').show();
+                    $('#filter_from').val('');
+                    $('#filter_to').val('');
+                    return;
+                }
+
+                table.draw();
+            });
 
         });
     </script>

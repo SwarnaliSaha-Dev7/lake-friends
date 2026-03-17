@@ -113,6 +113,12 @@ Route::middleware('auth')->group(function () {
         Route::get('approve/{id}', 'approve')->name('liquorItemPriceApproval.approve');
         Route::get('view/{id}', 'view')->name('liquorItemPriceApproval.view');
     });
+
+    Route::prefix('manage-godown-stock-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list', 'godownStockLIst')->name('godownStockApproval.list');
+        Route::get('reject/{id}', 'reject')->name('godownStockApproval.reject');
+        Route::get('approve/{id}', 'approve')->name('godownStockApproval.approve');
+    });
     Route::post('price-request', [FoodItemManageController::class, 'requestPriceChange'])->name('foodItemPriceApproval.request');
 
     Route::resource('manage-liquor-items', LiquorItemManageController::class)->names('manage-liquor-items');
@@ -121,6 +127,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('stock-management')->controller(StockManagementController::class)->group(function () {
         Route::get('godown-stock-manage', 'godownStockList')->name('godown-stock-manage.list');
         Route::post('godown-stock-manage', 'godownStockStore')->name('godown-stock-manage.store');
+        Route::get('godown-current-stock-list', 'godownCurrentStockList')->name('godown-current-stock-list');
         Route::get('bar-stock-manage', 'barStockManage')->name('bar-stock-manage.list');
         Route::get('current-stock-inventory', 'currentStockInventory')->name('current-stock-inventory.list');
         Route::get('liquor-stock-report', 'liquorStockReport')->name('liquor-stock-report.list');

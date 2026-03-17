@@ -45,6 +45,8 @@
                             $route = route('liquorItemPriceApproval.list');
                         } elseif (in_array($notification->data['notification_type'] ?? '', ['food_price_update'])) {
                             $route = route('foodItemPriceApproval.list');
+                        } elseif (in_array($notification->data['notification_type'] ?? '', ['godown_stock_management'])) {
+                            $route = route('godownStockApproval.list');
                         }
                     @endphp
                     <a href="{{ $route }}">

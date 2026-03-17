@@ -48,10 +48,12 @@
                                             {{ $data->entity->email ?? '-' }}
                                         @elseif($data->entity_model === 'FoodItem')
                                             {{ $data->entity->name ?? '-' }}
+                                        @elseif($data->module === 'godown_stock_management')
+                                            {{ $data->entity?->foodItem?->name ?? '-' }}
                                         @endif
                                     </td>
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
-                                    <td class="text-nowrap">@if($data->entity_model === 'Member'){{ $data->membershipType?->name ?? '-' }}@elseif($data->entity_model === 'FoodItem') - @endif</td>
+                                    <td class="text-nowrap">@if($data->entity_model === 'Member'){{ $data->membershipType?->name ?? '-' }}@else - @endif</td>
                                     <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->status ?? 'Pending')) }}</td>

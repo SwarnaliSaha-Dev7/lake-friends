@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
 use App\Models\Card;
+use App\Models\FoodItemCurrentStock;
 use App\Models\FoodItemPrice;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use App\Models\StockLedger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -165,6 +167,31 @@ class ActionApprovalController extends Controller
                 ->get();
 
             return view('action_approval.liquor_item_price.list', compact('title', 'page_title', 'foodPriceData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function godownStockLIst()
+    {
+        try {
+            $title = 'Godown Stock Approval List';
+            $page_title = 'Godown Stock Approval';
+
+            $clubId = club_id();
+            // return 68736;
+
+            $godownStockData = ActionApproval::with('operatorDetails', 'entity.foodItem')
+                ->where('club_id', $clubId)
+                ->where('module', 'godown_stock_management')
+                ->where('status', 'pending')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->latest()
+                ->get();
+
+            // dd($godownStockData);
+
+            return view('action_approval.godown_stock.list', compact('title', 'page_title', 'godownStockData'));
         } catch (\Throwable $th) {
             return $th->getMessage();
         }
@@ -478,6 +505,82 @@ class ActionApprovalController extends Controller
                 DB::commit();
             }
 
+            if ($data->module == 'godown_stock_management') {
+
+                $payloadJson = $data->request_payload;
+
+                $payload = json_decode($payloadJson);
+
+                $itemId = $data->entity_id;
+
+                DB::beginTransaction();
+
+                $godownStockledger = StockLedger::find($data->entity_id);
+
+                $currentGodownStock = FoodItemCurrentStock::where('club_id', $data->club_id)
+                    ->where('food_items_id', $godownStockledger->food_items_id)
+                    ->first();
+
+                $godownStockledger->update([
+                    'status' => 'approved',
+                ]);
+
+                // if ($godownStockledger->movement_type == 'transfer_to_bar') {
+                //     $barStockledger = StockLedger::find($payload->bar_stock_ledger_id);
+                //     $barStockledger->update([
+                //         'status' => 'approved',
+                //     ]);
+                // }
+
+                if ($currentGodownStock) {
+
+                    if ($godownStockledger->movement_type == 'transfer_to_bar') {
+
+                        $barStockledger = StockLedger::find($payload->bar_stock_ledger_id);
+                        $barStockledger->update([
+                            'status' => 'approved',
+                        ]);
+
+                        $currentGodownStock->quantity -= $payload->quantity;
+
+                        $currentBarStock = FoodItemCurrentStock::where('club_id', $data->club_id)
+                            ->where('food_items_id', $godownStockledger->food_items_id)
+                            ->where('location_id', $payload->bar_location_id)
+                            ->first();
+
+                        if ($currentBarStock) {
+                            $currentBarStock->quantity += $barStockledger->quantity;
+                            $currentBarStock->save();
+                        } else {
+                            $currentBarStock = FoodItemCurrentStock::create([
+                                'club_id' => $data->club_id,
+                                'location_id' => $payload->bar_location_id,
+                                'food_items_id' => (int) $payload->food_items_id,
+                                'quantity' => $barStockledger->quantity,
+                                'unit' => 'ml',
+                            ]);
+                        }
+                    } else {
+                        if ($payload->direction == 'in') {
+                            $currentGodownStock->quantity += $payload->quantity;
+                        } else {
+                            $currentGodownStock->quantity -= $payload->quantity;
+                        }
+                    }
+                    $currentGodownStock->save();
+                } else {
+                    $currentGodownStock = FoodItemCurrentStock::create([
+                        'club_id' => $data->club_id,
+                        'location_id' => $payload->location_id,
+                        'food_items_id' => (int) $payload->food_items_id,
+                        'quantity' => $payload->quantity,
+                        'unit' => $payload->unit,
+                    ]);
+                }
+
+                DB::commit();
+            }
+
             $data->update([
                 'checker_user_id' => Auth::id(),
                 'status' => 'approved',
@@ -569,6 +672,12 @@ class ActionApprovalController extends Controller
                     }
                 }
                 // return $payload;
+            } elseif ($data->module == 'stock_management') {
+                $stockledger = StockLedger::find($data->entity_id);
+
+                $stockledger->update([
+                    'status' => 'rejected',
+                ]);
             }
 
             $data->update([

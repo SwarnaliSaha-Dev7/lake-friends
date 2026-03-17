@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('warehouse_id')->nullable()->constrained('stock_warehouses')->nullOnDelete();
             $table->foreignId('food_items_id')->nullable()->constrained('food_items')->nullOnDelete();
-            $table->enum('movement_type',['opening','purchase','sale','adjustment','wastage'])->nullable();
-            $table->enum('direction',['in','out'])->nullable();
-            $table->string('quantity',255)->nullable();
-            $table->enum('reference_type',['order','manual','purchase'])->nullable();
+            $table->enum('movement_type', ['opening', 'purchase', 'sale', 'adjustment', 'wastage'])->nullable();
+            $table->enum('direction', ['in', 'out'])->nullable();
+            $table->string('quantity', 255)->nullable();
+            $table->enum('reference_type', ['order', 'manual', 'purchase'])->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->nullable();
             $table->timestamps();
         });
     }

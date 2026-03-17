@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
             'Member' => \App\Models\Member::class,
             'Locker' => \App\Models\Locker::class,
             'FoodItem' => \App\Models\FoodItem::class,
+            'StockLedger' => \App\Models\StockLedger::class,
         ]);
     }
 }

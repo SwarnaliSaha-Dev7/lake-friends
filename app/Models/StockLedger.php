@@ -18,7 +18,8 @@ class StockLedger extends Model
         'direction',
         'quantity',
         'unit',
-        'reference_type'
+        'reference_type',
+        'status'
     ];
 
     public function club(): BelongsTo
@@ -38,6 +39,6 @@ class StockLedger extends Model
 
     public function foodItem(): BelongsTo
     {
-        return $this->belongsTo(FoodItem::class);
+        return $this->belongsTo(FoodItem::class, 'food_items_id');
     }
 }
