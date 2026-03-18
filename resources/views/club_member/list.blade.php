@@ -1323,13 +1323,14 @@
                         let allocation = response.data;
                         let lockerId = allocation.locker_id;
                         let lockerNumber = allocation.locker?.locker_number ?? '';
+                        let isExpired = allocation.is_expired == 1;
 
                         let $select = $('#lockerSelect');
                         if ($select.find(`option[value="${lockerId}"]`).length === 0) {
-                            $select.append(`<option value="${lockerId}" data-assigned="1">Locker ${lockerNumber}</option>`);
+                            $select.append(`<option value="${lockerId}" data-assigned="1" data-price="600.00">Locker ${lockerNumber}</option>`);
                         }
 
-                        $select.val(lockerId).prop('disabled', true);
+                        $select.val(lockerId).prop('disabled', !isExpired);
 
                         let startDate = allocation.start_date
                             ? new Date(allocation.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
@@ -1338,12 +1339,21 @@
                             ? new Date(allocation.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
                             : 'No Expiry';
 
-                        $('#lockerAllocationDates').text(`${startDate} - ${endDate}`);
+                        let expiredLabel = isExpired ? ' (Expired)' : '';
+                        $('#lockerAllocationDates').text(`${startDate} - ${endDate}${expiredLabel}`);
                         $('#lockerAllocationInfo').removeClass('d-none');
 
-                        $('#lockerPriceWrapper').addClass('d-none');
-                        $('#purchaseLockerBtn').addClass('d-none');
-                        $('#lockerModal').data('has-locker', true);
+                        if (isExpired) {
+                            $('#lockerModal').data('has-locker', false);
+                            let lockerPrice = $select.find(':selected').data('price') || 0;
+                            $('#lockerPrice').text(lockerPrice);
+                            $('#lockerPriceWrapper').removeClass('d-none');
+                            $('#purchaseLockerBtn').removeClass('d-none');
+                        } else {
+                            $('#lockerPriceWrapper').addClass('d-none');
+                            $('#purchaseLockerBtn').addClass('d-none');
+                            $('#lockerModal').data('has-locker', true);
+                        }
                     } else {
                         $('#lockerModal').data('has-locker', false);
                     }

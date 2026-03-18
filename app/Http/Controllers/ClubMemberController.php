@@ -1131,17 +1131,17 @@ class ClubMemberController extends Controller
     public function getMemberLockerAllocation($memberId)
     {
         try {
-            $today = Carbon::today()->toDateString();
-
             $allocation = LockerAllocation::with('locker:id,locker_number')
                 ->where('member_id', $memberId)
-                ->whereDate('start_date', '<=', $today)
-                ->where(function ($query) use ($today) {
-                    $query->whereNull('end_date')
-                        ->orWhereDate('end_date', '>=', $today);
-                })
                 ->latest()
                 ->first();
+
+            if ($allocation) {
+                $today = Carbon::today()->toDateString();
+                $allocation->is_expired = $allocation->end_date
+                    ? (Carbon::parse($allocation->end_date)->toDateString() < $today)
+                    : false;
+            }
 
             return response()->json([
                 'statusCode' => 200,
