@@ -1118,6 +1118,7 @@ class ClubMemberController extends Controller
             $requestData = [
                 'locker_id' => $request->locker_id,
                 'locker_allocation_id' => $lockerAllocation->id,
+                'locker_price' => $lockerAmount,
             ];
 
             $approval = ActionApproval::create([

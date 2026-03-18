@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\ActionApproval;
 use App\Models\Card;
 use App\Models\FoodItemPrice;
+use App\Models\Locker;
+use App\Models\LockerAllocation;
+use App\Models\LockerPrice;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -522,7 +527,48 @@ class ActionApprovalController extends Controller
                 // return $payload;
             }elseif ($data->module == 'locker_purchase') {
                 $payloadJson = $data->request_payload;
-                $payload = json_decode($payloadJson);
+                $payload = json_decode($payloadJson, true);
+
+                $lockerId = $payload['locker_id'] ?? null;
+                $lockerAllocationId = $payload['locker_allocation_id'] ?? null;
+                $memberId = $data->entity_id;
+
+                DB::beginTransaction();
+
+                if ($lockerAllocationId) {
+                    $allocation = LockerAllocation::where('id', $lockerAllocationId)
+                        ->where('member_id', $memberId)
+                        ->first();
+
+                    if ($allocation) {
+                        $allocation->delete();
+                    }
+                }
+
+                if ($lockerId) {
+                    Locker::where('id', $lockerId)->update([
+                        'status' => 'available'
+                    ]);
+                }
+
+                // $refundAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
+                $refundAmount = $payload['locker_price'];
+                $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
+                if ($wallet) {
+                    $wallet->current_balance += $refundAmount;
+                    $wallet->save();
+
+                    WalletTransaction::create([
+                        'wallet_id' => $wallet->id,
+                        'member_id' => $memberId,
+                        'amount'    => $refundAmount,
+                        'direction' => 'credit',
+                        'txn_type'  => 'locker_purchase_refund',
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+
+                DB::commit();
             }
 
             $data->update([
