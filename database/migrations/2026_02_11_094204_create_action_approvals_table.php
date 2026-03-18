@@ -25,7 +25,8 @@ return new class extends Migration
                 'stock_adjustment',
                 'member_create',
                 'member_delete',
-                'locker_purchase'
+                'locker_purchase',
+                'add_on_purchase'
             ])->nullable();
 
             $table->enum('action_type', ['create', 'update', 'delete'])->nullable();

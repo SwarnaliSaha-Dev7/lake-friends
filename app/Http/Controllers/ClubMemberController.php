@@ -938,8 +938,10 @@ class ClubMemberController extends Controller
             // return $request;
 
             DB::beginTransaction();
+            $clubId = club_id();
             $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
             $amount = $request->amount;
+            $memberDtls = Member::find($request->member_id);
 
             // $wallet = Wallet::where('member_id', $id)->value('current_balance');
 
@@ -958,17 +960,20 @@ class ClubMemberController extends Controller
             $startDate = carbon::now();
             $endDate   = carbon::now()->addMonths(6);
 
+            $memberAddOnIds = [];
             foreach ($request->addons as $addonId) {
 
                 $addon = AddOn::find($addonId);
 
-                MemberAddOn::create([
+                $memberAddOn = MemberAddOn::create([
                         'member_id' => $request->member_id,
                         'add_on_id' => $addonId,
                         'price' => $addon->price,
                         'start_date'=> $startDate,
                         'end_date'  => $endDate,
                     ]);
+
+                $memberAddOnIds[] = $memberAddOn->id;
             }
 
             // WALLET LOG
@@ -980,6 +985,38 @@ class ClubMemberController extends Controller
                 'txn_type'  => 'add_on_purchase',
                 'created_by' => auth()->id(),
             ]);
+
+            $requestData = [
+                'member_addon_ids' => $memberAddOnIds,
+                'total_price' => $amount,
+            ];
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'add_on_purchase',
+                'action_type' => 'create',
+                'entity_model' => 'Member',
+                'entity_id' => $request->member_id,
+                'membership_type_id' => $memberDtls->membership_type_id,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($requestData)
+            ]);
+
+            if (Auth::user()->hasRole('admin')) {
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
 
             DB::commit();
 
