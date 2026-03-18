@@ -35,7 +35,7 @@
                 <div class="pt-3 pb-4 px-3 noti-body overflow-auto">
                     @forelse(auth()->user()->unreadNotifications as $notification)
                     {{-- <a href="{{ route('notification.read', $notification->id) }}"> --}}
-                    <a href="{{ in_array($notification->data['notification_type'] ?? '', ['member_create','member_edit','member_delete'])
+                    <a href="{{ in_array($notification->data['notification_type'] ?? '', ['member_create','member_edit','member_delete','locker_purchase'])
                         ? route('memberActionApproval.list')
                         : 'javascript:void(0)' }}">
                         {{-- {{ $notification->data['message'] }} --}}

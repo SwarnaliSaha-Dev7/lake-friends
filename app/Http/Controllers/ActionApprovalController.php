@@ -34,7 +34,7 @@ class ActionApprovalController extends Controller
 
             $clubMembershipId = MembershipType::where('name', 'Club Membership')->value('id');
 
-            $swimmingMembershipData = ActionApproval::with('operatorDetails')
+            $swimmingMembershipData = ActionApproval::with(['operatorDetails','entity'])
                 ->where('maker_user_id', '!=', Auth::id())
                 ->where('membership_type_id', $swimmingMembershipId)
                 ->where('status', 'pending')
@@ -73,7 +73,7 @@ class ActionApprovalController extends Controller
             //     ->latest()
             //     ->get();
 
-            $clubMembershipData = ActionApproval::with('operatorDetails')
+            $clubMembershipData = ActionApproval::with(['operatorDetails','entity'])
                 ->where('maker_user_id', '!=', Auth::id())
                 ->where('membership_type_id', $clubMembershipId)
                 ->where('status', 'pending')

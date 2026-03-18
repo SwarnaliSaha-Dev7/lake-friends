@@ -40,7 +40,7 @@ class ActionApproval extends Model
 
     public function entity()
     {
-        return $this->morphTo(null, 'entity_model', 'entity_id');
+        return $this->morphTo(null, 'entity_model', 'entity_id')->withTrashed();
     }
 
     public function membershipType(): BelongsTo

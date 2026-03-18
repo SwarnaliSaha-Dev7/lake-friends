@@ -40,7 +40,7 @@
                         </thead>
                         <tbody>
                             @foreach ($clubMembershipData as $data)
-                                    @php
+                                    {{-- @php
                                         $payloadJson = $data->request_payload;
                                         $payload = json_decode($payloadJson);
                                         // echo "<pre>"; print_r($payload); echo "</pre>";
@@ -62,10 +62,16 @@
                                         elseif (isset($payload->name)) {
                                             $detail = $payload?->name ?? '';
                                         }
-                                    @endphp
+
+                                    @endphp --}}
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                    <td class="text-nowrap"><a href="#" class="clubMemberDetail" data-id="{{$data->id}}">{{ $detail }}</a></td>
+
+                                    @if($data->module =="locker_purchase")
+                                        <td class="text-nowrap"><a href="javascript:void(0)" class="lockerDtls" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
+                                    @else
+                                        <td class="text-nowrap"><a href="javascript:void(0)" class="clubMemberDetail" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
+                                    @endif
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                     <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
@@ -134,7 +140,7 @@
                         </thead>
                         <tbody>
                             @foreach ($swimmingMembershipData as $data)
-                                    @php
+                                    {{-- @php
                                         $payloadJson = $data->request_payload;
                                         $payload = json_decode($payloadJson);
                                         // echo "<pre>"; print_r($payload); echo "</pre>";
@@ -153,10 +159,10 @@
                                         elseif (isset($payload->name)) {
                                             $detail = $payload?->name ?? '';
                                         }
-                                    @endphp
+                                    @endphp --}}
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                    <td class="text-nowrap"><a href="#" class="swimMemberDetail" data-id="{{$data->id}}">{{ $detail }}</a></td>
+                                    <td class="text-nowrap"><a href="javascript:void(0)" class="swimMemberDetail" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                     <td class="text-nowrap">{{$data->operatorDetails->name}}</td>

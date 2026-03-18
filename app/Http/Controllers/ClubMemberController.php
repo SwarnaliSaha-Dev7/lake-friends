@@ -1132,6 +1132,28 @@ class ClubMemberController extends Controller
                 'request_payload' => json_encode($requestData)
             ]);
 
+            if (Auth::user()->hasRole('admin')) {
+
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+
+                $approvers = User::role(['operator', 'admin'])
+                ->where('id', '!=', Auth::id())
+                ->get();
+
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
+
+
             DB::commit();
 
             return response()->json([
