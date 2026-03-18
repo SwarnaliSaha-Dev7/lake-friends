@@ -1033,6 +1033,25 @@ class ClubMemberController extends Controller
 
             DB::beginTransaction();
 
+            $lockerAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
+
+            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
+            if (!$wallet) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Wallet not found'
+                ]);
+            }
+
+            if ($wallet->current_balance < $lockerAmount) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Insufficient wallet balance'
+                ]);
+            }
+
             $locker = Locker::where('id', $request->locker_id)
                 ->where('club_id', $clubId)
                 ->where('is_active', 1)
@@ -1076,8 +1095,22 @@ class ClubMemberController extends Controller
                 'end_date' => $endDate,
             ]);
 
+            // DEDUCT WALLET
+            $wallet->current_balance -= $lockerAmount;
+            $wallet->save();
+
             $locker->update([
                 'status' => 'occupied'
+            ]);
+
+            // WALLET LOG
+            WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'member_id' => $request->member_id,
+                'amount'    => $lockerAmount,
+                'direction' => 'debit',
+                'txn_type'  => 'locker_purchase',
+                'created_by' => auth()->id(),
             ]);
 
             DB::commit();

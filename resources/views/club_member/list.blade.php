@@ -1310,7 +1310,7 @@
             $('#lockerAllocationInfo').addClass('d-none');
             $('#lockerAllocationDates').text('-');
 
-            $('#lockerModal').data('has-locker', false);
+            // $('#lockerModal').data('has-locker', false);
 
             $('#lockerPriceWrapper').addClass('d-none');
             $('#purchaseLockerBtn').addClass('d-none');
@@ -1394,6 +1394,7 @@
                     locker_id: lockerId
                 },
                 success: function(response) {
+                    // console.log(response)
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
                         $('#lockerModal').modal('hide');
