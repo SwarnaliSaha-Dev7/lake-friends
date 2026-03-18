@@ -1033,6 +1033,8 @@ class ClubMemberController extends Controller
 
             DB::beginTransaction();
 
+            $memberDtls = Member::find($request->member_id);
+
             $lockerAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
 
             $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
@@ -1087,7 +1089,7 @@ class ClubMemberController extends Controller
                 $previousAllocations->delete();
             }
 
-            LockerAllocation::create([
+            $lockerAllocation = LockerAllocation::create([
                 'club_id' => $clubId,
                 'locker_id' => $request->locker_id,
                 'member_id' => $request->member_id,
@@ -1111,6 +1113,22 @@ class ClubMemberController extends Controller
                 'direction' => 'debit',
                 'txn_type'  => 'locker_purchase',
                 'created_by' => auth()->id(),
+            ]);
+
+            $requestData = [
+                'locker_id' => $request->locker_id,
+                'locker_allocation_id' => $lockerAllocation->id,
+            ];
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'locker_purchase',
+                'action_type' => 'create',
+                'entity_model' => 'Member',
+                'entity_id' => $request->member_id,
+                'membership_type_id' => $memberDtls->membership_type_id ,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($requestData)
             ]);
 
             DB::commit();

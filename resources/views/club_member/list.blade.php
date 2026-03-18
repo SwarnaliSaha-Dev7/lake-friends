@@ -1339,8 +1339,11 @@
                             ? new Date(allocation.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
                             : 'No Expiry';
 
-                        let expiredLabel = isExpired ? ' (Expired)' : '';
-                        $('#lockerAllocationDates').text(`${startDate} - ${endDate}${expiredLabel}`);
+                        if (isExpired) {
+                            $('#lockerAllocationDates').html(`${startDate} - ${endDate} <span class="text-danger">(Expired)</span>`);
+                        } else {
+                            $('#lockerAllocationDates').text(`${startDate} - ${endDate}`);
+                        }
                         $('#lockerAllocationInfo').removeClass('d-none');
 
                         if (isExpired) {

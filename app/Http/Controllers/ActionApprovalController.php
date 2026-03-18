@@ -425,6 +425,10 @@ class ActionApprovalController extends Controller
                 DB::commit();
             }
 
+            if ($data->module == 'locker_purchase') {
+                //
+            }
+
             $data->update([
                 'checker_user_id' => Auth::id(),
                 'status' => 'approved',
@@ -516,6 +520,9 @@ class ActionApprovalController extends Controller
                     }
                 }
                 // return $payload;
+            }elseif ($data->module == 'locker_purchase') {
+                $payloadJson = $data->request_payload;
+                $payload = json_decode($payloadJson);
             }
 
             $data->update([
