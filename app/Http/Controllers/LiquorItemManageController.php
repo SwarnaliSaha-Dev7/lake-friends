@@ -6,9 +6,12 @@ use App\Models\ActionApproval;
 use App\Models\FoodCategory;
 use App\Models\FoodItem;
 use App\Models\FoodItemPrice;
+use App\Models\User;
+use App\Notifications\ApprovalNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 
 class LiquorItemManageController extends Controller
@@ -129,7 +132,7 @@ class LiquorItemManageController extends Controller
                 'image'               => $image_path,
             ];
 
-            ActionApproval::create([
+            $approval = ActionApproval::create([
                 'club_id'                 => $club_id,
                 'module'                  => 'liquor_item_create',
                 'action_type'             => 'create',
@@ -143,6 +146,11 @@ class LiquorItemManageController extends Controller
             ]);
 
             DB::commit();
+
+            if (!$isAdmin) {
+                $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
 
             return response()->json([
                 'statusCode' => 200,
@@ -311,7 +319,7 @@ class LiquorItemManageController extends Controller
                 return response()->json(['statusCode' => 200, 'message' => 'Price updated successfully.']);
             }
 
-            ActionApproval::create([
+            $approval = ActionApproval::create([
                 'club_id'         => $club_id,
                 'module'          => 'liquor_price_update',
                 'action_type'     => 'update',
@@ -321,6 +329,9 @@ class LiquorItemManageController extends Controller
                 'request_payload' => json_encode($payload),
                 'status'          => 'pending',
             ]);
+
+            $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            Notification::send($approvers, new ApprovalNotification($approval));
 
             return response()->json(['statusCode' => 200, 'message' => 'Price change request sent for approval.']);
         } catch (\Throwable $th) {
@@ -364,7 +375,7 @@ class LiquorItemManageController extends Controller
                 return response()->json(['statusCode' => 200, 'message' => 'Liquor item deleted successfully.']);
             }
 
-            ActionApproval::create([
+            $approval = ActionApproval::create([
                 'club_id'         => $club_id,
                 'module'          => 'liquor_item_delete',
                 'action_type'     => 'delete',
@@ -374,6 +385,9 @@ class LiquorItemManageController extends Controller
                 'request_payload' => json_encode(['item_id' => $id, 'item_name' => $liquorItem->name]),
                 'status'          => 'pending',
             ]);
+
+            $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            Notification::send($approvers, new ApprovalNotification($approval));
 
             return response()->json(['statusCode' => 200, 'message' => 'Delete request submitted for approval.']);
         } catch (\Throwable $th) {

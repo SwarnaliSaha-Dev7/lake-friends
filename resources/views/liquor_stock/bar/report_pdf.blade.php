@@ -111,6 +111,17 @@
                     $closingBtlEq = $isBeer ? $closing : ($sizeMl > 0 ? floor($closing / $sizeMl) : 0);
                     $isOut       = $closing === 0 && $row['opening_qty'] > 0;
                     $isLow       = !$isOut && $alertQty > 0 && $closingBtlEq <= $alertQty;
+
+                    $fmtQty = function($qty, $prefix = '') use ($isBeer, $sizeMl, $unit) {
+                        if ($qty <= 0) return '—';
+                        if ($isBeer) return $prefix . number_format($qty) . ' BTL';
+                        $btl = $sizeMl > 0 ? (int) floor($qty / $sizeMl) : 0;
+                        $rem = $sizeMl > 0 ? ($qty % $sizeMl) : $qty;
+                        $breakdown = $btl > 0
+                            ? ' (' . $btl . ' BTL' . ($rem > 0 ? ' ' . number_format($rem) . ' ml' : '') . ')'
+                            : '';
+                        return $prefix . number_format($qty) . ' ml' . $breakdown;
+                    };
                 @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
@@ -124,14 +135,11 @@
                         @endif
                     </td>
                     <td>{{ $sizeMl ? $sizeMl . ' ml' : '—' }}</td>
-                    <td>{{ $row['opening_qty'] > 0 ? number_format($row['opening_qty']) . ' ' . $unit : '—' }}</td>
-                    <td class="text-success">{{ $row['in_qty'] > 0 ? '+' . number_format($row['in_qty']) . ' ' . $unit : '—' }}</td>
-                    <td class="text-danger">{{ $row['out_qty'] > 0 ? '-' . number_format($row['out_qty']) . ' ' . $unit : '—' }}</td>
+                    <td>{{ $fmtQty($row['opening_qty']) }}</td>
+                    <td class="text-success">{{ $fmtQty($row['in_qty'], '+') }}</td>
+                    <td class="text-danger">{{ $fmtQty($row['out_qty'], '-') }}</td>
                     <td>
-                        {{ number_format($closing) }} {{ $unit }}
-                        @if(!$isBeer && $sizeMl > 0 && $closing > 0)
-                            ({{ floor($closing / $sizeMl) }} BTL)
-                        @endif
+                        {{ $fmtQty($closing) }}
                         @if($isOut)
                             <span class="badge-danger">Empty</span>
                         @elseif($isLow)
@@ -141,15 +149,6 @@
                 </tr>
             @endforeach
         </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="5" style="text-align:right; padding-right:10px;">Total (bottle equiv.)</td>
-                <td>{{ number_format($totalOpening, 2) }} BTL</td>
-                <td class="text-success">+{{ number_format($totalIn, 2) }}</td>
-                <td class="text-danger">-{{ number_format($totalOut, 2) }}</td>
-                <td>{{ number_format($totalClosing, 2) }} BTL</td>
-            </tr>
-        </tfoot>
     </table>
 
     <div class="footer">Bar Stock Report &mdash; Lake Friends Club</div>

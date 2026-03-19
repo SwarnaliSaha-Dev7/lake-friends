@@ -343,9 +343,13 @@ $(document).ready(function () {
             var isOut = !item.in_stock;
             var isLow = item.is_low;
 
+            var remainder    = item.size_ml > 0 ? item.bar_stock % item.size_ml : item.bar_stock;
+            var btlBreakdown = item.btl_eq > 0
+                ? ' (' + item.btl_eq + ' BTL' + (remainder > 0 ? ' ' + remainder.toLocaleString() + ' ml' : '') + ')'
+                : '';
             var stockDisplay = item.is_beer
                 ? item.bar_stock + ' BTL'
-                : item.bar_stock.toLocaleString() + ' ml' + (item.btl_eq > 0 ? ' (' + item.btl_eq + ' BTL)' : '');
+                : item.bar_stock.toLocaleString() + ' ml' + btlBreakdown;
 
             var stockColor  = isOut ? '#dc3545' : (isLow ? '#fd7e14' : '#198754');
             var stockLabel  = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');

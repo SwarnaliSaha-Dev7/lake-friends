@@ -128,6 +128,17 @@
                                     $closingBtlEq = $isBeer ? $closing : ($sizeMl > 0 ? floor($closing / $sizeMl) : 0);
                                     $isOut    = $closing === 0;
                                     $isLow    = !$isOut && $alertQty > 0 && $closingBtlEq <= $alertQty;
+
+                                    $fmtQty = function($qty, $prefix = '') use ($isBeer, $sizeMl, $unit) {
+                                        if ($qty <= 0) return '—';
+                                        if ($isBeer) return $prefix . number_format($qty) . ' BTL';
+                                        $btl = $sizeMl > 0 ? (int) floor($qty / $sizeMl) : 0;
+                                        $rem = $sizeMl > 0 ? ($qty % $sizeMl) : $qty;
+                                        $breakdown = $btl > 0
+                                            ? ' (' . $btl . ' BTL' . ($rem > 0 ? ' ' . number_format($rem) . ' ml' : '') . ')'
+                                            : '';
+                                        return $prefix . number_format($qty) . ' ml' . $breakdown;
+                                    };
                                 @endphp
                                 <tr @if($isOut && $row['opening_qty'] > 0) class="table-danger" @elseif($isLow) class="table-warning" @endif>
                                     <td class="text-nowrap">{{ $index + 1 }}</td>
@@ -141,20 +152,11 @@
                                         @endif
                                     </td>
                                     <td class="text-nowrap">{{ $sizeMl ? $sizeMl . ' ml' : '—' }}</td>
-                                    <td class="text-nowrap">
-                                        {{ $row['opening_qty'] > 0 ? number_format($row['opening_qty']) . ' ' . $unit : '—' }}
-                                    </td>
-                                    <td class="text-nowrap text-success fw-semibold">
-                                        {{ $row['in_qty'] > 0 ? '+' . number_format($row['in_qty']) . ' ' . $unit : '—' }}
-                                    </td>
-                                    <td class="text-nowrap text-danger fw-semibold">
-                                        {{ $row['out_qty'] > 0 ? '−' . number_format($row['out_qty']) . ' ' . $unit : '—' }}
-                                    </td>
+                                    <td class="text-nowrap">{{ $fmtQty($row['opening_qty']) }}</td>
+                                    <td class="text-nowrap text-success fw-semibold">{{ $fmtQty($row['in_qty'], '+') }}</td>
+                                    <td class="text-nowrap text-danger fw-semibold">{{ $fmtQty($row['out_qty'], '−') }}</td>
                                     <td class="text-nowrap fw-bold">
-                                        {{ number_format($closing) }} {{ $unit }}
-                                        @if(!$isBeer && $sizeMl > 0 && $closing > 0)
-                                            <small class="text-muted fw-normal">({{ floor($closing / $sizeMl) }} BTL)</small>
-                                        @endif
+                                        {{ $fmtQty($closing) }}
                                         @if($isOut && $row['opening_qty'] > 0)
                                             <span class="badge bg-danger ms-1">Empty</span>
                                         @elseif($isLow)
@@ -166,15 +168,6 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                        <tfoot>
-                            <tr class="fw-bold" style="background-color: #f0f0f0;">
-                                <td colspan="5" class="text-end pe-3">Total (bottle equiv.)</td>
-                                <td class="text-nowrap">{{ number_format($totalOpening, 2) }} BTL</td>
-                                <td class="text-nowrap text-success">+{{ number_format($totalIn, 2) }}</td>
-                                <td class="text-nowrap text-danger">−{{ number_format($totalOut, 2) }}</td>
-                                <td class="text-nowrap">{{ number_format($totalClosing, 2) }} BTL</td>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
             </div>

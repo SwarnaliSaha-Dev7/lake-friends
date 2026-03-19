@@ -143,9 +143,14 @@
                                     $isOut       = $barQty === 0;
                                     $isLow       = !$isOut && $alertQty > 0 && $barBtlEq <= $alertQty;
 
+                                    $btl         = ($sizeMl > 0 && $barQty > 0) ? (int) floor($barQty / $sizeMl) : 0;
+                                    $remainder   = ($sizeMl > 0) ? ($barQty % $sizeMl) : $barQty;
+                                    $btlBreakdown = $btl > 0
+                                        ? ' (' . $btl . ' BTL' . ($remainder > 0 ? ' ' . number_format($remainder) . ' ml' : '') . ')'
+                                        : '';
                                     $barDisplay  = $isBeer
                                         ? $barQty . ' BTL'
-                                        : number_format($barQty) . ' ml' . ($barQty > 0 && $sizeMl > 0 ? ' (' . floor($barQty / $sizeMl) . ' BTL)' : '');
+                                        : number_format($barQty) . ' ml' . $btlBreakdown;
                                 @endphp
                                 <tr @if($isOut) class="table-danger" @elseif($isLow) class="table-warning" @endif>
                                     <td class="text-nowrap">{{ $index + 1 }}</td>
