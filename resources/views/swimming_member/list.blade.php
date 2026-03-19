@@ -75,6 +75,11 @@
                                             title="Locker Purchase" data-id="{{$member->id}}"><small><i
                                                 class="fa-solid fa-table-cells-row-lock"></i></small>
                                         </button>
+
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn receiptBtn"  title="View Receipt"  data-id="{{$member->id}}">
+                                            <small><i class="fa-solid fa-receipt"></i></small>
+                                        </button>
+
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
                                             data-bs-toggle="modal" data-bs-target="#planrenewal"
                                             title="Plan Renewal" data-id="{{$member->id}}"><small><i
@@ -1570,6 +1575,95 @@
             </div>
         </div>
     </div>
+    <!-- Receipt Modal Start-->
+    <div class="modal fade" data-bs-scroll="false" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
+                    <img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97" height="106" style="max-width: 50px;">
+                        <p class="m-0 lh-2">Associate No.: <span class="text-muted">SWIM/FLEXI/</span> <span class="text-primary fw-medium" id="member_code">250</span></p>
+                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button> -->
+                </div>
+                <div class="modal-body">
+                    <table class="table border-0 membership-plan-table" cellspacing="1" cellpadding="1">
+                        <tbody>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>FLEXI. TIME <br> (NOVICE / SWIMMER)</small>
+                                </td>
+                                <td class="pe-3"><img id="receiptImage" src="" alt="img" loading="lazy" fetchpriority="auto" width="60" height="60"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Member’s Name:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptName">Soumen Das</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Address:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptAddress">42/3 Sarat Bose Road, Kolkata - 700025, West Bengal, India.</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Phone number:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptPhone">9021532654</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Police Station:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptPolice">9021532654</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Age:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptAge">35 Years</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Height:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptHeight">8.5 inch</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Weight:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptWeight">8.5 inch</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Pulse Rate:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptPulse">80-100 bmp</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Gender:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptGender">Male</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Date:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptDate">18-02-2026</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-info" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" value="Print this page" onClick="window.print()">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Receipt Modal End-->
 
     <!-- Add Locker Purchase Modal Start for swimming members-->
     <div class="modal fade" id="lockerModal" tabindex="-1">
@@ -1653,7 +1747,6 @@
         if (type === 'addMember') {
             $('#addSwimmingMemberBtn').trigger('click');
         }
-
 
 
         //name validation
@@ -1933,9 +2026,16 @@
 
                         // $('.spinner-border').replaceWith(originalBtn);
                     }
-                    else{
-                        toastr.error('Something Went Wrong');
-                        // console.log(response);
+                    else {
+                        // $btn.html(originalText);
+                        // $btn.prop('disabled', false);
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                            // console.log(response)
+                        }
                     }
 
                 },
@@ -2440,6 +2540,54 @@
 
         // Locker Purchase Section End for swimming members
 
+    });
+
+    $(document).on('click', '.receiptBtn', function () {
+
+        let memberId = $(this).data('id');
+        let btn = $(this);
+        let original = btn.html();
+
+        btn.html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '{{ route("swimming-member.receipt", ":id") }}'.replace(':id', memberId),
+            type: 'GET',
+            success: function (response) {
+
+                if (response.statusCode == 200) {
+
+                    let data = response.data;
+
+                    $('#receiptName').text(data.name);
+                    $('#receiptAddress').text(data.address);
+                    $('#receiptPhone').text(data.phone);
+                    $('#receiptPolice').text(data.police_station);
+                    $('#receiptAge').text(data.age + ' Years');
+                    $('#receiptHeight').text(data.height);
+                    $('#receiptWeight').text(data.weight);
+                    $('#receiptPulse').text(data.pulse_rate);
+                    $('#receiptGender').text(data.gender);
+                    $('#member_code').text(data.member_code);
+                    $('#receiptDate').text(data.date);
+
+
+                    if (data.image) {
+                        $('#receiptImage').attr('src', '/' + data.image);
+                    }
+
+                    $('#receiptModal').modal('show');
+                } else {
+                    toastr.error(response.message || 'Something went wrong');
+                }
+
+                btn.html(original);
+            },
+            error: function () {
+                toastr.error('Something went wrong');
+                btn.html(original);
+            }
+        });
     });
 </script>
 @endsection

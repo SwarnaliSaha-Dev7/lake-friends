@@ -81,4 +81,9 @@ class Member extends Model
     // {
     //     return $this->hasMany(MemberAddOn::class);
     // }
+    
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(MembershipPurchaseHistory::class, 'member_id');
+    }
 }

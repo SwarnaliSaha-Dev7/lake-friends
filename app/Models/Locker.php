@@ -17,3 +17,4 @@ class Locker extends Model
         'club_id',
     ];
 }
+

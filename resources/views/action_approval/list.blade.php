@@ -145,11 +145,13 @@
                                         $payload = json_decode($payloadJson);
                                         // echo "<pre>"; print_r($payload); echo "</pre>";
                                         // $detail = "";
+
+                                        $detail = '';
+
                                         if ($data->module == 'member_delete') {
                                             $member = \App\Models\Member::find($data->entity_id);
                                             $detail = $member->name ?? '';
                                         }
-
                                         elseif (isset($payload->swim_name)) {
                                             $detail = $payload?->swim_name ?? '';
                                         }

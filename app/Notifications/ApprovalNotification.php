@@ -77,13 +77,13 @@ class ApprovalNotification extends Notification
                 $notificationType = "locker_purchase";
                 break;
 
-                // case 'user':
-                //     $message = "New user registration waiting for approval";
-                //     break;
+            // case 'user':
+            //     $message = "New user registration waiting for approval";
+            //     break;
 
-                // case 'transaction':
-                //     $message = "Transaction waiting for approval";
-                //     break;
+            // case 'transaction':
+            //     $message = "Transaction waiting for approval";
+            //     break;
         }
 
         return [

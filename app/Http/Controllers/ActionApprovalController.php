@@ -348,7 +348,7 @@ class ActionApprovalController extends Controller
                 $member = Member::find($memberId);
 
                 $membershipPlanPurchase = MembershipPurchaseHistory::where('club_id', $clubId)
-                    ->where('member_id', $id)
+                    ->where('member_id', $memberId)
                     ->where('status', 'pending')
                     ->first();
 

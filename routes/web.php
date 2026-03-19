@@ -90,6 +90,8 @@ Route::middleware('auth')->group(function () {
         Route::get('locker-allocation/{memberId}', [SwimmingMemberController::class, 'getMemberLockerAllocation'])->name('swimming-member.locker-allocation');
         // swimming member locker route end
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
+
+        Route::get('/receipt/{id}', [SwimmingMemberController::class, 'getReceipt'])->name('swimming-member.receipt');
     });
 
     Route::prefix('manage-member-approval-status')->controller(ActionApprovalController::class)->group(function () {
