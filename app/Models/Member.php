@@ -86,4 +86,11 @@ class Member extends Model
     {
         return $this->hasMany(MembershipPurchaseHistory::class, 'member_id');
     }
+    
+    public function pendingFines(): HasMany
+    {
+        return $this->hasMany(MemberFine::class, 'member_id')
+                    ->where('status', 'pending')
+                    ->orderByDesc('fine_date');
+    }
 }

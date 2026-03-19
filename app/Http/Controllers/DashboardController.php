@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
 use App\Models\Card;
+use App\Models\FoodItem;
+use App\Models\FoodItemCurrentStock;
+use App\Models\Location;
+use App\Models\LiquorServing;
 use App\Models\Member;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
 use Carbon\Carbon;
+use App\Models\Offer;
+use App\Models\StockWarehouse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -177,6 +183,101 @@ class DashboardController extends Controller
                 'statusCode' => 500,
                 'error' => $th->getMessage(),
             ]);
+        }
+    }
+
+    public function getOrderItems()
+    {
+        try {
+            $clubId = club_id();
+            $today  = now()->toDateString();
+
+            // Build a map of food_item_id => first active offer
+            $offerMap = [];
+            $activeOffers = Offer::where('club_id', $clubId)
+                ->where('status', 'active')
+                ->where('start_at', '<=', $today)
+                ->where('end_at', '>=', $today)
+                ->with(['offerType', 'offerItems'])
+                ->get();
+
+            foreach ($activeOffers as $offer) {
+                foreach ($offer->offerItems as $oi) {
+                    if (!isset($offerMap[$oi->food_items_id])) {
+                        $offerMap[$oi->food_items_id] = [
+                            'offer_name'     => $offer->name,
+                            'type_slug'      => $offer->offerType ? $offer->offerType->slug : '',
+                            'discount_value' => (float) $offer->discount_value,
+                            'buy_qty'        => (int) $offer->buy_qty,
+                            'get_qty'        => (int) $offer->get_qty,
+                        ];
+                    }
+                }
+            }
+
+            $foodItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'food')
+                ->where('is_active', 1)
+                ->with('foodItemPrice')
+                ->get(['id', 'name', 'item_type'])
+                ->map(function ($item) use ($offerMap) {
+                    $item->offer = $offerMap[$item->id] ?? null;
+                    return $item;
+                });
+
+            // Bar stock map for liquor items
+            $warehouse = StockWarehouse::where('club_id', $clubId)->first();
+            $barLocation = Location::where('name', Location::BAR)->first();
+            $barStockMap = [];
+            if ($warehouse && $barLocation) {
+                $barStockMap = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
+                    ->where('location_id', $barLocation->id)
+                    ->pluck('quantity', 'food_items_id')
+                    ->toArray();
+            }
+
+            // Beer items: served by BTL, price from food_item_price
+            $beerItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'liquor')
+                ->where('is_beer', 1)
+                ->where('is_active', 1)
+                ->with('foodItemPrice')
+                ->get()
+                ->map(function ($item) use ($offerMap, $barStockMap) {
+                    return [
+                        'id'           => 'beer_' . $item->id,
+                        'food_item_id' => $item->id,
+                        'name'         => $item->name,
+                        'is_beer'      => 1,
+                        'volume_ml'    => null,
+                        'price'        => isset($item->foodItemPrice) ? (float) $item->foodItemPrice->price : 0,
+                        'bar_stock'    => (int) ($barStockMap[$item->id] ?? 0),
+                        'offer'        => $offerMap[$item->id] ?? null,
+                    ];
+                });
+
+            // Spirit servings: ml-wise menu items from liquor_servings
+            $spiritServings = LiquorServing::where('club_id', $clubId)
+                ->where('is_active', 1)
+                ->get()
+                ->map(function ($serving) use ($offerMap, $barStockMap) {
+                    return [
+                        'id'           => 'srv_' . $serving->id,
+                        'food_item_id' => $serving->food_item_id,
+                        'name'         => $serving->name,
+                        'is_beer'      => 0,
+                        'volume_ml'    => $serving->volume_ml,
+                        'price'        => (float) $serving->price,
+                        'bar_stock'    => (int) ($barStockMap[$serving->food_item_id] ?? 0),
+                        'offer'        => $offerMap[$serving->food_item_id] ?? null,
+                    ];
+                });
+
+            $liquorItems = $beerItems->merge($spiritServings)->values();
+
+            return response()->json(['statusCode' => 200, 'foodItems' => $foodItems, 'liquorItems' => $liquorItems]);
+        } catch (\Throwable $th) {
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
         }
     }
 

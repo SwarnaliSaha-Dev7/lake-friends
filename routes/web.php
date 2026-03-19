@@ -1,12 +1,18 @@
 <?php
 
 use App\Http\Controllers\ActionApprovalController;
+use App\Http\Controllers\RestaurantOrderController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
 use App\Http\Controllers\ClubMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoodItemManageController;
+use App\Http\Controllers\BarOrderController;
+use App\Http\Controllers\BarStockController;
+use App\Http\Controllers\LiquorServingController;
+use App\Http\Controllers\GodownStockController;
 use App\Http\Controllers\LiquorItemManageController;
+use App\Http\Controllers\OfferManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
 use App\Http\Controllers\Master\FineRulesManageController;
@@ -73,6 +79,7 @@ Route::middleware('auth')->group(function () {
         Route::post('member-addon/list',[ClubMemberController::class, 'memberAddonList'])->name('club-member.member-addon.list');
         Route::post('locker/purchase', [ClubMemberController::class, 'purchaseLocker'])->name('club-member.locker.purchase');
         Route::get('locker-allocation/{memberId}', [ClubMemberController::class, 'getMemberLockerAllocation'])->name('club-member.locker-allocation');
+        Route::post('/renew', [ClubMemberController::class, 'renew'])->name('club-member.renew');
         Route::delete('/club-member/{id}', [ClubMemberController::class, 'delete'])->name('club-member.delete');
     });
 
@@ -108,8 +115,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/read-all', [DashboardController::class, 'readAllNotification'])->name('readAllNotification');
 
     Route::get('get-member-details/{cardNo}', [DashboardController::class, 'fetchMemberDetailsByCard'])->name('getMemberDetails');
+    Route::get('get-order-items', [DashboardController::class, 'getOrderItems'])->name('getOrderItems');
+    Route::get('restaurant-orders', [RestaurantOrderController::class, 'index'])->name('restaurant-orders.index');
+    Route::get('restaurant-orders-history', [RestaurantOrderController::class, 'history'])->name('restaurant-orders.history');
+    Route::get('restaurant-orders-history/download', [RestaurantOrderController::class, 'downloadReport'])->name('restaurant-orders.report.download');
+    Route::get('restaurant-orders/{id}', [RestaurantOrderController::class, 'show'])->name('restaurant-orders.show');
+    Route::post('restaurant-orders', [RestaurantOrderController::class, 'store'])->name('restaurant-orders.store');
+    Route::get('restaurant-orders/{id}/invoice', [RestaurantOrderController::class, 'downloadInvoice'])->name('restaurant-orders.invoice');
+    Route::patch('restaurant-orders/{id}/delivered', [RestaurantOrderController::class, 'markDelivered'])->name('restaurant-orders.delivered');
+    Route::patch('restaurant-orders/{id}/cancel', [RestaurantOrderController::class, 'cancelOrder'])->name('restaurant-orders.cancel');
 
     Route::resource('manage-food-items', FoodItemManageController::class);
+    Route::prefix('manage-offer-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',        'offerApprovalList')->name('offerApproval.list');
+        Route::get('approve/{id}','approve')->name('offerApproval.approve');
+        Route::get('reject/{id}', 'reject')->name('offerApproval.reject');
+    });
+
     Route::prefix('manage-food-item-price-approval')->controller(ActionApprovalController::class)->group(function () {
         Route::get('list', 'foodItemPriceLIst')->name('foodItemPriceApproval.list');
         Route::get('reject/{id}', 'reject')->name('foodItemPriceApproval.reject');
@@ -119,6 +141,63 @@ Route::middleware('auth')->group(function () {
     Route::post('price-request', [FoodItemManageController::class, 'requestPriceChange'])->name('foodItemPriceApproval.request');
 
     Route::resource('manage-liquor-items', LiquorItemManageController::class);
+    Route::post('liquor-price-request', [LiquorItemManageController::class, 'requestPriceChange'])->name('liquorItemPriceApproval.request');
+
+    Route::resource('liquor-servings', LiquorServingController::class)->only(['index', 'store', 'edit', 'update', 'destroy']);
+
+    Route::prefix('manage-liquor-serving-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',         'liquorServingApprovalList')->name('liquorServingApproval.list');
+        Route::get('approve/{id}', 'approve')->name('liquorServingApproval.approve');
+        Route::get('reject/{id}',  'reject')->name('liquorServingApproval.reject');
+    });
+
+    Route::prefix('manage-liquor-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',         'liquorApprovalList')->name('liquorApproval.list');
+        Route::get('approve/{id}', 'approve')->name('liquorApproval.approve');
+        Route::get('reject/{id}',  'reject')->name('liquorApproval.reject');
+    });
+
+    Route::resource('manage-offers', OfferManageController::class);
+
+    // Godown Stock
+    Route::prefix('liquor-stock')->group(function () {
+        Route::get('godown',         [GodownStockController::class, 'index'])->name('godown-stock.index');
+        Route::post('godown',        [GodownStockController::class, 'store'])->name('godown-stock.store');
+        Route::post('godown/adjust', [GodownStockController::class, 'adjust'])->name('godown-stock.adjust');
+        Route::get('godown/report',          [GodownStockController::class, 'report'])->name('godown-stock.report');
+        Route::get('godown/report/download', [GodownStockController::class, 'downloadReport'])->name('godown-stock.report.download');
+    });
+
+    Route::prefix('manage-godown-stock-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',         'godownStockApprovalList')->name('godownStockApproval.list');
+        Route::get('approve/{id}', 'approve')->name('godownStockApproval.approve');
+        Route::get('reject/{id}',  'reject')->name('godownStockApproval.reject');
+    });
+
+    // Bar Stock
+    Route::prefix('liquor-stock')->group(function () {
+        Route::get('bar',                  [BarStockController::class, 'index'])->name('bar-stock.index');
+        Route::post('bar/transfer',        [BarStockController::class, 'transfer'])->name('bar-stock.transfer');
+        Route::get('bar/report',           [BarStockController::class, 'report'])->name('bar-stock.report');
+        Route::get('bar/report/download',  [BarStockController::class, 'downloadReport'])->name('bar-stock.report.download');
+    });
+
+    Route::prefix('manage-bar-stock-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',         'barStockApprovalList')->name('barStockApproval.list');
+        Route::get('approve/{id}', 'approve')->name('barStockApproval.approve');
+        Route::get('reject/{id}',  'reject')->name('barStockApproval.reject');
+    });
+
+    // Bar Orders
+    Route::prefix('bar-orders')->group(function () {
+        Route::get('/',              [BarOrderController::class, 'index'])->name('bar-orders.index');
+        Route::get('/history',       [BarOrderController::class, 'history'])->name('bar-orders.history');
+        Route::get('/items',         [BarOrderController::class, 'getBarItems'])->name('bar-orders.items');
+        Route::post('/',             [BarOrderController::class, 'store'])->name('bar-orders.store');
+        Route::get('/{id}',          [BarOrderController::class, 'show'])->name('bar-orders.show');
+        Route::patch('/{id}/serve',  [BarOrderController::class, 'markServed'])->name('bar-orders.serve');
+        Route::patch('/{id}/cancel', [BarOrderController::class, 'cancel'])->name('bar-orders.cancel');
+    });
 });
 
 

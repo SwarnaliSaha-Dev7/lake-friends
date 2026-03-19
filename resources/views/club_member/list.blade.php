@@ -45,7 +45,14 @@
                             @foreach($members as $member)
                             <tr>
                                 <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                <td class="text-nowrap">{{$member->name}}</td>
+                                <td class="text-nowrap">
+                                    {{$member->name}}
+                                    @if($member->pendingFines->isNotEmpty())
+                                        <span class="badge bg-danger ms-1" title="Pending fine: ₹{{ number_format($member->pendingFines->sum('fine_amount'), 2) }}">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Fine
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="text-nowrap">{{$member->phone}}</td>
                                 <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
                                 <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
@@ -89,8 +96,10 @@
                                             <i class="fa-solid fa-puzzle-piece"></i>
                                         </small>
                                     </button>
-                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
+                                    <!-- <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
                                         data-bs-toggle="modal" data-bs-target="#planrenewal"
+                                                    class="fa-solid fa-wallet"></i></small></button> -->
+                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn planRenewalBtn"
                                         title="Plan Renewal" data-id="{{$member->id}}"><small><i
                                                 class="fa-solid fa-rotate-right"></i></small></button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn memberEditBtn" title="Edit" data-id="{{$member->id}}">
@@ -749,6 +758,21 @@
                             </tr>
                         </tbody>
                     </table>
+
+                    <!-- Pending Fines Section -->
+                    <div id="pendingFinesSection" style="display:none;">
+                        <div class="px-3 pb-2 pt-1">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                                <span class="fw-semibold text-danger small">Pending Fines</span>
+                            </div>
+                            <div id="pendingFinesList"></div>
+                            <div class="d-flex justify-content-between border-top pt-2 mt-1">
+                                <small class="fw-semibold">Total Pending Fine</small>
+                                <small class="fw-bold text-danger" id="totalPendingFine"></small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -759,101 +783,130 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="planrenewalModalLabel">Renewal Plan</h5>
+                    <h5 class="modal-title fs-5 fw-semibold" id="planrenewalModalLabel">Plan Renewal</h5>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
-                    <form action="">
-                        <div class="row">
-                            <div class="col-12">
-                                <label for="" class="form-label fw-semibold text-dark mb-3"><span
-                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
-                                            class="fa-regular fa-user"></i></span>Personal Details</label>
-                                <div class="row">
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Renewal type</small></label>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="renewinlineRadioOptions"
-                                                    id="renewinlineRadio1" value="option1">
-                                                <label class="form-check-label"
-                                                    for="renewinlineRadio1"><small>Annual</small></label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="renewinlineRadioOptions"
-                                                    id="renewinlineRadio2" value="option2">
-                                                <label class="form-check-label"
-                                                    for="renewinlineRadio2"><small>Lifetime</small></label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="renewinlineRadioOptions"
-                                                    id="renewinlineRadio3" value="option3">
-                                                <label class="form-check-label"
-                                                    for="renewinlineRadio3"><small>Silver</small></label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Mode">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="A/C Head">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Fine">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Taxable Amt (Min 500)">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST%">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id="" placeholder="GST Amt">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Receipt Amt">
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Bank Name">
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-part mb-3">
-                                            <textarea class="form-control py-2 shadow-none" id="" rows="3"
-                                                placeholder="Remarks"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
+                    <form id="renewalForm">
+                        @csrf
+                        <input type="hidden" id="renewal_member_id" name="member_id">
+
+                        {{-- Member Summary --}}
+                        <label class="form-label fw-semibold text-dark mb-3">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-regular fa-user"></i>
+                            </span>Member Details
+                        </label>
+                        <div class="row g-2 mb-3 p-3 rounded-3 border bg-light">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Name</small>
+                                <span class="fw-semibold" id="renewal_member_name">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Card No</small>
+                                <span class="fw-semibold" id="renewal_card_no">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Current Plan</small>
+                                <span class="fw-semibold" id="renewal_current_plan">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Expiry Date</small>
+                                <span class="fw-semibold" id="renewal_expiry_date">—</span>
                             </div>
                         </div>
-                        <div class="text-end mod-footer mt-3">
-                            <button type="button" class="btn btn-info fw-semibold"
-                                data-bs-dismiss="modal">Cancel</button>
-                            <input type="submit" class="btn btn-primary fw-semibold" value="Submit">
+
+                        {{-- Pending Fines --}}
+                        <div id="renewalFineAlert" class="alert alert-danger py-2 mb-3" style="display:none;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span class="fw-semibold small">Pending Fines (included in this renewal)</span>
+                            </div>
+                            <div id="renewalFineList" class="small"></div>
+                            <div class="d-flex justify-content-between border-top border-danger mt-2 pt-2">
+                                <span class="fw-semibold small">Total Fine</span>
+                                <span class="fw-bold" id="renewalTotalFine">₹0.00</span>
+                            </div>
+                        </div>
+
+                        {{-- Plan Type --}}
+                        <label class="form-label fw-semibold text-dark mb-2 mt-1">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-regular fa-credit-card"></i>
+                            </span>Renewal Details
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label w-100 mb-1"><small>Plan Type <span class="text-danger">*</span></small></label>
+                                @foreach ($clubMembershipPlanTypeList as $type)
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input renewal-plan-type" type="radio"
+                                        name="membership_plan_type_id"
+                                        id="renewal_plan_{{ $type->id }}"
+                                        value="{{ $type->id }}"
+                                        data-price="{{ $type->price ?? 0 }}"
+                                        {{ $loop->first ? 'required' : '' }}>
+                                    <label class="form-check-label" for="renewal_plan_{{ $type->id }}">
+                                        <small>{{ $type->name }}</small>
+                                    </label>
+                                </div>
+                                @endforeach
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Payment Mode <span class="text-danger">*</span></small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="payment_mode" id="renewal_payment_mode" placeholder="e.g. Cash / Cheque / UPI" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>A/C Head <span class="text-danger">*</span></small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="ac_head" id="renewal_ac_head" placeholder="A/C Head" required>
+                            </div>
+
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>Taxable Amt <span class="text-danger">*</span></small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="taxable_amount" id="renewal_taxable" placeholder="0.00" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>GST%</small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="renewal_gst_pct" value="{{ $gstPercentage }}" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>GST Amt</small></label>
+                                <input type="text" class="form-control py-2 shadow-none bg-light" name="gst_amount" id="renewal_gst_amt" placeholder="0.00" readonly>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>Fine Amt</small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="fine_amount" id="renewal_fine_amt" placeholder="0.00" min="0" step="0.01" value="0">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold">Total Receipt Amount</span>
+                                    <span class="fw-bold fs-5 text-primary" id="renewal_receipt_amt">₹0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Bank <span class="text-danger">*</span></small></label>
+                                <select name="bank_id" class="form-select py-2 shadow-none" id="renewal_bank" required>
+                                    <option value="">Select Bank</option>
+                                    @foreach ($bankList as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Remarks</small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="remarks" id="renewal_remarks" placeholder="Remarks">
+                            </div>
+                        </div>
+
+                        <div class="text-end mod-footer mt-4">
+                            <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-semibold" id="renewalSubmitBtn">
+                                <i class="fa-solid fa-rotate-right me-1"></i> Submit Renewal
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -1672,6 +1725,28 @@
                         $('#memberPlanExpiry').text(formatted);
                         $('#memberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
 
+                        // Pending fines
+                        const fines = response.data.pending_fines || [];
+                        if (fines.length > 0) {
+                            let fineHtml = '';
+                            let total = 0;
+                            fines.forEach(function(f) {
+                                const label = f.fine_type === 'membership_expiry_fine'
+                                    ? 'Membership Expiry Fine' + (f.reference_days ? ' (' + f.reference_days + ' days)' : '')
+                                    : 'Min. Spend Shortfall' + (f.financial_year ? ' (' + f.financial_year.fy_label + ')' : '');
+                                total += parseFloat(f.fine_amount);
+                                fineHtml += `<div class="d-flex justify-content-between py-1 border-bottom">
+                                    <small class="text-muted">${label}</small>
+                                    <small class="fw-semibold text-danger">₹${parseFloat(f.fine_amount).toFixed(2)}</small>
+                                </div>`;
+                            });
+                            $('#pendingFinesList').html(fineHtml);
+                            $('#totalPendingFine').text('₹' + total.toFixed(2));
+                            $('#pendingFinesSection').show();
+                        } else {
+                            $('#pendingFinesSection').hide();
+                        }
+
                         $('.spinner-border').replaceWith(originalBtn);
                         $('#viewprofile').modal('show');
                     }
@@ -1881,6 +1956,108 @@
                 }
             });
 
+        });
+
+        $(document).on('click', '.planRenewalBtn', function() {
+            const memberId = $(this).data('id');
+
+            // Reset form
+            $('#renewalForm')[0].reset();
+            $('#renewal_member_id').val(memberId);
+            $('#renewal_gst_pct').val('{{ $gstPercentage }}');
+            $('#renewalFineAlert').hide();
+            $('#renewalFineList').html('');
+            $('#renewalTotalFine').text('₹0.00');
+            $('#renewal_fine_amt').val('0');
+            $('#renewal_receipt_amt').text('₹0.00');
+            $('#renewal_gst_amt').val('');
+
+            $.ajax({
+                url: '{{route("club-member.view", ":id")}}'.replace(':id', memberId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.statusCode == 200) {
+                        const d = response.data;
+                        const purchase = d.purchase_history?.[0];
+
+                        $('#renewal_member_name').text(d.name || '—');
+                        $('#renewal_card_no').text(d.card_details?.card_no || '—');
+                        $('#renewal_current_plan').text(
+                            purchase?.status === 'active' ? (purchase?.membership_plan_type?.name ?? '—') : '—'
+                        );
+                        const expiry = purchase?.expiry_date
+                            ? new Date(purchase.expiry_date).toLocaleDateString('en-IN')
+                            : '—';
+                        $('#renewal_expiry_date').text(expiry);
+
+                        // Pending fines
+                        const fines = d.pending_fines || [];
+                        let fineTotal = 0;
+                        if (fines.length > 0) {
+                            let html = '';
+                            fines.forEach(function(f) {
+                                const label = f.fine_type === 'membership_expiry_fine'
+                                    ? 'Membership Expiry Fine' + (f.reference_days ? ' (' + f.reference_days + ' days)' : '')
+                                    : 'Min. Spend Shortfall' + (f.financial_year ? ' (' + f.financial_year.fy_label + ')' : '');
+                                fineTotal += parseFloat(f.fine_amount);
+                                html += `<div class="d-flex justify-content-between py-1 border-bottom border-danger border-opacity-25">
+                                    <span>${label}</span>
+                                    <span class="fw-semibold">₹${parseFloat(f.fine_amount).toFixed(2)}</span>
+                                </div>`;
+                            });
+                            $('#renewalFineList').html(html);
+                            $('#renewalTotalFine').text('₹' + fineTotal.toFixed(2));
+                            $('#renewal_fine_amt').val(fineTotal.toFixed(2));
+                            $('#renewalFineAlert').show();
+                        }
+
+                        calcRenewalReceipt();
+                    }
+                    $('#planrenewal').modal('show');
+                },
+                error: function() {
+                    $('#planrenewal').modal('show');
+                }
+            });
+        });
+
+        function calcRenewalReceipt() {
+            const taxable = parseFloat($('#renewal_taxable').val()) || 0;
+            const gstPct  = parseFloat($('#renewal_gst_pct').val()) || 0;
+            const fine    = parseFloat($('#renewal_fine_amt').val()) || 0;
+            const gstAmt  = (taxable * gstPct) / 100;
+            const receipt = taxable + gstAmt + fine;
+            $('#renewal_gst_amt').val(gstAmt.toFixed(2));
+            $('#renewal_receipt_amt').text('₹' + receipt.toFixed(2));
+        }
+
+        $('#renewal_taxable, #renewal_gst_pct, #renewal_fine_amt').on('input', calcRenewalReceipt);
+
+        $('#renewalForm').on('submit', function(e) {
+            e.preventDefault();
+            const $btn = $('#renewalSubmitBtn');
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Submitting...');
+
+            $.ajax({
+                url: '{{ route("club-member.renew") }}',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        $('#planrenewal').modal('hide');
+                        setTimeout(() => location.reload(), 800);
+                    } else {
+                        toastr.error(response.message || 'Something went wrong');
+                    }
+                },
+                error: function() {
+                    toastr.error('Something went wrong');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right me-1"></i> Submit Renewal');
+                }
+            });
         });
 
         $(document).on('click', '.memberDeleteBtn', function(){

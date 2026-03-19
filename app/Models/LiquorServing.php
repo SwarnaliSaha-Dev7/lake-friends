@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class LiquorServing extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'club_id',
+        'food_item_id',
+        'name',
+        'volume_ml',
+        'price',
+        'is_active',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'volume_ml' => 'integer',
+        'price'     => 'float',
+    ];
+
+    public function foodItem()
+    {
+        return $this->belongsTo(FoodItem::class, 'food_item_id');
+    }
+}

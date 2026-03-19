@@ -160,6 +160,7 @@ jQuery(function ($) {
         lengthChange: false,
         searching: true,
         info: false,
+        order: [],
         buttons: [
             'colvis',
             'copyHtml5',

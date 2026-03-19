@@ -99,6 +99,46 @@
                             $('#cardMemberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
                             $('#cardStatus').text(response.cardStatus);
                             $('#memberStatus').text(humanStatus);
+                            var memberName = response.data.name;
+                            $('#cardMemberName').text(memberName);
+                            $('#cardMemberClubName').text(response.data.club_details.name);
+                            $('#cardMemberCode').text(response.data.member_code);
+                            $('#cardMemberCardNo').text(response.data.card_details.card_no);
+                            $('#cardMemberPlan').text(response.data.purchase_history[0].membership_plan_type.name);
+                            var expiryDate = response.data.purchase_history[0].expiry_date;
+                            var formatted = new Date(expiryDate).toLocaleDateString('en-IN');
+                            $('#cardMemberPlanExpiry').text(formatted);
+                            var walletDetails = response.data.wallet_details;
+                            var walletBal = parseFloat(walletDetails && walletDetails.current_balance ? walletDetails.current_balance : 0).toFixed(2);
+                            $('#cardMemberWallet').text('Rs.' + walletBal);
+
+                            // Avatar initials
+                            var nameParts = memberName.trim().split(' ');
+                            var initials = '';
+                            for (var ni = 0; ni < Math.min(nameParts.length, 2); ni++) {
+                                if (nameParts[ni]) initials += nameParts[ni][0].toUpperCase();
+                            }
+                            $('#cardMemberAvatar').text(initials);
+
+                            // Card status badge
+                            var cardStatusVal = response.cardStatus || '';
+                            var cardBadgeClass = cardStatusVal === 'active'
+                                ? 'bg-success-subtle text-success border-success'
+                                : 'bg-danger-subtle text-danger border-danger';
+                            $('#cardStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + cardBadgeClass)
+                                .text('Card: ' + (cardStatusVal || 'N/A'));
+
+                            // Member status badge
+                            var memberBadgeClass = statusCode === 'active'
+                                ? 'bg-success-subtle text-success border-success'
+                                : (statusCode === 'pending'
+                                    ? 'bg-warning-subtle text-warning border-warning'
+                                    : 'bg-danger-subtle text-danger border-danger');
+                            $('#memberStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + memberBadgeClass)
+                                .text('Status: ' + (humanStatus || 'N/A'));
+
+                            // Store member ID for action buttons
+                            $('#cardentry').data('member-id', response.data.id);
 
                             $('#cardentry').modal('show');
 
@@ -112,6 +152,8 @@
                             $('.swipe-animation').show();
                             toastr.error(response.error ?? 'Something Went Wrong.');
                             //console.log(response);
+                            //toastr.error(response.error || 'Something Went Wrong.');
+                            console.log(response);
                         }
 
                     },
