@@ -68,9 +68,18 @@
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn membershipPlanBtn"
                                             title="Membership Plan" data-id="{{$member->id}}"><small><i
                                                     class="fa-sharp fa-clock-rotate-left"></i></small></button>
-                                        {{-- <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
                                             title="Wallet Recharge" data-id="{{$member->id}}"><small><i
-                                                    class="fa-solid fa-wallet"></i></small></button> --}}
+                                                    class="fa-solid fa-wallet"></i></small></button>
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn lockerBtn" data-bs-toggle="modal" data-bs-target="#lockerModal"
+                                            title="Locker Purchase" data-id="{{$member->id}}"><small><i
+                                                class="fa-solid fa-table-cells-row-lock"></i></small>
+                                        </button>
+
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn receiptBtn"  title="View Receipt"  data-id="{{$member->id}}">
+                                            <small><i class="fa-solid fa-receipt"></i></small>
+                                        </button>
+
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
                                             data-bs-toggle="modal" data-bs-target="#planrenewal"
                                             title="Plan Renewal" data-id="{{$member->id}}"><small><i
@@ -1566,6 +1575,162 @@
             </div>
         </div>
     </div>
+    <!-- Receipt Modal Start-->
+    <div class="modal fade" data-bs-scroll="false" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
+                    <img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97" height="106" style="max-width: 50px;">
+                        <p class="m-0 lh-2">Associate No.: <span class="text-muted">SWIM/FLEXI/</span> <span class="text-primary fw-medium" id="member_code">250</span></p>
+                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button> -->
+                </div>
+                <div class="modal-body">
+                    <table class="table border-0 membership-plan-table" cellspacing="1" cellpadding="1">
+                        <tbody>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>FLEXI. TIME <br> (NOVICE / SWIMMER)</small>
+                                </td>
+                                <td class="pe-3"><img id="receiptImage" src="" alt="img" loading="lazy" fetchpriority="auto" width="60" height="60"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Member’s Name:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptName">Soumen Das</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Address:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptAddress">42/3 Sarat Bose Road, Kolkata - 700025, West Bengal, India.</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Phone number:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptPhone">9021532654</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Police Station:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptPolice">9021532654</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Age:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptAge">35 Years</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Height:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptHeight">8.5 inch</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Weight:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptWeight">8.5 inch</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Pulse Rate:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptPulse">80-100 bmp</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Gender:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptGender">Male</small></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary ps-3">
+                                    <small>Date:</small>
+                                </td>
+                                <td class="pe-3"><small id="receiptDate">18-02-2026</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-info" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" value="Print this page" onClick="window.print()">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Receipt Modal End-->
+
+    <!-- Add Locker Purchase Modal Start for swimming members-->
+    <div class="modal fade" id="lockerModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+
+                <!-- Header -->
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-semibold">Locker Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">
+                        <i class="fa-regular fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form id="lockerForm">
+                        <input type="hidden" id="lockerMemberId">
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-part mb-3">
+                                    <label class="form-label">
+                                        <small>Select Locker</small>
+                                    </label>
+
+                                    <select class="form-select shadow-none" id="lockerSelect" required>
+                                        <option value="">Select Locker</option>
+                                        @foreach($lockers as $locker)
+                                            <option value="{{ $locker->id }}" data-price="{{ $lockerPrice->price ?? 0 }}">
+                                                Locker {{ $locker->locker_number }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="d-none" id="lockerAllocationInfo">
+                                    <small class="text-muted">Allocated Duration</small>
+                                    <div class="fw-semibold">
+                                        <span id="lockerAllocationDates">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PRICE SECTION HERE -->
+                        <div class="text-end mt-3" id="lockerPriceWrapper">
+                            <small>Amount to Pay</small>
+                            <h5 class="fw-semibold mb-0">
+                                ₹ <span id="lockerPrice">0</span>
+                            </h5>
+                        </div>
+
+                        <!-- Bottom -->
+                        <div class="border-top pt-3 mt-3 d-flex justify-content-end">
+                            <button class="btn btn-primary fw-semibold px-4" id="purchaseLockerBtn">
+                                Purchase
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Add Locker Purchase Modal End-->
 
 @endsection
 
@@ -1582,7 +1747,6 @@
         if (type === 'addMember') {
             $('#addSwimmingMemberBtn').trigger('click');
         }
-
 
 
         //name validation
@@ -1862,9 +2026,16 @@
 
                         // $('.spinner-border').replaceWith(originalBtn);
                     }
-                    else{
-                        toastr.error('Something Went Wrong');
-                        // console.log(response);
+                    else {
+                        // $btn.html(originalText);
+                        // $btn.prop('disabled', false);
+                        if(response.message){
+                            toastr.error(response.message);
+                        }
+                        else{
+                            toastr.error("Something went wrong, Please try again.");
+                            // console.log(response)
+                        }
                     }
 
                 },
@@ -2236,6 +2407,187 @@
 
         });
 
+         // Locker Purchase Section Start for swimming members
+
+        $(document).on('click', '.lockerBtn', function() {
+            let memberId = $(this).data('id');
+
+            $('#lockerMemberId').val(memberId);
+            $('#lockerSelect option[data-assigned="1"]').remove();
+            $('#lockerSelect').val('').prop('disabled', false);
+            $('#lockerPrice').text(0);
+            $('#lockerAllocationInfo').addClass('d-none');
+            $('#lockerAllocationDates').text('-');
+
+            // $('#lockerModal').data('has-locker', false);
+
+            $('#lockerPriceWrapper').addClass('d-none');
+            $('#purchaseLockerBtn').addClass('d-none');
+
+            $.ajax({
+                url: '{{ route("swimming-member.locker-allocation", ":memberId") }}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200 && response.data) {
+                        let allocation = response.data;
+                        let lockerId = allocation.locker_id;
+                        let lockerNumber = allocation.locker?.locker_number ?? '';
+                        let isExpired = allocation.is_expired == 1;
+
+                        let $select = $('#lockerSelect');
+                        if ($select.find(`option[value="${lockerId}"]`).length === 0) {
+                            $select.append(`<option value="${lockerId}" data-assigned="1" data-price="600.00">Locker ${lockerNumber}</option>`);
+                        }
+
+                        $select.val(lockerId).prop('disabled', !isExpired);
+
+                        let startDate = allocation.start_date
+                            ? new Date(allocation.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+                            : '-';
+                        let endDate = allocation.end_date
+                            ? new Date(allocation.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+                            : 'No Expiry';
+
+                        if (isExpired) {
+                            $('#lockerAllocationDates').html(`${startDate} - ${endDate} <span class="text-danger">(Expired)</span>`);
+                        } else {
+                            $('#lockerAllocationDates').text(`${startDate} - ${endDate}`);
+                        }
+                        $('#lockerAllocationInfo').removeClass('d-none');
+
+                        if (isExpired) {
+                            $('#lockerModal').data('has-locker', false);
+                            let lockerPrice = $select.find(':selected').data('price') || 0;
+                            $('#lockerPrice').text(lockerPrice);
+                            $('#lockerPriceWrapper').removeClass('d-none');
+                            $('#purchaseLockerBtn').removeClass('d-none');
+                        } else {
+                            $('#lockerPriceWrapper').addClass('d-none');
+                            $('#purchaseLockerBtn').addClass('d-none');
+                            $('#lockerModal').data('has-locker', true);
+                        }
+                    } else {
+                        $('#lockerModal').data('has-locker', false);
+                    }
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+        });
+
+        $(document).on('change', '#lockerSelect', function() {
+            let hasLocker = $('#lockerModal').data('has-locker') == 1;
+            let lockerPrice = $(this).find(':selected').data('price') || 0;
+            let hasSelection = $(this).val() !== '';
+
+            if (!hasLocker && hasSelection) {
+                $('#lockerPrice').text(lockerPrice);
+                $('#lockerPriceWrapper').removeClass('d-none');
+                $('#purchaseLockerBtn').removeClass('d-none');
+            } else {
+                $('#lockerPrice').text(0);
+                $('#lockerPriceWrapper').addClass('d-none');
+                $('#purchaseLockerBtn').addClass('d-none');
+            }
+        });
+
+        $(document).on('click', '#purchaseLockerBtn', function(e) {
+            e.preventDefault();
+
+            let memberId = $('#lockerMemberId').val();
+            let lockerId = $('#lockerSelect').val();
+
+            if (!lockerId) {
+                toastr.error('Please select a locker');
+                return;
+            }
+
+            let btn = $(this);
+            btn.prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
+
+            $.ajax({
+                url: "{{ route('swimming-member.locker.purchase') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    member_id: memberId,
+                    locker_id: lockerId
+                },
+                success: function(response) {
+                    // console.log(response)
+                    if (response.statusCode == 200) {
+                        toastr.success(response.message);
+                        $('#lockerModal').modal('hide');
+
+                        setTimeout(() => {
+                            window.location.href = "{{ route('swimming-member.list') }}";
+                        }, 1200);
+                    } else {
+                        toastr.error(response.message ?? "Something went wrong");
+                    }
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON?.message || xhr.responseJSON?.error || "Something went wrong";
+                    toastr.error(msg);
+                },
+                complete: function() {
+                    btn.prop('disabled', false).html('Purchase');
+                }
+            });
+        });
+
+        // Locker Purchase Section End for swimming members
+
+    });
+
+    $(document).on('click', '.receiptBtn', function () {
+
+        let memberId = $(this).data('id');
+        let btn = $(this);
+        let original = btn.html();
+
+        btn.html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '{{ route("swimming-member.receipt", ":id") }}'.replace(':id', memberId),
+            type: 'GET',
+            success: function (response) {
+
+                if (response.statusCode == 200) {
+
+                    let data = response.data;
+
+                    $('#receiptName').text(data.name);
+                    $('#receiptAddress').text(data.address);
+                    $('#receiptPhone').text(data.phone);
+                    $('#receiptPolice').text(data.police_station);
+                    $('#receiptAge').text(data.age + ' Years');
+                    $('#receiptHeight').text(data.height);
+                    $('#receiptWeight').text(data.weight);
+                    $('#receiptPulse').text(data.pulse_rate);
+                    $('#receiptGender').text(data.gender);
+                    $('#member_code').text(data.member_code);
+                    $('#receiptDate').text(data.date);
+
+
+                    if (data.image) {
+                        $('#receiptImage').attr('src', '/' + data.image);
+                    }
+
+                    $('#receiptModal').modal('show');
+                } else {
+                    toastr.error(response.message || 'Something went wrong');
+                }
+
+                btn.html(original);
+            },
+            error: function () {
+                toastr.error('Something went wrong');
+                btn.html(original);
+            }
+        });
     });
 </script>
 @endsection

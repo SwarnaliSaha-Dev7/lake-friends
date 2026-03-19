@@ -11,7 +11,7 @@
                 <div class="card-header bg-transparent border-0"><i class="fa-solid fa-users"></i></div>
                 <div class="card-body">
                     <p class="card-text mb-2 fw-medium">Total Members</p>
-                    <h2 class="card-title fs-4">120</h2>
+                    <h2 class="card-title fs-4">{{ $totalMembers }}</h2>
                 </div>
             </a>
             <a href="javascript:void(0)"
@@ -20,7 +20,7 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text mb-2 fw-medium">Active Members</p>
-                    <h2 class="card-title fs-4">120</h2>
+                    <h2 class="card-title fs-4">{{ $activeMembers }}</h2>
                 </div>
             </a>
             <a href="javascript:void(0)"
@@ -29,7 +29,7 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text mb-2 fw-medium">Expired Members</p>
-                    <h2 class="card-title fs-4">120</h2>
+                    <h2 class="card-title fs-4">{{ $expiredMembers }}</h2>
                 </div>
             </a>
             <a href="javascript:void(0)"
@@ -37,7 +37,7 @@
                 <div class="card-header bg-transparent border-0"><i class="fa-solid fa-user-plus"></i></div>
                 <div class="card-body">
                     <p class="card-text mb-2 fw-medium">Pending Approval</p>
-                    <h2 class="card-title fs-4">120</h2>
+                    <h2 class="card-title fs-4">{{ $pendingApprovals }}</h2>
                 </div>
             </a>
             <a href="javascript:void(0)"
@@ -45,8 +45,8 @@
                 <div class="card-header bg-transparent border-0"><i
                         class="fa-solid fa-arrow-right-to-bracket"></i></div>
                 <div class="card-body">
-                    <p class="card-text mb-2 fw-medium">This Month Signups</p>
-                    <h2 class="card-title fs-4">120</h2>
+                    <p class="card-text mb-2 fw-medium">New Members In This Month</p>
+                    <h2 class="card-title fs-4">{{ $thisMonthSignups }}</h2>
                 </div>
             </a>
             <a href="javascript:void(0)"
@@ -54,7 +54,7 @@
                 <div class="card-header bg-transparent border-0"><i class="fa-regular fa-clock"></i></div>
                 <div class="card-body">
                     <p class="card-text mb-2 fw-medium">Expiring Soon</p>
-                    <h2 class="card-title fs-4">120</h2>
+                    <h2 class="card-title fs-4">{{ $expiringSoon }}</h2>
                 </div>
             </a>
         </div>

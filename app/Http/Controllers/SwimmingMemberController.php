@@ -6,6 +6,9 @@ use App\Models\ActionApproval;
 use App\Models\Bank;
 use App\Models\Card;
 use App\Models\GstRate;
+use App\Models\Locker;
+use App\Models\LockerPrice;
+use App\Models\LockerAllocation;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
@@ -73,6 +76,17 @@ class SwimmingMemberController extends Controller
                 ->get();
 
             // dd($members);
+            // swimming locker part start
+
+            $lockers = Locker::where('is_active', 1)
+                                ->where('club_id', $clubId)
+                                ->where('status', 'available')
+                                ->select('id', 'locker_number')
+                                ->get();
+
+            $lockerPrice = LockerPrice::where('club_id', $clubId)->first();
+
+            // swimming locker part end
 
             return view('swimming_member.list', compact(
                 'title',
@@ -81,7 +95,9 @@ class SwimmingMemberController extends Controller
                 'gstPercentage',
                 'bankList',
                 'cards',
-                'members'
+                'members',
+                'lockers',
+                'lockerPrice'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -147,8 +163,21 @@ class SwimmingMemberController extends Controller
                 'spouse_image'
             );
 
-            // $memberCode = 'LF-' . time();
+            $lastMember = Member::where('club_id', $clubId)
+                                ->where('membership_type_id', $membershipTypeId)
+                                ->whereNotNull('member_code')
+                                ->orderBy('id', 'desc')
+                                ->lockForUpdate()
+                                ->first();
 
+            if ($lastMember && $lastMember->member_code) {
+                $lastCode = (int) $lastMember->member_code;
+                $newCode = $lastCode + 1;
+            } else {
+                $newCode = 1;
+            }
+
+            $memberCode = str_pad($newCode, 4, '0', STR_PAD_LEFT);
 
             $dest_path = 'uploads/images';
             $image_path = null;
@@ -164,7 +193,7 @@ class SwimmingMemberController extends Controller
             $member = Member::create([
                 'club_id'     => $clubId,
                 'membership_type_id' => $membershipTypeId,
-                // 'member_code' => $memberCode,
+                'member_code' => $memberCode,
                 'name'        => ucwords($request->swim_name),
                 'email'       => $request->swim_email,
                 'phone'       => $request->swim_phone,
@@ -354,7 +383,8 @@ class SwimmingMemberController extends Controller
                 ->where('entity_id', $memberId)
                 ->where(function ($query) {
                     $query->where('module', 'member_create')
-                        ->orWhere('module', 'member_edit');
+                        ->orWhere('module', 'member_edit')
+                        ->orWhere('module', 'member_delete');
                 })
                 ->where('status', 'pending')
                 ->exists();
@@ -800,6 +830,239 @@ class SwimmingMemberController extends Controller
         }
     }
 
+    // swimming locker part start
+    public function purchaseLocker(Request $request)
+    {
+        try {
+            $request->validate([
+                'member_id' => ['required', 'integer'],
+                'locker_id' => ['required', 'integer'],
+            ]);
+
+            $clubId = club_id();
+            $startDate = Carbon::today();
+            $endDate = Carbon::today()->addMonths(6);
+
+            DB::beginTransaction();
+
+            $memberDtls = Member::find($request->member_id);
+
+            $lockerAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
+
+            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
+            if (!$wallet) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Wallet not found'
+                ]);
+            }
+
+            if ($wallet->current_balance < $lockerAmount) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Insufficient wallet balance'
+                ]);
+            }
+
+            $locker = Locker::where('id', $request->locker_id)
+                ->where('club_id', $clubId)
+                ->where('is_active', 1)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$locker) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Locker not found'
+                ]);
+            }
+
+            $existingLockerAllocation = LockerAllocation::where('locker_id', $request->locker_id)->first();
+            if ($existingLockerAllocation && $existingLockerAllocation->member_id != $request->member_id) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'Locker already allocated'
+                ]);
+            }
+
+            $previousAllocations = LockerAllocation::where('member_id', $request->member_id)
+                                                    ->latest('id')
+                                                    ->first();
+
+            if($previousAllocations){
+                Locker::where('id', $previousAllocations->locker_id)->update([
+                    'status' => 'available'
+                ]);
+
+                $previousAllocations->delete();
+            }
+
+            $lockerAllocation = LockerAllocation::create([
+                'club_id' => $clubId,
+                'locker_id' => $request->locker_id,
+                'member_id' => $request->member_id,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]);
+
+            // DEDUCT WALLET
+            $wallet->current_balance -= $lockerAmount;
+            $wallet->save();
+
+            $locker->update([
+                'status' => 'occupied'
+            ]);
+
+            // WALLET LOG
+            WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'member_id' => $request->member_id,
+                'amount'    => $lockerAmount,
+                'direction' => 'debit',
+                'txn_type'  => 'locker_purchase',
+                'created_by' => auth()->id(),
+            ]);
+
+            $requestData = [
+                'locker_id' => $request->locker_id,
+                'locker_allocation_id' => $lockerAllocation->id,
+                'locker_price' => $lockerAmount,
+            ];
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'locker_purchase',
+                'action_type' => 'create',
+                'entity_model' => 'Member',
+                'entity_id' => $request->member_id,
+                'membership_type_id' => $memberDtls->membership_type_id ,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($requestData)
+            ]);
+
+            if (Auth::user()->hasRole('admin')) {
+
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+
+                $approvers = User::role(['operator', 'admin'])
+                ->where('id', '!=', Auth::id())
+                ->get();
+
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
+
+
+            DB::commit();
+
+            return response()->json([
+                'statusCode' => 200,
+                'message' => 'Locker purchased successfully'
+            ]);
+        }
+
+        catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function getMemberLockerAllocation($memberId)
+    {
+        try {
+            $allocation = LockerAllocation::with('locker:id,locker_number')
+                ->where('member_id', $memberId)
+                ->latest()
+                ->first();
+
+            if ($allocation) {
+                $today = Carbon::today()->toDateString();
+                $allocation->is_expired = $allocation->end_date
+                    ? (Carbon::parse($allocation->end_date)->toDateString() < $today)
+                    : false;
+            }
+
+            return response()->json([
+                'statusCode' => 200,
+                'data' => $allocation
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+    // swimming locker part end
+
+    public function getReceipt($id)
+    {
+        try {
+            $clubId = club_id();
+
+             $member = Member::where('club_id', $clubId)
+                             ->with([
+                                 'memberDetails',
+                                 ])
+                             ->find($id);
+
+            if (!$member) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Member not found'
+                ]);
+            }
+
+            $details = $member->memberDetails->details ?? [];
+
+            $purchase = $member->purchaseHistory->first();
+
+            $date = $purchase?->start_date?->format('d-m-Y');
+
+            $data = [
+                    'name' => $member->name,
+                    'address' => $member->address,
+                    'phone' => $member->phone,
+                    'member_code' => $member->member_code,
+                    'age' => $details['age'] ?? '-',
+                    'height' => $details['height'] ?? '-',
+                    'weight' => $details['weight'] ?? '-',
+                    'pulse_rate' => $details['pulse_rate'] ?? '-',
+                    'police_station' => $details['police_station'] ?? '-',
+                    'gender' => $details['sex'] ?? '-',
+                    'image' => $details['image'] ?? $member->image,
+                    'date' => $date,
+                ];
+
+            return response()->json([
+                'statusCode' => 200,
+                'data' => $data,
+            ]);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
 
     public function delete($id)
     {
@@ -813,6 +1076,25 @@ class SwimmingMemberController extends Controller
                     // 'data' => $data,
                     'statusCode' => 404,
                     'message' => 'Member Not Found'
+                ]);
+            }
+
+            $memberId = $member->id;
+
+            $exists = ActionApproval::where('club_id', $clubId)
+                ->where('entity_id', $memberId)
+                ->where(function ($query) {
+                    $query->where('module', 'member_create')
+                        ->orWhere('module', 'member_edit')
+                        ->orWhere('module', 'member_delete');
+                })
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'A request is already pending.'
                 ]);
             }
 
@@ -878,14 +1160,23 @@ class SwimmingMemberController extends Controller
 
             $memberDetail = $member->memberDetails;
 
+            $payload = [
+                'member_id' => $member->id,
+                // 'name' => $member->name,
+                'email' => $member->email,
+                'phone' => $member->phone,
+            ];
+
             ActionApproval::create([
                             'club_id' => $clubId,
                             'module' => 'member_delete',
+                            'action_type' => 'delete',
                             'membership_type_id' => $memberDetail->membership_type_id,
                             'entity_model' => 'Member',
                             'entity_id' => $member->id,
                             'maker_user_id' => Auth::id(),
-                            'status' => 'pending'
+                            'status' => 'pending',
+                            'request_payload' => json_encode($payload)
                         ]);
 
             return response()->json([

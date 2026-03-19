@@ -70,4 +70,20 @@ class Member extends Model
                     ->where('status', 'approved')
                     ->orderByDesc('created_at');
     }
+
+    public function addOns()
+    {
+        return $this->belongsToMany(AddOn::class, 'member_add_ons', 'member_id', 'add_on_id')
+                    ->withPivot('price');
+    }
+
+    // public function addOns()
+    // {
+    //     return $this->hasMany(MemberAddOn::class);
+    // }
+    
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(MembershipPurchaseHistory::class, 'member_id');
+    }
 }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('member_id')->nullable()->constrained('members')->cascadeOnDelete();
             $table->decimal('amount', 12, 2)->default(0);
             $table->enum('direction', ['credit', 'debit'])->nullable();
-            $table->enum('txn_type',['recharge','plan_purchase', 'plan_renewal', 'spend', 'refund', 'fine', 'adjustment', 'reversal'])->nullable();
+            $table->enum('txn_type',['recharge','plan_purchase', 'add_on_purchase', 'plan_renewal', 'spend', 'refund', 'fine', 'adjustment', 'reversal','locker_purchase','locker_purchase_refund'])->nullable();
             $table->timestamps();
         });
     }

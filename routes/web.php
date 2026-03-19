@@ -69,6 +69,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/membership-plan/{id}', [ClubMemberController::class, 'membershipPlan'])->name('club-member.membership-plan');
         Route::get('/fetch-wallet-balance/{id}', [ClubMemberController::class, 'fetchWalletBalance'])->name('club-member.fetch-wallet-balance');
         Route::post('/recharge-wallet-balance', [ClubMemberController::class, 'rechargeWalletBalance'])->name('club-member.recharge-wallet-balance');
+        Route::post('member-addon/purchase', [ClubMemberController::class,'purchaseAddOn'])->name('club-member.member-addon.purchase');
+        Route::post('member-addon/list',[ClubMemberController::class, 'memberAddonList'])->name('club-member.member-addon.list');
+        Route::post('locker/purchase', [ClubMemberController::class, 'purchaseLocker'])->name('club-member.locker.purchase');
+        Route::get('locker-allocation/{memberId}', [ClubMemberController::class, 'getMemberLockerAllocation'])->name('club-member.locker-allocation');
         Route::delete('/club-member/{id}', [ClubMemberController::class, 'delete'])->name('club-member.delete');
     });
 
@@ -81,7 +85,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/membership-plan/{id}', [SwimmingMemberController::class, 'membershipPlan'])->name('swimming-member.membership-plan');
         Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
         Route::post('/recharge-wallet-balance', [SwimmingMemberController::class, 'rechargeWalletBalance'])->name('swimming-member.recharge-wallet-balance');
+        // swimming member locker route start
+        Route::post('locker/purchase', [SwimmingMemberController::class, 'purchaseLocker'])->name('swimming-member.locker.purchase');
+        Route::get('locker-allocation/{memberId}', [SwimmingMemberController::class, 'getMemberLockerAllocation'])->name('swimming-member.locker-allocation');
+        // swimming member locker route end
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
+
+        Route::get('/receipt/{id}', [SwimmingMemberController::class, 'getReceipt'])->name('swimming-member.receipt');
     });
 
     Route::prefix('manage-member-approval-status')->controller(ActionApprovalController::class)->group(function () {

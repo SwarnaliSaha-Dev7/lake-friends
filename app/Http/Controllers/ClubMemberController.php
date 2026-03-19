@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
+use App\Models\AddOn;
 use App\Models\Bank;
 use App\Models\Card;
 use App\Models\GstRate;
+use App\Models\Locker;
+use App\Models\LockerAllocation;
+use App\Models\LockerPrice;
 use App\Models\Member;
+use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPlanType;
@@ -15,8 +20,8 @@ use App\Models\MembershipType;
 use App\Models\PaymentHistory;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Notifications\ApprovalNotification;
 use App\Models\WalletTransaction;
+use App\Notifications\ApprovalNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,6 +78,19 @@ class ClubMemberController extends Controller
                 ->orderBy('created_at', 'DESC')
                 ->get();
 
+
+            $addonList = AddOn::where('club_id', $clubId)
+            ->where('is_active', 1)
+            ->get();
+
+            $lockers = Locker::where('is_active', 1)
+                                ->where('club_id', $clubId)
+                                ->where('status', 'available')
+                                ->select('id', 'locker_number')
+                                ->get();
+
+            $lockerPrice = LockerPrice::where('club_id', $clubId)->first();
+
             return view('club_member.list', compact(
                 'title',
                 'page_title',
@@ -80,7 +98,10 @@ class ClubMemberController extends Controller
                 'gstPercentage',
                 'bankList',
                 'cards',
-                'members'
+                'members',
+                'addonList',
+                'lockers',
+                'lockerPrice'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -225,7 +246,7 @@ class ClubMemberController extends Controller
                 'net_amount'              => $netAmount,
                 'start_date'              => $startDate,
                 'expiry_date'             => $expiryDate,
-                'status'                  => 1
+                //'status'                  => 1
             ]);
 
             //$card_no = $request->card_id;
@@ -388,7 +409,8 @@ class ClubMemberController extends Controller
                 ->where('entity_id', $memberId)
                 ->where(function ($query) {
                     $query->where('module', 'member_create')
-                        ->orWhere('module', 'member_edit');
+                        ->orWhere('module', 'member_edit')
+                        ->orWhere('module', 'member_delete');
                 })
                 ->where('status', 'pending')
                 ->exists();
@@ -795,6 +817,25 @@ class ClubMemberController extends Controller
                 ]);
             }
 
+            $memberId = $member->id;
+
+            $exists = ActionApproval::where('club_id', $clubId)
+                ->where('entity_id', $memberId)
+                ->where(function ($query) {
+                    $query->where('module', 'member_create')
+                        ->orWhere('module', 'member_edit')
+                        ->orWhere('module', 'member_delete');
+                })
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'A request is already pending.'
+                ]);
+            }
+
             //ADMIN → skip approval
             if(Auth::user()->hasRole('admin')){
 
@@ -843,28 +884,37 @@ class ClubMemberController extends Controller
 
             // If operator → send approval request
 
-            $existingRequest = ActionApproval::where('entity_id', $member->id)
-                            ->where('module', 'member_delete')
-                            ->where('status', 'pending')
-                            ->first();
+            // $existingRequest = ActionApproval::where('entity_id', $member->id)
+            //                 ->where('module', 'member_delete')
+            //                 ->where('status', 'pending')
+            //                 ->first();
 
-            if ($existingRequest) {
-                return response()->json([
-                    'statusCode' => 409,
-                    'message' => 'Delete request already pending'
-                ]);
-            }
+            // if ($existingRequest) {
+            //     return response()->json([
+            //         'statusCode' => 409,
+            //         'message' => 'Delete request already pending'
+            //     ]);
+            // }
 
             $memberDetail = $member->memberDetails;
+
+            $payload = [
+                'member_id' => $member->id,
+                // 'name' => $member->name,
+                'email' => $member->email,
+                'phone' => $member->phone,
+            ];
 
             ActionApproval::create([
                             'club_id' => $clubId,
                             'module' => 'member_delete',
+                            'action_type' => 'delete',
                             'membership_type_id' => $memberDetail->membership_type_id,
                             'entity_model' => 'Member',
                             'entity_id' => $member->id,
                             'maker_user_id' => Auth::id(),
-                            'status' => 'pending'
+                            'status' => 'pending',
+                            'request_payload' => json_encode($payload)
                         ]);
 
             return response()->json([
@@ -910,6 +960,308 @@ class ClubMemberController extends Controller
             ]);
         }
     }
+
+    public function purchaseAddOn(Request $request)
+    {
+        try {
+            // return $request;
+
+            DB::beginTransaction();
+            $clubId = club_id();
+            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
+            $amount = $request->amount;
+            $memberDtls = Member::find($request->member_id);
+
+            // $wallet = Wallet::where('member_id', $id)->value('current_balance');
+
+            // CHECK BALANCE
+            if (!$wallet || $wallet->current_balance < $amount) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Insufficient wallet balance'
+                ]);
+            }
+
+             //DEDUCT WALLET
+            $wallet->current_balance -= $amount;
+            $wallet->save();
+
+            $startDate = carbon::now();
+            $endDate   = carbon::now()->addMonths(6);
+
+            $memberAddOnIds = [];
+            foreach ($request->addons as $addonId) {
+
+                $addon = AddOn::find($addonId);
+
+                $memberAddOn = MemberAddOn::create([
+                        'member_id' => $request->member_id,
+                        'add_on_id' => $addonId,
+                        'price' => $addon->price,
+                        'start_date'=> $startDate,
+                        'end_date'  => $endDate,
+                    ]);
+
+                $memberAddOnIds[] = $memberAddOn->id;
+            }
+
+            // WALLET LOG
+            WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'member_id' => $request->member_id,
+                'amount'    => $amount,
+                'direction' => 'debit',
+                'txn_type'  => 'add_on_purchase',
+                'created_by' => auth()->id(),
+            ]);
+
+            $requestData = [
+                'member_addon_ids' => $memberAddOnIds,
+                'total_price' => $amount,
+            ];
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'add_on_purchase',
+                'action_type' => 'create',
+                'entity_model' => 'Member',
+                'entity_id' => $request->member_id,
+                'membership_type_id' => $memberDtls->membership_type_id,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($requestData)
+            ]);
+
+            if (Auth::user()->hasRole('admin')) {
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+                $approvers = User::role(['operator', 'admin'])
+                    ->where('id', '!=', Auth::id())
+                    ->get();
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'data' => '',
+                'statusCode' => 200,
+                'message' => 'Add-ons purchased successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function memberAddonList(Request $request)
+    {
+        try {
+
+            //fetch the activated add on
+            $addons = MemberAddOn::where('member_id', $request->member_id)
+                ->whereDate('end_date', '>=', carbon::now())
+                ->get();
+
+            return response()->json([
+                'statusCode' => 200,
+                'message'    => 'Add-ons fetched successfully',
+                'data'       => $addons
+            ]);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function purchaseLocker(Request $request)
+    {
+        try {
+            $request->validate([
+                'member_id' => ['required', 'integer'],
+                'locker_id' => ['required', 'integer'],
+            ]);
+
+            $clubId = club_id();
+            $startDate = Carbon::today();
+            $endDate = Carbon::today()->addMonths(6);
+
+            DB::beginTransaction();
+
+            $memberDtls = Member::find($request->member_id);
+
+            $lockerAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
+
+            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
+            if (!$wallet) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Wallet not found'
+                ]);
+            }
+
+            if ($wallet->current_balance < $lockerAmount) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Insufficient wallet balance'
+                ]);
+            }
+
+            $locker = Locker::where('id', $request->locker_id)
+                ->where('club_id', $clubId)
+                ->where('is_active', 1)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$locker) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Locker not found'
+                ]);
+            }
+
+            $existingLockerAllocation = LockerAllocation::where('locker_id', $request->locker_id)->first();
+            if ($existingLockerAllocation && $existingLockerAllocation->member_id != $request->member_id) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 409,
+                    'message' => 'Locker already allocated'
+                ]);
+            }
+
+            $previousAllocations = LockerAllocation::where('member_id', $request->member_id)
+                                                    ->latest('id')
+                                                    ->first();
+
+            if($previousAllocations){
+                Locker::where('id', $previousAllocations->locker_id)->update([
+                    'status' => 'available'
+                ]);
+
+                $previousAllocations->delete();
+            }
+
+            $lockerAllocation = LockerAllocation::create([
+                'club_id' => $clubId,
+                'locker_id' => $request->locker_id,
+                'member_id' => $request->member_id,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]);
+
+            // DEDUCT WALLET
+            $wallet->current_balance -= $lockerAmount;
+            $wallet->save();
+
+            $locker->update([
+                'status' => 'occupied'
+            ]);
+
+            // WALLET LOG
+            WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'member_id' => $request->member_id,
+                'amount'    => $lockerAmount,
+                'direction' => 'debit',
+                'txn_type'  => 'locker_purchase',
+                'created_by' => auth()->id(),
+            ]);
+
+            $requestData = [
+                'locker_id' => $request->locker_id,
+                'locker_allocation_id' => $lockerAllocation->id,
+                'locker_price' => $lockerAmount,
+            ];
+
+            $approval = ActionApproval::create([
+                'club_id' => $clubId,
+                'module' => 'locker_purchase',
+                'action_type' => 'create',
+                'entity_model' => 'Member',
+                'entity_id' => $request->member_id,
+                'membership_type_id' => $memberDtls->membership_type_id ,
+                'maker_user_id' => Auth::id(),
+                'request_payload' => json_encode($requestData)
+            ]);
+
+            if (Auth::user()->hasRole('admin')) {
+
+                $approval->update([
+                    'checker_user_id' => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status' => 'approved'
+                ]);
+
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+
+                $approvers = User::role(['operator', 'admin'])
+                ->where('id', '!=', Auth::id())
+                ->get();
+
+
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
+
+
+            DB::commit();
+
+            return response()->json([
+                'statusCode' => 200,
+                'message' => 'Locker purchased successfully'
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function getMemberLockerAllocation($memberId)
+    {
+        try {
+            $allocation = LockerAllocation::with('locker:id,locker_number')
+                ->where('member_id', $memberId)
+                ->latest()
+                ->first();
+
+            if ($allocation) {
+                $today = Carbon::today()->toDateString();
+                $allocation->is_expired = $allocation->end_date
+                    ? (Carbon::parse($allocation->end_date)->toDateString() < $today)
+                    : false;
+            }
+
+            return response()->json([
+                'statusCode' => 200,
+                'data' => $allocation
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
     // public function mealPriceEdit(Request $request)
     // {
     //     try {

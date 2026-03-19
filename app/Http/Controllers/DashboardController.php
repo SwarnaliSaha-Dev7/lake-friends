@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActionApproval;
 use App\Models\Card;
 use App\Models\Member;
+use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -17,6 +20,59 @@ class DashboardController extends Controller
             $title = 'Dashboard';
 
             $clubId     = club_id();
+
+            $today = Carbon::today();
+
+            $next15Days = Carbon::today()->addDays(15);
+
+            $totalMembers = Member::where('club_id', $clubId)
+                                  ->where('status', 'active')
+                                  ->count();
+
+            $activeMembers = MembershipPurchaseHistory::where('club_id', $clubId)
+                                                      ->where('status', 'active')
+                                                      ->whereDate('start_date', '<=', $today)
+                                                      ->whereDate('expiry_date', '>=', $today)
+                                                      ->whereHas('member', function($q){
+                                                            $q->where('status', 'active')
+                                                              ->whereNull('deleted_at');
+                                                        })
+                                                      ->distinct('member_id')
+                                                      ->count('member_id');
+
+            $expiredMembers = Member::where('club_id', $clubId)
+                                    ->where('status', 'active')
+                                    ->whereNull('deleted_at')
+                                    ->whereDoesntHave('memberships', function($q) use ($today){
+                                        $q->where('status', 'active')
+                                        ->whereDate('start_date', '<=', $today)
+                                          ->whereDate('expiry_date', '>=', $today);
+                                        })
+                                    ->count();
+
+            $thisMonthSignups = Member::where('club_id', $clubId)
+                                      ->where('status', 'active')
+                                      ->whereMonth('created_at', Carbon::now()->month)
+                                      ->whereYear('created_at', Carbon::now()->year)
+                                      ->count();
+
+            $pendingApprovals = ActionApproval::where('club_id', $clubId)
+                                              ->where('status', 'pending')
+                                              ->count();
+
+            $expiringSoon = Member::where('club_id', $clubId)
+                                  ->where('status','active')
+                                  ->whereNull('deleted_at')
+                                  ->whereHas('memberships', function($q) use($today, $next15Days){
+                                         $q->where('status', 'active')
+                                         ->whereDate('expiry_date', '>=', $today)
+                                           ->whereDate('expiry_date', '<=', $next15Days);
+                                        })
+                                  ->whereDoesntHave('memberships', function ($q) use ($next15Days) {
+                                        $q->where('status', 'active')
+                                        ->whereDate('expiry_date', '>', $next15Days);
+                                        })
+                                  ->count();
 
             $clubMembershipType = MembershipType::where('name', 'Club Membership')
                 ->where('club_id', $clubId)
@@ -54,7 +110,13 @@ class DashboardController extends Controller
                 'title',
                 'page_title',
                 'clubMembers',
-                'swimMembers'
+                'swimMembers',
+                'activeMembers',
+                'totalMembers',
+                'expiredMembers',
+                'thisMonthSignups',
+                'pendingApprovals',
+                'expiringSoon'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -88,7 +150,7 @@ class DashboardController extends Controller
 
             $member = Member::where('club_id', $clubId)
                 ->with([
-                    'memberDetails',
+                    'memberDetails.membershipType',
                     'cardDetails',
                     'purchaseHistory.membershipPlanType',
                     'clubDetails',

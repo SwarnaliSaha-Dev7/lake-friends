@@ -28,4 +28,9 @@ class MembershipPurchaseHistory extends Model
     {
         return $this->belongsTo(MembershipPlanType::class, 'membership_plan_type_id');
     }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'member_id');
+    }
 }

@@ -68,14 +68,22 @@ class ApprovalNotification extends Notification
                 $message = "A member is edited and waiting for approval";
                 $notificationType = "member_edit";
                 break;
+            case 'locker_purchase':
+                $message = "A member has purchased locker and waiting for approval";
+                $notificationType = "locker_purchase";
+                break;
+            case 'add_on_purchase':
+                $message = "A member has purchased Add-ons and waiting for approval";
+                $notificationType = "locker_purchase";
+                break;
 
-                // case 'user':
-                //     $message = "New user registration waiting for approval";
-                //     break;
+            // case 'user':
+            //     $message = "New user registration waiting for approval";
+            //     break;
 
-                // case 'transaction':
-                //     $message = "Transaction waiting for approval";
-                //     break;
+            // case 'transaction':
+            //     $message = "Transaction waiting for approval";
+            //     break;
         }
 
         return [
