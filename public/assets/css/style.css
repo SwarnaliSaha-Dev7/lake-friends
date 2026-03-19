@@ -93,7 +93,7 @@ body {
 }
 
 .modal .btn-close {
-    background: none;
+    background-color: transparent;
 }
 
 .form-control,
