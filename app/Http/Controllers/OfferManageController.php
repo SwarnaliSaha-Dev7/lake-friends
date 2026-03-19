@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
 use App\Models\FoodItem;
+use App\Models\LiquorServing;
 use App\Models\Offer;
 use App\Models\OfferItem;
 use App\Models\OfferType;
@@ -35,12 +36,28 @@ class OfferManageController extends Controller
                         ->where('is_active', 1)
                         ->get(['id', 'name', 'item_type']);
 
-        $liquorItems = FoodItem::where('club_id', $club_id)
+        $beerItems = FoodItem::where('club_id', $club_id)
                         ->where('item_type', 'liquor')
+                        ->where('is_beer', 1)
                         ->where('is_active', 1)
-                        ->get(['id', 'name', 'item_type']);
+                        ->get(['id', 'name'])
+                        ->map(fn($item) => ['id' => $item->id, 'name' => $item->name]);
 
-        return view('offers.list', compact('page_title', 'title', 'offers', 'offerTypes', 'foodItems', 'liquorItems'));
+        $spiritServings = LiquorServing::where('club_id', $club_id)
+                        ->where('is_active', 1)
+                        ->get(['food_item_id', 'name'])
+                        ->map(fn($s) => ['id' => $s->food_item_id, 'name' => $s->name]);
+
+        $liquorItems = $beerItems->merge($spiritServings)->unique('id')->values();
+
+        // Item IDs already in an active offer
+        $activeOfferIds = Offer::where('club_id', $club_id)
+                            ->where('status', 'active')
+                            ->pluck('id');
+        $takenItemIds = OfferItem::whereIn('offer_id', $activeOfferIds)
+                            ->pluck('food_items_id')->unique()->toArray();
+
+        return view('offers.list', compact('page_title', 'title', 'offers', 'offerTypes', 'foodItems', 'liquorItems', 'takenItemIds'));
     }
 
     public function store(Request $request)

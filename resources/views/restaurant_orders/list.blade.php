@@ -189,10 +189,13 @@ $(document).ready(function () {
                     }
                 }
 
-                if (it.unit === 'ml') {
+                if (it.unit === 'ml' || it.unit === 'btl') {
+                    var volDesc = it.unit === 'btl'
+                        ? '1 BTL'
+                        : ((it.metadata && it.metadata.volume_ml) ? it.metadata.volume_ml + ' ml' : '—');
                     liquorRows += '<tr>'
                         + '<td class="text-muted">' + itemName + offerBadge + '</td>'
-                        + '<td class="text-center text-muted text-nowrap">' + (it.metadata && it.metadata.volume ? it.metadata.volume : '—') + '</td>'
+                        + '<td class="text-center text-muted text-nowrap">' + volDesc + '</td>'
                         + '<td class="text-center text-muted">' + it.quantity + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td>'
@@ -354,17 +357,7 @@ $(document).ready(function () {
             success: function (res) {
                 if (res.statusCode === 200) {
                     toastr.success(res.message);
-                    // Update button to delivered state
-                    $btn.replaceWith(
-                        '<button class="btn btn-sm ms-1 fw-semibold px-2 py-1 text-white delivered-btn"'
-                        + ' style="background:#4f46e5;border-color:#4f46e5;pointer-events:none;" disabled>'
-                        + '<i class="fa-solid fa-circle-check me-1"></i>Delivered</button>'
-                    );
-                    // Update status badge in same row
-                    $('#order-row-' + id + ' .order-status-badge')
-                        .removeClass()
-                        .addClass('badge border rounded-pill px-3 py-1 bg-primary-subtle text-primary border-primary order-status-badge')
-                        .text('Delivered');
+                    setTimeout(function () { location.reload(); }, 800);
                 } else {
                     toastr.error(res.message || 'Something went wrong.');
                     $btn.prop('disabled', false).html('<i class="fa-regular fa-circle-check me-1"></i>Delivered');

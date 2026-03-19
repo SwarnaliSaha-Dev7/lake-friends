@@ -35,9 +35,20 @@
                 <div class="pt-3 pb-4 px-3 noti-body overflow-auto">
                     @forelse(auth()->user()->unreadNotifications as $notification)
                     {{-- <a href="{{ route('notification.read', $notification->id) }}"> --}}
-                    <a href="{{ in_array($notification->data['notification_type'] ?? '', ['member_create','member_edit','member_delete'])
-                        ? route('memberActionApproval.list')
-                        : 'javascript:void(0)' }}">
+                    @php
+                        $nType     = $notification->data['notification_type'] ?? '';
+                        $notiRoute = match(true) {
+                            in_array($nType, ['member_create','member_edit','member_delete'])              => route('memberActionApproval.list'),
+                            in_array($nType, ['stock_add_pending','stock_adjust_pending'])                 => route('godownStockApproval.list'),
+                            in_array($nType, ['stock_added','stock_adjusted'])                             => route('godown-stock.index'),
+                            in_array($nType, ['bar_transfer_pending'])                                     => route('barStockApproval.list'),
+                            in_array($nType, ['bar_transfer_done'])                                        => route('bar-stock.index'),
+                            in_array($nType, ['liquor_serving_add','liquor_serving_update','liquor_serving_delete']) => route('liquorServingApproval.list'),
+                            in_array($nType, ['offer_create','offer_update','offer_delete'])               => route('offerApproval.list'),
+                            default => 'javascript:void(0)',
+                        };
+                    @endphp
+                    <a href="{{ $notiRoute }}">
                         {{-- {{ $notification->data['message'] }} --}}
                          <div class="card text-white mb-2">
                             <div class="card-body">

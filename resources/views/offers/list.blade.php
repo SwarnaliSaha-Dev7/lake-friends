@@ -349,11 +349,14 @@
 <script>
 $(document).ready(function () {
 
-    const foodItems   = @json($foodItems);
-    const liquorItems = @json($liquorItems);
+    const foodItems    = @json($foodItems);
+    const liquorItems  = @json($liquorItems);
+    const takenItemIds = @json($takenItemIds);  // IDs already in an active offer
+
+    let currentEditOwnIds = [];  // items belonging to the offer being edited
 
     // ── Shared: load items into a select2 ─────────────────────────────────
-    function loadItemsInto(selectId, modalId, type, selectedIds = []) {
+    function loadItemsInto(selectId, modalId, type, selectedIds = [], ownIds = []) {
         const $sel = $('#' + selectId);
         $sel.empty();
 
@@ -363,9 +366,14 @@ $(document).ready(function () {
         if (type === 'both')   items = [...foodItems, ...liquorItems];
 
         items.forEach(function (item) {
-            const label    = type === 'both' ? item.name + ' (' + item.item_type + ')' : item.name;
-            const selected = selectedIds.includes(item.id);
-            const option   = new Option(label, item.id, selected, selected);
+            const isTaken   = takenItemIds.includes(item.id) && !ownIds.includes(item.id);
+            const baseLabel = type === 'both' ? item.name + ' (' + (item.item_type || '') + ')' : item.name;
+            const label     = isTaken ? baseLabel + ' — already has active offer' : baseLabel;
+            const selected  = selectedIds.includes(item.id);
+            const option    = new Option(label, item.id, selected, selected);
+            if (isTaken) {
+                $(option).prop('disabled', true).css('color', '#aaa');
+            }
             $sel.append(option);
         });
 
@@ -468,7 +476,7 @@ $(document).ready(function () {
 
     $('#appliesToSelect').on('change', function () {
         const val = $(this).val();
-        if (val) { $('#itemsGroup').removeClass('d-none'); loadItemsInto('itemsSelect', 'createoffer', val); $('#itemsError').text(''); }
+        if (val) { $('#itemsGroup').removeClass('d-none'); loadItemsInto('itemsSelect', 'createoffer', val, [], []); $('#itemsError').text(''); }
         else { $('#itemsGroup').addClass('d-none'); }
     });
 
@@ -529,7 +537,7 @@ $(document).ready(function () {
     $('#edit_appliesToSelect').on('change', function () {
         const val     = $(this).val();
         const current = $('#edit_itemsSelect').val() ?? [];
-        if (val) { loadItemsInto('edit_itemsSelect', 'editoffer', val, current.map(Number)); $('#edit_itemsError').text(''); }
+        if (val) { loadItemsInto('edit_itemsSelect', 'editoffer', val, current.map(Number), currentEditOwnIds); $('#edit_itemsError').text(''); }
     });
 
     // Edit button click → check pending
@@ -569,8 +577,9 @@ $(document).ready(function () {
                     $('#edit_offerEndAt').val(d.end_at);
                 }
 
-                // Load items with pre-selected
-                loadItemsInto('edit_itemsSelect', 'editoffer', d.applies_to, d.item_ids);
+                // Load items with pre-selected (own items excluded from "taken" check)
+                currentEditOwnIds = d.item_ids;
+                loadItemsInto('edit_itemsSelect', 'editoffer', d.applies_to, d.item_ids, d.item_ids);
 
                 $('#editoffer').modal('show');
             },
@@ -579,6 +588,7 @@ $(document).ready(function () {
     });
 
     $('#editoffer').on('hidden.bs.modal', function () {
+        currentEditOwnIds = [];
         $('#editOfferForm')[0].reset();
         $('#edit_offerDateRange').val(''); $('#edit_offerStartAt,#edit_offerEndAt').val('');
         $('#edit_discountValueGroup').addClass('d-none');

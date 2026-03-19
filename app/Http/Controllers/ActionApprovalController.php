@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ActionApproval;
 use App\Models\Card;
+use App\Models\FoodItem;
+use App\Models\FoodItemCurrentStock;
 use App\Models\FoodItemPrice;
+use App\Models\Location;
+use App\Models\LiquorServing;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
@@ -12,9 +16,12 @@ use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
 use App\Models\Offer;
 use App\Models\OfferItem;
+use App\Models\StockLedger;
+use App\Models\StockWarehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\BarStockController;
 
 class ActionApprovalController extends Controller
 {
@@ -449,13 +456,10 @@ class ActionApprovalController extends Controller
                 }
             }
 
-            if($data->module == 'food_price_update'){
+            if($data->module == 'food_price_update' || $data->module == 'liquor_price_update'){
 
-                $payloadJson = $data->request_payload;
-
-                $payload = json_decode($payloadJson);
-
-                $itemId = $data->entity_id;
+                $payload  = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $itemId   = $data->entity_id;
                 $newPrice = $payload->new_price;
 
                 DB::beginTransaction();
@@ -465,19 +469,130 @@ class ActionApprovalController extends Controller
                                              ->first();
 
                 if ($currentPrice) {
-
                     $currentPrice->update([
-                        'is_active' => 0,
+                        'is_active'    => 0,
                         'effective_to' => now()
                     ]);
                 }
 
                 FoodItemPrice::create([
-                    'item_id' => $itemId,
-                    'price' => $newPrice,
+                    'item_id'        => $itemId,
+                    'price'          => $newPrice,
                     'effective_from' => now(),
-                    'is_active' => 1
+                    'is_active'      => 1
                 ]);
+
+                DB::commit();
+            }
+
+            if ($data->module == 'liquor_item_create') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->update(['is_active' => $payload->is_active ?? 1]);
+                }
+            }
+
+            if ($data->module == 'liquor_item_delete') {
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            }
+
+            if ($data->module == 'liquor_serving_create') {
+                $serving = LiquorServing::find($data->entity_id);
+                if ($serving) {
+                    $serving->update(['is_active' => 1]);
+                }
+            }
+
+            if ($data->module == 'liquor_serving_update') {
+                $payload = is_array($data->request_payload) ? $data->request_payload : json_decode($data->request_payload, true);
+                $serving = LiquorServing::find($data->entity_id);
+                if ($serving && isset($payload['new'])) {
+                    $new = $payload['new'];
+                    $serving->update([
+                        'name'      => $new['name'],
+                        'volume_ml' => $new['volume_ml'],
+                        'price'     => $new['price'],
+                    ]);
+                }
+            }
+
+            if ($data->module == 'liquor_serving_delete') {
+                $serving = LiquorServing::find($data->entity_id);
+                if ($serving) {
+                    $serving->delete();
+                }
+            }
+
+            if ($data->module == 'bar_stock_transfer') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+
+                DB::beginTransaction();
+
+                $godownStock = FoodItemCurrentStock::where('warehouse_id', $payload->warehouse_id)
+                    ->where('location_id', $payload->godown_location_id)
+                    ->where('food_items_id', $payload->food_items_id)
+                    ->first();
+
+                if (!$godownStock || $godownStock->quantity < $payload->bottles) {
+                    return response()->json([
+                        'statusCode' => 422,
+                        'message'    => 'Insufficient godown stock at time of approval.',
+                    ]);
+                }
+
+                (new BarStockController)->executeTransfer(
+                    $payload->warehouse_id,
+                    $payload->godown_location_id,
+                    $payload->bar_location_id,
+                    $payload->food_items_id,
+                    $payload->bottles,
+                    $payload->bar_qty,
+                    $godownStock
+                );
+
+                DB::commit();
+            }
+
+            if ($data->module == 'stock_adjustment') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+
+                DB::beginTransaction();
+
+                StockLedger::create([
+                    'warehouse_id'   => $payload->warehouse_id,
+                    'location_id'    => $payload->location_id,
+                    'food_items_id'  => $payload->food_items_id,
+                    'movement_type'  => $payload->movement_type,
+                    'direction'      => $payload->direction,
+                    'quantity'       => $payload->quantity,
+                    'reference_type' => 'manual',
+                ]);
+
+                $currentStock = FoodItemCurrentStock::where('warehouse_id', $payload->warehouse_id)
+                    ->where('location_id', $payload->location_id)
+                    ->where('food_items_id', $payload->food_items_id)
+                    ->first();
+
+                if ($payload->direction === 'in') {
+                    if ($currentStock) {
+                        $currentStock->increment('quantity', $payload->quantity);
+                    } else {
+                        FoodItemCurrentStock::create([
+                            'warehouse_id'  => $payload->warehouse_id,
+                            'location_id'   => $payload->location_id,
+                            'food_items_id' => $payload->food_items_id,
+                            'quantity'      => $payload->quantity,
+                        ]);
+                    }
+                } else {
+                    if ($currentStock) {
+                        $currentStock->decrement('quantity', $payload->quantity);
+                    }
+                }
 
                 DB::commit();
             }
@@ -555,7 +670,19 @@ class ActionApprovalController extends Controller
                 if ($offer) {
                     $offer->update(['status' => 'rejected']);
                 }
-            } elseif ($data->module == 'member_edit') {
+            } elseif ($data->module == 'liquor_item_create') {
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            } elseif ($data->module == 'liquor_serving_create') {
+                $serving = LiquorServing::find($data->entity_id);
+                if ($serving) {
+                    $serving->forceDelete();
+                }
+            }
+            // liquor_serving_update / liquor_serving_delete: no rollback needed
+            elseif ($data->module == 'member_edit') {
                 $payloadJson = $data->request_payload;
                 $payload = json_decode($payloadJson);
 
@@ -579,6 +706,7 @@ class ActionApprovalController extends Controller
                 }
                 // return $payload;
             }
+            // stock_adjustment: no rollback needed, stock was never added while pending
 
             $data->update([
                 'status' => 'rejected',
@@ -618,6 +746,90 @@ class ActionApprovalController extends Controller
                 'statusCode' => 500,
                 'error' => $th->getMessage(),
             ]);
+        }
+    }
+
+    public function liquorApprovalList()
+    {
+        try {
+            $title      = 'Liquor Approval List';
+            $page_title = 'Liquor Approval';
+            $clubId     = club_id();
+
+            $liquorApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
+                ->where('club_id', $clubId)
+                ->whereIn('module', ['liquor_item_create', 'liquor_item_delete', 'liquor_price_update'])
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.liquor.list', compact('title', 'page_title', 'liquorApprovalData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function godownStockApprovalList()
+    {
+        try {
+            $title      = 'Godown Stock Approval List';
+            $page_title = 'Godown Stock Approval';
+            $clubId     = club_id();
+
+            $stockApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
+                ->where('club_id', $clubId)
+                ->where('module', 'stock_adjustment')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.godown_stock.list', compact('title', 'page_title', 'stockApprovalData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function barStockApprovalList()
+    {
+        try {
+            $title      = 'Bar Stock Transfer Approval List';
+            $page_title = 'Bar Stock Approval';
+            $clubId     = club_id();
+
+            $transferApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
+                ->where('club_id', $clubId)
+                ->where('module', 'bar_stock_transfer')
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.bar_stock.list', compact('title', 'page_title', 'transferApprovalData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function liquorServingApprovalList()
+    {
+        try {
+            $title      = 'Liquor Menu Approval List';
+            $page_title = 'Liquor Menu Approval';
+            $clubId     = club_id();
+
+            $approvalData = ActionApproval::with(['operatorDetails', 'entity'])
+                ->where('club_id', $clubId)
+                ->whereIn('module', ['liquor_serving_create', 'liquor_serving_update', 'liquor_serving_delete'])
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.liquor_serving.list', compact('title', 'page_title', 'approvalData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
         }
     }
 

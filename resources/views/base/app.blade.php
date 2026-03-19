@@ -289,38 +289,44 @@
         var allLiquorItems = [];
         var itemsLoaded    = false;
         var GST_RATE       = 0.10;
+        var foodOfferMap   = {};   // item id → offer object
+        var liquorOfferMap = {};   // item id → offer object
 
-        /* ---- Build option HTML (includes offer data attributes) ---- */
-        function buildOptions(items, selectedId) {
+        /* ---- Build option HTML ---- */
+        function buildFoodOptions(items) {
             var html = '<option value="">-- Select Item --</option>';
             for (var i = 0; i < items.length; i++) {
-                var it     = items[i];
-                var sel    = (it.id == selectedId) ? ' selected' : '';
-                var pr     = (it.food_item_price && it.food_item_price.price) ? it.food_item_price.price : 0;
-                var ofType = (it.offer && it.offer.type_slug)      ? it.offer.type_slug      : '';
-                var ofVal  = (it.offer && it.offer.discount_value)  ? it.offer.discount_value  : 0;
-                var ofName = (it.offer && it.offer.offer_name)      ? it.offer.offer_name      : '';
-                var bqty   = (it.offer && it.offer.buy_qty)         ? it.offer.buy_qty          : 1;
-                var gqty   = (it.offer && it.offer.get_qty)         ? it.offer.get_qty          : 1;
-                html += '<option value="' + it.id + '" data-price="' + pr
-                    + '" data-offer-type="' + ofType
-                    + '" data-offer-value="' + ofVal
-                    + '" data-offer-name="' + ofName
-                    + '" data-buy-qty="' + bqty
-                    + '" data-get-qty="' + gqty + '"'
-                    + sel + '>' + it.name + '</option>';
+                var it = items[i];
+                var pr = (it.food_item_price && it.food_item_price.price) ? it.food_item_price.price : 0;
+                foodOfferMap[it.id] = it.offer || null;
+                html += '<option value="' + it.id + '"'
+                    + ' data-price="' + pr + '">'
+                    + it.name + '</option>';
             }
             return html;
         }
 
-        function foodOptions(selectedId)  { return buildOptions(allFoodItems,   selectedId); }
-        function liquorOptions(selectedId){ return buildOptions(allLiquorItems,  selectedId); }
+        function buildLiquorOptions(items) {
+            var html = '<option value="">-- Select Item --</option>';
+            for (var i = 0; i < items.length; i++) {
+                var it = items[i];
+                liquorOfferMap[it.id] = it.offer || null;
+                html += '<option value="' + it.id + '"'
+                    + ' data-food-item-id="' + it.food_item_id + '"'
+                    + ' data-price="' + it.price + '"'
+                    + ' data-is-beer="' + (it.is_beer ? '1' : '0') + '"'
+                    + ' data-volume-ml="' + (it.volume_ml || 0) + '"'
+                    + ' data-bar-stock="' + (it.bar_stock || 0) + '">'
+                    + it.name + '</option>';
+            }
+            return html;
+        }
 
         /* ---- Build row HTML ---- */
         function buildFoodRowHtml() {
             return '<tr class="food-order-row">'
                 + '<td style="width:40%;"><select class="form-select form-select-sm food-item-sel shadow-none">'
-                + foodOptions('') + '</select></td>'
+                + buildFoodOptions(allFoodItems) + '</select></td>'
                 + '<td><div class="input-group input-group-sm" style="width:100px;">'
                 + '<button class="btn btn-outline-warning fw-bold py-0 food-qty-minus" type="button">-</button>'
                 + '<input type="text" class="form-control text-center border-warning px-1 food-qty-input" value="1" readonly>'
@@ -335,9 +341,14 @@
 
         function buildLiquorRowHtml() {
             return '<tr class="liquor-order-row">'
-                + '<td style="width:35%;"><select class="form-select form-select-sm liquor-item-sel shadow-none">'
-                + liquorOptions('') + '</select></td>'
-                + '<td><input type="text" class="form-control form-control-sm liquor-volume-input" placeholder="e.g. 30ml" style="width:80px;"></td>'
+                + '<td style="width:32%;">'
+                +   '<select class="form-select form-select-sm liquor-item-sel shadow-none">' + buildLiquorOptions(allLiquorItems) + '</select>'
+                + '</td>'
+                + '<td class="liquor-peg-cell" style="min-width:140px;">'
+                +   '<span class="text-muted small">Select item first</span>'
+                +   '<input type="hidden" class="liquor-volume-ml" value="">'
+                +   '<input type="hidden" class="liquor-is-beer" value="">'
+                + '</td>'
                 + '<td><div class="input-group input-group-sm" style="width:100px;">'
                 + '<button class="btn btn-outline-warning fw-bold py-0 liquor-qty-minus" type="button">-</button>'
                 + '<input type="text" class="form-control text-center border-warning px-1 liquor-qty-input" value="1" readonly>'
@@ -350,7 +361,79 @@
                 + '</tr>';
         }
 
-        /* ---- Open Create Order (member info stays open behind) ---- */
+        /* ---- Add row helpers (append + init Select2) ---- */
+        function addFoodRow() {
+            $('#foodEmptyRow').remove();
+            var $row = $(buildFoodRowHtml());
+            $('#foodTableBody').append($row);
+            $row.find('.food-item-sel').select2({
+                dropdownParent: $('#createOrderModal'),
+                placeholder:    'Search food item...',
+                allowClear:     true,
+                width:          '100%',
+            });
+            recalc();
+        }
+
+        function addLiquorRow() {
+            $('#liquorEmptyRow').remove();
+            var $row = $(buildLiquorRowHtml());
+            $('#liquorTableBody').append($row);
+            $row.find('.liquor-item-sel').select2({
+                dropdownParent: $('#createOrderModal'),
+                placeholder:    'Search liquor item...',
+                allowClear:     true,
+                width:          '100%',
+            });
+            recalc();
+        }
+
+        /* ---- Liquor item selected → update volume cell ---- */
+        $(document).on('change', '.liquor-item-sel', function () {
+            var $opt     = $(this).find('option:selected');
+            var $row     = $(this).closest('tr');
+            var isBeer   = $opt.attr('data-is-beer') == '1';
+            var volumeMl = parseInt($opt.attr('data-volume-ml')) || 0;
+            var barStock = parseInt($opt.attr('data-bar-stock')) || 0;
+            var itemId   = $opt.val();
+            var $cell    = $row.find('.liquor-peg-cell');
+
+            if (!itemId) {
+                $cell.html('<span class="text-muted small">Select item first</span>'
+                    + '<input type="hidden" class="liquor-volume-ml" value="">'
+                    + '<input type="hidden" class="liquor-is-beer" value="">');
+                $row.find('.liquor-unit-price').val('Rs 0');
+                $row.find('.liquor-total-price').val('Rs 0');
+                recalc();
+                return;
+            }
+
+            if (isBeer) {
+                var stockLabel = barStock > 0
+                    ? '<span class="text-success small ms-1">Stock: ' + barStock + ' BTL</span>'
+                    : '<span class="text-danger small ms-1">Out of stock</span>';
+                $cell.html(
+                    '<span class="badge bg-info-subtle text-info border border-info rounded-pill px-2 py-1">1 BTL</span>'
+                    + stockLabel
+                    + '<input type="hidden" class="liquor-volume-ml" value="">'
+                    + '<input type="hidden" class="liquor-is-beer" value="1">'
+                );
+            } else {
+                var stockLabel2 = barStock > 0
+                    ? '<span class="text-success small ms-1">Stock: ' + barStock + 'ml</span>'
+                    : '<span class="text-danger small ms-1">Out of stock</span>';
+                $cell.html(
+                    '<span class="badge bg-secondary-subtle text-secondary border border-secondary rounded-pill px-2 py-1">' + volumeMl + 'ml</span>'
+                    + stockLabel2
+                    + '<input type="hidden" class="liquor-volume-ml" value="' + volumeMl + '">'
+                    + '<input type="hidden" class="liquor-is-beer" value="0">'
+                );
+            }
+
+            updateLiquorRowTotal($row);
+        });
+
+        /* ---- Open Create Order ---- */
         $('#createOrderBtn').on('click', function () {
             var now = new Date();
             var dd  = String(now.getDate()).padStart(2, '0');
@@ -364,14 +447,12 @@
             $('#orderDate').text(dd + '-' + mm + '-' + yy);
             $('#orderTime').text(hh + ':' + mi);
 
-            // Reset tables
             $('#foodTableBody').html('<tr id="foodEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No food items added.</td></tr>');
             $('#liquorTableBody').html('<tr id="liquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');
             recalc();
 
             $('#createOrderModal').modal('show');
 
-            // Add the default food row (after items load if needed)
             if (!itemsLoaded) {
                 $.get('{{ route("getOrderItems") }}', function (res) {
                     if (res.statusCode == 200) {
@@ -379,33 +460,18 @@
                         allLiquorItems = res.liquorItems;
                         itemsLoaded    = true;
                     }
-                    $('#foodEmptyRow').remove();
-                    $('#foodTableBody').append(buildFoodRowHtml());
-                    recalc();
+                    addFoodRow();
                 });
             } else {
-                $('#foodEmptyRow').remove();
-                $('#foodTableBody').append(buildFoodRowHtml());
-                recalc();
+                addFoodRow();
             }
         });
 
         /* ---- Add food / liquor rows via button ---- */
-        $(document).on('click', '.add-food-item', function () {
-            $('#foodEmptyRow').remove();
-            $('#foodTableBody').append(buildFoodRowHtml());
-            recalc();
-        });
-
-        $(document).on('click', '.add-liquor-item', function () {
-            $('#liquorEmptyRow').remove();
-            $('#liquorTableBody').append(buildLiquorRowHtml());
-            recalc();
-        });
+        $(document).on('click', '.add-food-item',   function () { addFoodRow();   });
+        $(document).on('click', '.add-liquor-item', function () { addLiquorRow(); });
 
         /* ---- Helpers ---- */
-
-        // Returns total discount amount for a row (qty-aware for B1G1)
         function rowTotalDiscount(price, ofType, ofVal, qty, buyQty, getQty) {
             qty    = parseInt(qty)    || 1;
             buyQty = parseInt(buyQty) || 1;
@@ -415,14 +481,12 @@
             if (ofType === 'flat' && ofVal > 0)
                 return Math.min(ofVal, price) * qty;
             if (ofType === 'b1g1') {
-                // every (buyQty+getQty) items → getQty are free
                 var freeSets = Math.floor(qty / (buyQty + getQty));
                 return freeSets * getQty * price;
             }
             return 0;
         }
 
-        // Returns badge HTML for the offer column
         function offerBadge(ofType, ofVal, buyQty, getQty) {
             buyQty = parseInt(buyQty) || 1;
             getQty = parseInt(getQty) || 1;
@@ -439,38 +503,26 @@
             return '<span class="text-muted small">—</span>';
         }
 
-        function readRowOffer($opt) {
+        function readRowOffer($opt, map) {
+            var offer  = (map && $opt.val()) ? (map[$opt.val()] || null) : null;
             return {
-                price:  parseFloat($opt.data('price'))       || 0,
-                ofType: $opt.data('offer-type')              || '',
-                ofVal:  parseFloat($opt.data('offer-value')) || 0,
-                buyQty: parseInt($opt.data('buy-qty'))       || 1,
-                getQty: parseInt($opt.data('get-qty'))       || 1,
+                price:  parseFloat($opt.attr('data-price')) || 0,
+                ofType: offer ? (offer.type_slug      || '') : '',
+                ofVal:  offer ? (offer.discount_value || 0)  : 0,
+                buyQty: offer ? (offer.buy_qty        || 1)  : 1,
+                getQty: offer ? (offer.get_qty        || 1)  : 1,
             };
         }
 
-        /* ---- Item select change → price + offer badge + total ---- */
+        /* ---- Food item select change ---- */
         $(document).on('change', '.food-item-sel', function () {
-            var o    = readRowOffer($(this).find('option:selected'));
+            var o    = readRowOffer($(this).find('option:selected'), foodOfferMap);
             var $row = $(this).closest('tr');
             var qty  = parseInt($row.find('.food-qty-input').val()) || 1;
             var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
-
             $row.find('.food-unit-price').val('Rs ' + o.price.toFixed(2));
             $row.find('.food-offer').html(offerBadge(o.ofType, o.ofVal, o.buyQty, o.getQty));
             $row.find('.food-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
-            recalc();
-        });
-
-        $(document).on('change', '.liquor-item-sel', function () {
-            var o    = readRowOffer($(this).find('option:selected'));
-            var $row = $(this).closest('tr');
-            var qty  = parseInt($row.find('.liquor-qty-input').val()) || 1;
-            var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
-
-            $row.find('.liquor-unit-price').val('Rs ' + o.price.toFixed(2));
-            $row.find('.liquor-offer').html(offerBadge(o.ofType, o.ofVal, o.buyQty, o.getQty));
-            $row.find('.liquor-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
             recalc();
         });
 
@@ -481,16 +533,14 @@
             $inp.val(parseInt($inp.val()) + 1);
             updateFoodRowTotal($row);
         });
-
         $(document).on('click', '.food-qty-minus', function () {
             var $row = $(this).closest('tr');
             var $inp = $row.find('.food-qty-input');
             $inp.val(Math.max(1, parseInt($inp.val()) - 1));
             updateFoodRowTotal($row);
         });
-
         function updateFoodRowTotal($row) {
-            var o    = readRowOffer($row.find('.food-item-sel option:selected'));
+            var o    = readRowOffer($row.find('.food-item-sel option:selected'), foodOfferMap);
             var qty  = parseInt($row.find('.food-qty-input').val()) || 1;
             var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             $row.find('.food-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
@@ -499,23 +549,34 @@
 
         /* ---- Qty +/- liquor ---- */
         $(document).on('click', '.liquor-qty-plus', function () {
-            var $row = $(this).closest('tr');
-            var $inp = $row.find('.liquor-qty-input');
-            $inp.val(parseInt($inp.val()) + 1);
+            var $row     = $(this).closest('tr');
+            var $inp     = $row.find('.liquor-qty-input');
+            var $opt     = $row.find('.liquor-item-sel option:selected');
+            var isBeer   = $row.find('.liquor-is-beer').val() === '1';
+            var volumeMl = parseInt($row.find('.liquor-volume-ml').val()) || 0;
+            var barStock = parseInt($opt.attr('data-bar-stock')) || 0;
+            var curQty   = parseInt($inp.val()) || 1;
+            var maxQty   = isBeer ? barStock : (volumeMl > 0 ? Math.floor(barStock / volumeMl) : 0);
+
+            if (maxQty > 0 && curQty >= maxQty) {
+                toastr.warning('Stock limit reached (' + maxQty + (isBeer ? ' BTL' : ' servings') + ' available).');
+                return;
+            }
+            $inp.val(curQty + 1);
             updateLiquorRowTotal($row);
         });
-
         $(document).on('click', '.liquor-qty-minus', function () {
             var $row = $(this).closest('tr');
             var $inp = $row.find('.liquor-qty-input');
             $inp.val(Math.max(1, parseInt($inp.val()) - 1));
             updateLiquorRowTotal($row);
         });
-
         function updateLiquorRowTotal($row) {
-            var o    = readRowOffer($row.find('.liquor-item-sel option:selected'));
+            var o    = readRowOffer($row.find('.liquor-item-sel option:selected'), liquorOfferMap);
             var qty  = parseInt($row.find('.liquor-qty-input').val()) || 1;
             var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+            $row.find('.liquor-unit-price').val('Rs ' + o.price.toFixed(2));
+            $row.find('.liquor-offer').html(offerBadge(o.ofType, o.ofVal, o.buyQty, o.getQty));
             $row.find('.liquor-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
             recalc();
         }
@@ -528,7 +589,6 @@
             }
             recalc();
         });
-
         $(document).on('click', '.delete-liquor-row', function () {
             $(this).closest('tr').remove();
             if ($('#liquorTableBody tr').length === 0) {
@@ -537,30 +597,31 @@
             recalc();
         });
 
-        /* ---- Recalculate totals (with offer savings) ---- */
+        /* ---- Recalculate totals (GST on food only) ---- */
         function recalc() {
-            var subtotal      = 0;
-            var totalDiscount = 0;
+            var foodSubtotal = 0, foodDiscount = 0;
+            var liquorSubtotal = 0, liquorDiscount = 0;
 
             $('#foodTableBody .food-order-row').each(function () {
-                var o   = readRowOffer($(this).find('.food-item-sel option:selected'));
+                var o   = readRowOffer($(this).find('.food-item-sel option:selected'), foodOfferMap);
                 var qty = parseInt($(this).find('.food-qty-input').val()) || 0;
-                subtotal      += o.price * qty;
-                totalDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+                foodSubtotal += o.price * qty;
+                foodDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             });
-
             $('#liquorTableBody .liquor-order-row').each(function () {
-                var o   = readRowOffer($(this).find('.liquor-item-sel option:selected'));
+                var o   = readRowOffer($(this).find('.liquor-item-sel option:selected'), liquorOfferMap);
                 var qty = parseInt($(this).find('.liquor-qty-input').val()) || 0;
-                subtotal      += o.price * qty;
-                totalDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+                liquorSubtotal += o.price * qty;
+                liquorDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             });
 
-            var afterDiscount = subtotal - totalDiscount;
-            var gst           = Math.round(afterDiscount * GST_RATE * 100) / 100;
-            var grand         = afterDiscount + gst;
+            var totalSubtotal    = foodSubtotal + liquorSubtotal;
+            var totalDiscount    = foodDiscount + liquorDiscount;
+            var foodAfterDiscount = foodSubtotal - foodDiscount;
+            var gst              = Math.round(foodAfterDiscount * GST_RATE * 100) / 100;
+            var grand            = (totalSubtotal - totalDiscount) + gst;
 
-            $('#orderSubtotal').text('Rs ' + subtotal.toFixed(2));
+            $('#orderSubtotal').text('Rs ' + totalSubtotal.toFixed(2));
             $('#orderGst').text('Rs ' + gst.toFixed(2));
             $('#orderOfferApplied').text('-Rs ' + totalDiscount.toFixed(2));
             $('#orderGrandTotal').text('Rs ' + grand.toFixed(2));
@@ -576,65 +637,67 @@
                 var $opt   = $(this).find('.food-item-sel option:selected');
                 var itemId = $opt.val();
                 if (!itemId) { valid = false; return false; }
-                var price  = parseFloat($opt.data('price'))       || 0;
-                var ofType = $opt.data('offer-type')              || '';
-                var ofVal  = parseFloat($opt.data('offer-value')) || 0;
-                var buyQty = parseInt($opt.data('buy-qty'))       || 1;
-                var getQty = parseInt($opt.data('get-qty'))       || 1;
+                var fo     = readRowOffer($opt, foodOfferMap);
                 var qty    = parseInt($(this).find('.food-qty-input').val()) || 1;
-                var disc   = rowTotalDiscount(price, ofType, ofVal, qty, buyQty, getQty);
+                var disc   = rowTotalDiscount(fo.price, fo.ofType, fo.ofVal, qty, fo.buyQty, fo.getQty);
                 items.push({
                     food_item_id:  itemId,
                     quantity:      qty,
                     unit:          'plate',
-                    unit_price:    price,
-                    offer_applied: ofType ? { type_slug: ofType, discount_value: ofVal, buy_qty: buyQty, get_qty: getQty } : null,
-                    total_amount:  parseFloat((price * qty - disc).toFixed(2)),
+                    unit_price:    fo.price,
+                    offer_applied: fo.ofType ? { type_slug: fo.ofType, discount_value: fo.ofVal, buy_qty: fo.buyQty, get_qty: fo.getQty } : null,
+                    total_amount:  parseFloat((fo.price * qty - disc).toFixed(2)),
                 });
             });
 
             // Collect liquor rows
             $('#liquorTableBody .liquor-order-row').each(function () {
-                var $opt   = $(this).find('.liquor-item-sel option:selected');
-                var itemId = $opt.val();
+                var $opt       = $(this).find('.liquor-item-sel option:selected');
+                var itemId     = $opt.val();
                 if (!itemId) { valid = false; return false; }
-                var price  = parseFloat($opt.data('price'))       || 0;
-                var ofType = $opt.data('offer-type')              || '';
-                var ofVal  = parseFloat($opt.data('offer-value')) || 0;
-                var buyQty = parseInt($opt.data('buy-qty'))       || 1;
-                var getQty = parseInt($opt.data('get-qty'))       || 1;
-                var qty    = parseInt($(this).find('.liquor-qty-input').val()) || 1;
-                var disc   = rowTotalDiscount(price, ofType, ofVal, qty, buyQty, getQty);
+
+                var foodItemId = $opt.attr('data-food-item-id') || itemId;
+                var isBeer     = $(this).find('.liquor-is-beer').val() === '1';
+                var volumeMl   = parseInt($(this).find('.liquor-volume-ml').val()) || 0;
+                var lo         = readRowOffer($opt, liquorOfferMap);
+                var qty        = parseInt($(this).find('.liquor-qty-input').val()) || 1;
+                var disc       = rowTotalDiscount(lo.price, lo.ofType, lo.ofVal, qty, lo.buyQty, lo.getQty);
+                var deductQty  = isBeer ? qty : qty * volumeMl;
+
                 items.push({
-                    food_item_id:  itemId,
+                    food_item_id:  foodItemId,
                     quantity:      qty,
-                    unit:          'ml',
-                    unit_price:    price,
-                    offer_applied: ofType ? { type_slug: ofType, discount_value: ofVal, buy_qty: buyQty, get_qty: getQty } : null,
-                    total_amount:  parseFloat((price * qty - disc).toFixed(2)),
+                    unit:          isBeer ? 'btl' : 'ml',
+                    is_beer:       isBeer,
+                    volume_ml:     isBeer ? null : volumeMl,
+                    deduct_qty:    deductQty,
+                    unit_price:    lo.price,
+                    offer_applied: lo.ofType ? { type_slug: lo.ofType, discount_value: lo.ofVal, buy_qty: lo.buyQty, get_qty: lo.getQty } : null,
+                    total_amount:  parseFloat((lo.price * qty - disc).toFixed(2)),
                 });
             });
 
             if (!items.length) { toastr.warning('Please add at least one item.'); return; }
             if (!valid)        { toastr.warning('Please select an item for each row.'); return; }
 
-            // Recompute totals for submission
-            var subtotal = 0, totalDiscount = 0;
+            // Recompute totals for submission (GST on food only)
+            var foodSubtotal = 0, foodDiscount = 0, liquorSubtotal = 0, liquorDiscount = 0;
             $('#foodTableBody .food-order-row').each(function () {
-                var o = readRowOffer($(this).find('.food-item-sel option:selected'));
+                var o = readRowOffer($(this).find('.food-item-sel option:selected'), foodOfferMap);
                 var q = parseInt($(this).find('.food-qty-input').val()) || 0;
-                subtotal      += o.price * q;
-                totalDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+                foodSubtotal += o.price * q;
+                foodDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
             });
             $('#liquorTableBody .liquor-order-row').each(function () {
-                var o = readRowOffer($(this).find('.liquor-item-sel option:selected'));
+                var o = readRowOffer($(this).find('.liquor-item-sel option:selected'), liquorOfferMap);
                 var q = parseInt($(this).find('.liquor-qty-input').val()) || 0;
-                subtotal      += o.price * q;
-                totalDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+                liquorSubtotal += o.price * q;
+                liquorDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
             });
-            var afterDiscount = subtotal - totalDiscount;
-            var gst           = Math.round(afterDiscount * GST_RATE * 100) / 100;
-            var grand         = parseFloat((afterDiscount + gst).toFixed(2));
+            var subtotal      = foodSubtotal + liquorSubtotal;
+            var totalDiscount = foodDiscount + liquorDiscount;
+            var gst           = Math.round((foodSubtotal - foodDiscount) * GST_RATE * 100) / 100;
+            var grand         = parseFloat((subtotal - totalDiscount + gst).toFixed(2));
 
             var memberId = $('#cardentry').data('member-id');
             var $btn     = $(this);
@@ -657,7 +720,6 @@
                     if (response.statusCode == 200) {
                         toastr.success('Order placed! Order No: ' + response.order_no);
                         $('#createOrderModal').modal('hide');
-                        // Update wallet balance shown in member info modal
                         $('#cardMemberWallet').text('Rs.' + response.wallet_balance);
                     } else if (response.statusCode == 422 && response.wallet_balance) {
                         toastr.error(

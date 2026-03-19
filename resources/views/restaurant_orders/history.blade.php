@@ -12,6 +12,80 @@
                     <h2 class="fs-5 common-heading mb-0 fw-semibold">Order History</h2>
                 </div>
 
+                {{-- Stat cards --}}
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-xl-3">
+                        <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
+                            style="background:linear-gradient(135deg,#29b6f6,#0288d1);">
+                            <div>
+                                <div class="small opacity-75 mb-1">Total Orders</div>
+                                <div class="fs-4 fw-bold">{{ $totalOrders }}</div>
+                            </div>
+                            <i class="fa-solid fa-receipt fs-2 opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="col-6 col-xl-3">
+                        <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
+                            style="background:linear-gradient(135deg,#66bb6a,#388e3c);">
+                            <div>
+                                <div class="small opacity-75 mb-1">Total Revenue</div>
+                                <div class="fs-4 fw-bold">₹{{ number_format($totalRevenue, 0) }}</div>
+                            </div>
+                            <i class="fa-solid fa-indian-rupee-sign fs-2 opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="col-6 col-xl-3">
+                        <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
+                            style="background:linear-gradient(135deg,#ffa726,#e65100);">
+                            <div>
+                                <div class="small opacity-75 mb-1">Total Discount</div>
+                                <div class="fs-4 fw-bold">₹{{ number_format($totalDiscount, 0) }}</div>
+                            </div>
+                            <i class="fa-solid fa-tag fs-2 opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="col-6 col-xl-3">
+                        <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
+                            style="background:linear-gradient(135deg,#ab47bc,#7b1fa2);">
+                            <div>
+                                <div class="small opacity-75 mb-1">Avg Order Value</div>
+                                <div class="fs-4 fw-bold">₹{{ number_format($avgOrder, 0) }}</div>
+                            </div>
+                            <i class="fa-solid fa-chart-line fs-2 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Date filter --}}
+                <form method="GET" action="{{ route('restaurant-orders.history') }}" class="row g-2 align-items-end mb-3">
+                    <div class="col-sm-auto">
+                        <label class="form-label small fw-semibold mb-1">From</label>
+                        <input type="date" name="start_date" class="form-control form-control-sm shadow-none"
+                            value="{{ $startDate }}">
+                    </div>
+                    <div class="col-sm-auto">
+                        <label class="form-label small fw-semibold mb-1">To</label>
+                        <input type="date" name="end_date" class="form-control form-control-sm shadow-none"
+                            value="{{ $endDate }}">
+                    </div>
+                    <div class="col-sm-auto">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-filter me-1"></i> Filter
+                        </button>
+                        @if(request()->hasAny(['start_date', 'end_date']))
+                            <a href="{{ route('restaurant-orders.history') }}" class="btn btn-sm btn-outline-secondary ms-1">
+                                <i class="fa-solid fa-xmark me-1"></i> Reset
+                            </a>
+                        @endif
+                    </div>
+                    <div class="col-sm-auto ms-sm-auto">
+                        <a href="{{ route('restaurant-orders.report.download', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
+                            class="btn btn-sm btn-outline-danger fw-semibold">
+                            <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+                        </a>
+                    </div>
+                </form>
+
                 <div class="table-responsive">
                     <table class="table rounded-3 overflow-hidden clubmemberlist2" cellspacing="0" width="100%">
                         <thead>
@@ -135,10 +209,13 @@ $(document).ready(function () {
                     }
                 }
 
-                if (it.unit === 'ml') {
+                if (it.unit === 'ml' || it.unit === 'btl') {
+                    var volDesc = it.unit === 'btl'
+                        ? '1 BTL'
+                        : ((it.metadata && it.metadata.volume_ml) ? it.metadata.volume_ml + ' ml' : '—');
                     liquorRows += '<tr>'
                         + '<td class="text-muted">' + itemName + offerBadge + '</td>'
-                        + '<td class="text-center text-muted text-nowrap">' + (it.metadata && it.metadata.volume ? it.metadata.volume : '—') + '</td>'
+                        + '<td class="text-center text-muted text-nowrap">' + volDesc + '</td>'
                         + '<td class="text-center text-muted">' + it.quantity + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td>'
