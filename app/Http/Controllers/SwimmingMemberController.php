@@ -81,7 +81,9 @@ class SwimmingMemberController extends Controller
                 'gstPercentage',
                 'bankList',
                 'cards',
-                'members'
+                'members',
+                'lockers',
+                'lockerPrice'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();

@@ -70,4 +70,9 @@ class Member extends Model
                     ->where('status', 'approved')
                     ->orderByDesc('created_at');
     }
+
+    public function memberships(): HasMany
+        {
+            return $this->hasMany(MembershipPurchaseHistory::class, 'member_id');
+        }
 }

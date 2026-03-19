@@ -10,6 +10,8 @@ use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -343,7 +345,7 @@ class ActionApprovalController extends Controller
                 $member = Member::find($memberId);
 
                 $membershipPlanPurchase = MembershipPurchaseHistory::where('club_id', $clubId)
-                    ->where('member_id', $id)
+                    ->where('member_id', $memberId)
                     ->where('status', 'pending')
                     ->first();
 

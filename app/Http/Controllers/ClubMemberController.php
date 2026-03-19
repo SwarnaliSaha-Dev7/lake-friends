@@ -225,7 +225,7 @@ class ClubMemberController extends Controller
                 'net_amount'              => $netAmount,
                 'start_date'              => $startDate,
                 'expiry_date'             => $expiryDate,
-                'status'                  => 1
+                //'status'                  => 1
             ]);
 
             //$card_no = $request->card_id;

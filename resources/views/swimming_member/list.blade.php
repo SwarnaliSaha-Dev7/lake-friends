@@ -68,9 +68,9 @@
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn membershipPlanBtn"
                                             title="Membership Plan" data-id="{{$member->id}}"><small><i
                                                     class="fa-sharp fa-clock-rotate-left"></i></small></button>
-                                        {{-- <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
                                             title="Wallet Recharge" data-id="{{$member->id}}"><small><i
-                                                    class="fa-solid fa-wallet"></i></small></button> --}}
+                                                    class="fa-solid fa-wallet"></i></small></button>
 
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn receiptBtn"  title="View Receipt"  data-id="{{$member->id}}">
                                             <small><i class="fa-solid fa-receipt"></i></small>
@@ -1577,7 +1577,7 @@
             <div class="modal-content">
                 <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
                     <img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97" height="106" style="max-width: 50px;">
-                        <p class="m-0 lh-2">Associate No.: <span class="text-muted">SWIMFLEXI</span> <span class="text-primary fw-medium" id="member_code">250</span></p>
+                        <p class="m-0 lh-2">Associate No.: <span class="text-muted">SWIM/FLEXI/</span> <span class="text-primary fw-medium" id="member_code">250</span></p>
                     <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button> -->
                 </div>
                 <div class="modal-body">
@@ -1661,7 +1661,6 @@
     </div>
     <!-- Receipt Modal End-->
 
-
 @endsection
 
 @section('customJS')
@@ -1677,7 +1676,6 @@
         if (type === 'addMember') {
             $('#addSwimmingMemberBtn').trigger('click');
         }
-
 
 
         //name validation
