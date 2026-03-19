@@ -43,12 +43,25 @@
                             @foreach ($actionApprovalList as $data)
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                    <td class="text-nowrap">
-                                        @if($data->entity_model === 'Member')
-                                            {{ $data->entity->email ?? '-' }}
-                                        @else
-                                            -
-                                        @endif
+                                    <td>
+                                        @php
+                                            $p      = is_array($data->request_payload) ? $data->request_payload : [];
+                                            $mod    = $data->module ?? '';
+
+                                            if (str_contains($mod, 'member')) {
+                                                $detail = $data->entity->email ?? ($data->entity->name ?? '-');
+                                            } elseif (in_array($mod, ['food_price_update', 'liquor_price_update'])) {
+                                                $eName  = $data->entity->name ?? '-';
+                                                $old    = isset($p['old_price']) ? 'Rs ' . number_format($p['old_price'], 2) : null;
+                                                $new    = isset($p['new_price']) ? 'Rs ' . number_format($p['new_price'], 2) : null;
+                                                $detail = $eName . ($old && $new ? ' (' . $old . ' → ' . $new . ')' : '');
+                                            } elseif ($mod === 'offer') {
+                                                $detail = $data->entity->name ?? ($p['name'] ?? '-');
+                                            } else {
+                                                $detail = $p['name'] ?? $p['item_name'] ?? ($data->entity->name ?? '-');
+                                            }
+                                        @endphp
+                                        {{ $detail }}
                                     </td>
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
                                     <td class="text-nowrap">{{ $data->membershipType?->name ?? '-' }}</td>
