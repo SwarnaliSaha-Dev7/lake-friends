@@ -70,4 +70,11 @@ class Member extends Model
                     ->where('status', 'approved')
                     ->orderByDesc('created_at');
     }
+
+    public function pendingFines(): HasMany
+    {
+        return $this->hasMany(MemberFine::class, 'member_id')
+                    ->where('status', 'pending')
+                    ->orderByDesc('fine_date');
+    }
 }

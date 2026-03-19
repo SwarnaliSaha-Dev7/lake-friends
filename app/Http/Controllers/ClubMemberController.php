@@ -8,6 +8,7 @@ use App\Models\Card;
 use App\Models\GstRate;
 use App\Models\Member;
 use App\Models\MemberCardMapping;
+use App\Models\MemberFine;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPlanType;
 use App\Models\MembershipPurchaseHistory;
@@ -65,7 +66,8 @@ class ClubMemberController extends Controller
                     'cardDetails',
                     'purchaseHistory',
                     'walletDetails',
-                    'latestApproval.checker:id,name'
+                    'latestApproval.checker:id,name',
+                    'pendingFines'
                 ])
                 ->whereHas('memberDetails', function ($query) use ($membershipTypeId) {
                     $query->where('membership_type_id', $membershipTypeId);
@@ -345,6 +347,116 @@ class ClubMemberController extends Controller
         }
     }
 
+    public function renew(Request $request)
+    {
+        try {
+            $clubId = club_id();
+
+            $member = Member::where('club_id', $clubId)->findOrFail($request->member_id);
+
+            $membershipType = MembershipType::where('name', 'Club Membership')
+                ->where('club_id', $clubId)
+                ->first();
+
+            $plan = MembershipPlanType::where('id', $request->membership_plan_type_id)
+                ->where('is_active', 1)
+                ->first();
+
+            if (!$plan) {
+                return response()->json(['statusCode' => 404, 'message' => 'Membership plan not found']);
+            }
+
+            DB::beginTransaction();
+
+            // Start date: day after current expiry or today if already expired
+            $lastPurchase = MembershipPurchaseHistory::where('member_id', $member->id)
+                ->where('status', 'active')
+                ->latest('expiry_date')
+                ->first();
+
+            $startDate = Carbon::today();
+            if ($lastPurchase && $lastPurchase->expiry_date && Carbon::parse($lastPurchase->expiry_date)->isFuture()) {
+                $startDate = Carbon::parse($lastPurchase->expiry_date)->addDay();
+            }
+
+            $expiryDate = $plan->is_lifetime ? null : $startDate->copy()->addMonths($plan->duration_months);
+
+            $taxableAmount = $request->taxable_amount;
+            $fineAmount    = $request->fine_amount ?? 0;
+            $gstPercentage = $request->gst_percentage;
+            $gstAmount     = ($taxableAmount * $gstPercentage) / 100;
+            $netAmount     = $taxableAmount + $fineAmount + $gstAmount;
+
+            $purchase = MembershipPurchaseHistory::create([
+                'club_id'                 => $clubId,
+                'member_id'               => $member->id,
+                'membership_type_id'      => $membershipType->id,
+                'membership_plan_type_id' => $plan->id,
+                'fee'                     => $taxableAmount,
+                'fine_amount'             => $fineAmount,
+                'net_amount'              => $netAmount,
+                'start_date'              => $startDate,
+                'expiry_date'             => $expiryDate,
+                'status'                  => 'pending',
+            ]);
+
+            PaymentHistory::create([
+                'member_id'                      => $member->id,
+                'club_id'                        => $clubId,
+                'purpose'                        => 'plan_renewal',
+                'membership_purchase_history_id' => $purchase->id,
+                'mr_no'                          => generateMrNo(),
+                'bill_no'                        => generateBillNo(),
+                'ac_head'                        => $request->ac_head,
+                'taxable_amount'                 => $taxableAmount,
+                'gst_percentage'                 => $gstPercentage,
+                'gst_amount'                     => $gstAmount,
+                'net_amount'                     => $netAmount,
+                'payment_mode'                   => $request->payment_mode,
+                'payment_status'                 => 'success',
+                'bank_id'                        => $request->bank_id,
+                'remarks'                        => $request->remarks,
+            ]);
+
+            // Mark pending fines as paid
+            MemberFine::where('member_id', $member->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'paid']);
+
+            $approval = ActionApproval::create([
+                'club_id'            => $clubId,
+                'module'             => 'member_renewal',
+                'action_type'        => 'create',
+                'entity_model'       => 'MembershipPurchaseHistory',
+                'membership_type_id' => $membershipType->id,
+                'entity_id'          => $purchase->id,
+                'maker_user_id'      => Auth::id(),
+                'request_payload'    => json_encode($request->except('_token')),
+            ]);
+
+            if (Auth::user()->hasRole('admin')) {
+                $purchase->update(['status' => 'active']);
+                $approval->update([
+                    'checker_user_id'          => Auth::id(),
+                    'approved_or_rejected_at'  => now(),
+                    'status'                   => 'approved',
+                ]);
+            }
+
+            if (Auth::user()->hasRole('operator')) {
+                $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
+            DB::commit();
+
+            return response()->json(['statusCode' => 200, 'message' => 'Renewal submitted successfully']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
+        }
+    }
+
     public function view($id)
     {
         try {
@@ -358,7 +470,8 @@ class ClubMemberController extends Controller
                     'clubDetails',
                     'walletDetails',
                     'paymentHistory',
-                    'latestApproval.checker:id,name'
+                    'latestApproval.checker:id,name',
+                    'pendingFines.financialYear'
                 ])
                 ->find($id);
 
