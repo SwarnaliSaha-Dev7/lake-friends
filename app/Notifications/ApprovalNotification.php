@@ -62,19 +62,44 @@ class ApprovalNotification extends Notification
         switch ($this->approval->module) {
 
             case 'plan_renewal':
-                $message          = "A member plan renewal is waiting for approval";
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $memberId   = $payload['member_id'] ?? null;
+                $memberName = $memberId ? (\App\Models\Member::find($memberId)?->name ?? 'Unknown') : 'Unknown';
+                $title      = 'Plan Renewal Approval';
+                $message    = "Membership plan renewal for \"{$memberName}\" is waiting for your approval.";
                 $notificationType = "plan_renewal";
-                $title            = "Plan Renewal Approval";
                 break;
 
             case 'member_create':
-                $message          = "New member created and waiting for approval";
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $memberName = $payload['name'] ?? $payload['swim_name'] ?? 'a new member';
+                $title      = 'New Member Approval';
+                $message    = "New member \"{$memberName}\" has been added and is waiting for your approval.";
                 $notificationType = "member_create";
                 break;
 
             case 'member_edit':
-                $message          = "A member is edited and waiting for approval";
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $memberName = $payload['name'] ?? $payload['swim_name'] ?? null;
+                if (!$memberName) {
+                    $memberName = \App\Models\Member::find($this->approval->entity_id)?->name ?? 'a member';
+                }
+                $title   = 'Member Edit Approval';
+                $message = "Member \"{$memberName}\" details have been edited and are waiting for your approval.";
                 $notificationType = "member_edit";
+                break;
+
+            case 'member_delete':
+                $memberName = \App\Models\Member::find($this->approval->entity_id)?->name ?? 'a member';
+                $title      = 'Member Deletion Approval';
+                $message    = "Deletion request for member \"{$memberName}\" is waiting for your approval.";
+                $notificationType = "member_delete";
                 break;
             case 'locker_purchase':
                 $message = "A member has purchased locker and waiting for approval";

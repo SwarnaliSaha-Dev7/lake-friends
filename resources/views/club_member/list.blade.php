@@ -43,6 +43,10 @@
                         </thead>
                         <tbody>
                             @foreach($members as $member)
+                            @php
+                                $latestActivePlan = $member->purchaseHistory->where('status','active')->sortByDesc('expiry_date')->first();
+                                $planExpired = $latestActivePlan && $latestActivePlan->expiry_date && \Carbon\Carbon::parse($latestActivePlan->expiry_date)->isPast();
+                            @endphp
                             <tr>
                                 <td class="text-nowrap">{{ $loop->iteration }}</td>
                                 <td class="text-nowrap">
@@ -56,12 +60,22 @@
                                 <td class="text-nowrap">{{$member->phone}}</td>
                                 <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
                                 <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
-                                <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
+                                <td class="text-nowrap {{ $planExpired ? 'text-danger fw-semibold' : '' }}">
+                                    {{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
+                                    @if($planExpired)
+                                        <i class="fa-solid fa-circle-exclamation ms-1" title="Plan expired"></i>
+                                    @endif
+                                </td>
                                 <td class="text-nowrap">
                                     {{ ucwords($member->latestApproval?->checker?->name ?? '-') }}
                                 </td>
                                 @if ($member->status == 'active')
-                                    <td class="text-success text-nowrap">Active</td>
+                                    <td class="text-nowrap">
+                                        <span class="text-success">Active</span>
+                                        @if($planExpired)
+                                            <br><span class="badge bg-danger" style="font-size:0.68rem;">Plan Expired</span>
+                                        @endif
+                                    </td>
                                 @elseif ($member->status == 'pending')
                                     <td class="text-warning text-nowrap">Pending</td>
                                 @elseif ($member->status == 'rejected')

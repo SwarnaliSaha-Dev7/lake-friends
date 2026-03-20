@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
         Route::post('locker/purchase', [SwimmingMemberController::class, 'purchaseLocker'])->name('swimming-member.locker.purchase');
         Route::get('locker-allocation/{memberId}', [SwimmingMemberController::class, 'getMemberLockerAllocation'])->name('swimming-member.locker-allocation');
         // swimming member locker route end
+        Route::post('/renew', [SwimmingMemberController::class, 'renew'])->name('swimming-member.renew');
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
 
         Route::get('/receipt/{id}', [SwimmingMemberController::class, 'getReceipt'])->name('swimming-member.receipt');

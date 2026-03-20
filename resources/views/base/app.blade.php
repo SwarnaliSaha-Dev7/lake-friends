@@ -116,7 +116,7 @@
                     </div>
 
                     <!-- Wallet -->
-                    <div class="rounded-3 px-3 py-2 d-flex align-items-center justify-content-between mb-3"
+                    <div id="cardWalletSection" class="rounded-3 px-3 py-2 d-flex align-items-center justify-content-between mb-3"
                         style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;">
                         <div>
                             <div class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;">Wallet Balance</div>
@@ -132,6 +132,10 @@
                     <!-- Action Buttons -->
                     <div class="d-flex gap-2 mb-2 flex-wrap">
                         <button type="button" class="btn flex-fill py-2 fw-medium" id="renewalBtn"
+                            style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:10px;font-size:0.82rem;">
+                            <i class="fa-solid fa-rotate-right d-block mb-1 fs-6"></i>Renewal
+                        </button>
+                        <button type="button" class="btn flex-fill py-2 fw-medium d-none" id="swimRenewalBtn"
                             style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:10px;font-size:0.82rem;">
                             <i class="fa-solid fa-rotate-right d-block mb-1 fs-6"></i>Renewal
                         </button>
@@ -639,6 +643,143 @@
         </div>
     </div>
     <!-- Plan Renewal Modal end -->
+
+    <!-- Swimming Member Renewal Modal start -->
+    <div class="modal fade" id="swimRenewalModal" tabindex="-1" aria-labelledby="swimRenewalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="swimRenewalModalLabel">Swimming Plan Renewal</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="swimRenewalForm">
+                        @csrf
+                        <input type="hidden" id="swim_renewal_member_id" name="member_id">
+
+                        {{-- Member Summary --}}
+                        <label class="form-label fw-semibold text-dark mb-3">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-regular fa-user"></i>
+                            </span>Member Details
+                        </label>
+                        <div class="row g-2 mb-3 p-3 rounded-3 border bg-light">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Name</small>
+                                <span class="fw-semibold" id="swim_renewal_member_name">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Card No</small>
+                                <span class="fw-semibold" id="swim_renewal_card_no">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Current Plan</small>
+                                <span class="fw-semibold" id="swim_renewal_current_plan">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Expiry Date</small>
+                                <span class="fw-semibold" id="swim_renewal_expiry_date">—</span>
+                            </div>
+                        </div>
+
+                        {{-- Pending Fines --}}
+                        <div id="swimRenewalFineAlert" class="alert alert-danger py-2 mb-3" style="display:none;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span class="fw-semibold small">Pending Fines (included in this renewal)</span>
+                            </div>
+                            <div id="swimRenewalFineList" class="small"></div>
+                            <div class="d-flex justify-content-between border-top border-danger mt-2 pt-2">
+                                <span class="fw-semibold small">Total Fine</span>
+                                <span class="fw-bold" id="swimRenewalTotalFine">₹0.00</span>
+                            </div>
+                        </div>
+
+                        {{-- Plan Type --}}
+                        <label class="form-label fw-semibold text-dark mb-2 mt-1">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-regular fa-credit-card"></i>
+                            </span>Renewal Details
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label w-100 mb-1"><small>Plan Type <span class="text-danger">*</span></small></label>
+                                @foreach ($swimRenewalPlanTypes as $type)
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input swim-renewal-plan-type" type="radio"
+                                        name="membership_plan_type_id"
+                                        id="swim_renewal_plan_{{ $type->id }}"
+                                        value="{{ $type->id }}"
+                                        data-price="{{ $type->price ?? 0 }}"
+                                        {{ $loop->first ? 'required' : '' }}>
+                                    <label class="form-check-label" for="swim_renewal_plan_{{ $type->id }}">
+                                        <small>{{ $type->name }}</small>
+                                    </label>
+                                </div>
+                                @endforeach
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Payment Mode <span class="text-danger">*</span></small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="payment_mode" id="swim_renewal_payment_mode" placeholder="e.g. Cash / Cheque / UPI" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>A/C Head <span class="text-danger">*</span></small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="ac_head" id="swim_renewal_ac_head" placeholder="A/C Head" required>
+                            </div>
+
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>Taxable Amt <span class="text-danger">*</span></small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="taxable_amount" id="swim_renewal_taxable" placeholder="0.00" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>GST%</small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="swim_renewal_gst_pct" value="{{ $globalGstPercentage }}" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>GST Amt</small></label>
+                                <input type="text" class="form-control py-2 shadow-none bg-light" name="gst_amount" id="swim_renewal_gst_amt" placeholder="0.00" readonly>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>Fine Amt</small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="fine_amount" id="swim_renewal_fine_amt" placeholder="0.00" min="0" step="0.01" value="0">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold">Total Receipt Amount</span>
+                                    <span class="fw-bold fs-5 text-primary" id="swim_renewal_receipt_amt">₹0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Bank <span class="text-danger">*</span></small></label>
+                                <select name="bank_id" class="form-select py-2 shadow-none" id="swim_renewal_bank" required>
+                                    <option value="">Select Bank</option>
+                                    @foreach ($globalBankList as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Remarks</small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="remarks" id="swim_renewal_remarks" placeholder="Remarks">
+                            </div>
+                        </div>
+
+                        <div class="text-end mod-footer mt-4">
+                            <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-semibold" id="swimRenewalSubmitBtn">
+                                <i class="fa-solid fa-rotate-right me-1"></i> Submit Renewal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Swimming Member Renewal Modal end -->
 
     @include('base.scripts')
     @yield('customJS')

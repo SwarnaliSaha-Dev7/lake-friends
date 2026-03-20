@@ -143,6 +143,9 @@
 @section('customJS')
 <script>
     $(document).ready(function () {
+        @if(session('inactive_error'))
+            toastr.error("{{ session('inactive_error') }}");
+        @endif
 
         $('#sendOtpBtn').click(function () {
 

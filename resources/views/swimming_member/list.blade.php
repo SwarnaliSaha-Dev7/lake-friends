@@ -43,18 +43,39 @@
                         </thead>
                         <tbody>
                             @foreach ($members as $member)
+                                @php
+                                    $latestActivePlan = $member->purchaseHistory->where('status','active')->sortByDesc('expiry_date')->first();
+                                    $planExpired = $latestActivePlan && $latestActivePlan->expiry_date && \Carbon\Carbon::parse($latestActivePlan->expiry_date)->isPast();
+                                @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                    <td class="text-nowrap">{{$member->name}}</td>
+                                    <td class="text-nowrap">
+                                        {{$member->name}}
+                                        @if($member->pendingFines->isNotEmpty())
+                                            <span class="badge bg-danger ms-1" title="Pending fine: ₹{{ number_format($member->pendingFines->sum('fine_amount'), 2) }}">
+                                                <i class="fa-solid fa-triangle-exclamation"></i> Fine
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
                                     <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
                                     <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
-                                    <td class="text-nowrap">{{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}</td>
+                                    <td class="text-nowrap {{ $planExpired ? 'text-danger fw-semibold' : '' }}">
+                                        {{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
+                                        @if($planExpired)
+                                            <i class="fa-solid fa-circle-exclamation ms-1" title="Plan expired"></i>
+                                        @endif
+                                    </td>
                                     <td class="text-nowrap">
                                         {{ ucwords($member->latestApproval?->checker?->name ?? '-') }}
                                     </td>
                                     @if ($member->status == 'active')
-                                        <td class="text-success text-nowrap">Active</td>
+                                        <td class="text-nowrap">
+                                            <span class="text-success">Active</span>
+                                            @if($planExpired)
+                                                <br><span class="badge bg-danger" style="font-size:0.68rem;">Plan Expired</span>
+                                            @endif
+                                        </td>
                                     @elseif ($member->status == 'pending')
                                         <td class="text-warning text-nowrap">Pending</td>
                                     @elseif ($member->status == 'rejected')
@@ -80,8 +101,7 @@
                                             <small><i class="fa-solid fa-receipt"></i></small>
                                         </button>
 
-                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn"
-                                            data-bs-toggle="modal" data-bs-target="#planrenewal"
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn swimPlanRenewalBtn"
                                             title="Plan Renewal" data-id="{{$member->id}}"><small><i
                                                     class="fa-solid fa-rotate-right"></i></small></button>
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn memberEditBtn"
@@ -1169,12 +1189,7 @@
                                 </td>
                                 <td class="pe-3"><small id="memberPlanExpiry">12-31-2006</small></td>
                             </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Current Wallet Balance:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberWallet">₹2,450.00</small></td>
-                            </tr>
+
                             <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Approved By:</small>
@@ -1183,113 +1198,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Plan Renewal Modal -->
-    <div class="modal fade" id="planrenewal" tabindex="-1" aria-labelledby="planrenewalModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="planrenewalModalLabel">Renewal Plan</h5>
-                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
-                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <form action="">
-                        <div class="row">
-                            <div class="col-12">
-                                <label for="" class="form-label fw-semibold text-dark mb-3"><span
-                                        class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
-                                            class="fa-regular fa-user"></i></span>Personal Details</label>
-                                <div class="row">
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100"><small>Renewal type</small></label>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="renewinlineRadioOptions"
-                                                    id="renewinlineRadio1" value="option1">
-                                                <label class="form-check-label"
-                                                    for="renewinlineRadio1"><small>Annual</small></label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="renewinlineRadioOptions"
-                                                    id="renewinlineRadio2" value="option2">
-                                                <label class="form-check-label"
-                                                    for="renewinlineRadio2"><small>Lifetime</small></label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="renewinlineRadioOptions"
-                                                    id="renewinlineRadio3" value="option3">
-                                                <label class="form-check-label"
-                                                    for="renewinlineRadio3"><small>Silver</small></label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Mode">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="A/C Head">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Fine">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Taxable Amt (Min 500)">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="GST%">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id="" placeholder="GST Amt">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Receipt Amt">
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-part mb-3">
-                                            <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Bank Name">
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-part mb-3">
-                                            <textarea class="form-control py-2 shadow-none" id="" rows="3"
-                                                placeholder="Remarks"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-end mod-footer mt-3">
-                            <button type="button" class="btn btn-info fw-semibold"
-                                data-bs-dismiss="modal">Cancel</button>
-                            <input type="submit" class="btn btn-primary fw-semibold" value="Submit">
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>

@@ -112,8 +112,22 @@
                             $('#cardMemberTypeCard').text(memberTypeName);
 
                             // Store member ID & member type for action buttons
+                            var memberTypeSlug = response.data.member_details?.membership_type?.name?.toLowerCase().includes('swim') ? 'swimming' : 'club';
                             $('#cardentry').data('member-id', response.data.id);
-                            $('#cardentry').data('member-type', response.data.member_details?.membership_type?.name?.toLowerCase().includes('swim') ? 'swimming' : 'club');
+                            $('#cardentry').data('member-type', memberTypeSlug);
+
+                            // Show/hide elements based on member type
+                            if (memberTypeSlug === 'swimming') {
+                                $('#renewalBtn').addClass('d-none');
+                                $('#swimRenewalBtn').removeClass('d-none');
+                                $('#createOrderBtn').addClass('d-none');
+                                $('#cardWalletSection').addClass('d-none');
+                            } else {
+                                $('#renewalBtn').removeClass('d-none');
+                                $('#swimRenewalBtn').addClass('d-none');
+                                $('#createOrderBtn').removeClass('d-none');
+                                $('#cardWalletSection').removeClass('d-none');
+                            }
 
                             $('#cardentry').modal('show');
 
@@ -534,7 +548,16 @@
     $('#membershipHistoryBtn').on('click', function() {
         var memberId = $('#cardentry').data('member-id');
         if (!memberId) { toastr.error('Member data missing'); return; }
-        openMembershipHistoryModal(memberId);
+        $('#cardentry').modal('hide');
+        $('#cardentry').one('hidden.bs.modal', function() {
+            openMembershipHistoryModal(memberId);
+        });
+    });
+
+    $('#membershipplan').on('hidden.bs.modal', function() {
+        if ($('#cardentry').data('member-id')) {
+            $('#cardentry').modal('show');
+        }
     });
 
     $(document).on('click', '.membershipPlanBtn', function() {
@@ -656,6 +679,7 @@
             success: function(response) {
                 if (response.statusCode == 200) {
                     toastr.success(response.message);
+                    $('#cardentry').removeData('member-id');
                     $('#planrenewal').modal('hide');
                     setTimeout(() => location.reload(), 800);
                 } else {
@@ -673,11 +697,168 @@
     $('#renewalBtn').on('click', function () {
         var memberId = $('#cardentry').data('member-id');
         if (!memberId) { toastr.error('Member data missing'); return; }
-        openRenewalModal(memberId);
+        $('#cardentry').modal('hide');
+        $('#cardentry').one('hidden.bs.modal', function() {
+            openRenewalModal(memberId);
+        });
     });
 
     /* ---- Renewal button in member list table ---- */
     $(document).on('click', '.planRenewalBtn', function () {
         openRenewalModal($(this).data('id'));
+    });
+
+    /* Re-show #cardentry when renewal/swim-renewal modal is cancelled (not submitted) */
+    var _renewalFromCard = false;
+    $('#planrenewal').on('show.bs.modal', function() {
+        _renewalFromCard = $('#cardentry').data('member-id') ? true : false;
+    });
+    $('#planrenewal').on('hidden.bs.modal', function() {
+        if (_renewalFromCard && $('#cardentry').data('member-id')) {
+            _renewalFromCard = false;
+            $('#cardentry').modal('show');
+        }
+    });
+
+    var _swimRenewalFromCard = false;
+    $('#swimRenewalModal').on('show.bs.modal', function() {
+        _swimRenewalFromCard = $('#cardentry').data('member-id') ? true : false;
+    });
+    $('#swimRenewalModal').on('hidden.bs.modal', function() {
+        if (_swimRenewalFromCard && $('#cardentry').data('member-id')) {
+            _swimRenewalFromCard = false;
+            $('#cardentry').modal('show');
+        }
+    });
+
+    /* ===================== Swimming Member Renewal Modal JS ===================== */
+    function openSwimRenewalModal(memberId) {
+        $('#swimRenewalForm')[0].reset();
+        $('#swim_renewal_member_id').val(memberId);
+        $('#swim_renewal_gst_pct').val('{{ $globalGstPercentage ?? 0 }}');
+        $('#swimRenewalFineAlert').hide();
+        $('#swimRenewalFineList').html('');
+        $('#swimRenewalTotalFine').text('₹0.00');
+        $('#swim_renewal_fine_amt').val('0');
+        $('#swim_renewal_receipt_amt').text('₹0.00');
+        $('#swim_renewal_gst_amt').val('');
+
+        $.ajax({
+            url: '{{route("swimming-member.view", ":id")}}'.replace(':id', memberId),
+            type: 'GET',
+            success: function(response) {
+                if (response.statusCode == 200) {
+                    const d = response.data;
+                    const purchases = (d.purchase_history || []).slice().sort((a, b) =>
+                        new Date(b.expiry_date) - new Date(a.expiry_date)
+                    );
+                    const purchase = purchases[0];
+
+                    $('#swim_renewal_member_name').text(d.name || '—');
+                    $('#swim_renewal_card_no').text(d.card_details?.card_no || '—');
+                    $('#swim_renewal_current_plan').text(purchase?.membership_plan_type?.name ?? '—');
+                    $('#swim_renewal_expiry_date').text(
+                        purchase?.expiry_date ? new Date(purchase.expiry_date).toLocaleDateString('en-IN') : '—'
+                    );
+
+                    let fineTotal = 0, fineHtml = '';
+
+                    const sf = response.suggested_fine;
+                    if (sf && sf.has_fine) {
+                        fineTotal += parseFloat(sf.amount);
+                        fineHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-danger border-opacity-25">
+                            <span>Membership Expiry Fine (${sf.days} days × ₹${sf.per_day}/day)</span>
+                            <span class="fw-semibold">₹${parseFloat(sf.amount).toFixed(2)}</span>
+                        </div>`;
+                    }
+
+                    (d.pending_fines || []).forEach(function(f) {
+                        if (f.fine_type !== 'membership_expiry_fine') return;
+                        fineTotal += parseFloat(f.fine_amount);
+                        let label;
+                        if (f.reference_days && f.reference_days > 0) {
+                            const perDay = (parseFloat(f.fine_amount) / f.reference_days).toFixed(4);
+                            label = `Membership Expiry Fine (${f.reference_days} days × ₹${perDay}/day)`;
+                        } else {
+                            label = 'Membership Expiry Fine';
+                        }
+                        fineHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-danger border-opacity-25">
+                            <span>${label}</span>
+                            <span class="fw-semibold">₹${parseFloat(f.fine_amount).toFixed(2)}</span>
+                        </div>`;
+                    });
+
+                    if (fineTotal > 0) {
+                        $('#swimRenewalFineList').html(fineHtml);
+                        $('#swimRenewalTotalFine').text('₹' + fineTotal.toFixed(2));
+                        $('#swim_renewal_fine_amt').val(fineTotal.toFixed(2));
+                        $('#swimRenewalFineAlert').show();
+                    }
+
+                    calcSwimRenewalReceipt();
+                }
+                $('#swimRenewalModal').modal('show');
+            },
+            error: function() {
+                $('#swimRenewalModal').modal('show');
+            }
+        });
+    }
+
+    function calcSwimRenewalReceipt() {
+        const taxable = parseFloat($('#swim_renewal_taxable').val()) || 0;
+        const gstPct  = parseFloat($('#swim_renewal_gst_pct').val()) || 0;
+        const fine    = parseFloat($('#swim_renewal_fine_amt').val()) || 0;
+        const gstAmt  = (taxable * gstPct) / 100;
+        $('#swim_renewal_gst_amt').val(gstAmt.toFixed(2));
+        $('#swim_renewal_receipt_amt').text('₹' + (taxable + gstAmt + fine).toFixed(2));
+    }
+
+    $('#swim_renewal_taxable, #swim_renewal_gst_pct, #swim_renewal_fine_amt').on('input', calcSwimRenewalReceipt);
+
+    $(document).on('change', '.swim-renewal-plan-type', function() {
+        const price = parseFloat($(this).data('price')) || 0;
+        $('#swim_renewal_taxable').val(price > 0 ? price : '');
+        calcSwimRenewalReceipt();
+    });
+
+    $('#swimRenewalForm').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $('#swimRenewalSubmitBtn');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Submitting...');
+        $.ajax({
+            url: '{{ route("swimming-member.renew") }}',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.statusCode == 200) {
+                    toastr.success(response.message);
+                    $('#cardentry').removeData('member-id');
+                    $('#swimRenewalModal').modal('hide');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    toastr.error(response.message || 'Something went wrong');
+                }
+            },
+            error: function() { toastr.error('Something went wrong'); },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right me-1"></i> Submit Renewal');
+            }
+        });
+    });
+
+    /* ---- Swim Renewal button in card punch modal ---- */
+    $('#swimRenewalBtn').on('click', function () {
+        var memberId = $('#cardentry').data('member-id');
+        if (!memberId) { toastr.error('Member data missing'); return; }
+        $('#cardentry').modal('hide');
+        $('#cardentry').one('hidden.bs.modal', function() {
+            openSwimRenewalModal(memberId);
+        });
+    });
+
+    /* ---- Swim Renewal button in member list table ---- */
+    $(document).on('click', '.swimPlanRenewalBtn', function () {
+        openSwimRenewalModal($(this).data('id'));
     });
 </script>

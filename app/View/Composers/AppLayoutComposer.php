@@ -25,6 +25,14 @@ class AppLayoutComposer
                 ->where('is_active', 1)->get()
             : collect();
 
+        $swimMembershipType = MembershipType::where('name', 'Swimming Membership')
+            ->where('club_id', $clubId)->first();
+
+        $swimRenewalPlanTypes = $swimMembershipType
+            ? MembershipPlanType::where('membership_type_id', $swimMembershipType->id)
+                ->where('is_active', 1)->get()
+            : collect();
+
         $globalGstPercentage = GstRate::where('club_id', $clubId)
             ->value('gst_percentage') ?? 0;
 
@@ -32,6 +40,7 @@ class AppLayoutComposer
 
         $view->with([
             'renewalPlanTypes'    => $renewalPlanTypes,
+            'swimRenewalPlanTypes' => $swimRenewalPlanTypes,
             'globalGstPercentage' => $globalGstPercentage,
             'globalBankList'      => $globalBankList,
         ]);
