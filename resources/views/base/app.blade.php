@@ -285,7 +285,7 @@
     </div>
     <!-- card entry Modal end  -->
 
-    <!-- Membership plan Modal start-->
+    {{-- <!-- Membership plan Modal start-->
     <div class="modal fade" id="membershipplan" tabindex="-1" aria-labelledby="membershipplanModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -358,7 +358,7 @@
             </div>
         </div>
     </div>
-    <!-- Membership plan Modal end-->
+    <!-- Membership plan Modal end--> --}}
 
     <!-- ===================== Wallet Recharge Modal (Global) ===================== -->
     <div class="modal fade" id="walletrecharge" tabindex="-1" aria-labelledby="walletrechargeModalLabel" aria-hidden="true">

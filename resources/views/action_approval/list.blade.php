@@ -82,6 +82,12 @@
                                         </td>
                                     @elseif($data->module =="add_on_purchase")
                                         <td class="text-nowrap"><a href="javascript:void(0)" class="addOnPurchaseDtls" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
+
+                                    @elseif($data->module == "member_delete")
+                                        <td class="text-nowrap">
+                                                {{ $data->entity->name }}
+                                        </td>
+
                                     @else
                                         <td class="text-nowrap"><a href="javascript:void(0)" class="clubMemberDetail" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
                                     @endif
@@ -177,7 +183,25 @@
                                     @endphp --}}
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                    <td class="text-nowrap"><a href="javascript:void(0)" class="swimMemberDetail" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
+                                                                        @if($data->module =="locker_purchase")
+                                        <td class="text-nowrap">
+                                            <a href="javascript:void(0)" class="lockerDtls" data-id="{{$data->id}}">
+                                                {{ $data->entity->name }}
+                                            </a>
+                                        </td>
+
+                                    @elseif($data->module == "member_delete")
+                                        <td class="text-nowrap">
+                                                {{ $data->entity->name }}
+                                        </td>
+
+                                    @else
+                                        <td class="text-nowrap">
+                                            <a href="javascript:void(0)" class="swimMemberDetail" data-id="{{$data->id}}">
+                                                {{ $data->entity->name }}
+                                            </a>
+                                        </td>
+                                    @endif
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                     <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
@@ -728,7 +752,59 @@
     </div>
     <!-- edit Club Member Modal end  -->
 
+    <!-- Add Locker Purchase Modal Start for swimming members-->
+    <div class="modal fade" id="lockerModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
 
+                <!-- Header -->
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-semibold">Locker Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">
+                        <i class="fa-regular fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+
+                    <input type="hidden" id="lockerMemberId">
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-part mb-3">
+                                <label class="form-label">
+                                    <small>Assigned Locker</small>
+                                </label>
+
+                                <div class="fw-semibold">
+                                    <span id="lockerNumber">-</span>
+                                </div>
+                            </div>
+
+                            <div class="d-none" id="lockerAllocationInfo">
+                                <small class="form-label">Allocated Duration</small>
+                                <div class="fw-semibold">
+                                    <span id="lockerAllocationDates">-</span>
+                                </div>
+                            </div>
+
+                            <!-- PRICE SECTION HERE -->
+                            <label class="form-label">
+                                <small>Amount Paid</small>
+                            </label>
+
+                            <h5 class="fw-semibold mb-0">
+                                ₹ <span id="lockerPrice">0</span>
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Add Locker Purchase Modal End-->
 
 @endsection
 
@@ -970,7 +1046,43 @@
             });
         });
 
+        $(document).on('click', '.lockerDtls', function(e){
+            e.preventDefault();
 
+            let id = $(this).data('id');
+
+            // reset UI
+            $('#lockerNumber').text('-');
+            $('#lockerAllocationDates').text('-');
+            $('#lockerPrice').text('0');
+            $('#lockerAllocationInfo').addClass('d-none');
+
+            // open modal immediately
+            $('#lockerModal').modal('show');
+
+            $.ajax({
+                url: '{{ route("memberActionApproval.view", ":id") }}'.replace(':id', id),
+                type: 'GET',
+                success: function(response){
+
+                    if (response.statusCode == 200) {
+
+                        $('#lockerNumber').text(response.data.locker_name ?? 'N/A');
+
+                        $('#lockerAllocationDates').text(
+                            (response.data.start_date ?? '-') + ' to ' + (response.data.end_date ?? '-')
+                        );
+
+                        $('#lockerPrice').text(response.data.locker_price ?? 0);
+
+                        $('#lockerAllocationInfo').removeClass('d-none');
+                    }
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+        });
 
     });
 </script>
