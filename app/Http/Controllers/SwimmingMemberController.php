@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 
+//
+
 class SwimmingMemberController extends Controller
 {
     public function list()
