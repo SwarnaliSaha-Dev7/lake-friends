@@ -1707,6 +1707,22 @@
                                         <span id="lockerAllocationStatus" class="ms-2"></span>
                                     </div>
                                 </div>
+
+                                <div class="d-none mt-3" id="lockerPaymentHistory">
+                                    <small class="text-muted">Payment History</small>
+                                    <div class="border rounded-2 mt-1">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-muted">Date</th>
+                                                    <th class="text-muted text-end">Amount</th>
+                                                    <th class="text-muted text-end">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lockerPaymentHistoryBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -2420,6 +2436,8 @@
             $('#lockerAllocationInfo').addClass('d-none');
             $('#lockerAllocationDates').text('-');
             $('#lockerAllocationStatus').text('').removeClass('text-success text-warning text-danger');
+            $('#lockerPaymentHistory').removeClass('d-none');
+            $('#lockerPaymentHistoryBody').html('<tr><td colspan="3" class="text-center text-muted">No history</td></tr>');
 
             // $('#lockerModal').data('has-locker', false);
 
@@ -2469,6 +2487,24 @@
                         }
                         $('#lockerAllocationInfo').removeClass('d-none');
 
+                        const history = response.payment_history || allocation.payment_history || [];
+                        if (history.length > 0) {
+                            let rows = '';
+                            history.forEach(function (h) {
+                                const date = h.created_at ? new Date(h.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '-';
+                                const amount = h.net_amount !== null ? parseFloat(h.net_amount).toFixed(2) : '0.00';
+                                const status = h.payment_status ? h.payment_status.toString() : '-';
+                                rows += `<tr>
+                                    <td>${date}</td>
+                                    <td class="text-end">₹ ${amount}</td>
+                                    <td class="text-end">${status}</td>
+                                </tr>`;
+                            });
+                            $('#lockerPaymentHistoryBody').html(rows);
+                        } else {
+                            $('#lockerPaymentHistoryBody').html('<tr><td colspan="3" class="text-center text-muted">No history</td></tr>');
+                        }
+
                         if (isExpired) {
                             $('#lockerModal').data('has-locker', false);
                             let lockerPrice = $select.find(':selected').data('price') || 0;
@@ -2482,6 +2518,23 @@
                         }
                     } else {
                         $('#lockerModal').data('has-locker', false);
+                        const history = response.payment_history || [];
+                        if (history.length > 0) {
+                            let rows = '';
+                            history.forEach(function (h) {
+                                const date = h.created_at ? new Date(h.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '-';
+                                const amount = h.net_amount !== null ? parseFloat(h.net_amount).toFixed(2) : '0.00';
+                                const status = h.payment_status ? h.payment_status.toString() : '-';
+                                rows += `<tr>
+                                    <td>${date}</td>
+                                    <td class="text-end">₹ ${amount}</td>
+                                    <td class="text-end">${status}</td>
+                                </tr>`;
+                            });
+                            $('#lockerPaymentHistoryBody').html(rows);
+                        } else {
+                            $('#lockerPaymentHistoryBody').html('<tr><td colspan="3" class="text-center text-muted">No history</td></tr>');
+                        }
                     }
                 },
                 error: function(){
