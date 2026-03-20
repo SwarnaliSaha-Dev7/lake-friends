@@ -39,9 +39,20 @@ class FoodItemManageController extends Controller
                                           ->where('item_type', 'food')
                                           ->get();
 
-            return view('food_items.list', compact('foodItemsList','foodCatList','page_title','title'));
+            $pendingByItem = ActionApproval::where('club_id', $club_id)
+                            ->whereIn('module', ['food_item_create', 'food_item_delete', 'food_price_update'])
+                            ->where('status', 'pending')
+                            ->get(['entity_id', 'module'])
+                            ->groupBy('entity_id')
+                            ->map(fn($rows) => $rows->pluck('module')->toArray());
 
-        }
+                        $pendingCreateIds = $pendingByItem->filter(fn($m) => in_array('food_item_create', $m))->keys()->toArray();
+                        $pendingDeleteIds  = $pendingByItem->filter(fn($m) => in_array('food_item_delete', $m))->keys()->toArray();
+                        $pendingAnyIds     = $pendingByItem->keys()->toArray();
+
+                        return view('food_items.list', compact('foodItemsList','foodCatList','page_title','title', 'pendingCreateIds', 'pendingDeleteIds', 'pendingAnyIds'));
+
+                    }
 
         catch (\Throwable $th) {
             return $th->getMessage();
@@ -110,6 +121,8 @@ class FoodItemManageController extends Controller
             $image_path = 'storage/' . $path;
             }
 
+            $isAdmin = Auth::user()->hasRole('admin');
+
             $foodItem   = FoodItem::create([
                 'club_id'             => $club_id,
                 'name'                => $request->itemName,
@@ -117,7 +130,7 @@ class FoodItemManageController extends Controller
                 'item_type'           => 'food',
                 'image'               => $image_path,
                 'code'                => $request->itemCode,
-                'is_active'           => $request->itemstatus,
+                'is_active'           => $isAdmin ? $request->itemstatus : 0,
                 'unit'                => 'plate'
             ]);
 
@@ -128,13 +141,37 @@ class FoodItemManageController extends Controller
                 'is_active'       => '1',
             ]);
 
+            $payload = [
+                'item_id'             => $foodItem->id,
+                'name'                => $request->itemName,
+                'category_id'         => $request->itemCat,
+                'code'                => $request->itemCode,
+                'is_active'           => $request->itemstatus,
+                'unit'                => 'plate',
+                'price'               => $request->itemPrice,
+                'image'               => $image_path,
+            ];
+
+            $approval = ActionApproval::create([
+                'club_id'                 => $club_id,
+                'module'                  => 'food_item_create',
+                'action_type'             => 'create',
+                'entity_model'            => 'FoodItem',
+                'entity_id'               => $foodItem->id,
+                'maker_user_id'           => Auth::id(),
+                'checker_user_id'         => $isAdmin ? Auth::id() : null,
+                'request_payload'         => json_encode($payload),
+                'status'                  => $isAdmin ? 'approved' : 'pending',
+                'approved_or_rejected_at' => $isAdmin ? now() : null,
+            ]);
+
             DB::commit();
 
             return response()->json([
 
             'statusCode'=>200,
 
-            'message'   =>'Food item added successfully'
+            'message'    => $isAdmin ? 'Food item added successfully.' : 'Food item submitted for approval.',
 
             ]);
 
@@ -460,19 +497,46 @@ class FoodItemManageController extends Controller
                                 ->where('id', $id)
                                 ->firstOrFail();
 
-            $foodItem->delete();
+            $pendingApproval = ActionApproval::where('club_id', $club_id)
+                                             ->where('entity_id', $id)
+                                             ->whereIn('module', ['food_item_create', 'food_item_delete', 'food_price_update'])
+                                             ->where('status', 'pending')
+                                             ->first();
 
-            return response()->json([
-                'statusCode' => 200,
-                'message' => 'Food item deleted successfully'
+            if ($pendingApproval) {
+                $label = match($pendingApproval->module) {
+                    'food_item_create'  => 'add',
+                    'food_item_delete'  => 'delete',
+                    'food_price_update' => 'price change',
+                    default               => 'approval',
+                };
+                return response()->json([
+                    'statusCode' => 422,
+                    'message'    => "This item already has a pending {$label} request. Please wait for it to be approved or rejected before proceeding.",
+                ]);
+            }
+
+            if (Auth::user()->hasRole('admin')) {
+                $foodItem->delete();
+                return response()->json(['statusCode' => 200, 'message' => 'Food item deleted successfully.']);
+            }
+
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'food_item_delete',
+                'action_type'     => 'delete',
+                'entity_model'    => 'FoodItem',
+                'entity_id'       => $id,
+                'maker_user_id'   => Auth::id(),
+                'request_payload' => json_encode(['item_id' => $id, 'item_name' => $foodItem->name]),
+                'status'          => 'pending',
             ]);
+
+            return response()->json(['statusCode' => 200, 'message' => 'Delete request submitted for approval.']);
 
         } catch (\Throwable $th) {
 
-            return response()->json([
-                'statusCode' => 500,
-                'error' => $th->getMessage()
-            ]);
+             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
 
         }
     }

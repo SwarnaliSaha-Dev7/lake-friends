@@ -30,29 +30,50 @@
                             <tr>
                                 <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Item Name</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Old Price</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">New Price</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Date</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Action Type</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Details</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Maker</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Status</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($foodPriceData as $data)
+                            @forelse ($foodPriceData as $data)
                                     @php
-                                        $payloadJson = $data->request_payload;
-                                        $payload = json_decode($payloadJson);
+                                         $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+
+                                         $actionLabel = match($data->module) {
+                                        'food_item_create' => 'Add Item',
+                                        'food_item_delete' => 'Delete Item',
+                                        'food_price_update' => 'Price Change',
+                                        default => ucfirst(str_replace('_', ' ', $data->module)),
+                                    };
+
+                                    $actionBadgeClass = match($data->module) {
+                                        'food_item_create'  => 'bg-success-subtle text-success border-success',
+                                        'food_item_delete'  => 'bg-danger-subtle text-danger border-danger',
+                                        'food_price_update' => 'bg-info-subtle text-info border-info',
+                                        default               => 'bg-secondary-subtle text-secondary border-secondary',
+                                    };
                                     @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">{{ $data->entity->name ?? '-' }}</td>
-                                    <td class="text-nowrap">₹{{ $payload->old_price }}</td>
-                                    <td class="text-nowrap">₹{{ $payload->new_price }}</td>
+                                    <td class="text-nowrap">
+                                        <span class="badge border rounded-pill px-3 py-1 {{ $actionBadgeClass }}">{{ $actionLabel }}</span>
+                                    </td>
+                                    <td class="text-nowrap small text-muted">
+                                        @if($data->module === 'food_price_update')
+                                            ₹{{ $payload->old_price }} → ₹{{ $payload->new_price }}
+                                        @elseif($data->module === 'food_item_create')
+                                            Price: ₹{{ $payload->price ?? '—' }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
                                     {{-- <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td> --}}
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
-                                    <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
-                                    <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->status ?? 'Pending')) }}</td>
 
                                     {{-- @if ($member->status == 'active')
                                         <td class="text-success text-nowrap">Active</td>
@@ -72,7 +93,11 @@
 
                                     </td>
                                 </tr>
-                            @endforeach
+                                @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">No pending approvals found.</td>
+                                </tr>
+                            @endforelse
 
                         </tbody>
                     </table>

@@ -26,7 +26,9 @@ return new class extends Migration
                 'member_create',
                 'member_delete',
                 'locker_purchase',
-                'add_on_purchase'
+                'add_on_purchase',
+                'food_item_create',
+                'food_item_delete'
             ])->nullable();
 
             $table->enum('action_type', ['create', 'update', 'delete'])->nullable();

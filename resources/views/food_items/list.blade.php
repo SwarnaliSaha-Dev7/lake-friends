@@ -32,10 +32,9 @@
                                 <th class="text-white fw-medium text-nowrap">Sl. No.</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Name</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Code</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Category
-                                </th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Category</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Image</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Satus</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Status</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Price</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                             </tr>
@@ -50,15 +49,13 @@
                                     <td class="text-nowrap"><img src="{{ $items->image }}"
                                             class="rounded-circle" alt="" loading="lazy" fetchpriority="auto"
                                             width="64" height="64"></td>
-                                    <td class="text-success text-nowrap">
-                                        @if(($items->is_active == 1))
-                                            <span class="text-success text-nowrap">
-                                                Active
-                                            </span>
+                                    <td class="text-nowrap">
+                                        @if(in_array($items->id, $pendingCreateIds))
+                                            <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2">Pending Approval</span>
+                                        @elseif($items->is_active == 1)
+                                            <span class="text-success">Active</span>
                                         @else
-                                            <span class="text-secondary text-nowrap">
-                                                Inactive
-                                            </span>
+                                            <span class="text-secondary">Inactive</span>
                                         @endif
                                     </td>
                                     <td class="text-nowrap">&#8377;{{ $items->foodItemPrice->price ?? '0' }}</td>
@@ -69,12 +66,26 @@
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </small>
                                         </button>
-                                        <button
+
+                                        @if(in_array($items->id, $pendingDeleteIds))
+                                            <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2 ms-1">Delete Pending</span>
+                                        @elseif(in_array($items->id, $pendingCreateIds))
+                                            {{-- item not yet approved, block deletion --}}
+                                        @else
+                                            <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row ms-1"
+                                                data-id="{{ $items->id }}"
+                                                data-pending="{{ in_array($items->id, $pendingAnyIds) ? '1' : '0' }}"
+                                                title="Delete">
+                                                <small><i class="fa-solid fa-trash"></i></small>
+                                            </button>
+                                        @endif
+
+                                        {{-- <button
                                             class="border-0 bg-light p-1 rounded-3 lh-1 action-btn delete-row"
                                             data-id="{{ $items->id }}"
                                             title="Delete">
                                             <small><i class="fa-solid fa-trash"></i></small>
-                                        </button>
+                                        </button> --}}
 
                                     </td>
                                 </tr>

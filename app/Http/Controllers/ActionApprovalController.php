@@ -178,7 +178,7 @@ class ActionApprovalController extends Controller
 
                 $foodPriceData = ActionApproval::with('operatorDetails','entity')
                                             ->where('club_id', $clubId)
-                                            ->where('module', 'food_price_update')
+                                            ->whereIn('module', ['food_item_create', 'food_price_update','food_item_delete'])
                                             ->where('status', 'pending')
                                             ->where('maker_user_id', '!=', Auth::id())
                                             ->latest()
@@ -531,6 +531,21 @@ class ActionApprovalController extends Controller
                 $item    = FoodItem::find($data->entity_id);
                 if ($item) {
                     $item->update(['is_active' => $payload->is_active ?? 1]);
+                }
+            }
+
+            if ($data->module == 'food_item_create') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->update(['is_active' => $payload->is_active ?? 1]);
+                }
+            }
+
+            if ($data->module == 'food_item_delete') {
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
                 }
             }
 
