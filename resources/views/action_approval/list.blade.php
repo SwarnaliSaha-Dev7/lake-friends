@@ -67,8 +67,19 @@
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
 
-                                    @if($data->module =="locker_purchase")
+                                    @if($data->module == 'locker_purchase')
                                         <td class="text-nowrap"><a href="javascript:void(0)" class="lockerDtls" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
+                                    @elseif($data->module == 'plan_renewal')
+                                        @php
+                                            $renewalMember = $data->entity->member ?? null;
+                                            $renewalPlan   = $data->entity->membershipPlanType ?? null;
+                                        @endphp
+                                        <td class="text-nowrap">
+                                            {{ $renewalMember->name ?? '—' }}
+                                            @if($renewalPlan)
+                                                <span class="text-muted small">— {{ $renewalPlan->name }}</span>
+                                            @endif
+                                        </td>
                                     @else
                                         <td class="text-nowrap"><a href="javascript:void(0)" class="clubMemberDetail" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
                                     @endif

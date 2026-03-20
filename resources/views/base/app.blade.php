@@ -29,7 +29,7 @@
         <div class="modal-dialog modal-md">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h2 class="modal-title fs-5 fw-semibold" id="cardentryswipeModalLabel">Gate Entry Logs</h2>
+                    <h2 class="modal-title fs-5 fw-semibold" id="cardentryswipeModalLabel">Card Swipe</h2>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
@@ -77,6 +77,7 @@
                         <div class="overflow-hidden">
                             <div class="fw-semibold fs-6 text-truncate lh-sm" id="cardMemberName">—</div>
                             <div class="small opacity-75 text-truncate" id="cardMemberClubName">—</div>
+                            <div class="small opacity-75 text-truncate" id="cardMemberType" style="font-size:0.75rem;"></div>
                             <div class="d-flex gap-1 mt-1 flex-wrap">
                                 <span class="badge rounded-pill px-2 py-1 border border-white border-opacity-50 small" id="cardStatusBadge" style="font-size:0.68rem;background:rgba(255,255,255,0.15);">—</span>
                                 <span class="badge rounded-pill px-2 py-1 border border-white border-opacity-50 small" id="memberStatusBadge" style="font-size:0.68rem;background:rgba(255,255,255,0.15);">—</span>
@@ -90,8 +91,8 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <div class="rounded-3 p-2" style="background:#f8f9fa;">
-                                <div class="text-muted mb-1" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;">Member ID</div>
-                                <div class="fw-semibold small text-truncate" id="cardMemberCode">—</div>
+                                <div class="text-muted mb-1" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;">Member Type</div>
+                                <div class="fw-semibold small text-truncate" id="cardMemberTypeCard">—</div>
                             </div>
                         </div>
                         <div class="col-6">
@@ -121,18 +122,15 @@
                             <div class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;">Wallet Balance</div>
                             <div class="fw-bold fs-5 text-success lh-sm" id="cardMemberWallet">Rs.0.00</div>
                         </div>
-                        <div class="rounded-circle d-flex align-items-center justify-content-center text-success"
-                            style="width:40px;height:40px;background:rgba(16,185,129,0.12);">
-                            <i class="fa-solid fa-wallet"></i>
-                        </div>
+                        <button type="button" id="walletRechargeBtn" title="Recharge Wallet"
+                            class="btn d-flex align-items-center gap-1 fw-semibold"
+                            style="background:#16a34a;color:#fff;border-radius:8px;font-size:0.78rem;padding:6px 12px;">
+                            <i class="fa-solid fa-plus"></i> Recharge
+                        </button>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="d-flex gap-2 mb-2">
-                        <button type="button" class="btn flex-fill py-2 fw-medium" id="walletRechargeBtn"
-                            style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:10px;font-size:0.82rem;">
-                            <i class="fa-solid fa-wallet d-block mb-1 fs-6"></i>Wallet Recharge
-                        </button>
+                    <div class="d-flex gap-2 mb-2 flex-wrap">
                         <button type="button" class="btn flex-fill py-2 fw-medium" id="renewalBtn"
                             style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:10px;font-size:0.82rem;">
                             <i class="fa-solid fa-rotate-right d-block mb-1 fs-6"></i>Renewal
@@ -140,6 +138,10 @@
                         <button type="button" class="btn flex-fill py-2 fw-medium" id="createOrderBtn"
                             style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;font-size:0.82rem;">
                             <i class="fa-solid fa-cart-plus d-block mb-1 fs-6"></i>Create Order
+                        </button>
+                        <button type="button" class="btn flex-fill py-2 fw-medium" id="membershipHistoryBtn"
+                            style="background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:10px;font-size:0.82rem;">
+                            <i class="fa-solid fa-clock-rotate-left d-block mb-1 fs-6"></i>Membership History
                         </button>
                     </div>
                 </div>
@@ -267,7 +269,10 @@
                     </div>
 
                     <div class="d-flex flex-wrap justify-content-between align-items-center mt-3">
-                        <button type="button" class="btn btn-primary" id="payWithWalletBtn">wallet</button>
+                        <button type="button" class="btn d-flex align-items-center gap-2 fw-semibold" id="payWithWalletBtn"
+                            style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:8px;">
+                            <i class="fa-solid fa-wallet"></i> Recharge Wallet
+                        </button>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             <button type="button" class="btn btn-primary" id="placeOrderBtn">Place Order</button>
@@ -278,7 +283,6 @@
             </div>
         </div>
     </div>
-<<<<<<< HEAD
     <!-- card entry Modal end  -->
 
     <!-- Membership plan Modal start-->
@@ -356,6 +360,99 @@
     </div>
     <!-- Membership plan Modal end-->
 
+    <!-- ===================== Wallet Recharge Modal (Global) ===================== -->
+    <div class="modal fade" id="walletrecharge" tabindex="-1" aria-labelledby="walletrechargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="walletrechargeModalLabel">Wallet Recharge</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card current-balance border-0 p-1 mb-4">
+                        <div class="card-body">
+                            <p class="card-text fw-semibold mb-2 text-white">Current Balance</p>
+                            <h5 class="card-title fs-4 fw-semibold text-white mb-0" id="walletBalance"></h5>
+                        </div>
+                    </div>
+                    <form action="" id="walletRechargeForm" method="post">
+                        @csrf
+                        <input type="hidden" name="wallet_member_id" id="walletMemberId" value="">
+                        <input type="hidden" id="walletMemberType" value="">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="input-group mb-3">
+                                    <label class="form-label w-100 mb-1"><small>Balance</small></label>
+                                    <span class="input-group-text bg-transparent border-end-0 bg-white"><small>₹</small></span>
+                                    <input id="amountInput" type="number" class="form-control border-start-0 shadow-none"
+                                        name="wallet_recharge_amount" placeholder="0" min="500" step="1" required>
+                                </div>
+                                <span class="error-div text-danger" id="amountErrorDiv"></span>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-dark mb-3">Quick Select</label>
+                                <div class="d-flex gap-2 flex-wrap mb-3">
+                                    @foreach ([500, 1000, 2000, 5000] as $amt)
+                                    <button type="button" class="btn btn-outline-success btn-sm quick-amt-btn px-3" data-amt="{{ $amt }}">₹ {{ number_format($amt) }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-part mb-3">
+                                    <label class="form-label w-100 mb-1"><small>Payment Mode</small></label>
+                                    <input type="text" class="form-control py-2 shadow-none" name="wallet_payment_mode"
+                                        placeholder="Payment Mode" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-part mb-3">
+                                    <label class="form-label w-100 mb-1"><small>A/C Head</small></label>
+                                    <input type="text" class="form-control py-2 shadow-none" name="wallet_ac_head"
+                                        placeholder="A/C Head" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-part mb-3">
+                                    <label class="form-label w-100 mb-1"><small>Bank Name</small></label>
+                                    <select name="wallet_bank_id" class="form-select py-2 shadow-none" required>
+                                        <option value="">Bank Name</option>
+                                        @foreach ($globalBankList as $bank)
+                                            <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-part mb-3">
+                                    <label class="form-label w-100 mb-1"><small>Remarks</small></label>
+                                    <input type="text" class="form-control py-2 shadow-none" name="wallet_remarks"
+                                        placeholder="Remarks" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button class="btn btn-primary fw-semibold" id="rechargeSubmitBtn">Recharge Wallet</button>
+                        </div>
+                    </form>
+                    <div class="d-flex justify-content-between align-items-center gap-3 my-4">
+                        <div class="form-label fw-semibold text-dark mb-3">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-solid fa-wallet"></i>
+                            </span> Recent Transactions
+                        </div>
+                    </div>
+                    <div class="bg-light p-2">
+                        <table class="table border-0 m-0 wallet-table">
+                            <tbody id="walletTransactionTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Wallet Recharge Modal end-->
+
     <!-- Wallet Recharge Confirmation Modal start-->
     <div class="modal fade" id="confirmRechargeModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -384,9 +481,164 @@
         </div>
     </div>
     <!-- Wallet Recharge Confirmation Modal end-->
-=======
-    <!-- create modal end -->
->>>>>>> main-merge
+
+    <!-- ===================== Membership History Modal (Global) ===================== -->
+    <div class="modal fade" id="membershipplan" tabindex="-1" aria-labelledby="membershipplanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="membershipplanModalLabel">Membership Plan History</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table border-0 membership-plan-table">
+                            <tbody id="membershipPlanTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Membership History Modal end -->
+
+    <!-- ===================== Plan Renewal Modal (Global) ===================== -->
+    <div class="modal fade" id="planrenewal" tabindex="-1" aria-labelledby="planrenewalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="planrenewalModalLabel">Plan Renewal</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="renewalForm">
+                        @csrf
+                        <input type="hidden" id="renewal_member_id" name="member_id">
+
+                        {{-- Member Summary --}}
+                        <label class="form-label fw-semibold text-dark mb-3">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-regular fa-user"></i>
+                            </span>Member Details
+                        </label>
+                        <div class="row g-2 mb-3 p-3 rounded-3 border bg-light">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Name</small>
+                                <span class="fw-semibold" id="renewal_member_name">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Card No</small>
+                                <span class="fw-semibold" id="renewal_card_no">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Current Plan</small>
+                                <span class="fw-semibold" id="renewal_current_plan">—</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Expiry Date</small>
+                                <span class="fw-semibold" id="renewal_expiry_date">—</span>
+                            </div>
+                        </div>
+
+                        {{-- Pending Fines --}}
+                        <div id="renewalFineAlert" class="alert alert-danger py-2 mb-3" style="display:none;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span class="fw-semibold small">Pending Fines (included in this renewal)</span>
+                            </div>
+                            <div id="renewalFineList" class="small"></div>
+                            <div class="d-flex justify-content-between border-top border-danger mt-2 pt-2">
+                                <span class="fw-semibold small">Total Fine</span>
+                                <span class="fw-bold" id="renewalTotalFine">₹0.00</span>
+                            </div>
+                        </div>
+
+                        {{-- Plan Type --}}
+                        <label class="form-label fw-semibold text-dark mb-2 mt-1">
+                            <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                <i class="fa-regular fa-credit-card"></i>
+                            </span>Renewal Details
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label w-100 mb-1"><small>Plan Type <span class="text-danger">*</span></small></label>
+                                @foreach ($renewalPlanTypes as $type)
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input renewal-plan-type" type="radio"
+                                        name="membership_plan_type_id"
+                                        id="grenewal_plan_{{ $type->id }}"
+                                        value="{{ $type->id }}"
+                                        data-price="{{ $type->price ?? 0 }}"
+                                        {{ $loop->first ? 'required' : '' }}>
+                                    <label class="form-check-label" for="grenewal_plan_{{ $type->id }}">
+                                        <small>{{ $type->name }}</small>
+                                    </label>
+                                </div>
+                                @endforeach
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Payment Mode <span class="text-danger">*</span></small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="payment_mode" id="renewal_payment_mode" placeholder="e.g. Cash / Cheque / UPI" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>A/C Head <span class="text-danger">*</span></small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="ac_head" id="renewal_ac_head" placeholder="A/C Head" required>
+                            </div>
+
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>Taxable Amt <span class="text-danger">*</span></small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="taxable_amount" id="renewal_taxable" placeholder="0.00" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>GST%</small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="renewal_gst_pct" value="{{ $globalGstPercentage }}" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>GST Amt</small></label>
+                                <input type="text" class="form-control py-2 shadow-none bg-light" name="gst_amount" id="renewal_gst_amt" placeholder="0.00" readonly>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <label class="form-label w-100 mb-1"><small>Fine Amt</small></label>
+                                <input type="number" class="form-control py-2 shadow-none" name="fine_amount" id="renewal_fine_amt" placeholder="0.00" min="0" step="0.01" value="0">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold">Total Receipt Amount</span>
+                                    <span class="fw-bold fs-5 text-primary" id="renewal_receipt_amt">₹0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Bank <span class="text-danger">*</span></small></label>
+                                <select name="bank_id" class="form-select py-2 shadow-none" id="renewal_bank" required>
+                                    <option value="">Select Bank</option>
+                                    @foreach ($globalBankList as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label w-100 mb-1"><small>Remarks</small></label>
+                                <input type="text" class="form-control py-2 shadow-none" name="remarks" id="renewal_remarks" placeholder="Remarks">
+                            </div>
+                        </div>
+
+                        <div class="text-end mod-footer mt-4">
+                            <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-semibold" id="renewalSubmitBtn">
+                                <i class="fa-solid fa-rotate-right me-1"></i> Submit Renewal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Plan Renewal Modal end -->
 
     @include('base.scripts')
     @yield('customJS')
@@ -735,8 +987,24 @@
             $('#orderGrandTotal').text('Rs ' + grand.toFixed(2));
         }
 
+        /* ---- Wallet Recharge from Create Order modal ---- */
+        $('#payWithWalletBtn').on('click', function () {
+            let memberId = $('#cardentry').data('member-id');
+            let memberType = $('#cardentry').data('member-type');
+            if (!memberId || !memberType) {
+                toastr.error('Member data missing');
+                return;
+            }
+            let url = memberType === 'swimming'
+                ? '{{route("swimming-member.fetch-wallet-balance", ":id")}}'.replace(':id', memberId)
+                : '{{route("club-member.fetch-wallet-balance", ":id")}}'.replace(':id', memberId);
+
+            // Open wallet recharge modal on top of create order modal
+            loadWalletData(url, memberId, memberType, { keepCardEntry: true });
+        });
+
         /* ---- Place Order ---- */
-        $('#placeOrderBtn, #payWithWalletBtn').on('click', function () {
+        $('#placeOrderBtn').on('click', function () {
             var items = [];
             var valid = true;
 
@@ -838,11 +1106,11 @@
                     } else {
                         toastr.error(response.message || 'Something went wrong.');
                     }
-                    $btn.prop('disabled', false).html($btn.attr('id') === 'payWithWalletBtn' ? 'Wallet' : 'Place Order');
+                    $btn.prop('disabled', false).html('Place Order');
                 },
                 error: function () {
                     toastr.error('Something went wrong.');
-                    $btn.prop('disabled', false).html($btn.attr('id') === 'payWithWalletBtn' ? 'Wallet' : 'Place Order');
+                    $btn.prop('disabled', false).html('Place Order');
                 }
             });
         });

@@ -89,6 +89,12 @@ class ActionApprovalController extends Controller
                 ->latest()
                 ->get();
 
+            $clubMembershipData->each(function ($row) {
+                if ($row->module === 'plan_renewal' && $row->entity) {
+                    $row->entity->load('member:id,name', 'membershipPlanType:id,name');
+                }
+            });
+
             // $clubMembershipData = ActionApproval::with('operatorDetails')
             //     ->where('maker_user_id', '!=', Auth::id())
             //     ->where(function ($q) use ($clubMembershipId) {
@@ -394,6 +400,13 @@ class ActionApprovalController extends Controller
                 ]);
             }
 
+            if ($data->module == 'plan_renewal') {
+                $purchase = MembershipPurchaseHistory::find($data->entity_id);
+                if ($purchase) {
+                    $purchase->update(['status' => 'active']);
+                }
+            }
+
             if ($data->module == 'member_delete') {
 
                 DB::beginTransaction();
@@ -689,6 +702,11 @@ class ActionApprovalController extends Controller
                 if ($serving) {
                     $serving->forceDelete();
                 }
+            } elseif ($data->module == 'plan_renewal') {
+                $purchase = MembershipPurchaseHistory::find($data->entity_id);
+                if ($purchase) {
+                    $purchase->update(['status' => 'cancelled']);
+                }
             }
             // liquor_serving_update / liquor_serving_delete: no rollback needed
             elseif ($data->module == 'member_edit') {
@@ -895,10 +913,22 @@ class ActionApprovalController extends Controller
 
             $clubId = club_id();
 
-            $actionApprovalList = ActionApproval::with(['operatorDetails','entity','membershipType:id,name'])
+            $actionApprovalList = ActionApproval::with([
+                    'operatorDetails',
+                    'entity',
+                    'membershipType:id,name',
+                    'checker:id,name',
+                ])
                 ->where('club_id', $clubId)
                 ->latest('id')
                 ->get();
+
+            // Eager load renewal-specific relations
+            $actionApprovalList->each(function ($row) {
+                if ($row->module === 'plan_renewal' && $row->entity) {
+                    $row->entity->load('member:id,name', 'membershipPlanType:id,name');
+                }
+            });
 
             return view('all-action-approval-list', compact(
                 'title',

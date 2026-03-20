@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActionApproval;
 use App\Models\AddOn;
 use App\Models\Bank;
+use App\Models\FineRule;
 use App\Models\Card;
 use App\Models\GstRate;
 use App\Models\Locker;
@@ -444,9 +445,12 @@ class ClubMemberController extends Controller
                 ->where('status', 'pending')
                 ->update(['status' => 'paid']);
 
+            // Record projected FY shortfall as paid so year-end command doesn't double-charge
+            $this->recordFyShortfallAtRenewal($member, $clubId);
+
             $approval = ActionApproval::create([
                 'club_id'            => $clubId,
-                'module'             => 'member_renewal',
+                'module'             => 'plan_renewal',
                 'action_type'        => 'create',
                 'entity_model'       => 'MembershipPurchaseHistory',
                 'membership_type_id' => $membershipType->id,
@@ -492,14 +496,124 @@ class ClubMemberController extends Controller
                     'walletDetails',
                     'paymentHistory',
                     'latestApproval.checker:id,name',
-                    'pendingFines.financialYear'
+                    'pendingFines',
                 ])
                 ->find($id);
 
+            // Calculate suggested fine based on membership plan's fine rule
+            $suggestedFine = [
+                'amount'      => 0,
+                'days'        => 0,
+                'per_day'     => 0,
+                'has_fine'    => false,
+            ];
+
+            $latestPurchase = $member->purchaseHistory
+                ->where('status', 'active')
+                ->sortByDesc('expiry_date')->first();
+
+            // Only dynamically calculate expiry fine if no stored pending record exists
+            $hasStoredExpiryFine = $member->pendingFines
+                ->where('fine_type', 'membership_expiry_fine')
+                ->isNotEmpty();
+
+            if (!$hasStoredExpiryFine && $latestPurchase && $latestPurchase->expiry_date) {
+                $expiry = Carbon::parse($latestPurchase->expiry_date);
+                if ($expiry->isPast() && $latestPurchase->membershipPlanType) {
+                    $plan         = $latestPurchase->membershipPlanType;
+                    $durationDays = max(1, (int) $plan->duration_months * 30);
+                    $perDay       = round((float) $plan->price / $durationDays, 4);
+
+                    // Get grace days & max cap from fine_rules (plan-specific or global)
+                    $fineRule = FineRule::where('club_id', $clubId)
+                        ->where('rule_type', 'membership_expiry')
+                        ->where('membership_plan_type_id', $plan->id)
+                        ->first()
+                        ?? FineRule::where('club_id', $clubId)
+                            ->where('rule_type', 'membership_expiry')
+                            ->whereNull('membership_plan_type_id')
+                            ->first();
+
+                    $graceDays    = (int) ($fineRule?->grace_days ?? 0);
+                    $maxCap       = $fineRule?->max_fine_cap ? (float) $fineRule->max_fine_cap : null;
+
+                    $daysExpired  = (int) $expiry->diffInDays(Carbon::today());
+                    $billableDays = max(0, $daysExpired - $graceDays);
+                    $fineAmount   = round($billableDays * $perDay, 2);
+
+                    if ($maxCap && $fineAmount > $maxCap) {
+                        $fineAmount = $maxCap;
+                    }
+
+                    $suggestedFine = [
+                        'amount'   => $fineAmount,
+                        'days'     => $billableDays,
+                        'per_day'  => $perDay,
+                        'has_fine' => $fineAmount > 0,
+                    ];
+                }
+            }
+
+            // Calculate projected FY minimum spend shortfall (even if FY not yet closed)
+            $fyShortfalls = [];
+            $spendRule = \App\Models\MinimumSpendRule::where('club_id', $clubId)->first();
+            if ($spendRule) {
+                $today      = Carbon::today();
+                $monthlyMin = (float) $spendRule->minimum_amount / 12;
+
+                // Determine current FY
+                if ($today->month >= 4) {
+                    $fyLabel = $today->year . '-' . ($today->year + 1);
+                    $fyStart = Carbon::create($today->year, 4, 1);
+                    $fyEnd   = Carbon::create($today->year + 1, 3, 31);
+                } else {
+                    $fyLabel = ($today->year - 1) . '-' . $today->year;
+                    $fyStart = Carbon::create($today->year - 1, 4, 1);
+                    $fyEnd   = Carbon::create($today->year, 3, 31);
+                }
+
+                // Pro-rated minimum: use first ACTIVE purchase start_date as join date
+                $firstPurchase  = $member->purchaseHistory
+                    ->where('status', 'active')
+                    ->sortBy('start_date')->first();
+                $joinDate       = $firstPurchase
+                    ? Carbon::parse($firstPurchase->start_date)->startOfMonth()
+                    : Carbon::parse($member->created_at)->startOfMonth();
+                $effectiveStart = $joinDate->gt($fyStart) ? $joinDate : $fyStart;
+                $months         = (int) $effectiveStart->diffInMonths($fyEnd->copy()->addDay());
+                $minimumRequired = round($monthlyMin * $months, 2);
+
+                // Get existing financial summary for current FY
+                $fy = \App\Models\FinancialYear::where('club_id', $clubId)->where('fy_label', $fyLabel)->first();
+                $totalSpend = 0;
+                if ($fy) {
+                    $summary = \App\Models\MemberFinancialSummary::where('member_id', $member->id)
+                        ->where('financial_year_id', $fy->id)->first();
+                    $totalSpend = $summary ? (float) $summary->total_spend : 0;
+                }
+
+                // Check if already has a pending min_spend_shortfall fine for current FY
+                $existingFine = $member->pendingFines
+                    ->where('fine_type', 'minimum_spend_shortfall')
+                    ->first();
+
+                $shortfall = max(0, $minimumRequired - $totalSpend);
+                if ($shortfall > 0 && !$existingFine) {
+                    $fyShortfalls[] = [
+                        'fy_label'         => $fyLabel,
+                        'minimum_required' => $minimumRequired,
+                        'total_spend'      => $totalSpend,
+                        'shortfall'        => $shortfall,
+                    ];
+                }
+            }
+
             return response()->json([
-                'data' => $member,
-                'statusCode' => 200,
-                'message' => 'Member Fetched successfully'
+                'data'           => $member,
+                'suggested_fine' => $suggestedFine,
+                'fy_shortfalls'  => $fyShortfalls,
+                'statusCode'     => 200,
+                'message'        => 'Member Fetched successfully'
             ]);
         } catch (\Throwable $th) {
             return response()->json([
@@ -1373,6 +1487,61 @@ class ClubMemberController extends Controller
                 'error' => $th->getMessage(),
             ]);
         }
+    }
+
+    private function recordFyShortfallAtRenewal(Member $member, int $clubId): void
+    {
+        $spendRule = \App\Models\MinimumSpendRule::where('club_id', $clubId)->first();
+        if (!$spendRule) return;
+
+        $today      = Carbon::today();
+        $monthlyMin = (float) $spendRule->minimum_amount / 12;
+
+        if ($today->month >= 4) {
+            $fyLabel = $today->year . '-' . ($today->year + 1);
+            $fyStart = Carbon::create($today->year, 4, 1);
+            $fyEnd   = Carbon::create($today->year + 1, 3, 31);
+        } else {
+            $fyLabel = ($today->year - 1) . '-' . $today->year;
+            $fyStart = Carbon::create($today->year - 1, 4, 1);
+            $fyEnd   = Carbon::create($today->year, 3, 31);
+        }
+
+        $firstPurchase  = $member->purchaseHistory()
+            ->where('status', 'active')->orderBy('start_date')->first();
+        $joinDate       = $firstPurchase
+            ? Carbon::parse($firstPurchase->start_date)->startOfMonth()
+            : Carbon::parse($member->created_at)->startOfMonth();
+        $effectiveStart  = $joinDate->gt($fyStart) ? $joinDate : $fyStart;
+        $months          = (int) $effectiveStart->diffInMonths($fyEnd->copy()->addDay());
+        $minimumRequired = round($monthlyMin * $months, 2);
+
+        $fy         = \App\Models\FinancialYear::where('club_id', $clubId)->where('fy_label', $fyLabel)->first();
+        $totalSpend = 0;
+        if ($fy) {
+            $summary    = \App\Models\MemberFinancialSummary::where('member_id', $member->id)
+                ->where('financial_year_id', $fy->id)->first();
+            $totalSpend = $summary ? (float) $summary->total_spend : 0;
+        }
+
+        $shortfall = max(0, $minimumRequired - $totalSpend);
+        if ($shortfall <= 0) return;
+
+        // Ensure FY record exists
+        if (!$fy) {
+            $fy = \App\Models\FinancialYear::firstOrCreate(
+                ['club_id' => $clubId, 'fy_label' => $fyLabel],
+                ['start_date' => $fyStart->toDateString(), 'end_date' => $fyEnd->toDateString(), 'is_closed' => false]
+            );
+        }
+
+        // Create or update as paid — prevents year-end command from double-charging
+        \App\Models\MemberFine::firstOrCreate(
+            ['club_id' => $clubId, 'member_id' => $member->id, 'financial_year_id' => $fy->id, 'fine_type' => 'minimum_spend_shortfall'],
+            ['fine_amount' => $shortfall, 'reference_amount' => $shortfall,
+             'fine_date' => $today->toDateString(), 'status' => 'paid',
+             'notes' => "FY {$fyLabel} shortfall collected at renewal"]
+        );
     }
 
     // public function mealPriceEdit(Request $request)

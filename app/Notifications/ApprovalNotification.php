@@ -61,6 +61,12 @@ class ApprovalNotification extends Notification
 
         switch ($this->approval->module) {
 
+            case 'plan_renewal':
+                $message          = "A member plan renewal is waiting for approval";
+                $notificationType = "plan_renewal";
+                $title            = "Plan Renewal Approval";
+                break;
+
             case 'member_create':
                 $message          = "New member created and waiting for approval";
                 $notificationType = "member_create";
