@@ -18,6 +18,7 @@ use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use App\Models\PaymentHistory;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Models\Offer;
@@ -523,7 +524,31 @@ class ActionApprovalController extends Controller
             }
 
             if ($data->module == 'locker_purchase') {
-                //
+                $payload = is_array($data->request_payload)
+                    ? $data->request_payload
+                    : json_decode($data->request_payload, true);
+
+                // $lockerId = $payload['locker_id'] ?? null;
+                $lockerAllocationId = $payload['locker_allocation_id'] ?? null;
+                $memberId = $data->entity_id;
+                $lockerPrice = $payload['locker_price'] ?? 0;
+
+                DB::beginTransaction();
+
+                $allocation = null;
+                if ($lockerAllocationId) {
+                    $allocation = LockerAllocation::where('id', $lockerAllocationId)
+                        ->where('member_id', $memberId)
+                        ->first();
+                }
+
+                if ($allocation) {
+                    $allocation->update([
+                        'status' => 'active',
+                    ]);
+                }
+
+                DB::commit();
             }
 
             if ($data->module == 'liquor_item_create') {
@@ -673,7 +698,8 @@ class ActionApprovalController extends Controller
         try {
             $clubId = club_id();
 
-            $data = ActionApproval::find($id);
+            $data = ActionApproval::with('membershipType')->find($id);
+            $membershipType = $data->membershipType?->name ?? '';
 
             if ($data->status != "pending") {
                 return response()->json([
@@ -789,21 +815,28 @@ class ActionApprovalController extends Controller
                     ]);
                 }
 
-                // $refundAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
-                $refundAmount = $payload['locker_price'];
-                $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
-                if ($wallet) {
-                    $wallet->current_balance += $refundAmount;
-                    $wallet->save();
+                if ($membershipType && $membershipType->name === 'Swimming Membership' && $lockerAllocationId) {
+                    PaymentHistory::where('locker_allocation_id', $lockerAllocationId)
+                                    ->update(['payment_status' => 'refunded']);
+                }
+                else{
+                    //REFUND in wallet for club members
+                    // $refundAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
+                    $refundAmount = $payload['locker_price'];
+                    $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
+                    if ($wallet) {
+                        $wallet->current_balance += $refundAmount;
+                        $wallet->save();
 
-                    WalletTransaction::create([
-                        'wallet_id' => $wallet->id,
-                        'member_id' => $memberId,
-                        'amount'    => $refundAmount,
-                        'direction' => 'credit',
-                        'txn_type'  => 'refund',
-                        'created_by' => auth()->id(),
-                    ]);
+                        WalletTransaction::create([
+                            'wallet_id' => $wallet->id,
+                            'member_id' => $memberId,
+                            'amount'    => $refundAmount,
+                            'direction' => 'credit',
+                            'txn_type'  => 'refund',
+                            'created_by' => auth()->id(),
+                        ]);
+                    }
                 }
 
                 DB::commit();

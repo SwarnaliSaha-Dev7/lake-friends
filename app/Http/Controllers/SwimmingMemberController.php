@@ -909,6 +909,7 @@ class SwimmingMemberController extends Controller
                 'member_id' => $request->member_id,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'price' => $lockerAmount,
             ]);
 
             // // DEDUCT WALLET
@@ -917,6 +918,18 @@ class SwimmingMemberController extends Controller
 
             $locker->update([
                 'status' => 'occupied'
+            ]);
+
+            PaymentHistory::create([
+                'member_id' => $request->member_id,
+                'club_id' => $clubId,
+                'purpose' => 'swim_locker_purchase',
+                'locker_allocation_id' => $lockerAllocation->id,
+                'mr_no' => generateMrNo(),
+                'bill_no' => generateBillNo(),
+                'taxable_amount' => $lockerAmount,
+                'net_amount' => $lockerAmount,
+                'payment_status' => 'success',
             ]);
 
             // // WALLET LOG

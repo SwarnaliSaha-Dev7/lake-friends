@@ -2540,54 +2540,54 @@
 
         // Locker Purchase Section End for swimming members
 
-    });
+        $(document).on('click', '.receiptBtn', function () {
 
-    $(document).on('click', '.receiptBtn', function () {
+            let memberId = $(this).data('id');
+            let btn = $(this);
+            let original = btn.html();
 
-        let memberId = $(this).data('id');
-        let btn = $(this);
-        let original = btn.html();
+            btn.html('<span class="spinner-border spinner-border-sm"></span>');
 
-        btn.html('<span class="spinner-border spinner-border-sm"></span>');
+            $.ajax({
+                url: '{{ route("swimming-member.receipt", ":id") }}'.replace(':id', memberId),
+                type: 'GET',
+                success: function (response) {
 
-        $.ajax({
-            url: '{{ route("swimming-member.receipt", ":id") }}'.replace(':id', memberId),
-            type: 'GET',
-            success: function (response) {
+                    if (response.statusCode == 200) {
 
-                if (response.statusCode == 200) {
+                        let data = response.data;
 
-                    let data = response.data;
-
-                    $('#receiptName').text(data.name);
-                    $('#receiptAddress').text(data.address);
-                    $('#receiptPhone').text(data.phone);
-                    $('#receiptPolice').text(data.police_station);
-                    $('#receiptAge').text(data.age + ' Years');
-                    $('#receiptHeight').text(data.height);
-                    $('#receiptWeight').text(data.weight);
-                    $('#receiptPulse').text(data.pulse_rate);
-                    $('#receiptGender').text(data.gender);
-                    $('#member_code').text(data.member_code);
-                    $('#receiptDate').text(data.date);
+                        $('#receiptName').text(data.name);
+                        $('#receiptAddress').text(data.address);
+                        $('#receiptPhone').text(data.phone);
+                        $('#receiptPolice').text(data.police_station);
+                        $('#receiptAge').text(data.age + ' Years');
+                        $('#receiptHeight').text(data.height);
+                        $('#receiptWeight').text(data.weight);
+                        $('#receiptPulse').text(data.pulse_rate);
+                        $('#receiptGender').text(data.gender);
+                        $('#member_code').text(data.member_code);
+                        $('#receiptDate').text(data.date);
 
 
-                    if (data.image) {
-                        $('#receiptImage').attr('src', '/' + data.image);
+                        if (data.image) {
+                            $('#receiptImage').attr('src', '/' + data.image);
+                        }
+
+                        $('#receiptModal').modal('show');
+                    } else {
+                        toastr.error(response.message || 'Something went wrong');
                     }
 
-                    $('#receiptModal').modal('show');
-                } else {
-                    toastr.error(response.message || 'Something went wrong');
+                    btn.html(original);
+                },
+                error: function () {
+                    toastr.error('Something went wrong');
+                    btn.html(original);
                 }
-
-                btn.html(original);
-            },
-            error: function () {
-                toastr.error('Something went wrong');
-                btn.html(original);
-            }
+            });
         });
+
     });
 </script>
 @endsection

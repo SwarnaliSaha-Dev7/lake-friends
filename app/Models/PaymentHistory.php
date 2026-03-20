@@ -12,6 +12,7 @@ class PaymentHistory extends Model
         'purpose',
         'membership_purchase_history_id',
         'wallet_transaction_id',
+        'locker_allocation_id',
         'mr_no',
         'bill_no',
         'ac_head',
@@ -24,4 +25,9 @@ class PaymentHistory extends Model
         'bank_id',
         'remarks'
     ];
+
+    public function lockerAllocation()
+    {
+        return $this->belongsTo(LockerAllocation::class);
+    }
 }
