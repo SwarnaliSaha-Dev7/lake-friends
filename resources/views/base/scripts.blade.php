@@ -545,7 +545,7 @@
     function openRenewalModal(memberId) {
         $('#renewalForm')[0].reset();
         $('#renewal_member_id').val(memberId);
-        $('#renewal_gst_pct').val('{{ $globalGstPercentage }}');
+        $('#renewal_gst_pct').val('{{ $globalGstPercentage ?? 0 }}');
         $('#renewalFineAlert').hide();
         $('#renewalFineList').html('');
         $('#renewalTotalFine').text('₹0.00');
