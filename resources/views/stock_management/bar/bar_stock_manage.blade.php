@@ -108,7 +108,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($godownStockList as $stock)
+                                @foreach ($barStockList as $stock)
                                     <tr>
                                         <td class="text-nowrap">{{ $loop->iteration }}</td>
                                         <td class="text-nowrap">{{ $stock->created_at->format('d/m/Y') }}</td>

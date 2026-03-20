@@ -39,7 +39,7 @@
                                         <td class="text-nowrap">{{ $loop->iteration }}</td>
                                         <td class="text-nowrap">{{ ucfirst($data->entity?->foodItem?->name ?? '-') }}</td>
                                         <td class="text-nowrap">{{ $payload->quantity }} @if($payload->quantity) @if($payload->quantity == 1) Bottle @else Bottles @endif @endif</td>
-                                        <td class="text-nowrap">{{ ucfirst($payload->movement_type) }}</td>
+                                        <td class="text-nowrap">{{ ucfirst(str_replace('_', ' ', $payload->movement_type)) }}</td>
                                         <td class="text-nowrap">{{ ucfirst($payload->direction) }}</td>
                                         <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
                                         <td class="text-nowrap">{{$data->operatorDetails->name}}</td>

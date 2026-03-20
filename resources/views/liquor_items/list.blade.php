@@ -332,7 +332,7 @@
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label w-100"><small>Is Beer</small></label>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="checkbox" value="1" name="is_beer" id="edit_is_beer" required>
+                                        <input class="form-check-input" type="checkbox" value="1" name="is_beer" id="edit_is_beer">
                                         <label class="form-check-label" for="edit_is_beer">
                                             <small>Is Beer</small>
                                         </label>

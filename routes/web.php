@@ -128,7 +128,7 @@ Route::middleware('auth')->group(function () {
         Route::get('godown-stock-manage', 'godownStockList')->name('godown-stock-manage.list');
         Route::post('godown-stock-manage', 'godownStockStore')->name('godown-stock-manage.store');
         Route::get('godown-current-stock-list', 'godownCurrentStockList')->name('godown-current-stock-list');
-        Route::get('bar-stock-manage', 'barStockManage')->name('bar-stock-manage.list');
+        Route::get('bar-stock-manage', 'barStockList')->name('bar-stock-manage.list');
         Route::get('current-stock-inventory', 'currentStockInventory')->name('current-stock-inventory.list');
         Route::get('liquor-stock-report', 'liquorStockReport')->name('liquor-stock-report.list');
     });

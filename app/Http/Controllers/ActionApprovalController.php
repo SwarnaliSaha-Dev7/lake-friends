@@ -557,7 +557,7 @@ class ActionApprovalController extends Controller
                                 'location_id' => $payload->bar_location_id,
                                 'food_items_id' => (int) $payload->food_items_id,
                                 'quantity' => $barStockledger->quantity,
-                                'unit' => 'ml',
+                                'unit' => $barStockledger->unit,
                             ]);
                         }
                     } else {
