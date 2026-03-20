@@ -974,6 +974,24 @@ class ClubMemberController extends Controller
                         ]);
                     }
 
+                    $lockerAllocation = LockerAllocation::where('member_id', $memberId)->first();
+
+                    $locker = null;
+
+                    if($lockerAllocation){
+                        $locker = Locker::find($lockerAllocation->locker_id);
+                    }
+
+                    if($lockerAllocation){
+                        $lockerAllocation->delete();
+                    }
+
+                    if($locker){
+                        $locker->update([
+                            'status' => 'available',
+                        ]);
+                    }
+
                     $member->delete();
 
                     // $approvalRequests = ActionApproval::where('club_id', $clubId)

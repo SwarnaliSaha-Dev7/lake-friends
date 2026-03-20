@@ -417,6 +417,24 @@ class ActionApprovalController extends Controller
                         $cardMapping->delete();
                     }
 
+                    $lockerAllocation = LockerAllocation::where('member_id', $member->id)->first();
+
+                    $locker = null;
+
+                    if($lockerAllocation){
+                        $locker = Locker::find($lockerAllocation->locker_id);
+                    }
+
+                    if($lockerAllocation){
+                        $lockerAllocation->delete();
+                    }
+
+                    if($locker){
+                        $locker->update([
+                            'status' => 'available',
+                        ]);
+                    }
+
                     $member->delete();
 
                     // $approvalRequests = ActionApproval::where('club_id', $clubId)
@@ -493,7 +511,7 @@ class ActionApprovalController extends Controller
             if ($data->module == 'locker_purchase') {
                 //
             }
-                
+
             if ($data->module == 'liquor_item_create') {
                 $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
                 $item    = FoodItem::find($data->entity_id);
@@ -779,28 +797,76 @@ class ActionApprovalController extends Controller
         }
     }
 
+
+    // public function view($id)
+    // {
+    //     try {
+    //         $clubId = club_id();
+
+    //         $approval = ActionApproval::where('club_id', $clubId)
+    //             ->find($id);
+
+    //         $details = json_decode($approval->request_payload);
+
+    //         return response()->json([
+    //             'data' => $details,
+    //             'statusCode' => 200,
+    //             'message' => 'Approval Details Fetched successfully'
+    //         ]);
+    //     } catch (\Throwable $th) {
+    //         return response()->json([
+    //             'statusCode' => 500,
+    //             'error' => $th->getMessage(),
+    //         ]);
+    //     }
+    // }
+
     public function view($id)
     {
         try {
             $clubId = club_id();
 
-            $approval = ActionApproval::where('club_id', $clubId)
-                ->find($id);
+            $approval = ActionApproval::where('club_id', $clubId)->find($id);
 
-            $details = json_decode($approval->request_payload);
+            $details = json_decode($approval->request_payload, true);
 
-            return response()->json([
-                'data' => $details,
-                'statusCode' => 200,
-                'message' => 'Approval Details Fetched successfully'
-            ]);
-        } catch (\Throwable $th) {
+            // Locker part
+            if ($approval->module == 'locker_purchase') {
+
+                $locker = Locker::find($details['locker_id'] ?? null);
+                $allocation = LockerAllocation::find($details['locker_allocation_id'] ?? null);
+
+                return response()->json([
+                    'statusCode' => 200,
+                    'data' => [
+                        'locker_name' => $locker->locker_number ?? 'N/A',
+                        'start_date' => $allocation->start_date ?? null,
+                        'end_date' => $allocation->end_date ?? null,
+                        'locker_price' => $details['locker_price'] ?? 0,
+                    ]
+                ]);
+            }
+
+            else{
+
+                // club/swimming
+                return response()->json([
+                    'data' => $details,
+                    'statusCode' => 200,
+                    'message' => 'Approval Details Fetched successfully'
+                ]);
+            }
+
+        }
+
+        catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,
                 'error' => $th->getMessage(),
             ]);
         }
     }
+
 
     public function liquorApprovalList()
     {

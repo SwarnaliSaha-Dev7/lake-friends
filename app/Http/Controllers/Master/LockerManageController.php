@@ -65,6 +65,7 @@ class LockerManageController extends Controller
         $store = Locker::create([
             'locker_number' => $request->locker_number,
             'club_id' => $club_id,
+            'is_active' => "1",
         ]);
 
         return redirect()

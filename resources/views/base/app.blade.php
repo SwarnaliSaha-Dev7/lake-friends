@@ -149,7 +149,7 @@
     </div>
     <!-- Member Info Modal end -->
 
-   
+
     <!-- create order modal -->
     <div class="modal fade" id="createOrderModal" tabindex="-1" aria-labelledby="createOrderModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -278,7 +278,6 @@
             </div>
         </div>
     </div>
-<<<<<<< HEAD
     <!-- card entry Modal end  -->
 
     <!-- Membership plan Modal start-->
@@ -384,9 +383,6 @@
         </div>
     </div>
     <!-- Wallet Recharge Confirmation Modal end-->
-=======
-    <!-- create modal end -->
->>>>>>> main-merge
 
     @include('base.scripts')
     @yield('customJS')
