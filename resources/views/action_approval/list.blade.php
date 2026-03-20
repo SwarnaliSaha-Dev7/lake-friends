@@ -80,6 +80,8 @@
                                                 <span class="text-muted small">— {{ $renewalPlan->name }}</span>
                                             @endif
                                         </td>
+                                    @elseif($data->module =="add_on_purchase")
+                                        <td class="text-nowrap"><a href="javascript:void(0)" class="addOnPurchaseDtls" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
                                     @else
                                         <td class="text-nowrap"><a href="javascript:void(0)" class="clubMemberDetail" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
                                     @endif

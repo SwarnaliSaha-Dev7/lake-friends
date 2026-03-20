@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 
+//
+
 class SwimmingMemberController extends Controller
 {
     public function list()
@@ -849,22 +851,22 @@ class SwimmingMemberController extends Controller
 
             $lockerAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
 
-            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
-            if (!$wallet) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 404,
-                    'message' => 'Wallet not found'
-                ]);
-            }
+            // $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
+            // if (!$wallet) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'statusCode' => 404,
+            //         'message' => 'Wallet not found'
+            //     ]);
+            // }
 
-            if ($wallet->current_balance < $lockerAmount) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 422,
-                    'message' => 'Insufficient wallet balance'
-                ]);
-            }
+            // if ($wallet->current_balance < $lockerAmount) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'statusCode' => 422,
+            //         'message' => 'Insufficient wallet balance'
+            //     ]);
+            // }
 
             $locker = Locker::where('id', $request->locker_id)
                 ->where('club_id', $clubId)
@@ -898,7 +900,7 @@ class SwimmingMemberController extends Controller
                     'status' => 'available'
                 ]);
 
-                $previousAllocations->delete();
+                $previousAllocations->delete(); //
             }
 
             $lockerAllocation = LockerAllocation::create([
@@ -909,23 +911,23 @@ class SwimmingMemberController extends Controller
                 'end_date' => $endDate,
             ]);
 
-            // DEDUCT WALLET
-            $wallet->current_balance -= $lockerAmount;
-            $wallet->save();
+            // // DEDUCT WALLET
+            // $wallet->current_balance -= $lockerAmount;
+            // $wallet->save();
 
             $locker->update([
                 'status' => 'occupied'
             ]);
 
-            // WALLET LOG
-            WalletTransaction::create([
-                'wallet_id' => $wallet->id,
-                'member_id' => $request->member_id,
-                'amount'    => $lockerAmount,
-                'direction' => 'debit',
-                'txn_type'  => 'locker_purchase',
-                'created_by' => auth()->id(),
-            ]);
+            // // WALLET LOG
+            // WalletTransaction::create([
+            //     'wallet_id' => $wallet->id,
+            //     'member_id' => $request->member_id,
+            //     'amount'    => $lockerAmount,
+            //     'direction' => 'debit',
+            //     'txn_type'  => 'locker_purchase',
+            //     'created_by' => auth()->id(),
+            // ]);
 
             $requestData = [
                 'locker_id' => $request->locker_id,

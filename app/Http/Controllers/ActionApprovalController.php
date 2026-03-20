@@ -13,6 +13,7 @@ use App\Models\LockerPrice;
 use App\Models\Location;
 use App\Models\LiquorServing;
 use App\Models\Member;
+use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
 use App\Models\MembershipPurchaseHistory;
@@ -506,7 +507,7 @@ class ActionApprovalController extends Controller
             if ($data->module == 'locker_purchase') {
                 //
             }
-                
+
             if ($data->module == 'liquor_item_create') {
                 $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
                 $item    = FoodItem::find($data->entity_id);
@@ -617,6 +618,18 @@ class ActionApprovalController extends Controller
                 }
 
                 DB::commit();
+            }
+
+            if ($data->module == 'add_on_purchase') {
+                $payload = is_array($data->request_payload)
+                    ? $data->request_payload
+                    : json_decode($data->request_payload, true);
+
+                $addonIds = $payload['member_addon_ids'] ?? [];
+                if (!empty($addonIds)) {
+                    MemberAddOn::whereIn('id', $addonIds)
+                        ->update(['status' => 'active']);
+                }
             }
 
             $data->update([
@@ -770,9 +783,41 @@ class ActionApprovalController extends Controller
                         'member_id' => $memberId,
                         'amount'    => $refundAmount,
                         'direction' => 'credit',
-                        'txn_type'  => 'locker_purchase_refund',
+                        'txn_type'  => 'refund',
                         'created_by' => auth()->id(),
                     ]);
+                }
+
+                DB::commit();
+            } elseif ($data->module == 'add_on_purchase') {
+                $payloadJson = $data->request_payload;
+                $payload = json_decode($payloadJson, true);
+
+                $addonIds = $payload['member_addon_ids'] ?? [];
+                $refundAmount = (float) ($payload['total_price'] ?? 0);
+                $memberId = $data->entity_id;
+
+                DB::beginTransaction();
+
+                if (!empty($addonIds)) {
+                    MemberAddOn::whereIn('id', $addonIds)->delete();
+                }
+
+                if ($refundAmount > 0) {
+                    $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
+                    if ($wallet) {
+                        $wallet->current_balance += $refundAmount;
+                        $wallet->save();
+
+                        WalletTransaction::create([
+                            'wallet_id'  => $wallet->id,
+                            'member_id'  => $memberId,
+                            'amount'     => $refundAmount,
+                            'direction'  => 'credit',
+                            'txn_type'   => 'refund',
+                            'created_by' => auth()->id(),
+                        ]);
+                    }
                 }
 
                 DB::commit();
