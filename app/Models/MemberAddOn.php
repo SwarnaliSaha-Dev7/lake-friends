@@ -12,6 +12,7 @@ class MemberAddOn extends Model
         'start_date',
         'end_date',
         'price',
+        'status',
     ];
 
     public function member()
