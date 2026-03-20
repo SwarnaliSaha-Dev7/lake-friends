@@ -925,6 +925,34 @@ class ActionApprovalController extends Controller
                 ]);
             }
 
+            // Add On Part
+
+            elseif ($approval->module == 'add_on_purchase') {
+
+                $addonIds = $details['member_addon_ids'] ?? [];
+
+                $addons = \App\Models\MemberAddOn::with('addon')
+                    ->whereIn('id', $addonIds)
+                    ->get();
+
+                $addonData = $addons->map(function ($item) {
+                    return [
+                        'addon_name' => $item->addon->name ?? 'N/A',
+                        'price' => $item->price,
+                        'start_date' => $item->start_date,
+                        'end_date' => $item->end_date,
+                    ];
+                });
+
+                return response()->json([
+                    'statusCode' => 200,
+                    'data' => [
+                        'addons' => $addonData,
+                        'total_price' => $details['total_price'] ?? 0
+                    ]
+                ]);
+            }
+
             else{
 
                 // club/swimming

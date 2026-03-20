@@ -24,6 +24,6 @@ class MemberAddOn extends Model
 
     public function addOn()
     {
-        return $this->belongsTo(AddOn::class);
+        return $this->belongsTo(AddOn::class, 'add_on_id');
     }
 }
