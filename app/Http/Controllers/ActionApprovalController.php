@@ -815,7 +815,7 @@ class ActionApprovalController extends Controller
                     ]);
                 }
 
-                if ($membershipType && $membershipType->name === 'Swimming Membership' && $lockerAllocationId) {
+                if ($membershipType && $membershipType === 'Swimming Membership' && $lockerAllocationId) {
                     PaymentHistory::where('locker_allocation_id', $lockerAllocationId)
                                     ->update(['payment_status' => 'refunded']);
                 }
