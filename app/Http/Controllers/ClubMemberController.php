@@ -1103,6 +1103,7 @@ class ClubMemberController extends Controller
             $endDate   = carbon::now()->addMonths(6);
 
             $memberAddOnIds = [];
+            $addonStatus = Auth::user()->hasRole('admin') ? 'active' : 'pending';
             foreach ($request->addons as $addonId) {
 
                 $addon = AddOn::find($addonId);
@@ -1113,6 +1114,7 @@ class ClubMemberController extends Controller
                         'price' => $addon->price,
                         'start_date'=> $startDate,
                         'end_date'  => $endDate,
+                        'status'    => $addonStatus,
                     ]);
 
                 $memberAddOnIds[] = $memberAddOn->id;
