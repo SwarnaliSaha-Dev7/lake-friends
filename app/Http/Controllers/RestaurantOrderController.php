@@ -50,6 +50,109 @@ class RestaurantOrderController extends Controller
         }
     }
 
+    public function foodReport(Request $request)
+    {
+        try {
+            $clubId    = club_id();
+            $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
+            $endDate   = $request->input('end_date',   now()->toDateString());
+
+            $orders = RestaurantOrder::where('club_id', $clubId)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
+                ->whereNotIn('status', ['cancelled'])
+                ->whereHas('items', fn($q) => $q->where('unit', 'plate'))
+                ->with(['member', 'items' => fn($q) => $q->where('unit', 'plate')->with('foodItem')])
+                ->latest()
+                ->get();
+
+            // all food items across orders
+            $allFoodItems = $orders->flatMap(fn($o) => $o->items);
+            $totalRevenue = $allFoodItems->sum('total_amount');
+
+            // top selling: item with highest total qty
+            $topSelling = $allFoodItems
+                ->groupBy('food_item_id')
+                ->map(fn($group) => [
+                    'name' => $group->first()->foodItem->name ?? '—',
+                    'qty'  => $group->sum('quantity'),
+                ])
+                ->sortByDesc('qty')
+                ->first();
+
+            return view('restaurant_orders.food_report', compact(
+                'orders', 'startDate', 'endDate', 'totalRevenue', 'topSelling'
+            ));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function downloadFoodReport(Request $request)
+    {
+        try {
+            $clubId    = club_id();
+            $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
+            $endDate   = $request->input('end_date',   now()->toDateString());
+
+            $orders = RestaurantOrder::where('club_id', $clubId)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
+                ->whereNotIn('status', ['cancelled'])
+                ->whereHas('items', fn($q) => $q->where('unit', 'plate'))
+                ->with(['member', 'items' => fn($q) => $q->where('unit', 'plate')->with('foodItem')])
+                ->latest()
+                ->get();
+
+            $allFoodItems = $orders->flatMap(fn($o) => $o->items);
+            $totalRevenue = $allFoodItems->sum('total_amount');
+            $grandTotal   = $totalRevenue;
+
+            $topSelling = $allFoodItems
+                ->groupBy('food_item_id')
+                ->map(fn($g) => ['name' => $g->first()->foodItem->name ?? '—', 'qty' => $g->sum('quantity')])
+                ->sortByDesc('qty')
+                ->first();
+
+            // flatten to item-level rows for the PDF table
+            $rows = [];
+            foreach ($orders as $order) {
+                foreach ($order->items as $item) {
+                    $offer = null;
+                    if ($item->offer_applied) {
+                        $of   = is_array($item->offer_applied) ? $item->offer_applied : (array) $item->offer_applied;
+                        $slug = $of['type_slug'] ?? '';
+                        if ($slug === 'b1g1') {
+                            $offer = 'B1G1';
+                        } elseif ($slug === 'percentage' && !empty($of['discount_value'])) {
+                            $offer = $of['discount_value'] . '% off';
+                        } elseif ($slug === 'flat' && !empty($of['discount_value'])) {
+                            $offer = '₹' . $of['discount_value'] . ' off';
+                        }
+                    }
+                    $rows[] = [
+                        'order_no'   => $order->order_no,
+                        'member'     => $order->member->name ?? '—',
+                        'datetime'   => $order->created_at->format('d M Y, h:i A'),
+                        'item'       => $item->foodItem->name ?? '—',
+                        'qty'        => $item->quantity,
+                        'offer'      => $offer,
+                        'unit_price' => number_format($item->unit_price, 2),
+                        'amount'     => number_format($item->total_amount, 2),
+                    ];
+                }
+            }
+
+            $pdf = Pdf::loadView('restaurant_orders.food_report_pdf', compact(
+                'rows', 'startDate', 'endDate', 'totalRevenue', 'grandTotal', 'topSelling'
+            ))->setPaper('a4', 'landscape');
+
+            return $pdf->download('food_report_' . $startDate . '_to_' . $endDate . '.pdf');
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
     public function downloadReport(Request $request)
     {
         try {

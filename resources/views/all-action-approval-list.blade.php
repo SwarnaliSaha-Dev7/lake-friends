@@ -48,7 +48,11 @@
                                             $p      = is_array($data->request_payload) ? $data->request_payload : [];
                                             $mod    = $data->module ?? '';
 
-                                            if (str_contains($mod, 'member')) {
+                                            if (str_contains($mod, 'renewal')) {
+                                                $member = $data->entity->member ?? null;
+                                                $plan   = $data->entity->membershipPlanType ?? null;
+                                                $detail = ($member->name ?? '-') . ($plan ? ' — ' . $plan->name : '');
+                                            } elseif (str_contains($mod, 'member')) {
                                                 $detail = $data->entity->email ?? ($data->entity->name ?? '-');
                                             } elseif (in_array($mod, ['food_price_update', 'liquor_price_update'])) {
                                                 $eName  = $data->entity->name ?? '-';

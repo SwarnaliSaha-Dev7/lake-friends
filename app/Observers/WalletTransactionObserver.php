@@ -13,8 +13,9 @@ class WalletTransactionObserver
 {
     public function created(WalletTransaction $txn): void
     {
-        // Only track debit spend transactions
-        if ($txn->txn_type !== 'spend' || $txn->direction !== 'debit') {
+        // Track debit transactions that count toward minimum spend
+        $spendTypes = ['spend', 'add_on_purchase', 'locker_purchase'];
+        if (!in_array($txn->txn_type, $spendTypes) || $txn->direction !== 'debit') {
             return;
         }
 
@@ -82,8 +83,11 @@ class WalletTransactionObserver
         $fyStart = Carbon::parse($fy->start_date);
         $fyEnd   = Carbon::parse($fy->end_date);
 
-        // Member's join date within this FY
-        $joinDate = Carbon::parse($member->created_at)->startOfMonth();
+        // Member's join date: use first purchase start_date, fallback to created_at
+        $firstPurchase  = $member->purchaseHistory()->orderBy('start_date')->first();
+        $joinDate       = $firstPurchase
+            ? Carbon::parse($firstPurchase->start_date)->startOfMonth()
+            : Carbon::parse($member->created_at)->startOfMonth();
         $effectiveStart = $joinDate->gt($fyStart) ? $joinDate : $fyStart;
 
         // Months remaining from effective start to FY end (inclusive)

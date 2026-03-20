@@ -9,6 +9,7 @@ use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
 use App\Models\LiquorServing;
 use App\Models\Member;
+use App\Models\MemberFine;
 use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
 use Carbon\Carbon;
@@ -279,6 +280,208 @@ class DashboardController extends Controller
         } catch (\Throwable $th) {
             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
         }
+    }
+
+    public function membershipReport(Request $request)
+    {
+        try {
+            $clubId      = club_id();
+            $reportType  = $request->report_type;  // memberships | expiry_fines | renewals
+            $memberType  = $request->member_type;  // club | swimming | all
+            $period      = $request->period;       // daily|weekly|monthly|3months|6months|9months|yearly|custom
+            $fromDate    = $request->from_date;
+            $toDate      = $request->to_date;
+
+            // Resolve date range
+            $today = Carbon::today();
+            switch ($period) {
+                case 'daily':    $start = $today->copy(); $end = $today->copy(); break;
+                case 'weekly':   $start = $today->copy()->subDays(6); $end = $today->copy(); break;
+                case 'monthly':  $start = $today->copy()->subDays(29); $end = $today->copy(); break;
+                case '3months':  $start = $today->copy()->subMonths(3)->addDay(); $end = $today->copy(); break;
+                case '6months':  $start = $today->copy()->subMonths(6)->addDay(); $end = $today->copy(); break;
+                case '9months':  $start = $today->copy()->subMonths(9)->addDay(); $end = $today->copy(); break;
+                case 'yearly':   $start = $today->copy()->subYear()->addDay(); $end = $today->copy(); break;
+                case 'custom':
+                    if (!$fromDate || !$toDate) {
+                        return response()->json(['statusCode' => 422, 'error' => 'Please provide both from and to dates.']);
+                    }
+                    $start = Carbon::parse($fromDate)->startOfDay();
+                    $end   = Carbon::parse($toDate)->endOfDay();
+                    if ($start->diffInDays($end) > 365) {
+                        return response()->json(['statusCode' => 422, 'error' => 'Custom date range cannot exceed 1 year.']);
+                    }
+                    break;
+                default: $start = $today->copy()->subDays(29); $end = $today->copy();
+            }
+
+            // Resolve membership type IDs
+            $typeIds = [];
+            if ($memberType === 'club' || $memberType === 'all') {
+                $clubType = MembershipType::where('club_id', $clubId)->where('name', 'Club Membership')->first();
+                if ($clubType) $typeIds[] = $clubType->id;
+            }
+            if ($memberType === 'swimming' || $memberType === 'all') {
+                $swimType = MembershipType::where('club_id', $clubId)->where('name', 'Swimming Membership')->first();
+                if ($swimType) $typeIds[] = $swimType->id;
+            }
+
+            // ── Report: New Memberships ──────────────────────────────────────────
+            if ($reportType === 'memberships') {
+
+                $rows = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereIn('status', ['active', 'pending'])
+                    ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+                    ->when(!empty($typeIds), fn($q) => $q->whereIn('membership_type_id', $typeIds))
+                    ->with([
+                        'member',
+                        'member.cardDetails',
+                        'member.memberDetails.membershipType',
+                        'membershipPlanType',
+                    ])
+                    ->orderByDesc('start_date')
+                    ->get();
+
+                // Mark first vs renewal
+                $firstJoinMap = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereIn('status', ['active', 'pending', 'expired', 'cancelled'])
+                    ->selectRaw('member_id, MIN(id) as first_id')
+                    ->groupBy('member_id')
+                    ->pluck('first_id', 'member_id');
+
+                $data = $rows->map(function ($r) use ($firstJoinMap) {
+                    return [
+                        'name'         => $r->member->name ?? '-',
+                        'card_no'      => $r->member->cardDetails->card_no ?? '-',
+                        'member_type'  => $r->member->memberDetails->membershipType->name ?? '-',
+                        'plan'         => $r->membershipPlanType->name ?? '-',
+                        'start_date'   => $r->start_date?->format('d/m/Y') ?? '-',
+                        'expiry_date'  => $r->expiry_date?->format('d/m/Y') ?? '-',
+                        'fee'          => number_format((float)$r->fee, 2),
+                        'net_amount'   => number_format((float)$r->net_amount, 2),
+                        'status'       => ucfirst($r->status),
+                        'is_renewal'   => isset($firstJoinMap[$r->member_id]) && $firstJoinMap[$r->member_id] != $r->id,
+                    ];
+                });
+
+                return response()->json(['statusCode' => 200, 'data' => $data, 'from' => $start->format('d/m/Y'), 'to' => $end->format('d/m/Y')]);
+            }
+
+            // ── Report: Expiry & Fines ───────────────────────────────────────────
+            if ($reportType === 'expiry_fines') {
+
+                $rows = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereIn('status', ['active', 'expired'])
+                    ->whereBetween('expiry_date', [$start->toDateString(), $end->toDateString()])
+                    ->when(!empty($typeIds), fn($q) => $q->whereIn('membership_type_id', $typeIds))
+                    ->with([
+                        'member',
+                        'member.cardDetails',
+                        'member.memberDetails.membershipType',
+                        'member.pendingFines',
+                        'membershipPlanType',
+                    ])
+                    ->orderByDesc('expiry_date')
+                    ->get();
+
+                $data = $rows->map(function ($r) use ($today) {
+                    $expiry      = $r->expiry_date;
+                    $isExpired   = $expiry && $expiry->lt($today);
+                    $daysOverdue = $isExpired ? $expiry->diffInDays($today) : 0;
+                    $pendingFine = $r->member->pendingFines->sum('fine_amount');
+
+                    return [
+                        'name'          => $r->member->name ?? '-',
+                        'card_no'       => $r->member->cardDetails->card_no ?? '-',
+                        'member_type'   => $r->member->memberDetails->membershipType->name ?? '-',
+                        'plan'          => $r->membershipPlanType->name ?? '-',
+                        'expiry_date'   => $expiry?->format('d/m/Y') ?? '-',
+                        'days_overdue'  => $daysOverdue,
+                        'pending_fine'  => number_format($pendingFine, 2),
+                        'expiry_status' => $isExpired ? 'Expired' : 'Expiring Soon',
+                    ];
+                });
+
+                return response()->json(['statusCode' => 200, 'data' => $data, 'from' => $start->format('d/m/Y'), 'to' => $end->format('d/m/Y')]);
+            }
+
+            // ── Report: Renewal History ──────────────────────────────────────────
+            if ($reportType === 'renewals') {
+
+                // First join per member
+                $firstJoinMap = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->selectRaw('member_id, MIN(id) as first_id')
+                    ->groupBy('member_id')
+                    ->pluck('first_id', 'member_id');
+
+                $rows = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereIn('status', ['active', 'pending'])
+                    ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+                    ->when(!empty($typeIds), fn($q) => $q->whereIn('membership_type_id', $typeIds))
+                    ->whereNotIn('id', $firstJoinMap->values()->toArray())  // only renewals
+                    ->with([
+                        'member',
+                        'member.cardDetails',
+                        'member.memberDetails.membershipType',
+                        'membershipPlanType',
+                    ])
+                    ->orderByDesc('start_date')
+                    ->get();
+
+                $data = $rows->map(function ($r) {
+                    return [
+                        'name'         => $r->member->name ?? '-',
+                        'card_no'      => $r->member->cardDetails->card_no ?? '-',
+                        'member_type'  => $r->member->memberDetails->membershipType->name ?? '-',
+                        'plan'         => $r->membershipPlanType->name ?? '-',
+                        'renewal_date' => $r->start_date?->format('d/m/Y') ?? '-',
+                        'expiry_date'  => $r->expiry_date?->format('d/m/Y') ?? '-',
+                        'fee'          => number_format((float)$r->fee, 2),
+                        'fine_at_renewal' => number_format((float)$r->fine_amount, 2),
+                        'net_amount'   => number_format((float)$r->net_amount, 2),
+                        'status'       => ucfirst($r->status),
+                    ];
+                });
+
+                return response()->json(['statusCode' => 200, 'data' => $data, 'from' => $start->format('d/m/Y'), 'to' => $end->format('d/m/Y')]);
+            }
+
+            return response()->json(['statusCode' => 422, 'error' => 'Invalid report type.']);
+        } catch (\Throwable $th) {
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
+        }
+    }
+
+    public function downloadMembershipReportPdf(Request $request)
+    {
+        // Reuse the same logic as membershipReport but return PDF
+        $request->setMethod('POST');
+        $jsonResponse = $this->membershipReport($request);
+        $result       = json_decode($jsonResponse->getContent(), true);
+
+        if (($result['statusCode'] ?? 500) !== 200) {
+            abort(422, $result['error'] ?? 'Error generating report');
+        }
+
+        $tabLabels = [
+            'memberships'  => 'Membership Report',
+            'expiry_fines' => 'Expiry & Fines Report',
+            'renewals'     => 'Renewal History Report',
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.membership_report_pdf', [
+            'data'        => $result['data'],
+            'from'        => $result['from'],
+            'to'          => $result['to'],
+            'report_type' => $request->report_type,
+            'tab_label'   => $tabLabels[$request->report_type] ?? 'Report',
+            'member_type' => $request->member_type,
+        ])->setPaper('a4', 'landscape');
+
+        $safeFrom = str_replace('/', '-', $result['from']);
+        $safeTo   = str_replace('/', '-', $result['to']);
+
+        return $pdf->download('membership_report_' . $safeFrom . '_to_' . $safeTo . '.pdf');
     }
 
     public function readAllNotification()

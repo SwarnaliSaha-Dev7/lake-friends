@@ -13,6 +13,7 @@ use App\Models\StockWarehouse;
 use App\Models\Offer;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +148,42 @@ class BarOrderController extends Controller
                 'orders', 'topSellingLiquor', 'totalSelling',
                 'startDate', 'endDate', 'page_title', 'title'
             ));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    // ── Download history PDF ─────────────────────────────────────────────────
+
+    public function downloadReport(Request $request)
+    {
+        try {
+            $clubId    = club_id();
+            $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
+            $endDate   = $request->input('end_date',   now()->toDateString());
+
+            $orders = RestaurantOrder::where('club_id', $clubId)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
+                ->where('status', '!=', 'cancelled')
+                ->whereHas('items', fn($q) => $q->whereIn('unit', ['ml', 'btl']))
+                ->with(['member', 'items.foodItem'])
+                ->latest()
+                ->get();
+
+            $allLiquorItems   = $orders->flatMap(fn($o) => $o->items->whereIn('unit', ['ml', 'btl']));
+            $totalSelling     = $allLiquorItems->sum('total_amount');
+            $topSellingLiquor = $allLiquorItems
+                ->groupBy('food_item_id')
+                ->map(fn($rows) => ['name' => $rows->first()->foodItem->name ?? '—', 'total' => $rows->sum('total_amount')])
+                ->sortByDesc('total')
+                ->first()['name'] ?? '—';
+
+            $pdf = Pdf::loadView('bar_orders.report_pdf', compact(
+                'orders', 'startDate', 'endDate', 'totalSelling', 'topSellingLiquor'
+            ))->setPaper('a4', 'landscape');
+
+            return $pdf->download('bar_order_report_' . $startDate . '_to_' . $endDate . '.pdf');
         } catch (\Throwable $th) {
             return $th->getMessage();
         }

@@ -41,7 +41,7 @@
                     @php
                         $nType     = $notification->data['notification_type'] ?? '';
                         $notiRoute = match(true) {
-                            in_array($nType, ['member_create','member_edit','member_delete'])              => route('memberActionApproval.list'),
+                            in_array($nType, ['member_create','member_edit','member_delete','plan_renewal']) => route('memberActionApproval.list'),
                             in_array($nType, ['stock_add_pending','stock_adjust_pending'])                 => route('godownStockApproval.list'),
                             in_array($nType, ['stock_added','stock_adjusted'])                             => route('godown-stock.index'),
                             in_array($nType, ['bar_transfer_pending'])                                     => route('barStockApproval.list'),

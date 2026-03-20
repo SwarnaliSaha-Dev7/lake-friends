@@ -116,9 +116,13 @@ Route::middleware('auth')->group(function () {
 
     Route::get('get-member-details/{cardNo}', [DashboardController::class, 'fetchMemberDetailsByCard'])->name('getMemberDetails');
     Route::get('get-order-items', [DashboardController::class, 'getOrderItems'])->name('getOrderItems');
+    Route::post('membership-report', [DashboardController::class, 'membershipReport'])->name('membership.report');
+    Route::get('membership-report/pdf', [DashboardController::class, 'downloadMembershipReportPdf'])->name('membership.report.pdf');
     Route::get('restaurant-orders', [RestaurantOrderController::class, 'index'])->name('restaurant-orders.index');
     Route::get('restaurant-orders-history', [RestaurantOrderController::class, 'history'])->name('restaurant-orders.history');
     Route::get('restaurant-orders-history/download', [RestaurantOrderController::class, 'downloadReport'])->name('restaurant-orders.report.download');
+    Route::get('food-report', [RestaurantOrderController::class, 'foodReport'])->name('food-report.index');
+    Route::get('food-report/download', [RestaurantOrderController::class, 'downloadFoodReport'])->name('food-report.download');
     Route::get('restaurant-orders/{id}', [RestaurantOrderController::class, 'show'])->name('restaurant-orders.show');
     Route::post('restaurant-orders', [RestaurantOrderController::class, 'store'])->name('restaurant-orders.store');
     Route::get('restaurant-orders/{id}/invoice', [RestaurantOrderController::class, 'downloadInvoice'])->name('restaurant-orders.invoice');
@@ -192,6 +196,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('bar-orders')->group(function () {
         Route::get('/',              [BarOrderController::class, 'index'])->name('bar-orders.index');
         Route::get('/history',       [BarOrderController::class, 'history'])->name('bar-orders.history');
+        Route::get('/history/download', [BarOrderController::class, 'downloadReport'])->name('bar-orders.report.download');
         Route::get('/items',         [BarOrderController::class, 'getBarItems'])->name('bar-orders.items');
         Route::post('/',             [BarOrderController::class, 'store'])->name('bar-orders.store');
         Route::get('/{id}',          [BarOrderController::class, 'show'])->name('bar-orders.show');

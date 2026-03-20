@@ -68,37 +68,6 @@
                             };
                             let statusCode = response.data.status; // e.g., "pending_approval"
                             let humanStatus = statusMap[statusCode]
-
-
-                            let memberId = response.data.id;
-                            let memberType = response.data.member_details?.membership_type?.name?.toLowerCase();
-
-                            if (!memberType) {
-                                toastr.error('Membership type not found');
-                                return;
-                            }
-
-                            if (memberType.includes('club')) {
-                                memberType = 'club';
-                            }
-                            else if (memberType.includes('swimming')) {
-                                memberType = 'swimming';
-                            }
-
-                            $('#cardentry').data('member-id', memberId);
-                            $('#cardentry').data('member-type', memberType);
-
-                            $('#cardMemberName').text(response.data.name);
-                            $('#cardMemberClubName').text(response.data.club_details.name)
-                            $('#cardMemberCode').text(response.data.member_code)
-                            $('#cardMemberCardNo').text(response.data.card_details.card_no)
-                            $('#cardMemberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
-                            let expiryDate = response.data.purchase_history[0].expiry_date;
-                            let formatted = new Date(expiryDate).toLocaleDateString('en-IN'); // d/m/y format
-                            $('#cardMemberPlanExpiry').text(formatted);
-                            $('#cardMemberWallet').text('₹ ' + (response.data.wallet_details?.current_balance??0));
-                            $('#cardStatus').text(response.cardStatus);
-                            $('#memberStatus').text(humanStatus);
                             var memberName = response.data.name;
                             $('#cardMemberName').text(memberName);
                             $('#cardMemberClubName').text(response.data.club_details.name);
@@ -137,8 +106,14 @@
                             $('#memberStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + memberBadgeClass)
                                 .text('Status: ' + (humanStatus || 'N/A'));
 
-                            // Store member ID for action buttons
+                            // Member type
+                            var memberTypeName = response.data.member_details?.membership_type?.name ?? '—';
+                            $('#cardMemberType').text(memberTypeName);
+                            $('#cardMemberTypeCard').text(memberTypeName);
+
+                            // Store member ID & member type for action buttons
                             $('#cardentry').data('member-id', response.data.id);
+                            $('#cardentry').data('member-type', response.data.member_details?.membership_type?.name?.toLowerCase().includes('swim') ? 'swimming' : 'club');
 
                             $('#cardentry').modal('show');
 
@@ -150,9 +125,7 @@
                         else{
                             $('#cardLoader').hide();
                             $('.swipe-animation').show();
-                            toastr.error(response.error ?? 'Something Went Wrong.');
-                            //console.log(response);
-                            //toastr.error(response.error || 'Something Went Wrong.');
+                            toastr.error(response.error || 'Something Went Wrong.');
                             console.log(response);
                         }
 
@@ -291,13 +264,42 @@
             return;
         }
 
-        loadWalletData(url, memberId);
+        loadWalletData(url, memberId, memberType, { keepCardEntry: false });
     });
 
-    function loadWalletData(url, memberId) {
+    /* Card punch popup → Wallet Recharge button */
+    $('#walletRechargeBtn').on('click', function () {
+        let memberId = $('#cardentry').data('member-id');
+        let memberType = $('#cardentry').data('member-type');
+
+        if (!memberId || !memberType) {
+            toastr.error('Member data missing');
+            return;
+        }
+
+        let url = '';
+        if (memberType === 'club') {
+            url = '{{route("club-member.fetch-wallet-balance", ":id")}}'.replace(':id', memberId);
+        } else if (memberType === 'swimming') {
+            url = '{{route("swimming-member.fetch-wallet-balance", ":id")}}'.replace(':id', memberId);
+        } else {
+            toastr.error('Invalid member type');
+            return;
+        }
+
+        loadWalletData(url, memberId, memberType, { keepCardEntry: true });
+    });
+
+    /* Quick amount select buttons in wallet recharge modal */
+    $(document).on('click', '.quick-amt-btn', function () {
+        $('#amountInput').val($(this).data('amt'));
+    });
+
+    function loadWalletData(url, memberId, memberType, opts) {
+        opts = opts || {};
+        var keepCardEntry = opts.keepCardEntry === true;
 
         let tbody = $('#walletTransactionTbody');
-
         tbody.html('<tr><td colspan="2" class="text-center">Loading...</td></tr>');
 
         $.ajax({
@@ -309,7 +311,16 @@
                 if (response.statusCode == 200) {
 
                     $('#walletMemberId').val(memberId);
+                    $('#walletMemberType').val(memberType);
                     $('#walletBalance').text('₹' + (response.data.walletBalance ?? 0.00));
+
+                    // reset form fields
+                    $('#amountInput').val('');
+                    $('#amountErrorDiv').text('');
+                    $('#walletRechargeForm')[0].reset();
+                    $('#walletMemberId').val(memberId);
+                    $('#walletMemberType').val(memberType);
+                    $('#rechargeSubmitBtn').prop('disabled', false).html('Recharge Wallet').show();
 
                     tbody.empty();
 
@@ -334,12 +345,9 @@
                                     <td class="border-secondary bg-transparent align-middle lh-sm">
                                         <small class="fw-semibold">${label}:</small>
                                         <small class="text-black-50">${maker}</small>
-
-                                        ${remarks ? `<br>
-                                        <small class="fw-semibold">Remarks:</small>
+                                        ${remarks ? `<br><small class="fw-semibold">Remarks:</small>
                                         <small class="text-black-50">${remarks}</small>` : ''}
                                     </td>
-
                                     <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
                                         ${sign}₹${amount}
                                     </td>
@@ -353,16 +361,18 @@
                         tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
                     }
 
-
                     document.activeElement.blur();
 
-                    // Close card modal
-                    $('#cardentry').modal('hide');
-
-                    // Open wallet modal
-                    setTimeout(() => {
+                    if (keepCardEntry) {
+                        // Open wallet modal on top of card punch popup
                         $('#walletrecharge').modal('show');
-                    }, 300);
+                    } else {
+                        // Close card modal then open wallet modal
+                        $('#cardentry').modal('hide');
+                        setTimeout(() => {
+                            $('#walletrecharge').modal('show');
+                        }, 300);
+                    }
 
                 } else {
                     toastr.error('Failed to load wallet data');
@@ -378,6 +388,71 @@
     $('#walletRechargeForm').on('submit', function (e) {
         e.preventDefault();
         $('#confirmRechargeModal').modal('show');
+    });
+
+    /* Global confirmRechargeBtn handler — works for both club & swimming, from any page/modal */
+    $(document).on('click', '#confirmRechargeBtn', function () {
+
+        $('#confirmRechargeModal').modal('hide');
+
+        let memberType = $('#walletMemberType').val();
+
+        let rechargeUrl = '';
+        if (memberType === 'swimming') {
+            rechargeUrl = '{{ route("swimming-member.recharge-wallet-balance") }}';
+        } else {
+            rechargeUrl = '{{ route("club-member.recharge-wallet-balance") }}';
+        }
+
+        $('#rechargeSubmitBtn')
+            .prop('disabled', true)
+            .html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
+
+        let formData = new FormData($('#walletRechargeForm')[0]);
+
+        $.ajax({
+            url: rechargeUrl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+
+            success: function(response) {
+
+                if (response.statusCode == 200) {
+
+                    toastr.success(response.message);
+
+                    // If opened from card punch popup, update balance & close modal (no redirect)
+                    if ($('#cardentry').hasClass('show')) {
+                        let newBal = response.data ?? null;
+                        if (newBal !== null) {
+                            let balFormatted = parseFloat(newBal).toFixed(2);
+                            $('#cardMemberWallet').text('Rs.' + balFormatted);
+                            $('#walletBalance').text('₹' + balFormatted);
+                        }
+                        $('#rechargeSubmitBtn').prop('disabled', false).html('Recharge Wallet');
+                        $('#walletrecharge').modal('hide');
+                    } else {
+                        // Opened from member list page — reload as before
+                        $('#rechargeSubmitBtn').hide();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    }
+
+                } else {
+
+                    toastr.error(response.message ?? 'Something went wrong');
+                    $('#rechargeSubmitBtn').prop('disabled', false).html('Recharge Wallet');
+                }
+            },
+
+            error: function() {
+                toastr.error('Something went wrong, Please try again.');
+                $('#rechargeSubmitBtn').prop('disabled', false).html('Recharge Wallet');
+            }
+        });
     });
 
     $('#notification').on('click', function(e){
@@ -402,5 +477,207 @@
                 toastr.error('Something Went Wrong.');
             }
         });
+    });
+
+    /* ===================== Global Membership History Modal JS ===================== */
+    function openMembershipHistoryModal(memberId) {
+        $('#membershipPlanTbody').html('<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>');
+        $('#membershipplan').modal('show');
+
+        $.ajax({
+            url: '{{route("club-member.membership-plan", ":id")}}'.replace(':id', memberId),
+            type: 'GET',
+            success: function(response) {
+                if (response.statusCode == 200) {
+                    let tbody = $('#membershipPlanTbody');
+                    tbody.empty();
+                    response.data.forEach(function(plan) {
+                        let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                        let toDate   = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                        let isActive = new Date(plan.expiry_date) >= new Date() && plan.status !== 'cancelled';
+                        tbody.append(`<tr>
+                            <td class="bg-info align-middle p-3 text-nowrap">
+                                <small class="fw-semibold">From Date</small><br>
+                                <small class="text-black-50">${fromDate}</small>
+                            </td>
+                            <td class="bg-info align-middle p-3 text-nowrap">
+                                <small class="fw-semibold">To Date</small><br>
+                                <small class="text-black-50">${toDate}</small>
+                            </td>
+                            <td class="bg-info align-middle p-3 text-nowrap">
+                                <small class="fw-semibold">Plan Type</small><br>
+                                <small class="text-black-50">${plan.membership_plan_type.name}</small>
+                            </td>
+                            <td class="bg-info align-middle p-3 text-nowrap">
+                                <small class="fw-semibold">Fine</small><br>
+                                <small class="text-black-50">Rs ${plan.fine_amount}</small>
+                            </td>
+                            <td class="bg-info align-middle p-3 text-nowrap">
+                                <small class="fw-semibold">Price</small><br>
+                                <small class="text-black-50">Rs ${plan.net_amount}</small>
+                            </td>
+                            <td class="bg-info align-middle text-end p-3">
+                                <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}" alt="" width="${isActive ? 76 : 73}" height="${isActive ? 67 : 24}">
+                            </td>
+                        </tr>`);
+                    });
+                } else {
+                    $('#membershipPlanTbody').html('<tr><td colspan="6" class="text-center text-muted py-3">No data found.</td></tr>');
+                }
+            },
+            error: function() {
+                toastr.error('Something Went Wrong.');
+            }
+        });
+    }
+
+    $('#membershipHistoryBtn').on('click', function() {
+        var memberId = $('#cardentry').data('member-id');
+        if (!memberId) { toastr.error('Member data missing'); return; }
+        openMembershipHistoryModal(memberId);
+    });
+
+    $(document).on('click', '.membershipPlanBtn', function() {
+        openMembershipHistoryModal($(this).data('id'));
+    });
+
+    /* ===================== Global Renewal Modal JS ===================== */
+    function openRenewalModal(memberId) {
+        $('#renewalForm')[0].reset();
+        $('#renewal_member_id').val(memberId);
+        $('#renewal_gst_pct').val('{{ $globalGstPercentage }}');
+        $('#renewalFineAlert').hide();
+        $('#renewalFineList').html('');
+        $('#renewalTotalFine').text('₹0.00');
+        $('#renewal_fine_amt').val('0');
+        $('#renewal_receipt_amt').text('₹0.00');
+        $('#renewal_gst_amt').val('');
+
+        $.ajax({
+            url: '{{route("club-member.view", ":id")}}'.replace(':id', memberId),
+            type: 'GET',
+            success: function(response) {
+                if (response.statusCode == 200) {
+                    const d = response.data;
+                    const purchases = (d.purchase_history || []).slice().sort((a, b) =>
+                        new Date(b.expiry_date) - new Date(a.expiry_date)
+                    );
+                    const purchase = purchases[0];
+
+                    $('#renewal_member_name').text(d.name || '—');
+                    $('#renewal_card_no').text(d.card_details?.card_no || '—');
+                    $('#renewal_current_plan').text(purchase?.membership_plan_type?.name ?? '—');
+                    $('#renewal_expiry_date').text(
+                        purchase?.expiry_date ? new Date(purchase.expiry_date).toLocaleDateString('en-IN') : '—'
+                    );
+
+                    let fineTotal = 0, fineHtml = '';
+
+                    const sf = response.suggested_fine;
+                    if (sf && sf.has_fine) {
+                        fineTotal += parseFloat(sf.amount);
+                        fineHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-danger border-opacity-25">
+                            <span>Membership Expiry Fine (${sf.days} days × ₹${sf.per_day}/day)</span>
+                            <span class="fw-semibold">₹${parseFloat(sf.amount).toFixed(2)}</span>
+                        </div>`;
+                    }
+
+                    (response.fy_shortfalls || []).forEach(function(fs) {
+                        fineTotal += parseFloat(fs.shortfall);
+                        fineHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-danger border-opacity-25">
+                            <span>Min. Spend Shortfall FY ${fs.fy_label}
+                                <small class="text-muted">(Spent ₹${parseFloat(fs.total_spend).toFixed(2)} of ₹${parseFloat(fs.minimum_required).toFixed(2)})</small>
+                            </span>
+                            <span class="fw-semibold">₹${parseFloat(fs.shortfall).toFixed(2)}</span>
+                        </div>`;
+                    });
+
+                    (d.pending_fines || []).forEach(function(f) {
+                        fineTotal += parseFloat(f.fine_amount);
+                        let label;
+                        if (f.fine_type === 'membership_expiry_fine') {
+                            if (f.reference_days && f.reference_days > 0) {
+                                const perDay = (parseFloat(f.fine_amount) / f.reference_days).toFixed(4);
+                                label = `Membership Expiry Fine (${f.reference_days} days × ₹${perDay}/day)`;
+                            } else {
+                                label = 'Membership Expiry Fine';
+                            }
+                        } else {
+                            label = 'Min. Spend Shortfall' + (f.financial_year ? ' FY ' + f.financial_year.fy_label : '');
+                        }
+                        fineHtml += `<div class="d-flex justify-content-between py-1 border-bottom border-danger border-opacity-25">
+                            <span>${label}</span>
+                            <span class="fw-semibold">₹${parseFloat(f.fine_amount).toFixed(2)}</span>
+                        </div>`;
+                    });
+
+                    if (fineTotal > 0) {
+                        $('#renewalFineList').html(fineHtml);
+                        $('#renewalTotalFine').text('₹' + fineTotal.toFixed(2));
+                        $('#renewal_fine_amt').val(fineTotal.toFixed(2));
+                        $('#renewalFineAlert').show();
+                    }
+
+                    calcRenewalReceipt();
+                }
+                $('#planrenewal').modal('show');
+            },
+            error: function() {
+                $('#planrenewal').modal('show');
+            }
+        });
+    }
+
+    function calcRenewalReceipt() {
+        const taxable = parseFloat($('#renewal_taxable').val()) || 0;
+        const gstPct  = parseFloat($('#renewal_gst_pct').val()) || 0;
+        const fine    = parseFloat($('#renewal_fine_amt').val()) || 0;
+        const gstAmt  = (taxable * gstPct) / 100;
+        $('#renewal_gst_amt').val(gstAmt.toFixed(2));
+        $('#renewal_receipt_amt').text('₹' + (taxable + gstAmt + fine).toFixed(2));
+    }
+
+    $('#renewal_taxable, #renewal_gst_pct, #renewal_fine_amt').on('input', calcRenewalReceipt);
+
+    $(document).on('change', '.renewal-plan-type', function() {
+        const price = parseFloat($(this).data('price')) || 0;
+        $('#renewal_taxable').val(price > 0 ? price : '');
+        calcRenewalReceipt();
+    });
+
+    $('#renewalForm').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $('#renewalSubmitBtn');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Submitting...');
+        $.ajax({
+            url: '{{ route("club-member.renew") }}',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.statusCode == 200) {
+                    toastr.success(response.message);
+                    $('#planrenewal').modal('hide');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    toastr.error(response.message || 'Something went wrong');
+                }
+            },
+            error: function() { toastr.error('Something went wrong'); },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right me-1"></i> Submit Renewal');
+            }
+        });
+    });
+
+    /* ---- Renewal button in card punch modal ---- */
+    $('#renewalBtn').on('click', function () {
+        var memberId = $('#cardentry').data('member-id');
+        if (!memberId) { toastr.error('Member data missing'); return; }
+        openRenewalModal(memberId);
+    });
+
+    /* ---- Renewal button in member list table ---- */
+    $(document).on('click', '.planRenewalBtn', function () {
+        openRenewalModal($(this).data('id'));
     });
 </script>

@@ -62,6 +62,12 @@
                             </a>
                         @endif
                     </div>
+                    <div class="col-sm-auto ms-sm-auto">
+                        <a href="{{ route('bar-orders.report.download', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
+                            class="btn btn-sm btn-outline-danger fw-semibold" target="_blank">
+                            <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+                        </a>
+                    </div>
 
                 </form>
 
