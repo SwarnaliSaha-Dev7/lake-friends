@@ -73,10 +73,31 @@
                             $('#cardMemberClubName').text(response.data.club_details.name);
                             $('#cardMemberCode').text(response.data.member_code);
                             $('#cardMemberCardNo').text(response.data.card_details.card_no);
-                            $('#cardMemberPlan').text(response.data.purchase_history[0].membership_plan_type.name);
-                            var expiryDate = response.data.purchase_history[0].expiry_date;
-                            var formatted = new Date(expiryDate).toLocaleDateString('en-IN');
-                            $('#cardMemberPlanExpiry').text(formatted);
+                            var latestPlan = response.data.purchase_history[0];
+                            $('#cardMemberPlan').text(latestPlan?.membership_plan_type?.name ?? '—');
+                            var expiryDate = latestPlan?.expiry_date ?? null;
+                            var today = new Date(); today.setHours(0,0,0,0);
+                            var isPlanExpired = false;
+                            if (expiryDate) {
+                                var expiryObj = new Date(expiryDate); expiryObj.setHours(0,0,0,0);
+                                isPlanExpired = expiryObj < today;
+                                var formatted = expiryObj.toLocaleDateString('en-IN');
+                            } else {
+                                var formatted = '—';
+                            }
+
+                            // Style Plan Expiry card
+                            var $expiryCard = $('#cardMemberPlanExpiry').closest('.rounded-3');
+                            if (isPlanExpired) {
+                                $expiryCard.css('background', '#fee2e2');
+                                $('#cardMemberPlanExpiry').html(
+                                    '<span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>' + formatted + '</span>'
+                                );
+                            } else {
+                                $expiryCard.css('background', '#f8f9fa');
+                                $('#cardMemberPlanExpiry').text(formatted);
+                            }
+
                             var walletDetails = response.data.wallet_details;
                             var walletBal = parseFloat(walletDetails && walletDetails.current_balance ? walletDetails.current_balance : 0).toFixed(2);
                             $('#cardMemberWallet').text('Rs.' + walletBal);
@@ -94,17 +115,24 @@
                             var cardBadgeClass = cardStatusVal === 'active'
                                 ? 'bg-success-subtle text-success border-success'
                                 : 'bg-danger-subtle text-danger border-danger';
+                            var cardStatusLabel = cardStatusVal ? (cardStatusVal.charAt(0).toUpperCase() + cardStatusVal.slice(1)) : 'N/A';
                             $('#cardStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + cardBadgeClass)
-                                .text('Card: ' + (cardStatusVal || 'N/A'));
+                                .text(cardStatusLabel);
 
-                            // Member status badge
-                            var memberBadgeClass = statusCode === 'active'
-                                ? 'bg-success-subtle text-success border-success'
-                                : (statusCode === 'pending'
-                                    ? 'bg-warning-subtle text-warning border-warning'
-                                    : 'bg-danger-subtle text-danger border-danger');
-                            $('#memberStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + memberBadgeClass)
-                                .text('Status: ' + (humanStatus || 'N/A'));
+                            // Member status badge — override with Plan Expired if applicable
+                            if (isPlanExpired) {
+                                $('#memberStatusBadge').removeClass()
+                                    .addClass('badge rounded-pill px-3 py-1 border bg-danger text-white border-danger')
+                                    .html('<i class="fa-solid fa-triangle-exclamation me-1"></i>Plan Expired');
+                            } else {
+                                var memberBadgeClass = statusCode === 'active'
+                                    ? 'bg-success-subtle text-success border-success'
+                                    : (statusCode === 'pending'
+                                        ? 'bg-warning-subtle text-warning border-warning'
+                                        : 'bg-danger-subtle text-danger border-danger');
+                                $('#memberStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + memberBadgeClass)
+                                    .text('Status: ' + (humanStatus || 'N/A'));
+                            }
 
                             // Member type
                             var memberTypeName = response.data.member_details?.membership_type?.name ?? '—';
@@ -130,6 +158,17 @@
                             }
 
                             $('#cardentry').modal('show');
+
+                            // Show expired warning toastr after modal opens
+                            if (isPlanExpired) {
+                                setTimeout(function() {
+                                    toastr.warning(
+                                        '"' + memberName + '" — membership plan expired on ' + formatted + '. Please renew.',
+                                        'Plan Expired',
+                                        { timeOut: 6000 }
+                                    );
+                                }, 400);
+                            }
 
                             $('.swipe-animation').show();
                             $('#cardLoader').hide();

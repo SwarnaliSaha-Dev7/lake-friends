@@ -178,7 +178,7 @@ class ActionApprovalController extends Controller
 
                 $foodPriceData = ActionApproval::with('operatorDetails','entity')
                                             ->where('club_id', $clubId)
-                                            ->where('module', 'food_price_update')
+                                            ->whereIn('module', ['food_price_update', 'food_item_create', 'food_item_update', 'food_item_delete'])
                                             ->where('status', 'pending')
                                             ->where('maker_user_id', '!=', Auth::id())
                                             ->latest()
@@ -522,6 +522,35 @@ class ActionApprovalController extends Controller
                 DB::commit();
             }
 
+            if ($data->module == 'food_item_create') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->update(['is_active' => $payload->status ?? 1]);
+                }
+            }
+
+            if ($data->module == 'food_item_update') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->update([
+                        'name'        => $payload->item_name,
+                        'category_id' => $payload->category_id,
+                        'image'       => $payload->image,
+                        'code'        => $payload->code,
+                        'is_active'   => $payload->is_active,
+                    ]);
+                }
+            }
+
+            if ($data->module == 'food_item_delete') {
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            }
+
             if ($data->module == 'locker_purchase') {
                 //
             }
@@ -718,6 +747,16 @@ class ActionApprovalController extends Controller
                         'status' => 'cancelled'
                     ]);
                 }
+            } elseif ($data->module == 'food_item_create') {
+                // Item was created with is_active=0; on rejection just delete it
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            } elseif ($data->module == 'food_item_update') {
+                // No rollback needed — item was not changed while pending
+            } elseif ($data->module == 'food_item_delete') {
+                // No rollback needed — item was not deleted while pending
             } elseif ($data->module == 'offer') {
                 $offer = Offer::find($data->entity_id);
                 if ($offer) {

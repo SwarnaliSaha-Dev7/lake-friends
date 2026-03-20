@@ -6,9 +6,12 @@ use App\Models\ActionApproval;
 use App\Models\FoodCategory;
 use App\Models\FoodItem;
 use App\Models\FoodItemPrice;
+use App\Models\User;
+use App\Notifications\ApprovalNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 
 
@@ -110,32 +113,63 @@ class FoodItemManageController extends Controller
             $image_path = 'storage/' . $path;
             }
 
-            $foodItem   = FoodItem::create([
-                'club_id'             => $club_id,
-                'name'                => $request->itemName,
-                'category_id'         => $request->itemCat,
-                'item_type'           => 'food',
-                'image'               => $image_path,
-                'code'                => $request->itemCode,
-                'is_active'           => $request->itemstatus,
-                'unit'                => 'plate'
+            // Operator creates with is_active=0 (hidden until approved)
+            $foodItem = FoodItem::create([
+                'club_id'     => $club_id,
+                'name'        => $request->itemName,
+                'category_id' => $request->itemCat,
+                'item_type'   => 'food',
+                'image'       => $image_path,
+                'code'        => $request->itemCode,
+                'is_active'   => 0,
+                'unit'        => 'plate',
             ]);
 
-            $foodPrice  = FoodItemPrice::create([
-                'item_id'         => $foodItem->id,
-                'price'           => $request->itemPrice,
-                'effective_from'  => now(),
-                'is_active'       => '1',
+            FoodItemPrice::create([
+                'item_id'        => $foodItem->id,
+                'price'          => $request->itemPrice,
+                'effective_from' => now(),
+                'is_active'      => 1,
             ]);
+
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'food_item_create',
+                'action_type'     => 'create',
+                'entity_model'    => 'FoodItem',
+                'entity_id'       => $foodItem->id,
+                'maker_user_id'   => Auth::id(),
+                'request_payload' => json_encode([
+                    'item_name' => $request->itemName,
+                    'item_code' => $request->itemCode,
+                    'price'     => $request->itemPrice,
+                    'status'    => $request->itemstatus,
+                ]),
+            ]);
+
+            $isAdmin = Auth::user()->hasRole('admin');
+
+            if ($isAdmin) {
+                $foodItem->update(['is_active' => $request->itemstatus]);
+                $approval->update([
+                    'checker_user_id'         => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status'                  => 'approved',
+                ]);
+            }
 
             DB::commit();
 
+            if (!$isAdmin) {
+                $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
             return response()->json([
-
-            'statusCode'=>200,
-
-            'message'   =>'Food item added successfully'
-
+                'statusCode' => 200,
+                'message'    => $isAdmin
+                    ? 'Food item added successfully'
+                    : 'Food item creation request sent for approval',
             ]);
 
         }
@@ -143,8 +177,12 @@ class FoodItemManageController extends Controller
         catch (\Throwable $th) {
             DB::rollBack();
 
+            if ($th instanceof \Illuminate\Validation\ValidationException) {
+                throw $th;
+            }
+
             return response()->json([
-                'statusCode' =>500,
+                'statusCode' => 500,
                 'error'      => $th->getMessage(),
             ]);
         }
@@ -270,65 +308,54 @@ class FoodItemManageController extends Controller
                 $image_path = $foodItem->image;
             }
 
-            $foodItem->update([
+            $payload = [
+                'item_name'    => $request->itemName,
+                'category_id'  => $request->itemCat,
+                'image'        => $image_path,
+                'code'         => $request->itemCode,
+                'is_active'    => $request->itemstatus,
+                'old_name'     => $foodItem->name,
+            ];
 
-                'name' => $request->itemName,
-
-                'category_id' => $request->itemCat,
-
-                'image' => $image_path,
-
-                'code' => $request->itemCode,
-
-                'is_active' => $request->itemstatus
-
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'food_item_update',
+                'action_type'     => 'update',
+                'entity_model'    => 'FoodItem',
+                'entity_id'       => $foodItem->id,
+                'maker_user_id'   => Auth::id(),
+                'request_payload' => json_encode($payload),
             ]);
 
-            // Get current active price
-            // $currentPrice = FoodItemPrice::where('item_id',$foodItem->id)
-            //                              ->where('is_active', 1)
-            //                              ->first();
+            $isAdmin = Auth::user()->hasRole('admin');
 
-            // if($currentPrice){
-                // If price changed
-                // if($currentPrice->price != $request->itemPrice){
-
-                    // Deactivate old price
-                    // $currentPrice->update([
-                    //     'is_active' => 0,
-                    //     'effective_to' => now(),
-                    // ]);
-
-                    // Insert new price
-                    // FoodItemPrice::create([
-                    //     'item_id' => $foodItem->id,
-                    //     'price' => $request->itemPrice,
-                    //     'effective_from' => now(),
-                    //     'is_active' => '1'
-                    // ]);
-                // }
-            // }
-
-            // else{
-
-            //     // If no price exists yet
-
-            //     FoodItemPrice::create([
-            //         'item_id'        => $foodItem->id,
-            //         'price'          => $request->itemPrice,
-            //         'effective_from' => now(),
-            //         'is_active'      => 1
-            //     ]);
-            // }
+            if ($isAdmin) {
+                $foodItem->update([
+                    'name'        => $request->itemName,
+                    'category_id' => $request->itemCat,
+                    'image'       => $image_path,
+                    'code'        => $request->itemCode,
+                    'is_active'   => $request->itemstatus,
+                ]);
+                $approval->update([
+                    'checker_user_id'         => Auth::id(),
+                    'approved_or_rejected_at' => now(),
+                    'status'                  => 'approved',
+                ]);
+            }
 
             DB::commit();
 
+            if (!$isAdmin) {
+                $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+                Notification::send($approvers, new ApprovalNotification($approval));
+            }
+
             return response()->json([
-
-                'statusCode'=>200,
-
-                'message'=>'Food item updated successfully'
-
+                'statusCode' => 200,
+                'message'    => $isAdmin
+                    ? 'Food item updated successfully'
+                    : 'Food item update request sent for approval',
             ]);
 
 
@@ -337,9 +364,13 @@ class FoodItemManageController extends Controller
         catch (\Throwable $th) {
             DB::rollBack();
 
+            if ($th instanceof \Illuminate\Validation\ValidationException) {
+                throw $th;
+            }
+
             return response()->json([
-            'statusCode' => 500,
-            'error' => $th->getMessage(),
+                'statusCode' => 500,
+                'error'      => $th->getMessage(),
             ]);
         }
 
@@ -369,10 +400,10 @@ class FoodItemManageController extends Controller
                                         ->first();
 
             $payload = [
-                'item_id' => $foodItem->id,
-                // 'item_name' => $foodItem->name,
+                'item_id'   => $foodItem->id,
+                'item_name' => $foodItem->name,
                 'old_price' => $currentPrice?->price ?? 0,
-                'new_price' => $request->new_price
+                'new_price' => $request->new_price,
             ];
 
             //ADMIN → skip approval
@@ -417,20 +448,23 @@ class FoodItemManageController extends Controller
 
             //NORMAL USER → maker checker
 
-            ActionApproval::create([
-                'club_id' => $club_id,
-                'module' => 'food_price_update',
-                'action_type' => 'update',
-                'entity_model' => 'FoodItem',
-                'entity_id' => $foodItem->id,
-                'maker_user_id' => auth()->id(),
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'food_price_update',
+                'action_type'     => 'update',
+                'entity_model'    => 'FoodItem',
+                'entity_id'       => $foodItem->id,
+                'maker_user_id'   => auth()->id(),
                 'request_payload' => json_encode($payload),
-                'status' => 'pending'
+                'status'          => 'pending',
             ]);
+
+            $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            Notification::send($approvers, new ApprovalNotification($approval));
 
             return response()->json([
                 'statusCode' => 200,
-                'message' => 'Price change request sent for approval'
+                'message'    => 'Price change request sent for approval',
             ]);
 
         }
@@ -452,7 +486,7 @@ class FoodItemManageController extends Controller
     {
         try {
 
-            $user = auth()->user();
+            $user    = auth()->user();
             $club_id = $user->club_id;
 
             $foodItem = FoodItem::where('club_id', $club_id)
@@ -460,18 +494,60 @@ class FoodItemManageController extends Controller
                                 ->where('id', $id)
                                 ->firstOrFail();
 
-            $foodItem->delete();
+            if (Auth::user()->hasRole('admin')) {
+                $foodItem->delete();
+
+                return response()->json([
+                    'statusCode' => 200,
+                    'message'    => 'Food item deleted successfully',
+                ]);
+            }
+
+            $pendingApproval = ActionApproval::where('entity_id', $foodItem->id)
+                ->where('entity_model', 'FoodItem')
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            if ($pendingApproval) {
+                $pendingLabel = match($pendingApproval->module) {
+                    'food_item_create' => 'add',
+                    'food_item_update' => 'edit',
+                    'food_item_delete' => 'delete',
+                    'food_price_update' => 'price update',
+                    default            => 'update',
+                };
+
+                return response()->json([
+                    'statusCode' => 409,
+                    'message'    => "Cannot delete \"{$foodItem->name}\" — a pending {$pendingLabel} approval already exists for this item.",
+                ]);
+            }
+
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'food_item_delete',
+                'action_type'     => 'delete',
+                'entity_model'    => 'FoodItem',
+                'entity_id'       => $foodItem->id,
+                'maker_user_id'   => Auth::id(),
+                'request_payload' => json_encode(['item_name' => $foodItem->name]),
+                'status'          => 'pending',
+            ]);
+
+            $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            Notification::send($approvers, new ApprovalNotification($approval));
 
             return response()->json([
                 'statusCode' => 200,
-                'message' => 'Food item deleted successfully'
+                'message'    => 'Food item deletion request sent for approval',
             ]);
 
         } catch (\Throwable $th) {
 
             return response()->json([
                 'statusCode' => 500,
-                'error' => $th->getMessage()
+                'error'      => $th->getMessage(),
             ]);
 
         }

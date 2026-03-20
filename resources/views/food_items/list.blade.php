@@ -811,7 +811,7 @@
 
                         } else {
 
-                            toastr.error(response.error);
+                            toastr.error(response.message || response.error);
 
                         }
 

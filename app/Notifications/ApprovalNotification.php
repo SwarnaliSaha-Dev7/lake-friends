@@ -101,6 +101,48 @@ class ApprovalNotification extends Notification
                 $message    = "Deletion request for member \"{$memberName}\" is waiting for your approval.";
                 $notificationType = "member_delete";
                 break;
+            case 'food_price_update':
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['item_name'] ?? 'a food item';
+                $oldPrice         = $payload['old_price'] ?? 0;
+                $newPrice         = $payload['new_price'] ?? 0;
+                $title            = 'Food Price Update Approval';
+                $message          = "Price update request for \"{$itemName}\" (₹{$oldPrice} → ₹{$newPrice}) is waiting for your approval.";
+                $notificationType = 'food_item_create'; // routes to food item approval list
+                break;
+
+            case 'food_item_create':
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['item_name'] ?? 'a food item';
+                $title            = 'Food Item Add Approval';
+                $message          = "New food item \"{$itemName}\" has been added and is waiting for your approval.";
+                $notificationType = 'food_item_create';
+                break;
+
+            case 'food_item_update':
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['old_name'] ?? $payload['item_name'] ?? 'a food item';
+                $title            = 'Food Item Edit Approval';
+                $message          = "Food item \"{$itemName}\" has been edited and is waiting for your approval.";
+                $notificationType = 'food_item_update';
+                break;
+
+            case 'food_item_delete':
+                $payload    = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['item_name'] ?? 'a food item';
+                $title            = 'Food Item Delete Approval';
+                $message          = "Deletion request for food item \"{$itemName}\" is waiting for your approval.";
+                $notificationType = 'food_item_delete';
+                break;
+
             case 'locker_purchase':
                 $message = "A member has purchased locker and waiting for approval";
                 $notificationType = "locker_purchase";

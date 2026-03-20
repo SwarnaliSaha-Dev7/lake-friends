@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="member-list-part position-relative">
                 <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                    <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Food Price Approval list</h2>
+                    <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Food Item Approval list</h2>
                     {{-- <div class="d-flex gap-2">
                         <div class="d-flex justify-content-end">
                             <select id="statusFilter"
@@ -29,51 +29,67 @@
                         <thead>
                             <tr>
                                 <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Item Name</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Old Price</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">New Price</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Details</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Maker</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Status</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Action</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($foodPriceData as $data)
-                                    @php
-                                        $payloadJson = $data->request_payload;
-                                        $payload = json_decode($payloadJson);
-                                    @endphp
+                                @php
+                                    $payload = json_decode($data->request_payload);
+                                    $actionLabel = match($data->module) {
+                                        'food_item_create'  => 'Add Item',
+                                        'food_item_update'  => 'Edit Item',
+                                        'food_item_delete'  => 'Delete Item',
+                                        'food_price_update' => 'Price Update',
+                                        default             => \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)),
+                                    };
+                                    $badgeClass = match($data->module) {
+                                        'food_item_create'  => 'bg-success',
+                                        'food_item_update'  => 'bg-primary',
+                                        'food_item_delete'  => 'bg-danger',
+                                        'food_price_update' => 'bg-warning text-dark',
+                                        default             => 'bg-secondary',
+                                    };
+                                    $itemName = $data->entity->name ?? $payload->item_name ?? $payload->old_name ?? '-';
+                                @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                    <td class="text-nowrap">{{ $data->entity->name ?? '-' }}</td>
-                                    <td class="text-nowrap">₹{{ $payload->old_price }}</td>
-                                    <td class="text-nowrap">₹{{ $payload->new_price }}</td>
-                                    {{-- <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->module)) }}</td> --}}
+                                    <td class="text-nowrap">
+                                        <span class="badge {{ $badgeClass }}">{{ $actionLabel }}</span>
+                                    </td>
+                                    <td class="text-nowrap">{{ $itemName }}</td>
+                                    <td class="text-nowrap">
+                                        @if ($data->module === 'food_price_update')
+                                            ₹{{ $payload->old_price }} → ₹{{ $payload->new_price }}
+                                        @elseif ($data->module === 'food_item_create')
+                                            Code: {{ $payload->item_code ?? '-' }}
+                                        @elseif ($data->module === 'food_item_update')
+                                            @if(isset($payload->old_name) && $payload->old_name !== $payload->item_name)
+                                                {{ $payload->old_name }} → {{ $payload->item_name }}
+                                            @else
+                                                Updated details
+                                            @endif
+                                        @elseif ($data->module === 'food_item_delete')
+                                            Permanent deletion
+                                        @endif
+                                    </td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($data->created_at)->format('d/m/Y') }}</td>
-                                    <td class="text-nowrap">{{$data->operatorDetails->name}}</td>
+                                    <td class="text-nowrap">{{ $data->operatorDetails->name }}</td>
                                     <td class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $data->status ?? 'Pending')) }}</td>
-
-                                    {{-- @if ($member->status == 'active')
-                                        <td class="text-success text-nowrap">Active</td>
-                                    @elseif ($member->status == 'pending_approval')
-                                        <td class="text-warning text-nowrap">Pending</td>
-                                    @elseif ($member->status == 'suspended')
-                                        <td class="text-secondary text-nowrap">Suspended</td>
-                                    @elseif ($member->status == 'terminated')
-                                        <td class="text-danger text-nowrap">Terminated</td>
-                                    @endif --}}
-
                                     <td class="text-nowrap">
                                         <button class="border-0 p-1 rounded-3 lh-1 action-btn approveBtn bg-success text-white"
-                                            title="Approve" data-id="{{$data->id}}" id="">Approve</button>
+                                            title="Approve" data-id="{{ $data->id }}">Approve</button>
                                         <button class="border-0 p-1 rounded-3 lh-1 action-btn rejectBtn bg-danger text-white"
-                                            title="Reject" data-id="{{$data->id}}">Reject</button>
-
+                                            title="Reject" data-id="{{ $data->id }}">Reject</button>
                                     </td>
                                 </tr>
                             @endforeach
-
                         </tbody>
                     </table>
                 </div>
