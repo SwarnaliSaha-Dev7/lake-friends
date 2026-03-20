@@ -1179,9 +1179,14 @@ class ClubMemberController extends Controller
     {
         try {
 
-            //fetch the activated add on
+            // fetch latest record per add_on_id for this member
             $addons = MemberAddOn::where('member_id', $request->member_id)
-                ->whereDate('end_date', '>=', carbon::now())
+                ->whereIn('id', function ($query) use ($request) {
+                    $query->selectRaw('MAX(id)')
+                        ->from('member_add_ons')
+                        ->where('member_id', $request->member_id)
+                        ->groupBy('add_on_id');
+                })
                 ->get();
 
             return response()->json([

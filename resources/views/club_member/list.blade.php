@@ -1238,7 +1238,8 @@
                                                 <div class="addon-date small text-muted d-inline ms-1 d-none"
                                                     id="addonDate{{ $addon->id }}">
                                                     | Start: <span class="start-date"></span>,
-                                                    End: <span class="end-date"></span>
+                                                    End: <span class="end-date"></span>,
+                                                    <span class="status-text"></span>
                                                 </div>
                                             </label>
                                         </div>
@@ -2318,21 +2319,46 @@
 
                         let total = 0;
                         let addonIds = [];
+                        const today = new Date();
+                        const toDate = (value) => value ? new Date(value + 'T00:00:00') : null;
+                        const titleCase = (value) => {
+                            if (!value) return '—';
+                            return value.charAt(0).toUpperCase() + value.slice(1);
+                        };
 
                         // mark already purchased addons
                         response.data.forEach(function(addon){
-                            // collect addon ids
-                            addonIds.push(addon.add_on_id);
-
                             let checkbox = $('#addon' + addon.add_on_id);
-                            checkbox.prop('checked', true).prop('disabled', true); // prevent repurchase
-
                             // SHOW START & END DATE
                             let dateBox = $('#addonDate' + addon.add_on_id);
 
                             dateBox.removeClass('d-none');
                             dateBox.find('.start-date').text(addon.start_date);
                             dateBox.find('.end-date').text(addon.end_date);
+                            const endDate = toDate(addon.end_date);
+                            const isExpired = endDate ? endDate < new Date(today.toDateString()) : false;
+                            const statusEl = dateBox.find('.status-text');
+                            statusEl.removeClass('text-success text-warning text-danger text-muted');
+
+                            if (isExpired) {
+                                // show expired only, do not check/disable
+                                statusEl.text('Expired').addClass('text-danger');
+                                checkbox.prop('checked', false).prop('disabled', false);
+                                return;
+                            }
+
+                            // collect addon ids (only active/pending)
+                            addonIds.push(addon.add_on_id);
+                            checkbox.prop('checked', true).prop('disabled', true); // prevent repurchase
+                            const statusValue = titleCase(addon.status);
+                            statusEl.text(statusValue);
+                            if (addon.status === 'active') {
+                                statusEl.addClass('text-success');
+                            } else if (addon.status === 'pending') {
+                                statusEl.addClass('text-warning');
+                            } else if (addon.status === 'rejected') {
+                                statusEl.addClass('text-danger');
+                            }
 
                             // total += parseFloat(addon.price);
                         });
