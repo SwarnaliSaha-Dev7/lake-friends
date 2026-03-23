@@ -940,6 +940,7 @@
                                     <small class="text-muted">Allocated Duration</small>
                                     <div class="fw-semibold">
                                         <span id="lockerAllocationDates">-</span>
+                                        <span id="lockerAllocationStatus" class="ms-2"></span>
                                     </div>
                                 </div>
                             </div>
@@ -990,6 +991,7 @@
             $('#lockerPrice').text(0);
             $('#lockerAllocationInfo').addClass('d-none');
             $('#lockerAllocationDates').text('-');
+            $('#lockerAllocationStatus').text('').removeClass('text-success text-warning text-danger');
 
             // $('#lockerModal').data('has-locker', false);
 
@@ -1021,9 +1023,21 @@
                             : 'No Expiry';
 
                         if (isExpired) {
-                            $('#lockerAllocationDates').html(`${startDate} - ${endDate} <span class="text-danger">(Expired)</span>`);
+                            $('#lockerAllocationDates').html(`${startDate} - ${endDate} <span class="text-danger"> Expired</span>`);
+                            $('#lockerAllocationStatus').text('').removeClass('text-success text-warning text-danger');
                         } else {
                             $('#lockerAllocationDates').text(`${startDate} - ${endDate}`);
+                            const status = allocation.status || '';
+                            const $status = $('#lockerAllocationStatus');
+                            $status.text(status ? status.charAt(0).toUpperCase() + status.slice(1) : '');
+                            $status.removeClass('text-success text-warning text-danger');
+                            if (status === 'active') {
+                                $status.addClass('text-success');
+                            } else if (status === 'pending') {
+                                $status.addClass('text-warning');
+                            } else if (status === 'rejected') {
+                                $status.addClass('text-danger');
+                            }
                         }
                         $('#lockerAllocationInfo').removeClass('d-none');
 

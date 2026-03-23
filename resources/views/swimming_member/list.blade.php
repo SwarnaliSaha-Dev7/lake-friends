@@ -1610,6 +1610,23 @@
                                     <small class="text-muted">Allocated Duration</small>
                                     <div class="fw-semibold">
                                         <span id="lockerAllocationDates">-</span>
+                                        <span id="lockerAllocationStatus" class="ms-2"></span>
+                                    </div>
+                                </div>
+
+                                <div class="d-none mt-3" id="lockerPaymentHistory">
+                                    <small class="text-muted">Payment History</small>
+                                    <div class="border rounded-2 mt-1">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-muted">Date</th>
+                                                    <th class="text-muted text-end">Amount</th>
+                                                    <th class="text-muted text-end">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lockerPaymentHistoryBody"></tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -2324,6 +2341,9 @@
             $('#lockerPrice').text(0);
             $('#lockerAllocationInfo').addClass('d-none');
             $('#lockerAllocationDates').text('-');
+            $('#lockerAllocationStatus').text('').removeClass('text-success text-warning text-danger');
+            $('#lockerPaymentHistory').removeClass('d-none');
+            $('#lockerPaymentHistoryBody').html('<tr><td colspan="3" class="text-center text-muted">No history</td></tr>');
 
             // $('#lockerModal').data('has-locker', false);
 
@@ -2355,11 +2375,41 @@
                             : 'No Expiry';
 
                         if (isExpired) {
-                            $('#lockerAllocationDates').html(`${startDate} - ${endDate} <span class="text-danger">(Expired)</span>`);
+                            $('#lockerAllocationDates').html(`${startDate} - ${endDate} <span class="text-danger"> Expired</span>`);
+                            $('#lockerAllocationStatus').text('').removeClass('text-success text-warning text-danger');
                         } else {
                             $('#lockerAllocationDates').text(`${startDate} - ${endDate}`);
+                            const status = allocation.status || '';
+                            const $status = $('#lockerAllocationStatus');
+                            $status.text(status ? status.charAt(0).toUpperCase() + status.slice(1) : '');
+                            $status.removeClass('text-success text-warning text-danger');
+                            if (status === 'active') {
+                                $status.addClass('text-success');
+                            } else if (status === 'pending') {
+                                $status.addClass('text-warning');
+                            } else if (status === 'rejected') {
+                                $status.addClass('text-danger');
+                            }
                         }
                         $('#lockerAllocationInfo').removeClass('d-none');
+
+                        const history = response.payment_history || allocation.payment_history || [];
+                        if (history.length > 0) {
+                            let rows = '';
+                            history.forEach(function (h) {
+                                const date = h.created_at ? new Date(h.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '-';
+                                const amount = h.net_amount !== null ? parseFloat(h.net_amount).toFixed(2) : '0.00';
+                                const status = h.payment_status ? h.payment_status.toString() : '-';
+                                rows += `<tr>
+                                    <td>${date}</td>
+                                    <td class="text-end">₹ ${amount}</td>
+                                    <td class="text-end">${status}</td>
+                                </tr>`;
+                            });
+                            $('#lockerPaymentHistoryBody').html(rows);
+                        } else {
+                            $('#lockerPaymentHistoryBody').html('<tr><td colspan="3" class="text-center text-muted">No history</td></tr>');
+                        }
 
                         if (isExpired) {
                             $('#lockerModal').data('has-locker', false);
@@ -2374,6 +2424,23 @@
                         }
                     } else {
                         $('#lockerModal').data('has-locker', false);
+                        const history = response.payment_history || [];
+                        if (history.length > 0) {
+                            let rows = '';
+                            history.forEach(function (h) {
+                                const date = h.created_at ? new Date(h.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : '-';
+                                const amount = h.net_amount !== null ? parseFloat(h.net_amount).toFixed(2) : '0.00';
+                                const status = h.payment_status ? h.payment_status.toString() : '-';
+                                rows += `<tr>
+                                    <td>${date}</td>
+                                    <td class="text-end">₹ ${amount}</td>
+                                    <td class="text-end">${status}</td>
+                                </tr>`;
+                            });
+                            $('#lockerPaymentHistoryBody').html(rows);
+                        } else {
+                            $('#lockerPaymentHistoryBody').html('<tr><td colspan="3" class="text-center text-muted">No history</td></tr>');
+                        }
                     }
                 },
                 error: function(){
@@ -2446,54 +2513,54 @@
 
         // Locker Purchase Section End for swimming members
 
-    });
+        $(document).on('click', '.receiptBtn', function () {
 
-    $(document).on('click', '.receiptBtn', function () {
+            let memberId = $(this).data('id');
+            let btn = $(this);
+            let original = btn.html();
 
-        let memberId = $(this).data('id');
-        let btn = $(this);
-        let original = btn.html();
+            btn.html('<span class="spinner-border spinner-border-sm"></span>');
 
-        btn.html('<span class="spinner-border spinner-border-sm"></span>');
+            $.ajax({
+                url: '{{ route("swimming-member.receipt", ":id") }}'.replace(':id', memberId),
+                type: 'GET',
+                success: function (response) {
 
-        $.ajax({
-            url: '{{ route("swimming-member.receipt", ":id") }}'.replace(':id', memberId),
-            type: 'GET',
-            success: function (response) {
+                    if (response.statusCode == 200) {
 
-                if (response.statusCode == 200) {
+                        let data = response.data;
 
-                    let data = response.data;
-
-                    $('#receiptName').text(data.name);
-                    $('#receiptAddress').text(data.address);
-                    $('#receiptPhone').text(data.phone);
-                    $('#receiptPolice').text(data.police_station);
-                    $('#receiptAge').text(data.age + ' Years');
-                    $('#receiptHeight').text(data.height);
-                    $('#receiptWeight').text(data.weight);
-                    $('#receiptPulse').text(data.pulse_rate);
-                    $('#receiptGender').text(data.gender);
-                    $('#member_code').text(data.member_code);
-                    $('#receiptDate').text(data.date);
+                        $('#receiptName').text(data.name);
+                        $('#receiptAddress').text(data.address);
+                        $('#receiptPhone').text(data.phone);
+                        $('#receiptPolice').text(data.police_station);
+                        $('#receiptAge').text(data.age + ' Years');
+                        $('#receiptHeight').text(data.height);
+                        $('#receiptWeight').text(data.weight);
+                        $('#receiptPulse').text(data.pulse_rate);
+                        $('#receiptGender').text(data.gender);
+                        $('#member_code').text(data.member_code);
+                        $('#receiptDate').text(data.date);
 
 
-                    if (data.image) {
-                        $('#receiptImage').attr('src', '/' + data.image);
+                        if (data.image) {
+                            $('#receiptImage').attr('src', '/' + data.image);
+                        }
+
+                        $('#receiptModal').modal('show');
+                    } else {
+                        toastr.error(response.message || 'Something went wrong');
                     }
 
-                    $('#receiptModal').modal('show');
-                } else {
-                    toastr.error(response.message || 'Something went wrong');
+                    btn.html(original);
+                },
+                error: function () {
+                    toastr.error('Something went wrong');
+                    btn.html(original);
                 }
-
-                btn.html(original);
-            },
-            error: function () {
-                toastr.error('Something went wrong');
-                btn.html(original);
-            }
+            });
         });
+
     });
 </script>
 @endsection

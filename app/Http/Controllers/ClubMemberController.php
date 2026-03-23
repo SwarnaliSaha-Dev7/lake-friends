@@ -1413,6 +1413,7 @@ class ClubMemberController extends Controller
                 'member_id' => $request->member_id,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'price' => $lockerAmount,
             ]);
 
             // DEDUCT WALLET

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('member_id')->constrained('members')->nullOnDelete();
             $table->foreignId('club_id')->nullable()->constrained('clubs')->cascadeOnDelete();
 
-            $table->enum('purpose',['plan_purchase','plan_renewal', 'recharge', 'fine'])->nullable();
+            $table->enum('purpose',['plan_purchase','plan_renewal', 'recharge', 'fine','swim_locker_purchase'])->nullable();
             $table->foreignId('membership_purchase_history_id')->nullable()->constrained('membership_purchase_histories')->nullOnDelete();
             $table->foreignId('wallet_transaction_id')->nullable()->constrained('wallet_transactions')->nullOnDelete();
 

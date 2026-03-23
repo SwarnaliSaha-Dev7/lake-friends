@@ -16,6 +16,7 @@ class LockerAllocation extends Model
         'member_id',
         'start_date',
         'end_date',
+        'price',
         'status'
     ];
 

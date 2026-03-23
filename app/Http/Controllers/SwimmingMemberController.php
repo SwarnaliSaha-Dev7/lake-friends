@@ -965,6 +965,7 @@ class SwimmingMemberController extends Controller
                 'member_id' => $request->member_id,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'price' => $lockerAmount,
             ]);
 
             // // DEDUCT WALLET
@@ -973,6 +974,18 @@ class SwimmingMemberController extends Controller
 
             $locker->update([
                 'status' => 'occupied'
+            ]);
+
+            PaymentHistory::create([
+                'member_id' => $request->member_id,
+                'club_id' => $clubId,
+                'purpose' => 'swim_locker_purchase',
+                'locker_allocation_id' => $lockerAllocation->id,
+                'mr_no' => generateMrNo(),
+                'bill_no' => generateBillNo(),
+                'taxable_amount' => $lockerAmount,
+                'net_amount' => $lockerAmount,
+                'payment_status' => 'success',
             ]);
 
             // // WALLET LOG
@@ -1008,6 +1021,10 @@ class SwimmingMemberController extends Controller
                     'checker_user_id' => Auth::id(),
                     'approved_or_rejected_at' => now(),
                     'status' => 'approved'
+                ]);
+
+                $lockerAllocation->update([
+                    'status' => 'active'
                 ]);
 
             }
@@ -1049,16 +1066,24 @@ class SwimmingMemberController extends Controller
                 ->latest()
                 ->first();
 
+            $paymentHistory = PaymentHistory::where('member_id', $memberId)
+                ->where('purpose', 'swim_locker_purchase')
+                ->orderBy('id', 'DESC')
+                ->get(['id','created_at', 'net_amount', 'payment_status']);
+
             if ($allocation) {
                 $today = Carbon::today()->toDateString();
                 $allocation->is_expired = $allocation->end_date
                     ? (Carbon::parse($allocation->end_date)->toDateString() < $today)
                     : false;
+
+                $allocation->payment_history = $paymentHistory;
             }
 
             return response()->json([
                 'statusCode' => 200,
-                'data' => $allocation
+                'data' => $allocation,
+                'payment_history' => $paymentHistory
             ]);
         } catch (\Throwable $th) {
             return response()->json([
