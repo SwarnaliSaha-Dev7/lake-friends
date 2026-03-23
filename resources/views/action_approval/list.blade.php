@@ -1026,7 +1026,11 @@
                         $('#swim_member_email').val(response.data['swim_email']);
                         $('#swim_member_phone').val(response.data['swim_phone']);
                         $('#swim_member_address').val(response.data['swim_address']);
-                        $('#swim_member_police_station').val(response.data['swim_police_station']);
+                        if (response.data['swim_member_police_station']) {
+                            $('#swim_member_police_station').val(response.data['swim_member_police_station']);
+                        } else {
+                            $('#swim_member_police_station').val(response.data['swim_police_station']);
+                        }
                         $('#swim_member_age').val(response.data['swim_age']);
                         $('#swim_member_sex').val(response.data['swim_sex']);
                         $('#swim_member_height').val(response.data['swim_height']);

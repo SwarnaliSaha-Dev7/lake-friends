@@ -11,7 +11,7 @@
                 <div class="member-list-part position-relative">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
                         <h2 class="fs-5 common-heading mb-md-0 fw-semibold">Minimum Spend Rules</h2>
-                        <div class="d-flex gap-2">
+                        {{-- <div class="d-flex gap-2">
                             <div class="d-flex justify-content-end">
                                 <select id="statusFilter"
                                     class="form-select form-select-sm w-auto fs-6 rounded-2 ps-3 shadow-none">
@@ -22,8 +22,8 @@
                                     <option value="Blocked">Blocked</option>
                                 </select>
                             </div>
-                            
-                        </div>
+
+                        </div> --}}
                     </div>
                     <div class="table-responsive">
                         <table class="table rounded-3 overflow-hidden clubmemberlist2" cellspacing="0"
