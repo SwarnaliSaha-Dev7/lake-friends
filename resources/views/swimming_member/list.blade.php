@@ -1018,7 +1018,7 @@
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
-                                                    <p class="upload-text mb-0">
+                                                    <p class="upload-text mb-0" id="swim_member_photo_name">
                                                         Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
@@ -1071,7 +1071,7 @@
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
-                                                    <p class="upload-text mb-0">
+                                                    <p class="upload-text mb-0" id="swim_guardian_photo_name">
                                                         Upload Passport size Image & Signature
                                                     </p>
                                                     <small class="text-muted">
@@ -1979,6 +1979,14 @@
                 success: function(response){
                     if (response.statusCode == 200) {
                         // console.log(response);
+                        const fileNameFromPath = (path) => {
+                            if (!path) {
+                                return 'Upload Passport size Image & Signature';
+                            }
+                            const lastSlash = path.split('/').pop();
+                            const lastBackslash = lastSlash.split('\\').pop();
+                            return lastBackslash || 'Upload Passport size Image & Signature';
+                        };
                         $('#swim_member_id').val(memberId)
                         $('#swim_member_name').val(response.data.name);
                         $('#swim_member_email').val(response.data.email);
@@ -2003,6 +2011,10 @@
                         $('#swim_status').val(response.data.status);
                         $('#swim_guardian_name').val(response.data.member_details.details['guardian_name']);
                         $('#swim_guardian_occupation').val(response.data.member_details.details['guardian_occupation']);
+                        // console.log(fileNameFromPath(response.data.image))
+                        $('#swim_member_photo_name').text(fileNameFromPath(response.data.image));
+                        // console.log(fileNameFromPath(fileNameFromPath(response.data.member_details.details['guardian_image'])))
+                        $('#swim_guardian_photo_name').text(fileNameFromPath(response.data.member_details.details['guardian_image']));
                         let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
                         $('input[name="swim_membership_plan_type"]').prop('checked', false);
                         $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
