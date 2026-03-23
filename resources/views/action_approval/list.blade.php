@@ -81,7 +81,7 @@
                                             @endif
                                         </td>
                                     @elseif($data->module =="add_on_purchase")
-                                        <td class="text-nowrap"><a href="javascript:void(0)" class="addOnPurchaseDtls" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
+                                        <td class="text-nowrap"><a href="javascript:void(0)" class="addonDtls" data-id="{{$data->id}}">{{ $data->entity->name }}</a></td>
 
                                     @elseif($data->module == "member_delete")
                                         <td class="text-nowrap">
@@ -183,9 +183,16 @@
                                     @endphp --}}
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
-                                                                        @if($data->module =="locker_purchase")
+                                    @if($data->module =="locker_purchase")
                                         <td class="text-nowrap">
                                             <a href="javascript:void(0)" class="lockerDtls" data-id="{{$data->id}}">
+                                                {{ $data->entity->name }}
+                                            </a>
+                                        </td>
+
+                                    @elseif($data->module =="add_on_purchase")
+                                        <td class="text-nowrap">
+                                            <a href="javascript:void(0)" class="addonDtls" data-id="{{$data->id}}">
                                                 {{ $data->entity->name }}
                                             </a>
                                         </td>
@@ -806,6 +813,30 @@
     </div>
     <!-- Add Locker Purchase Modal End-->
 
+    <!-- Add On Modal Start for club members-->
+    <div class="modal fade" id="addonModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-semibold">Add-on Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="addonList"></div>
+
+                    <div class="form-label">
+                        <small>Total Amount</small>
+                        <h5>₹ <span id="addonTotal">0</span></h5>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Add On Modal End for club members-->
+
 @endsection
 
 @section('customJS')
@@ -1076,6 +1107,59 @@
                         $('#lockerPrice').text(response.data.locker_price ?? 0);
 
                         $('#lockerAllocationInfo').removeClass('d-none');
+                    }
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                }
+            });
+        });
+
+        $(document).on('click', '.addonDtls', function(e){
+            e.preventDefault();
+
+            let id = $(this).data('id');
+
+            // reset UI
+            $('#addonList').html('');
+            $('#addonTotal').text('0');
+
+            // open modal immediately (like locker)
+            $('#addonModal').modal('show');
+
+            $.ajax({
+                url: '{{route("memberActionApproval.view", ":id")}}'.replace(':id', id),
+                type: 'GET',
+                success: function(response){
+
+                    if(response.statusCode == 200){
+
+                        let addons = response.data.addons;
+                        let total = response.data.total_price;
+
+                        $('#addonTotal').text(total ?? 0);
+
+                        let html = '';
+
+                        if(addons && addons.length > 0){
+                            addons.forEach(function(item){
+                                html += `
+                                    <div class="border-bottom py-2">
+                                        <div>
+                                            <strong>${item.addon_name}</strong> ||
+                                            <small>${item.start_date ?? '-'} to ${item.end_date ?? '-'}</small> ||
+                                            ₹ ${item.price}
+                                            </div>
+
+
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            html = `<div class="text-muted">No add-ons found</div>`;
+                        }
+
+                        $('#addonList').html(html);
                     }
                 },
                 error: function(){

@@ -967,6 +967,10 @@ class SwimmingMemberController extends Controller
                     'status' => 'approved'
                 ]);
 
+                $lockerAllocation->update([
+                    'status' => 'active'
+                ]);
+
             }
 
             if (Auth::user()->hasRole('operator')) {
