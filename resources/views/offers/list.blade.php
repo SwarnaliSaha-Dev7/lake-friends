@@ -545,7 +545,7 @@ $(document).ready(function () {
         const id = $(this).data('id');
 
         $.ajax({
-            url: '/manage-offers/' + id + '/edit',
+            url: "{{ url('manage-offers') }}/" + id + '/edit',
             type: 'GET',
             success: function (response) {
                 if (response.statusCode === 423) {
@@ -606,7 +606,7 @@ $(document).ready(function () {
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
 
         $.ajax({
-            url: '/manage-offers/' + id,
+            url: "{{ url('manage-offers') }}/" + id,
             type: 'POST',
             data: $(this).serialize() + '&_method=PUT',
             success: function (response) {
@@ -635,7 +635,7 @@ $(document).ready(function () {
 
         // First check for pending approval
         $.ajax({
-            url: '/manage-offers/' + id + '/edit',
+            url: "{{ url('manage-offers') }}/" + id + '/edit',
             type: 'GET',
             success: function (response) {
                 if (response.statusCode === 423) {
@@ -656,7 +656,7 @@ $(document).ready(function () {
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>...');
 
         $.ajax({
-            url: '/manage-offers/' + id,
+            url: "{{ url('manage-offers') }}/" + id,
             type: 'POST',
             data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
             success: function (response) {

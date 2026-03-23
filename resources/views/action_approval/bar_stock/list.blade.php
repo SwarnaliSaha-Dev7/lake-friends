@@ -137,7 +137,7 @@
             btn.prop('disabled', true);
 
             $.ajax({
-                url: `/manage-bar-stock-approval/approve/${id}`,
+                url: "{{ url('manage-bar-stock-approval') }}/approve/" + id,
                 method: 'GET',
                 success: function (res) {
                     if (res.statusCode === 200) {
@@ -169,7 +169,7 @@
             btn.prop('disabled', true);
 
             $.ajax({
-                url: `/manage-bar-stock-approval/reject/${id}`,
+                url: "{{ url('manage-bar-stock-approval') }}/reject/" + id,
                 method: 'GET',
                 success: function (res) {
                     if (res.statusCode === 200) {

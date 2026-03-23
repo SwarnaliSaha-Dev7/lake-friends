@@ -295,10 +295,11 @@ class BarOrderController extends Controller
                 return response()->json(['statusCode' => 422, 'message' => 'Wallet not found.']);
             }
 
-            $taxable  = (float) $request->input('taxable_amount', 0);
-            $gstPct   = (float) $request->input('gst_percentage', 0);
-            $gstAmt   = (float) $request->input('gst_amount', 0);
-            $netAmt   = (float) $request->input('net_amount', 0);
+            $taxable     = (float) $request->input('taxable_amount', 0);
+            $discountAmt = (float) $request->input('discount_amount', 0);
+            $gstPct      = (float) $request->input('gst_percentage', 0);
+            $gstAmt      = (float) $request->input('gst_amount', 0);
+            $netAmt      = (float) $request->input('net_amount', 0);
 
             if ((float) $wallet->current_balance < $netAmt) {
                 return response()->json([
@@ -353,7 +354,7 @@ class BarOrderController extends Controller
                 'taxable_amount'  => $taxable,
                 'gst_percentage'  => $gstPct,
                 'gst_amount'      => $gstAmt,
-                'discount_amount' => 0,
+                'discount_amount' => $discountAmt,
                 'net_amount'      => $netAmt,
                 'status'          => 'paid',
             ]);
@@ -361,11 +362,12 @@ class BarOrderController extends Controller
             // Create order items + deduct bar stock
             foreach ($items as $item) {
                 $foodItemId = (int) $item['food_item_id'];
-                $isBeer     = (bool) $item['is_beer'];
-                $deductQty  = (int) $item['deduct_qty'];
-                $volumeMl   = $isBeer ? null : (int) $item['volume_ml'];
-                $quantity   = (int) $item['quantity'];
-                $unit       = $isBeer ? 'btl' : 'ml';
+                $isBeer       = (bool) $item['is_beer'];
+                $deductQty    = (int) $item['deduct_qty'];
+                $volumeMl     = $isBeer ? null : (int) $item['volume_ml'];
+                $quantity     = (int) $item['quantity'];
+                $unit         = $isBeer ? 'btl' : 'ml';
+                $offerApplied = $item['offer_applied'] ?? null;
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,
@@ -374,6 +376,7 @@ class BarOrderController extends Controller
                     'unit'                => $unit,
                     'unit_price'          => (float) $item['unit_price'],
                     'total_amount'        => (float) $item['total_amount'],
+                    'offer_applied'       => $offerApplied,
                     'metadata'            => $volumeMl ? ['volume_ml' => $volumeMl] : null,
                 ]);
 

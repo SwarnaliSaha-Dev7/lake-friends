@@ -71,19 +71,32 @@
                             @foreach($orders as $order)
                                 @foreach($order->items->whereIn('unit', ['ml', 'btl']) as $item)
                                     @php
-                                        $hasRows    = true;
-                                        $isBeer     = $item->unit === 'btl';
-                                        $volLabel   = $isBeer
-                                            ? $item->quantity . ' BTL'
-                                            : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
-                                        $grandTotal += $item->total_amount;
-                                        $offer      = $offerMap[$item->food_item_id] ?? null;
-                                        if ($offer) {
-                                            $offerLabel = match($offer['type_slug']) {
-                                                'percentage' => $offer['discount_value'] . '% OFF',
-                                                'flat'       => 'Rs ' . $offer['discount_value'] . ' OFF',
-                                                'b1g1'       => 'Buy ' . $offer['buy_qty'] . ' Get ' . $offer['get_qty'],
-                                                default      => $offer['offer_name'],
+                                        $hasRows      = true;
+                                        $isBeer       = $item->unit === 'btl';
+                                        $offerApplied = $item->offer_applied;
+                                        $grandTotal  += $item->total_amount;
+
+                                        // Qty label: B1G1 shows "1 BTL + 1 Free = 2 BTL"
+                                        if ($isBeer && $offerApplied && ($offerApplied['type_slug'] ?? '') === 'b1g1') {
+                                            $buyQty   = $offerApplied['buy_qty'] ?? 1;
+                                            $getQty   = $offerApplied['get_qty'] ?? 1;
+                                            $setSize  = $buyQty + $getQty;
+                                            $sets     = $setSize > 0 ? intdiv($item->quantity, $setSize) : 0;
+                                            $volLabel = ($sets * $buyQty) . ' BTL + ' . ($sets * $getQty) . ' Free = ' . $item->quantity . ' BTL';
+                                        } else {
+                                            $volLabel = $isBeer
+                                                ? $item->quantity . ' BTL'
+                                                : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
+                                        }
+
+                                        // Offer label from stored offer_applied
+                                        $offerLabel = null;
+                                        if ($offerApplied) {
+                                            $offerLabel = match($offerApplied['type_slug'] ?? '') {
+                                                'percentage' => ($offerApplied['discount_value'] ?? '') . '% OFF',
+                                                'flat'       => 'Rs ' . ($offerApplied['discount_value'] ?? '') . ' OFF',
+                                                'b1g1'       => 'Buy ' . ($offerApplied['buy_qty'] ?? 1) . ' Get ' . ($offerApplied['get_qty'] ?? 1),
+                                                default      => $offerApplied['offer_name'] ?? null,
                                             };
                                         }
                                     @endphp
@@ -93,7 +106,7 @@
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('h:i A') }}</td>
                                         <td class="text-nowrap">
                                             {{ $item->foodItem->name ?? '—' }}
-                                            @if($offer)
+                                            @if($offerLabel)
                                                 <br>
                                                 <span class="badge bg-danger rounded-pill px-2" style="font-size:0.65rem;">
                                                     <i class="fa-solid fa-tag me-1"></i>{{ $offerLabel }}
@@ -185,6 +198,10 @@
                                     <div class="d-flex justify-content-between small mb-1">
                                         <span class="text-muted">Subtotal</span>
                                         <span class="fw-semibold" id="cartSubtotal">Rs 0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small mb-1" id="cartDiscountRow" style="display:none!important;">
+                                        <span class="text-success"><i class="fa-solid fa-tag me-1"></i>Offer Savings</span>
+                                        <span class="fw-semibold text-success" id="cartDiscount">- Rs 0.00</span>
                                     </div>
                                     <div class="d-flex justify-content-between small mb-1">
                                         <span class="text-muted">GST (<span id="cartGstPct">0</span>%)</span>
@@ -333,15 +350,28 @@ $(document).ready(function () {
             html = '<div class="col-12 text-center text-muted py-4">No items found.</div>';
         }
 
-        // Sort: in-stock first, low-stock next, out-of-stock last
+        // Sort: in-stock first, low-stock next, out-of-stock / b1g1-insufficient last
         var sorted = items.slice().sort(function (a, b) {
-            var rank = function (x) { return !x.in_stock ? 2 : (x.is_low ? 1 : 0); };
+            var rank = function (x) {
+                if (!x.in_stock) return 3;
+                if (x.is_beer && x.offer && x.offer.type_slug === 'b1g1' &&
+                    x.bar_stock < (x.offer.buy_qty || 1) + (x.offer.get_qty || 1)) return 2;
+                if (x.is_low) return 1;
+                return 0;
+            };
             return rank(a) - rank(b);
         });
 
         sorted.forEach(function (item) {
             var isOut = !item.in_stock;
             var isLow = item.is_low;
+
+            // B1G1 specific: need buy_qty + get_qty bottles in stock
+            var isB1g1Insufficient = false;
+            if (!isOut && item.is_beer && item.offer && item.offer.type_slug === 'b1g1') {
+                var b1g1Need = (item.offer.buy_qty || 1) + (item.offer.get_qty || 1);
+                isB1g1Insufficient = item.bar_stock < b1g1Need;
+            }
 
             var remainder    = item.size_ml > 0 ? item.bar_stock % item.size_ml : item.bar_stock;
             var btlBreakdown = item.btl_eq > 0
@@ -351,10 +381,12 @@ $(document).ready(function () {
                 ? item.bar_stock + ' BTL'
                 : item.bar_stock.toLocaleString() + ' ml' + btlBreakdown;
 
-            var stockColor  = isOut ? '#dc3545' : (isLow ? '#fd7e14' : '#198754');
-            var stockLabel  = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
-            var cardBorder  = isOut ? 'border-danger' : (isLow ? 'border-warning' : '');
-            var cardBg      = isOut ? 'background:#fff5f5;' : (isLow ? 'background:#fffbf0;' : '');
+            var stockColor  = (isOut || isB1g1Insufficient) ? '#dc3545' : (isLow ? '#fd7e14' : '#198754');
+            var stockLabel  = isOut ? 'Out of Stock'
+                            : isB1g1Insufficient ? 'Insufficient for B1G1'
+                            : (isLow ? 'Low Stock' : 'In Stock');
+            var cardBorder  = (isOut || isB1g1Insufficient) ? 'border-danger' : (isLow ? 'border-warning' : '');
+            var cardBg      = (isOut || isB1g1Insufficient) ? 'background:#fff5f5;' : (isLow ? 'background:#fffbf0;' : '');
 
             var typeBadge = item.is_beer
                 ? '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Beer</span>'
@@ -384,7 +416,7 @@ $(document).ready(function () {
                 +   '<div class="text-muted mb-1">' + item.category + (sizeTxt ? ' · ' + sizeTxt : '') + '</div>'
                 +   '<div class="mb-1 d-flex align-items-center gap-2">'
                 +     '<span class="fw-bold" style="color:' + stockColor + ';font-size:0.78rem;">'
-                +       '<i class="fa-solid fa-' + (isOut ? 'circle-xmark' : (isLow ? 'triangle-exclamation' : 'circle-check')) + ' me-1"></i>'
+                +       '<i class="fa-solid fa-' + ((isOut || isB1g1Insufficient) ? 'circle-xmark' : (isLow ? 'triangle-exclamation' : 'circle-check')) + ' me-1"></i>'
                 +       stockLabel
                 +     '</span>'
                 +     '<span class="text-muted" style="font-size:0.75rem;">' + stockDisplay + '</span>'
@@ -398,7 +430,7 @@ $(document).ready(function () {
                 +     ' data-size-ml="' + item.size_ml + '"'
                 +     ' data-price="' + item.price + '"'
                 +     ' data-stock="' + item.bar_stock + '"'
-                +     (item.in_stock ? '' : ' disabled')
+                +     ((item.in_stock && !isB1g1Insufficient) ? '' : ' disabled')
                 +   '><i class="fa-solid fa-plus me-1"></i>Add</button>'
                 + '</div></div>';
         });
@@ -461,11 +493,35 @@ $(document).ready(function () {
         var stock  = parseInt($btn.data('stock'));
         var sizeMl = parseInt($btn.data('size-ml')) || 0;
 
+        var barItem = barItems.find(function (bi) { return String(bi.id) === String(id); });
+        var offer   = barItem ? (barItem.offer || null) : null;
+
         if (isBeer) {
-            addToCart({ id: id, name: name, is_beer: true, volume_ml: null, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock });
+            if (offer && offer.type_slug === 'b1g1') {
+                var buyQty = offer.buy_qty || 1;
+                var getQty = offer.get_qty || 1;
+                var totalNeeded = buyQty + getQty;
+                if (stock < totalNeeded) {
+                    toastr.error(
+                        '"' + name + '" এ Buy ' + buyQty + ' Get ' + getQty +
+                        ' offer আছে। কমপক্ষে ' + totalNeeded + ' BTL stock থাকতে হবে।' +
+                        ' বর্তমানে মাত্র ' + stock + ' BTL available।'
+                    );
+                    return;
+                }
+                addToCart({
+                    id: id, name: name, is_beer: true, volume_ml: null,
+                    paid_qty: buyQty, free_qty: getQty,
+                    quantity: buyQty + getQty,
+                    deduct_qty: buyQty + getQty,
+                    unit_price: price, bar_stock: stock, offer: offer,
+                });
+            } else {
+                addToCart({ id: id, name: name, is_beer: true, volume_ml: null, paid_qty: 1, free_qty: 0, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock, offer: offer });
+            }
         } else {
             // Show peg size selector
-            currentPegItem = { id: id, name: name, is_beer: false, size_ml: sizeMl, unit_price: price, bar_stock: stock };
+            currentPegItem = { id: id, name: name, is_beer: false, size_ml: sizeMl, unit_price: price, bar_stock: stock, offer: offer };
             selectedPegMl  = 60;
             $('#pegItemName').text(name + (sizeMl ? ' (' + sizeMl + ' ml)' : ''));
             $('#customPegMl').val('');
@@ -510,15 +566,20 @@ $(document).ready(function () {
             name: currentPegItem.name,
             is_beer: false,
             volume_ml: ml,
+            paid_qty: qty, free_qty: 0,
             quantity: qty,
             deduct_qty: deductQty,
             unit_price: currentPegItem.unit_price,
             bar_stock: currentPegItem.bar_stock,
+            offer: currentPegItem.offer,
         });
         $('#pegSizeModal').modal('hide');
     });
 
     function addToCart(item) {
+        if (item.paid_qty === undefined) item.paid_qty = item.quantity;
+        if (item.free_qty === undefined) item.free_qty = 0;
+
         // Merge if same item + same volume_ml
         var existing = cart.find(function (c) {
             return c.id === item.id && c.volume_ml === item.volume_ml;
@@ -529,7 +590,9 @@ $(document).ready(function () {
                 toastr.error('Not enough bar stock.');
                 return;
             }
-            existing.quantity  += item.quantity;
+            existing.paid_qty   = (existing.paid_qty || existing.quantity) + item.paid_qty;
+            existing.free_qty   = (existing.free_qty || 0) + item.free_qty;
+            existing.quantity   = existing.paid_qty + existing.free_qty;
             existing.deduct_qty = newDeduct;
         } else {
             cart.push(item);
@@ -550,18 +613,33 @@ $(document).ready(function () {
 
         var html = '';
         cart.forEach(function (item, idx) {
-            var desc = item.is_beer
-                ? item.quantity + ' BTL'
-                : item.quantity + ' × ' + item.volume_ml + ' ml = ' + item.deduct_qty.toLocaleString() + ' ml';
-            var total = item.quantity * item.unit_price;
+            var paidQty = item.paid_qty !== undefined ? item.paid_qty : item.quantity;
+            var freeQty = item.free_qty || 0;
+            var desc, lineTotal;
+
+            if (item.is_beer) {
+                if (freeQty > 0) {
+                    desc = paidQty + ' BTL + <span class="text-success fw-semibold">' + freeQty + ' Free</span> = ' + item.quantity + ' BTL';
+                } else {
+                    desc = item.quantity + ' BTL';
+                }
+                lineTotal = paidQty * item.unit_price;
+            } else {
+                desc = item.quantity + ' × ' + item.volume_ml + ' ml = ' + item.deduct_qty.toLocaleString() + ' ml';
+                lineTotal = paidQty * item.unit_price;
+            }
+
+            var offerTag = (item.offer && item.offer.type_slug === 'b1g1')
+                ? ' <span class="badge bg-danger text-white rounded-pill px-1" style="font-size:0.6rem;">B1G1</span>'
+                : '';
 
             html += '<div class="d-flex align-items-start gap-2 mb-2 pb-2 border-bottom">'
                 +   '<div class="flex-grow-1">'
-                +     '<div class="fw-semibold small">' + item.name + '</div>'
+                +     '<div class="fw-semibold small">' + item.name + offerTag + '</div>'
                 +     '<div class="text-muted" style="font-size:0.75rem;">' + desc + ' · Rs ' + item.unit_price.toFixed(2) + '/unit</div>'
                 +   '</div>'
                 +   '<div class="text-end">'
-                +     '<div class="fw-bold small">Rs ' + total.toFixed(2) + '</div>'
+                +     '<div class="fw-bold small">Rs ' + lineTotal.toFixed(2) + '</div>'
                 +     '<button type="button" class="btn btn-sm btn-link text-danger p-0 remove-cart-item" data-idx="' + idx + '" style="font-size:0.7rem;">Remove</button>'
                 +   '</div>'
                 + '</div>';
@@ -569,11 +647,23 @@ $(document).ready(function () {
 
         $('#barCartItems').html(html);
 
-        var subtotal = cart.reduce(function (s, c) { return s + c.quantity * c.unit_price; }, 0);
-        var gstAmt   = subtotal * GST_PCT / 100;
-        var total    = subtotal + gstAmt;
+        var subtotal    = cart.reduce(function (s, c) {
+            var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
+            return s + paidQty * c.unit_price;
+        }, 0);
+        var discountAmt = cart.reduce(function (s, c) {
+            return s + (c.free_qty || 0) * c.unit_price;
+        }, 0);
+        var gstAmt = subtotal * GST_PCT / 100;
+        var total  = subtotal + gstAmt;
 
         $('#cartSubtotal').text('Rs ' + subtotal.toFixed(2));
+        if (discountAmt > 0) {
+            $('#cartDiscount').text('- Rs ' + discountAmt.toFixed(2));
+            $('#cartDiscountRow').show();
+        } else {
+            $('#cartDiscountRow').hide();
+        }
         $('#cartGstPct').text(GST_PCT);
         $('#cartGstAmt').text('Rs ' + gstAmt.toFixed(2));
         $('#cartTotal').text('Rs ' + total.toFixed(2));
@@ -605,19 +695,29 @@ $(document).ready(function () {
         if (!memberId) { toastr.warning('Please select a member first.'); return; }
         if (!cart.length) { toastr.warning('Cart is empty.'); return; }
 
-        var subtotal = cart.reduce(function (s, c) { return s + c.quantity * c.unit_price; }, 0);
-        var gstAmt   = subtotal * GST_PCT / 100;
-        var netAmt   = subtotal + gstAmt;
+        var subtotal    = cart.reduce(function (s, c) {
+            var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
+            return s + paidQty * c.unit_price;
+        }, 0);
+        var discountAmt = cart.reduce(function (s, c) {
+            return s + (c.free_qty || 0) * c.unit_price;
+        }, 0);
+        var gstAmt = subtotal * GST_PCT / 100;
+        var netAmt = subtotal + gstAmt;
 
         var items = cart.map(function (c) {
+            var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
             return {
-                food_item_id: c.id,
-                is_beer:      c.is_beer,
-                volume_ml:    c.volume_ml,
-                quantity:     c.quantity,
-                deduct_qty:   c.deduct_qty,
-                unit_price:   c.unit_price,
-                total_amount: c.quantity * c.unit_price,
+                food_item_id:  c.id,
+                is_beer:       c.is_beer,
+                volume_ml:     c.volume_ml,
+                quantity:      c.quantity,
+                paid_qty:      paidQty,
+                free_qty:      c.free_qty || 0,
+                deduct_qty:    c.deduct_qty,
+                unit_price:    c.unit_price,
+                total_amount:  paidQty * c.unit_price,
+                offer_applied: c.offer || null,
             };
         });
 
@@ -629,13 +729,14 @@ $(document).ready(function () {
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
-                _token:          '{{ csrf_token() }}',
-                member_id:       memberId,
-                items:           items,
-                taxable_amount:  subtotal.toFixed(2),
-                gst_percentage:  GST_PCT,
-                gst_amount:      gstAmt.toFixed(2),
-                net_amount:      netAmt.toFixed(2),
+                _token:           '{{ csrf_token() }}',
+                member_id:        memberId,
+                items:            items,
+                taxable_amount:   subtotal.toFixed(2),
+                discount_amount:  discountAmt.toFixed(2),
+                gst_percentage:   GST_PCT,
+                gst_amount:       gstAmt.toFixed(2),
+                net_amount:       netAmt.toFixed(2),
             }),
             success: function (res) {
                 if (res.statusCode === 200) {
@@ -746,14 +847,38 @@ $(document).ready(function () {
             }).forEach(function (it) {
                 var isBeer  = it.unit === 'btl';
                 var meta    = it.metadata || {};
-                var volDesc = isBeer
-                    ? '1 BTL × ' + it.quantity
-                    : (meta.volume_ml || '?') + ' ml × ' + it.quantity + ' = ' + (it.quantity * (meta.volume_ml || 0)) + ' ml total';
+                var offer   = it.offer_applied || null;
+                var volDesc, offerTag = '';
+
+                if (isBeer) {
+                    if (offer && offer.type_slug === 'b1g1') {
+                        var buyQty  = offer.buy_qty || 1;
+                        var getQty  = offer.get_qty || 1;
+                        var setSize = buyQty + getQty;
+                        var sets    = setSize > 0 ? Math.floor(it.quantity / setSize) : 0;
+                        var paid    = sets * buyQty;
+                        var free    = sets * getQty;
+                        volDesc = paid + ' BTL + <span class="text-success fw-semibold">' + free + ' Free</span> = ' + it.quantity + ' BTL';
+                    } else {
+                        volDesc = it.quantity + ' BTL';
+                    }
+                } else {
+                    volDesc = (meta.volume_ml || '?') + ' ml × ' + it.quantity + ' = ' + (it.quantity * (meta.volume_ml || 0)) + ' ml total';
+                }
+
+                if (offer) {
+                    var oLabel = offer.offer_name || '';
+                    if (offer.type_slug === 'b1g1')       oLabel = 'Buy ' + (offer.buy_qty||1) + ' Get ' + (offer.get_qty||1);
+                    else if (offer.type_slug === 'percentage') oLabel = (offer.discount_value||'') + '% OFF';
+                    else if (offer.type_slug === 'flat')   oLabel = 'Rs ' + (offer.discount_value||'') + ' OFF';
+                    offerTag = ' <span class="badge bg-danger rounded-pill px-1" style="font-size:0.6rem;"><i class="fa-solid fa-tag me-1"></i>' + oLabel + '</span>';
+                }
+
                 var amt = parseFloat(it.total_amount);
                 liquorTotal += amt;
 
                 rows += '<tr>'
-                    + '<td class="fw-medium">' + (it.food_item ? it.food_item.name : '—') + '</td>'
+                    + '<td class="fw-medium">' + (it.food_item ? it.food_item.name : '—') + offerTag + '</td>'
                     + '<td class="text-center text-nowrap">' + volDesc + '</td>'
                     + '<td class="text-end text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
                     + '<td class="text-end text-nowrap">Rs ' + amt.toFixed(2) + '</td>'
@@ -768,6 +893,22 @@ $(document).ready(function () {
                 $('#viewBarOrderBody').html('<p class="text-muted text-center py-4">No liquor items in this order.</p>');
                 return;
             }
+
+            var discountAmt = parseFloat(o.discount_amount || 0);
+            var gstAmt      = parseFloat(o.gst_amount || 0);
+            var netAmt      = parseFloat(o.net_amount || 0);
+            var gstPct      = parseFloat(o.gst_percentage || 0);
+
+            var footerRows = '<tr><td colspan="3" class="text-end pe-2 text-muted small">Subtotal</td>'
+                + '<td class="text-end text-nowrap small">Rs ' + liquorTotal.toFixed(2) + '</td></tr>';
+            if (discountAmt > 0) {
+                footerRows += '<tr><td colspan="3" class="text-end pe-2 text-success small"><i class="fa-solid fa-tag me-1"></i>Offer Savings</td>'
+                    + '<td class="text-end text-nowrap text-success small">- Rs ' + discountAmt.toFixed(2) + '</td></tr>';
+            }
+            footerRows += '<tr><td colspan="3" class="text-end pe-2 text-muted small">GST (' + gstPct + '%)</td>'
+                + '<td class="text-end text-nowrap small">Rs ' + gstAmt.toFixed(2) + '</td></tr>'
+                + '<tr class="fw-bold"><td colspan="3" class="text-end pe-2 fs-6">Total Charged</td>'
+                + '<td class="text-end fs-6 text-primary text-nowrap">Rs ' + netAmt.toFixed(2) + '</td></tr>';
 
             var html = '<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">'
                 + '<div>'
@@ -785,9 +926,8 @@ $(document).ready(function () {
                 + '<th class="text-end" style="padding:8px;">Unit Price</th>'
                 + '<th class="text-end" style="padding:8px;">Amount</th>'
                 + '</tr></thead><tbody>' + rows + '</tbody>'
-                + '<tfoot><tr class="fw-bold"><td colspan="3" class="text-end pe-2 fs-6">Liquor Total</td>'
-                + '<td class="text-end fs-6 text-primary">Rs ' + liquorTotal.toFixed(2) + '</td></tr>'
-                + '</tfoot></table></div>';
+                + '<tfoot>' + footerRows + '</tfoot>'
+                + '</table></div>';
 
             $('#viewBarOrderBody').html(html);
         }).fail(function () {

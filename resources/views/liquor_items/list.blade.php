@@ -516,7 +516,7 @@ $(document).ready(function () {
         $('.changePriceBtn').prop('disabled', false).css({'opacity': '', 'cursor': ''});
 
         $.ajax({
-            url: '/manage-liquor-items/' + id + '/edit',
+            url: "{{ url('manage-liquor-items') }}/" + id + '/edit',
             type: 'GET',
             success: function (response) {
                 var data = response.data;
@@ -570,7 +570,7 @@ $(document).ready(function () {
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
 
         $.ajax({
-            url: '/manage-liquor-items/' + id,
+            url: "{{ url('manage-liquor-items') }}/" + id,
             type: 'POST',
             data: formData,
             processData: false,
@@ -639,7 +639,7 @@ $(document).ready(function () {
         btn.prop('disabled', true);
 
         $.ajax({
-            url: '/manage-liquor-items/' + id,
+            url: "{{ url('manage-liquor-items') }}/" + id,
             type: 'DELETE',
             data: { _token: '{{ csrf_token() }}' },
             success: function (response) {

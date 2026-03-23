@@ -90,18 +90,45 @@
                             @foreach($orders as $order)
                                 @foreach($order->items->whereIn('unit', ['ml', 'btl']) as $item)
                                     @php
-                                        $hasRows    = true;
-                                        $isBeer     = $item->unit === 'btl';
-                                        $volLabel   = $isBeer
-                                            ? $item->quantity . ' BTL'
-                                            : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
-                                        $grandTotal += $item->total_amount;
+                                        $hasRows      = true;
+                                        $isBeer       = $item->unit === 'btl';
+                                        $offerApplied = $item->offer_applied;
+                                        $grandTotal  += $item->total_amount;
+
+                                        if ($isBeer && $offerApplied && ($offerApplied['type_slug'] ?? '') === 'b1g1') {
+                                            $buyQty   = $offerApplied['buy_qty'] ?? 1;
+                                            $getQty   = $offerApplied['get_qty'] ?? 1;
+                                            $setSize  = $buyQty + $getQty;
+                                            $sets     = $setSize > 0 ? intdiv($item->quantity, $setSize) : 0;
+                                            $volLabel = ($sets * $buyQty) . ' BTL + ' . ($sets * $getQty) . ' Free = ' . $item->quantity . ' BTL';
+                                        } else {
+                                            $volLabel = $isBeer
+                                                ? $item->quantity . ' BTL'
+                                                : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
+                                        }
+
+                                        $offerLabel = null;
+                                        if ($offerApplied) {
+                                            $offerLabel = match($offerApplied['type_slug'] ?? '') {
+                                                'percentage' => ($offerApplied['discount_value'] ?? '') . '% OFF',
+                                                'flat'       => 'Rs ' . ($offerApplied['discount_value'] ?? '') . ' OFF',
+                                                'b1g1'       => 'Buy ' . ($offerApplied['buy_qty'] ?? 1) . ' Get ' . ($offerApplied['get_qty'] ?? 1),
+                                                default      => $offerApplied['offer_name'] ?? null,
+                                            };
+                                        }
                                     @endphp
                                     <tr>
                                         <td class="text-nowrap fw-medium">{{ $order->order_no }}</td>
                                         <td class="text-nowrap">{{ $order->member->name ?? '—' }}</td>
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('d M Y, h:i A') }}</td>
-                                        <td class="text-nowrap">{{ $item->foodItem->name ?? '—' }}</td>
+                                        <td class="text-nowrap">
+                                            {{ $item->foodItem->name ?? '—' }}
+                                            @if($offerLabel)
+                                                <br><span class="badge bg-danger rounded-pill px-2" style="font-size:0.65rem;">
+                                                    <i class="fa-solid fa-tag me-1"></i>{{ $offerLabel }}
+                                                </span>
+                                            @endif
+                                        </td>
                                         <td class="text-nowrap">{{ $volLabel }}</td>
                                         <td class="text-nowrap">Rs {{ number_format($item->unit_price, 2) }}</td>
                                         <td class="text-nowrap fw-semibold">Rs {{ number_format($item->total_amount, 2) }}</td>

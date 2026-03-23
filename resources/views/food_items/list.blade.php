@@ -595,7 +595,7 @@
                 });
 
                 $.ajax({
-                    url: "/manage-food-items/" + id + "/edit",
+                    url: "{{ url('manage-food-items') }}/" + id + "/edit",
                     type: "GET",
 
                     success:function(response){
@@ -673,7 +673,7 @@
 
                 $.ajax({
 
-                    url: "/manage-food-items/"+id,
+                    url: "{{ url('manage-food-items') }}/"+id,
 
                     type: "POST",   // Laravel PUT via method spoofing
 
@@ -789,7 +789,7 @@
 
                 $.ajax({
 
-                    url: "/manage-food-items/" + foodId,
+                    url: "{{ url('manage-food-items') }}/" + foodId,
 
                     type: "DELETE",
 

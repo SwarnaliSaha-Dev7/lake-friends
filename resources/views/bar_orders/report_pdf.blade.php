@@ -76,17 +76,39 @@
     $rowBuffer  = [];
     foreach ($orders as $order) {
         foreach ($order->items->whereIn('unit', ['ml', 'btl']) as $item) {
-            $hasRows     = true;
-            $isBeer      = $item->unit === 'btl';
-            $volLabel    = $isBeer
-                ? $item->quantity . ' BTL'
-                : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
-            $grandTotal += $item->total_amount;
+            $hasRows      = true;
+            $isBeer       = $item->unit === 'btl';
+            $offerApplied = $item->offer_applied;
+            $grandTotal  += $item->total_amount;
+
+            if ($isBeer && $offerApplied && ($offerApplied['type_slug'] ?? '') === 'b1g1') {
+                $buyQty   = $offerApplied['buy_qty'] ?? 1;
+                $getQty   = $offerApplied['get_qty'] ?? 1;
+                $setSize  = $buyQty + $getQty;
+                $sets     = $setSize > 0 ? intdiv($item->quantity, $setSize) : 0;
+                $volLabel = ($sets * $buyQty) . ' BTL + ' . ($sets * $getQty) . ' Free = ' . $item->quantity . ' BTL';
+            } else {
+                $volLabel = $isBeer
+                    ? $item->quantity . ' BTL'
+                    : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
+            }
+
+            $itemLabel = $item->foodItem->name ?? '—';
+            if ($offerApplied) {
+                $offerTag = match($offerApplied['type_slug'] ?? '') {
+                    'b1g1'       => ' [B' . ($offerApplied['buy_qty'] ?? 1) . 'G' . ($offerApplied['get_qty'] ?? 1) . ']',
+                    'percentage' => ' [' . ($offerApplied['discount_value'] ?? '') . '% OFF]',
+                    'flat'       => ' [Rs ' . ($offerApplied['discount_value'] ?? '') . ' OFF]',
+                    default      => '',
+                };
+                $itemLabel .= $offerTag;
+            }
+
             $rowBuffer[] = [
                 'order_no'   => $order->order_no,
                 'member'     => $order->member->name ?? '—',
                 'datetime'   => $order->created_at->format('d M Y, h:i A'),
-                'item'       => $item->foodItem->name ?? '—',
+                'item'       => $itemLabel,
                 'volume'     => $volLabel,
                 'unit_price' => number_format($item->unit_price, 2),
                 'amount'     => number_format($item->total_amount, 2),
