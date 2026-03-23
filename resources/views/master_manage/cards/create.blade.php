@@ -10,12 +10,12 @@
         <div class="row">
             <!-- data type text -->
             <div class="col-xl-6 col-md-6">
-                <div class="form-part mb-3">                    
+                <div class="form-part mb-3">
                     <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
                     <input type="text" class="form-control py-2 shadow-none" name="card_no" id="" placeholder="Card No" value="{{ old('card_no') }}" required>
                     @error('card_no')
                         <div class="text-danger">{{ $message }}</div>
-                    @enderror       
+                    @enderror
                 </div>
             </div>
 
