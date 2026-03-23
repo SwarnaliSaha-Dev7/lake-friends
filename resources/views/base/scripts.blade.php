@@ -117,13 +117,12 @@
                                 : 'bg-danger-subtle text-danger border-danger';
                             var cardStatusLabel = cardStatusVal ? (cardStatusVal.charAt(0).toUpperCase() + cardStatusVal.slice(1)) : 'N/A';
                             $('#cardStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + cardBadgeClass)
-                                .text(cardStatusLabel);
-
+                                .text('Card : ' + cardStatusLabel);
                             // Member status badge — override with Plan Expired if applicable
                             if (isPlanExpired) {
                                 $('#memberStatusBadge').removeClass()
                                     .addClass('badge rounded-pill px-3 py-1 border bg-danger text-white border-danger')
-                                    .html('<i class="fa-solid fa-triangle-exclamation me-1"></i>Plan Expired');
+                                    .html('<i class="fa-solid fa-triangle-exclamation me-1"></i>Plan: Expired');
                             } else {
                                 var memberBadgeClass = statusCode === 'active'
                                     ? 'bg-success-subtle text-success border-success'
@@ -131,7 +130,7 @@
                                         ? 'bg-warning-subtle text-warning border-warning'
                                         : 'bg-danger-subtle text-danger border-danger');
                                 $('#memberStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + memberBadgeClass)
-                                    .text('Status: ' + (humanStatus || 'N/A'));
+                                    .text('Plan: ' + (humanStatus || 'N/A'));
                             }
 
                             // Member type
