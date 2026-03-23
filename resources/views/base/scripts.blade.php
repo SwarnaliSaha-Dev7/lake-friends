@@ -117,7 +117,7 @@
                                 : 'bg-danger-subtle text-danger border-danger';
                             var cardStatusLabel = cardStatusVal ? (cardStatusVal.charAt(0).toUpperCase() + cardStatusVal.slice(1)) : 'N/A';
                             $('#cardStatusBadge').removeClass().addClass('badge rounded-pill px-3 py-1 border ' + cardBadgeClass)
-                                .text(cardStatusLabel);
+                                .text('Card : ' + cardStatusLabel);
 
                             // Member status badge — override with Plan Expired if applicable
                             if (isPlanExpired) {
