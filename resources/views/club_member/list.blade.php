@@ -490,7 +490,7 @@
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
-                                                    <p class="upload-text mb-0">
+                                                    <p class="upload-text mb-0" id="club_member_photo">
                                                         Passport size Image
                                                     </p>
                                                     <small class="text-muted">
@@ -562,7 +562,7 @@
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
-                                                    <p class="upload-text mb-0">
+                                                    <p class="upload-text mb-0"  id="spouse_photo">
                                                         Passport size Image
                                                     </p>
                                                     <small class="text-muted">
@@ -1109,7 +1109,7 @@
 
                         setTimeout(() => {
                             window.location.href = "{{ route('club-member.list') }}";
-                        }, 1200);
+                        }, 1500);
                     } else {
                         toastr.error(response.message ?? "Something went wrong");
                     }
@@ -1500,6 +1500,9 @@
                         success: function(response){
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
+                        setTimeout(() => {
+                            window.location.href = "{{ route('club-member.list') }}";
+                        }, 1500);
 
                         // $('.spinner-border').replaceWith(originalBtn);
                     }
@@ -1547,6 +1550,10 @@
                     $('#club_member_email').val(data.email);
                     $('#club_member_phone').val(data.phone);
                     $('#club_member_address').val(data.address);
+                    // $('#club_member_photo').html(data.image);
+                    const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
+                    $('#club_member_photo').text(imageName);
+
 
                     $('#club_status').val(data.status);
 
@@ -1557,6 +1564,10 @@
                     $('#edit_spouse_phone').val(details.spouse_phone);
                     $('#spouse_blood_grp').val(details.spouse_blood_grp);
                     $('#spouse_address').val(details.spouse_address);
+
+                    let spouseImageName = data.member_details.details.spouse_image
+                    spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
+                    $('#spouse_photo').text(spouseImageName);
 
                     // $('#member_image_preview').attr('src', data.image);
                     // $('#spouse_image_preview').attr('src', details.spouse_image);
@@ -1851,6 +1862,10 @@
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
                         $('#addAddonModal').modal('hide');
+
+                        setTimeout(function() {
+                            window.location.href = "{{ route('club-member.list') }}";
+                        }, 1500);
 
                     } else {
                         toastr.error(response.message ?? "Something went wrong");

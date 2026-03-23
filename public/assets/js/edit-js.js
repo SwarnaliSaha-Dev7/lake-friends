@@ -250,10 +250,10 @@ jQuery(function ($) {
 
             if (rowToDelete) {
 
-                table
-                    .row(rowToDelete)
-                    .remove()
-                    .draw(false);
+                // table
+                //     .row(rowToDelete)
+                //     .remove()
+                //     .draw(false);
 
                 rowToDelete = null;
 

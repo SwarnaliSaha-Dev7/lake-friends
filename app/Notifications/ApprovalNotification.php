@@ -144,12 +144,16 @@ class ApprovalNotification extends Notification
                 break;
 
             case 'locker_purchase':
-                $message = "A member has purchased locker and waiting for approval";
+                $memberName = \App\Models\Member::find($this->approval->entity_id)?->name ?? 'A member';
+                $title      = 'Member locker purchase Approval';
+                $message = "A member \"{$memberName}\" has purchased locker and waiting for approval";
                 $notificationType = "locker_purchase";
                 break;
             case 'add_on_purchase':
-                $message = "A member has purchased Add-ons and waiting for approval";
-                $notificationType = "locker_purchase";
+                $memberName = \App\Models\Member::find($this->approval->entity_id)?->name ?? 'A member';
+                $title      = 'Member Add-on purchase Approval';
+                $message = "A member \"{$memberName}\" has purchased Add-ons and waiting for approval";
+                $notificationType = "add_on_purchase";
                 break;
 
             // case 'user':

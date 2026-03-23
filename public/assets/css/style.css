@@ -98,7 +98,7 @@ body {
 
 .form-control,
 .form-select {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .btn-primary {
@@ -574,11 +574,18 @@ table.dataTable thead th {
 table.dataTable tbody td {
     padding-left: 15px;
     padding-right: 15px;
-    font-size: 14px;
+    font-size: 16px;
     padding-top: 14px;
     padding-bottom: 14px;
     color: var(--body-Text-Color);
     vertical-align: middle;;
+}
+
+table tbody td img.rounded-circle {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    object-position: center;
 }
 
 div.dataTables_wrapper div.dataTables_filter input {
@@ -647,7 +654,7 @@ table.dataTable thead th.sorting_desc:after {
 } */
 .select2-container--default .select2-search--inline .select2-search__field {
     min-height: 24px;
-    font-size: 14px;
+    font-size: 16px;
     font-family: var(--global-Font) !important;
 }
 
@@ -672,7 +679,7 @@ table.dataTable thead th.sorting_desc:after {
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
     line-height: 36px;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .select2-container {
@@ -763,8 +770,8 @@ small.text-muted {
 /*Dolan Css*/
 
 .bg-light-yellow {
-    background-color: #fff9e6 !important; 
-    color: #b38600 !important;           
+    background-color: #fff9e6 !important;
+    color: #b38600 !important;
 }
 
 
@@ -786,7 +793,7 @@ small.text-muted {
  .total-section .bg-dark{
     background-color: #5C6268 !important;
  }
-.member-list-part .createorder-icon {    
+.member-list-part .createorder-icon {
     background: #E6F5FC;
     width: 44px;
     height: 44px;
@@ -809,10 +816,10 @@ small.text-muted {
      background: var(--table-Header-bg-Color);
     padding-left: 15px;
     padding-top: 14px;
-    padding-bottom: 14px; 
+    padding-bottom: 14px;
 }
 #vieworde .table-responsive .bg-light-blue{
-    
+
   background-color: #E5F0FF !important;
 } */
  #vieworder .invoice-table thead th{
