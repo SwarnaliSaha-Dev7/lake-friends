@@ -132,12 +132,21 @@
                             </thead>
                             <tbody>
                                 @foreach ( $clubMembers as $clubMember)
+                                @php
+                                    $latestActivePlan = $clubMember->purchaseHistory->where('status','active')->sortByDesc('expiry_date')->first();
+                                    $planExpired = $latestActivePlan && $latestActivePlan->expiry_date && \Carbon\Carbon::parse($latestActivePlan->expiry_date)->isPast();
+                                @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $clubMember->name }}</td>
                                     <td class="text-nowrap">{{ $clubMember->cardDetails?->card_no ?? '-' }}</td>
                                     <td class="text-nowrap">₹ {{$clubMember->walletDetails?->current_balance ?? 0}}</td>
                                     @if ($clubMember->status == 'active')
-                                        <td class="text-success text-nowrap">Active</td>
+                                        <td class="text-nowrap">
+                                            <span class="text-success">Active</span>
+                                            @if($planExpired)
+                                                <br><span class="badge bg-danger" style="font-size:0.68rem;">Plan Expired</span>
+                                            @endif
+                                        </td>
                                     @elseif ($clubMember->status == 'pending')
                                         <td class="text-warning text-nowrap">Pending</td>
                                     @elseif ($clubMember->status == 'rejected')
@@ -187,18 +196,32 @@
                                 <tr>
                                     <th class="text-white fw-medium text-nowrap">Name</th>
                                     <th class="text-white fw-medium text-nowrap">Card Number</th>
-                                    <th class="text-white fw-medium text-nowrap">Wallet</th>
+                                    <th class="text-white fw-medium text-nowrap">Exp. Date</th>
                                     <th class="text-white fw-medium text-nowrap">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ( $swimMembers as $swimMember)
+                                @php
+                                    $latestActiveSwimPlan = $swimMember->purchaseHistory->where('status','active')->sortByDesc('expiry_date')->first();
+                                    $swimPlanExpired = $latestActiveSwimPlan && $latestActiveSwimPlan->expiry_date && \Carbon\Carbon::parse($latestActiveSwimPlan->expiry_date)->isPast();
+                                @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $swimMember->name }}</td>
                                     <td class="text-nowrap">{{ $swimMember->cardDetails?->card_no ?? '-' }}</td>
-                                    <td class="text-nowrap">₹ {{$swimMember->walletDetails?->current_balance ?? 0}}</td>
+                                    <td class="text-nowrap {{ $swimPlanExpired ? 'text-danger fw-semibold' : '' }}">
+                                        {{ isset($swimMember->purchaseHistory[0]) ? \Carbon\Carbon::parse($swimMember->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
+                                        @if($swimPlanExpired)
+                                            <i class="fa-solid fa-circle-exclamation ms-1" title="Plan expired"></i>
+                                        @endif
+                                    </td>
                                     @if ($swimMember->status == 'active')
-                                        <td class="text-success text-nowrap">Active</td>
+                                        <td class="text-nowrap">
+                                            <span class="text-success">Active</span>
+                                            @if($swimPlanExpired)
+                                                <br><span class="badge bg-danger" style="font-size:0.68rem;">Plan Expired</span>
+                                            @endif
+                                        </td>
                                     @elseif ($swimMember->status == 'pending')
                                         <td class="text-warning text-nowrap">Pending</td>
                                     @elseif ($swimMember->status == 'rejected')

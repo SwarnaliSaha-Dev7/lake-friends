@@ -89,6 +89,9 @@ class DashboardController extends Controller
             $clubMembers = Member::where('club_id', $clubId)
                 ->with([
                     'memberDetails',
+                    'cardDetails',
+                    'walletDetails',
+                    'purchaseHistory',
                 ])
                 ->whereHas('memberDetails', function ($query) use ($clubMembershipTypeId) {
                     $query->where('membership_type_id', $clubMembershipTypeId);
@@ -105,6 +108,9 @@ class DashboardController extends Controller
             $swimMembers = Member::where('club_id', $clubId)
                 ->with([
                     'memberDetails',
+                    'cardDetails',
+                    'walletDetails',
+                    'purchaseHistory',
                 ])
                 ->whereHas('memberDetails', function ($query) use ($swimMembershipTypeId) {
                     $query->where('membership_type_id', $swimMembershipTypeId);

@@ -33,7 +33,6 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Phone</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Card Number
                                 </th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Wallet</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Exp. Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Approve by
                                 </th>
@@ -59,7 +58,6 @@
                                     </td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
                                     <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
-                                    <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
                                     <td class="text-nowrap {{ $planExpired ? 'text-danger fw-semibold' : '' }}">
                                         {{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
                                         @if($planExpired)
