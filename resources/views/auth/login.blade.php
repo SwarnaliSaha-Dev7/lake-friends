@@ -10,7 +10,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="login-left w-100 h-100 rounded-3 overflow-hidden position-relative">
-                                <img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97"
+                                <img src="{{ asset($clubDetails->logo) }}" alt="img" loading="lazy" fetchpriority="auto" width="97"
                                     height="106" class="position-absolute overlay-logo">
                                 <img src="{{ asset('assets/images/login-img.webp') }}" alt="img" loading="lazy" fetchpriority="auto"
                                     width="710" height="852" class="w-100 h-100 object-fit-cover">

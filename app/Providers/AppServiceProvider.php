@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Club;
 use App\Models\WalletTransaction;
 use App\Observers\WalletTransactionObserver;
 use App\View\Composers\AppLayoutComposer;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
@@ -38,5 +40,19 @@ class AppServiceProvider extends ServiceProvider
             'LiquorServing'              => \App\Models\LiquorServing::class,
             'MembershipPurchaseHistory'  => \App\Models\MembershipPurchaseHistory::class,
         ]);
+
+        View::composer('*', function ($view) {
+
+        $clubDetails = null;
+
+        if (Auth::check()) {
+            $clubDetails = Club::find(Auth::user()->club_id);
+        }
+        else{
+            $clubDetails = Club::where('name', 'LIKE', '%Lake Friends%')->first();
+        }
+
+        $view->with('clubDetails', $clubDetails);
+    });
     }
 }

@@ -9,3 +9,7 @@
 <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" type="text/css">
 <link rel="stylesheet" href="{{ asset('assets/css/responsive.css') }}" type="text/css">
 <link href="{{ asset('assets/css/toastr.min.css') }}" rel="stylesheet">
+
+
+
+<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">

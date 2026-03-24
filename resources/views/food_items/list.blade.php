@@ -138,14 +138,17 @@
                                     <label for="" class="form-label"><small>Item Image</small></label>
                                     <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
                                     <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image" placeholder="Item Image" required>
-                                    <div class="upload-content">
+                                    <div class="upload-content" id="add_uploadContent">
                                         <i class="upload-icon"><i
                                                 class="fa-solid fa-arrow-up-from-bracket"></i></i>
                                         <small class="text-muted">
                                             Image format, PNG & JPEG, max file size 5MB
                                         </small>
                                     </div>
+                                    <img id="add_itemPreview" src="" width="80" class="rounded d-none mt-1">
+                                    </label>
                                     <div class="error-div text-danger small"></div>
+
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -402,6 +405,18 @@
                 this.value = this.value.replace(/[^A-Za-z\s]/g, '');
             });
 
+                // ── ADD item image preview ──
+            $('#itemImage').on('change', function () {
+                if (this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#add_itemPreview').attr('src', e.target.result).removeClass('d-none');
+                        $('#add_uploadContent').hide();
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
 
             $('#foodItemForm').on('submit', function(e){
                 e.preventDefault();
@@ -547,6 +562,8 @@
                             toastr.success(response.message);
 
                             $('#foodItemForm')[0].reset();
+                            $('#add_itemPreview').addClass('d-none').attr('src', '');
+                            $('#add_uploadContent').show();
 
                             setTimeout(() =>location.reload(),1500);
 
