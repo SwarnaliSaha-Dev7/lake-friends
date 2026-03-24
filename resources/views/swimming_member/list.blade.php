@@ -1486,7 +1486,7 @@
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
                 <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
-                    <img src="{{ asset('assets/images/logo.svg') }}" alt="img" loading="lazy" fetchpriority="auto" width="97" height="106" style="max-width: 50px;">
+                    <img src="{{ asset($clubDetails->logo) }}" alt="img" loading="lazy" fetchpriority="auto" width="97" height="106" style="max-width: 50px;">
                         <p class="m-0 lh-2">Associate No.: <span class="text-muted">SWIM/FLEXI/</span> <span class="text-primary fw-medium" id="member_code">250</span></p>
                     <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button> -->
                 </div>

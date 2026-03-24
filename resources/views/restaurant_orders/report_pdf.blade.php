@@ -43,6 +43,12 @@
 </head>
 <body>
 
+    <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
+        <img src="{{ public_path($clubDetails->logo) }}" alt="img" loading="lazy" fetchpriority="auto" style="max-width: 50px;">
+            <p class="m-0 lh-2">{{ $clubDetails->name }}</p>
+            <p class="m-0 lh-2">{{ $clubDetails->address }}</p>
+    </div>
+
     <div class="header">
         <h1>Restaurant Order Report</h1>
         <p>
@@ -142,7 +148,7 @@
         </tfoot>
     </table>
 
-    <div class="footer">Kolkata Lake Friends Club &mdash; Confidential</div>
+    <div class="footer">{{ $clubDetails->name }} &mdash; Confidential</div>
 
 </body>
 </html>

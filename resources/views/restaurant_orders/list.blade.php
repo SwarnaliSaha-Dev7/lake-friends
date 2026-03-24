@@ -263,10 +263,10 @@ $(document).ready(function () {
             var html = ''
                 // ── Club header ──
                 + '<div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom">'
-                +   '<img src="{{ asset("assets/images/logo.svg") }}" style="width:44px;height:44px;" alt="logo">'
+                +   '<img src="{{ asset($clubDetails->logo) }}" style="width:44px;height:44px;" alt="logo">'
                 +   '<div>'
-                +     '<div class="fw-bold fs-6" style="color:#97A0AC;">Kolkata Lake Friends Club</div>'
-                +     '<div class="text-muted" style="font-size:0.72rem;">Kolkata, West Bengal</div>'
+                +     '<div class="fw-bold fs-6" style="color:#97A0AC;">{{ $clubDetails->name ?? '' }}</div>'
+                +     '<div class="text-muted" style="font-size:0.72rem;">{{ $clubDetails->address ?? '' }}</div>'
                 +   '</div>'
                 + '</div>'
                 // ── Invoice meta ──

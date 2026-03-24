@@ -46,6 +46,12 @@
 </head>
 <body>
 
+    <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
+        <img src="{{ public_path($clubDetails->logo) }}" alt="img" loading="lazy" fetchpriority="auto" style="max-width: 50px;">
+            <p class="m-0 lh-2">{{ $clubDetails->name }}</p>
+            <p class="m-0 lh-2">{{ $clubDetails->address }}</p>
+    </div>
+
 <div class="header">
     <h1>{{ $tab_label }}</h1>
     <p>Generated on {{ now()->format('d/m/Y H:i') }} &nbsp;|&nbsp;
@@ -197,7 +203,7 @@
 
 <div class="footer">
     <small class="f-right">Period: {{ $from }} – {{ $to }}</small>
-    <small>Lake Friends Club &nbsp;|&nbsp; {{ $tab_label }}</small>
+    <small>{{ $clubDetails->name }} &nbsp;|&nbsp; {{ $tab_label }}</small>
 </div>
 
 </body>

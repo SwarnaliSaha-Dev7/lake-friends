@@ -39,6 +39,12 @@
 </head>
 <body>
 
+        <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
+            <img src="{{ public_path($clubDetails->logo) }}" alt="img" loading="lazy" fetchpriority="auto" style="max-width: 50px;">
+                <p class="m-0 lh-2">{{ $clubDetails->name }}</p>
+                <p class="m-0 lh-2">{{ $clubDetails->address }}</p>
+        </div>
+
     <div class="header">
         <h1>Godown Stock Report</h1>
         <p>
@@ -136,7 +142,7 @@
         </tfoot>
     </table>
 
-    <div class="footer">Godown Stock Report &mdash; Lake Friends Club</div>
+    <div class="footer">Godown Stock Report &mdash; {{ $clubDetails->name }}</div>
 
 </body>
 </html>
