@@ -102,13 +102,26 @@
                             var walletBal = parseFloat(walletDetails && walletDetails.current_balance ? walletDetails.current_balance : 0).toFixed(2);
                             $('#cardMemberWallet').text('Rs.' + walletBal);
 
-                            // Avatar initials
+                            // Avatar image (fallback to initials)
                             var nameParts = memberName.trim().split(' ');
                             var initials = '';
                             for (var ni = 0; ni < Math.min(nameParts.length, 2); ni++) {
                                 if (nameParts[ni]) initials += nameParts[ni][0].toUpperCase();
                             }
-                            $('#cardMemberAvatar').text(initials);
+                            var avatarUrl = response.data.image
+                                ? '/' + response.data.image.replace(/^\/+/, '')
+                                : '';
+                            if (avatarUrl) {
+                                $('#cardMemberAvatar')
+                                    .css({ 'background-image': 'none' })
+                                    .html('<img src="' + avatarUrl + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">');
+                            } else {
+                                $('#cardMemberAvatar')
+                                    .text(initials)
+                                    .empty()
+                                    .text(initials)
+                                    .css({ 'background-image': 'none' });
+                            }
 
                             // Card status badge
                             var cardStatusVal = response.cardStatus || '';
@@ -340,6 +353,89 @@
         }
 
         loadWalletData(url, memberId, memberType, { keepCardEntry: true });
+    });
+
+    /* Card punch popup → Transaction History button */
+    $('#transactionHistoryBtn').on('click', function () {
+        let memberId = $('#cardentry').data('member-id');
+        let memberType = $('#cardentry').data('member-type');
+
+        if (!memberId || !memberType) {
+            toastr.error('Member data missing');
+            return;
+        }
+
+        if (!$('#memberTransactionHistoryModal').length) {
+            toastr.error('Transaction history modal not found');
+            return;
+        }
+
+        let tbody = $('#memberTransactionHistoryTbody');
+        tbody.html('<tr><td colspan="2" class="text-center">Loading...</td></tr>');
+
+        let url = '';
+        if (memberType === 'club') {
+            url = '{{route("club-member.member-ledger", ":id")}}'.replace(':id', memberId);
+        } else if (memberType === 'swimming') {
+            url = '{{route("swimming-member.member-ledger", ":id")}}'.replace(':id', memberId);
+        } else {
+            toastr.error('Invalid member type');
+            return;
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(response){
+                if (response.statusCode == 200) {
+                    tbody.empty();
+
+                    if(response.data.length > 0){
+                        response.data.forEach(function(entry) {
+                            let purpose = (entry.purpose || '-')
+                                .toString()
+                                .replace(/_/g, ' ')
+                                .replace(/\b\w/g, (m) => m.toUpperCase());
+                            let createdAt = entry.created_at
+                                ? new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                                : '-';
+                            let direction = entry.direction || 'debit';
+                            let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
+                            let sign = direction == 'credit' ? '+' : '-';
+                            let maker = entry.maker ?? '-';
+                            let remarks = entry.remarks ?? '';
+
+                            let row = `
+                                <tr>
+                                    <td class="border-secondary bg-transparent align-middle lh-sm">
+                                        <div class="fw-semibold">${purpose}</div>
+                                        <small class="text-black-50">By: ${maker}</small><br>
+                                        <small class="text-black-50">Date: ${createdAt}</small>
+                                        ${remarks ? `<br><small class="text-black-50">Remarks: ${remarks}</small>` : ''}
+                                    </td>
+                                    <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
+                                        ${sign}₹${entry.amount}
+                                    </td>
+                                </tr>`;
+
+                            tbody.append(row);
+                        });
+                    } else {
+                        tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
+                    }
+
+                    // $('#cardentry').modal('hide');
+                    setTimeout(() => {
+                        $('#memberTransactionHistoryModal').modal('show');
+                    }, 300);
+                } else {
+                    toastr.error('Failed to load transaction history');
+                }
+            },
+            error: function(){
+                toastr.error('Something Went Wrong.');
+            }
+        });
     });
 
     /* Quick amount select buttons in wallet recharge modal */

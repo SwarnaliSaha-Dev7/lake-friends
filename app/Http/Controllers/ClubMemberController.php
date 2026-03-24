@@ -948,6 +948,7 @@ class ClubMemberController extends Controller
             ])
                 ->where('member_id', $id)
                 ->orderBy('created_at', 'DESC')
+                ->limit(5)
                 ->get();
 
             $data = [
@@ -960,6 +961,76 @@ class ClubMemberController extends Controller
                 'statusCode' => 200,
                 'message' => 'Wallet Balance Fetched successfully'
             ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function fetchWalletHistory($id)
+    {
+        try {
+            $walletTransactionHistory = WalletTransaction::with([
+                'creator:id,name',
+                'payment:id,wallet_transaction_id,remarks'
+            ])
+                ->where('member_id', $id)
+                ->orderBy('created_at', 'DESC')
+                ->get();
+
+            return response()->json([
+                'data' => $walletTransactionHistory,
+                'statusCode' => 200,
+                'message' => 'Wallet History Fetched successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function memberLedger($id)
+    {
+        try {
+            $walletTxns = WalletTransaction::with('creator:id,name', 'payment:id,wallet_transaction_id,remarks')
+                ->where('member_id', $id)
+                ->get()
+                ->map(function ($t) {
+                    return [
+                        'source'     => 'wallet',
+                        'purpose'    => $t->txn_type,
+                        'direction'  => $t->direction,
+                        'amount'     => (float) $t->amount,
+                        'remarks'    => $t->payment?->remarks,
+                        'maker'      => $t->creator?->name,
+                        'created_at' => $t->created_at,
+                    ];
+                });
+
+            $payments = PaymentHistory::where('member_id', $id)
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'source'     => 'payment',
+                        'purpose'    => $p->purpose,
+                        'direction'  => 'debit',
+                        'amount'     => (float) $p->net_amount,
+                        'remarks'    => $p->remarks,
+                        'maker'      => null,
+                        'created_at' => $p->created_at,
+                    ];
+                });
+
+            $ledger = $walletTxns
+                ->merge($payments)
+                ->sortByDesc('created_at')
+                ->values();
+
+            return response()->json(['statusCode' => 200, 'data' => $ledger]);
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,

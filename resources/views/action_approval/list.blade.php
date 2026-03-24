@@ -202,6 +202,17 @@
                                                 {{ $data->entity->name }}
                                         </td>
 
+                                    @elseif($data->module == 'plan_renewal')
+                                        @php
+                                            $renewalMember = $data->entity->member ?? null;
+                                            $renewalPlan   = $data->entity->membershipPlanType ?? null;
+                                        @endphp
+                                        <td class="text-nowrap">
+                                            {{ $renewalMember->name ?? '—' }}
+                                            @if($renewalPlan)
+                                                <span class="text-muted small">— {{ $renewalPlan->name }}</span>
+                                            @endif
+                                        </td>
                                     @else
                                         <td class="text-nowrap">
                                             <a href="javascript:void(0)" class="swimMemberDetail" data-id="{{$data->id}}">
@@ -517,7 +528,7 @@
                                 </div>
 
                             </div>
-                            <div class="col-lg-12" id="swimCardDetailCol">
+                            {{-- <div class="col-lg-12" id="swimCardDetailCol">
                                 <label for="" class="form-label fw-semibold text-dark my-3"><span
                                         class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
                                             class="fa-regular fa-regular fa-credit-card"></i></span> Card
@@ -535,16 +546,8 @@
                                             </select>
                                         </div>
                                     </div>
-                                    {{--
-                                    <div class="col-md-6 col-xl-3">
-                                        <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Current Card No.</small></label>
-                                            <p id="current_card_no"></p>
-                                        </div>
-                                    </div> --}}
                                 </div>
-
-                            </div>
+                            </div> --}}
                         </div>
 
                     </form>
@@ -1050,14 +1053,14 @@
                         $('#swim_guardian_name').val(response.data['swim_guardian_name']);
                         $('#swim_guardian_occupation').val(response.data['swim_guardian_occupation']);
 
-                        let card_no = response.data['swim_card_id'];
-                        if (card_no) {
-                            $('#swimCardDetailCol').show();
-                            $('#swim_card_no').val(response.data['swim_card_id']);
-                        }
-                        else{
-                            $('#swimCardDetailCol').hide();
-                        }
+                        // let card_no = response.data['swim_card_id'];
+                        // if (card_no) {
+                        //     $('#swimCardDetailCol').show();
+                        //     $('#swim_card_no').val(response.data['swim_card_id']);
+                        // }
+                        // else{
+                        //     $('#swimCardDetailCol').hide();
+                        // }
 
                         $("#swim_image").attr("src", '/' + response.data['swim_image']);
 

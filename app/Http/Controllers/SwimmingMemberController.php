@@ -55,14 +55,14 @@ class SwimmingMemberController extends Controller
 
             $bankList = Bank::where('club_id', $clubId)->get();
 
-            // $cards = Card::doesntHave('memberMapping')
+            // // $cards = Card::doesntHave('memberMapping')
+            // //     ->where('club_id', $clubId)
+            // //     ->where('status', 'active')
+            // //     ->get();
+            // $cards = Card::where('is_assigned', 0)
             //     ->where('club_id', $clubId)
             //     ->where('status', 'active')
             //     ->get();
-            $cards = Card::where('is_assigned', 0)
-                ->where('club_id', $clubId)
-                ->where('status', 'active')
-                ->get();
 
 
             $members = Member::where('club_id', $clubId)
@@ -99,7 +99,7 @@ class SwimmingMemberController extends Controller
                 'membershipPlanList',
                 'gstPercentage',
                 'bankList',
-                'cards',
+                // 'cards',
                 'members',
                 'lockers',
                 'lockerPrice'
@@ -306,17 +306,17 @@ class SwimmingMemberController extends Controller
                 'remarks' => $request->swim_remarks
             ]);
 
-            $currentCard = Card::find($request->swim_card_id);
-            if ($currentCard) {
-                $currentCard->update([
-                    'is_assigned' => 1
-                ]);
-            }
+            // $currentCard = Card::find($request->swim_card_id);
+            // if ($currentCard) {
+            //     $currentCard->update([
+            //         'is_assigned' => 1
+            //     ]);
+            // }
 
-            $card_mapping = MemberCardMapping::create([
-                'card_id' => $request->swim_card_id,
-                'member_id' => $member->id
-            ]);
+            // $card_mapping = MemberCardMapping::create([
+            //     'card_id' => $request->swim_card_id,
+            //     'member_id' => $member->id
+            // ]);
 
             Wallet::create([
                 'member_id' => $member->id,
@@ -446,17 +446,17 @@ class SwimmingMemberController extends Controller
             $data['swim_image'] = $image_path;
             $data['swim_guardian_image'] = $guardian_image_path;
 
-            $card_no = $request->swim_card_id;
+            // $card_no = $request->swim_card_id;
 
-            if ($card_no) {
-                $newCard = Card::find($card_no);
+            // if ($card_no) {
+            //     $newCard = Card::find($card_no);
 
-                if ($newCard) {
-                    $newCard->update([
-                        'is_assigned' => 1
-                    ]);
-                }
-            }
+            //     if ($newCard) {
+            //         $newCard->update([
+            //             'is_assigned' => 1
+            //         ]);
+            //     }
+            // }
 
             //check if any update happend start
             $membershipType = MembershipType::where('name', 'Swimming Membership')
@@ -566,29 +566,29 @@ class SwimmingMemberController extends Controller
 
 
 
-                    $card_no = $request->swim_card_id;
+                    // $card_no = $request->swim_card_id;
 
-                    if ($card_no) {
-                        $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
+                    // if ($card_no) {
+                    //     $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
 
-                        $currentCard = Card::find($currentCardMapping->card_id);
-                        if ($currentCard) {
-                            $currentCard->update([
-                                'is_assigned' => 0
-                            ]);
-                        }
+                    //     $currentCard = Card::find($currentCardMapping->card_id);
+                    //     if ($currentCard) {
+                    //         $currentCard->update([
+                    //             'is_assigned' => 0
+                    //         ]);
+                    //     }
 
-                        $newCard = Card::find($card_no);
-                        if ($newCard) {
-                            $newCard->update([
-                                'is_assigned' => 1
-                            ]);
+                    //     $newCard = Card::find($card_no);
+                    //     if ($newCard) {
+                    //         $newCard->update([
+                    //             'is_assigned' => 1
+                    //         ]);
 
-                            $currentCardMapping->update([
-                                'card_id' => $card_no
-                            ]);
-                        }
-                    }
+                    //         $currentCardMapping->update([
+                    //             'card_id' => $card_no
+                    //         ]);
+                    //     }
+                    // }
                 }
 
                 if (Auth::user()->hasRole('operator')) {
@@ -781,6 +781,34 @@ class SwimmingMemberController extends Controller
                 'statusCode' => 200,
                 'message' => 'Member Fetched successfully'
             ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function memberLedger($id)
+    {
+        try {
+            $payments = PaymentHistory::where('member_id', $id)
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'source'     => 'payment',
+                        'purpose'    => $p->purpose,
+                        'direction'  => 'debit',
+                        'amount'     => (float) $p->net_amount,
+                        'remarks'    => $p->remarks,
+                        'maker'      => null,
+                        'created_at' => $p->created_at,
+                    ];
+                })
+                ->sortByDesc('created_at')
+                ->values();
+
+            return response()->json(['statusCode' => 200, 'data' => $payments]);
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,
@@ -1297,23 +1325,23 @@ class SwimmingMemberController extends Controller
 
                     DB::beginTransaction();
 
-                    $card_mapping = MemberCardMapping::where('member_id', $member->id)->first();
+                    // $card_mapping = MemberCardMapping::where('member_id', $member->id)->first();
 
-                    $card = null;
+                    // $card = null;
 
-                    if ($card_mapping) {
-                        $card = Card::find($card_mapping->card_id);
-                    }
+                    // if ($card_mapping) {
+                    //     $card = Card::find($card_mapping->card_id);
+                    // }
 
-                    if ($card_mapping) {
-                        $card_mapping->delete();
-                    }
+                    // if ($card_mapping) {
+                    //     $card_mapping->delete();
+                    // }
 
-                    if ($card) {
-                        $card->update([
-                            'is_assigned' => 0
-                        ]);
-                    }
+                    // if ($card) {
+                    //     $card->update([
+                    //         'is_assigned' => 0
+                    //     ]);
+                    // }
 
                     $lockerAllocation = LockerAllocation::where('member_id', $memberId)->first();
 

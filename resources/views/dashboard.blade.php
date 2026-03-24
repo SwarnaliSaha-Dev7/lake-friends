@@ -195,7 +195,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-white fw-medium text-nowrap">Name</th>
-                                    <th class="text-white fw-medium text-nowrap">Card Number</th>
+                                    {{-- <th class="text-white fw-medium text-nowrap">Card Number</th> --}}
                                     <th class="text-white fw-medium text-nowrap">Exp. Date</th>
                                     <th class="text-white fw-medium text-nowrap">Status</th>
                                 </tr>
@@ -208,7 +208,7 @@
                                 @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $swimMember->name }}</td>
-                                    <td class="text-nowrap">{{ $swimMember->cardDetails?->card_no ?? '-' }}</td>
+                                    {{-- <td class="text-nowrap">{{ $swimMember->cardDetails?->card_no ?? '-' }}</td> --}}
                                     <td class="text-nowrap {{ $swimPlanExpired ? 'text-danger fw-semibold' : '' }}">
                                         {{ isset($swimMember->purchaseHistory[0]) ? \Carbon\Carbon::parse($swimMember->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
                                         @if($swimPlanExpired)

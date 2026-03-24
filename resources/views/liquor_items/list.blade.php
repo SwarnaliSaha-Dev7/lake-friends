@@ -35,7 +35,10 @@
                                     <td class="text-nowrap">{{ $items->code }}</td>
                                     <td class="text-nowrap">{{ $items->foodItemCat->name ?? '—' }}</td>
                                     <td class="text-nowrap">
-                                        <img src="{{ $items->image ? '/' . $items->image : '' }}"
+                                        <!--<img src="{{ $items->image ? '/' . $items->image : '' }}"-->
+                                        <!--    class="rounded-circle" alt="" loading="lazy" width="48" height="48"-->
+                                        <!--    style="{{ $items->image ? '' : 'display:none;' }}">-->
+                                        <img src="{{ $items->image ?  $items->image : '' }}"
                                             class="rounded-circle" alt="" loading="lazy" width="48" height="48"
                                             style="{{ $items->image ? '' : 'display:none;' }}">
                                     </td>
@@ -533,7 +536,8 @@ $(document).ready(function () {
                 $('#edit_itemPrice').val(data.food_item_price ? data.food_item_price.price : '');
 
                 if (data.image) {
-                    $('#edit_itemPreview').attr('src', '/' + data.image).removeClass('d-none');
+                    // $('#edit_itemPreview').attr('src', '/' + data.image).removeClass('d-none');
+                    $('#edit_itemPreview').attr('src', data.image).removeClass('d-none');
                     $('#edit_uploadContent').hide();
                 } else {
                     $('#edit_itemPreview').addClass('d-none').attr('src', '');

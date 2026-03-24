@@ -97,6 +97,9 @@
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
                                             title="Wallet Recharge" data-id="{{$member->id}}"><small><i
                                             class="fa-solid fa-wallet"></i></small></button>
+                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletHistoryBtn"
+                                            title="Wallet History" data-id="{{$member->id}}"><small><i
+                                            class="fa-solid fa-list"></i></small></button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn lockerBtn" data-bs-toggle="modal" data-bs-target="#lockerModal"
                                         title="Locker Purchase" data-id="{{$member->id}}">
                                         {{-- title="Locker Purchase" data-id="{{$member->id}}" data-has-locker="{{ $member->has_locker ? 1 : 0 }}"> --}}
@@ -219,6 +222,9 @@
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
                                                 </div>
+                                                <div class="mt-2">
+                                                    <img class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -290,6 +296,9 @@
                                                     <small class="text-muted">
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <img class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -497,6 +506,9 @@
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
                                                 </div>
+                                                <div class="mt-2">
+                                                    <img id="member_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -568,6 +580,9 @@
                                                     <small class="text-muted">
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <img id="spouse_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -955,6 +970,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Wallet History Modal start -->
+    <div class="modal fade" id="walletHistoryModal" tabindex="-1" aria-labelledby="walletHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="walletHistoryModalLabel">Wallet History</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bg-light p-2">
+                        <table class="table border-0 m-0 wallet-table">
+                            <tbody id="walletHistoryTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Wallet History Modal end -->
+
 @endsection
 
 @section('customJS')
@@ -1122,6 +1159,20 @@
         //phone no validation
         $('.phone-input').on('input', function () {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+
+        $(document).on('change', '.profile-image', function () {
+            let file = this.files && this.files[0];
+            let $preview = $(this).closest('.file-upload-box').find('.upload-preview');
+            if (!file || !$preview.length) {
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                $preview.attr('src', e.target.result).removeClass('d-none');
+            };
+            reader.readAsDataURL(file);
         });
 
         function calculateGST() {
@@ -1415,26 +1466,30 @@
                             response.data.walletTransactionHistory.forEach(function(transaction) {
                                 let amount = transaction.amount;
                                 let direction = transaction.direction;
-                                let date = new Date(transaction.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+                                // let txnType = (transaction.txn_type || '-').toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+                                let txnTypeRaw = transaction.txn_type || '-';
+                                if (txnTypeRaw === 'spend') {   // change value if spend
+                                    txnTypeRaw = 'restaurant food order';
+                                }
+                                let txnType = txnTypeRaw.toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+
+                                let createdAt = transaction.created_at
+                                    ? new Date(transaction.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                                    : '-';
                                 let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
                                 let sign = direction == 'credit' ? '+' : '-';
-                                let label = direction == 'credit' ? 'Added By' : 'Used';
                                 let maker = transaction.creator?.name ?? '-';
                                 let remarks = transaction.payment?.remarks ?? '';
 
                                 let row = `
                                     <tr>
                                         <td class="border-secondary bg-transparent align-middle lh-sm">
-                                            <small class="fw-semibold">${label}:</small>
-                                            <small class="text-black-50">${maker}</small>
-
-                                            ${remarks ? `<br>
-                                            <small class="fw-semibold">Remarks:</small>
-                                            <small class="text-black-50">${remarks}</small>` : ''}
-
+                                            <div class="fw-semibold">${txnType}</div>
+                                            <small class="text-black-50">By: ${maker}</small><br>
+                                            <small class="text-black-50">Date: ${createdAt}</small>
+                                            ${remarks ? `<br><small class="text-black-50">Remarks: ${remarks}</small>` : ''}
                                         </td>
-
-
                                         <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
                                             ${sign}₹${amount}
                                         </td>
@@ -1462,6 +1517,73 @@
                 }
             });
 
+        });
+
+        $(document).on('click', '.walletHistoryBtn', function() {
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML');
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
+
+            $.ajax({
+                url: '{{route("club-member.fetch-wallet-history", ":memberId")}}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200) {
+                        let tbody = $('#walletHistoryTbody');
+                        tbody.empty();
+
+                        if(response.data.length > 0){
+                            response.data.forEach(function(transaction) {
+                                let amount = transaction.amount;
+                                let direction = transaction.direction;
+
+                                // let txnType = (transaction.txn_type || '-').toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+                                let txnTypeRaw = transaction.txn_type || '-';
+                                if (txnTypeRaw === 'spend') {   // change value if spend
+                                    txnTypeRaw = 'restaurant food order';
+                                }
+                                let txnType = txnTypeRaw.toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+
+                                let createdAt = transaction.created_at
+                                    ? new Date(transaction.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                                    : '-';
+                                let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
+                                let sign = direction == 'credit' ? '+' : '-';
+                                let maker = transaction.creator?.name ?? '-';
+                                let remarks = transaction.payment?.remarks ?? '';
+
+                                let row = `
+                                    <tr>
+                                        <td class="border-secondary bg-transparent align-middle lh-sm">
+                                            <div class="fw-semibold">${txnType}</div>
+                                            <small class="text-black-50">By: ${maker}</small><br>
+                                            <small class="text-black-50">Date: ${createdAt}</small>
+                                            ${remarks ? `<br><small class="text-black-50">Remarks: ${remarks}</small>` : ''}
+                                        </td>
+                                        <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
+                                            ${sign}₹${amount}
+                                        </td>
+                                    </tr>`;
+
+                                tbody.append(row);
+                            });
+                        } else {
+                            tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
+                        }
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                        $('#walletHistoryModal').modal('show');
+                    }
+                    else{
+                        toastr.error('Something Went Wrong');
+                        $('.spinner-border').replaceWith(originalBtn);
+                    }
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                    $('.spinner-border').replaceWith(originalBtn);
+                }
+            });
         });
 
         // walletRechargeForm, confirmRechargeBtn handlers moved to base/scripts.blade.php (global)
@@ -1541,6 +1663,13 @@
                     // $('#club_member_photo').html(data.image);
                     const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
                     $('#club_member_photo').text(imageName);
+                    if (data.image) {
+                        $('#member_image_preview')
+                            .attr('src', '/' + data.image.replace(/^\/+/, ''))
+                            .removeClass('d-none');
+                    } else {
+                        $('#member_image_preview').addClass('d-none').attr('src', '');
+                    }
 
 
                     $('#club_status').val(data.status);
@@ -1556,6 +1685,13 @@
                     let spouseImageName = data.member_details.details.spouse_image
                     spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
                     $('#spouse_photo').text(spouseImageName);
+                    if (data.member_details.details.spouse_image) {
+                        $('#spouse_image_preview')
+                            .attr('src', '/' + data.member_details.details.spouse_image.replace(/^\/+/, ''))
+                            .removeClass('d-none');
+                    } else {
+                        $('#spouse_image_preview').addClass('d-none').attr('src', '');
+                    }
 
                     // $('#member_image_preview').attr('src', data.image);
                     // $('#spouse_image_preview').attr('src', details.spouse_image);
