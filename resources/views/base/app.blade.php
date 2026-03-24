@@ -147,6 +147,10 @@
                             style="background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:10px;font-size:0.82rem;">
                             <i class="fa-solid fa-clock-rotate-left d-block mb-1 fs-6"></i>Membership History
                         </button>
+                        <button type="button" class="btn flex-fill py-2 fw-medium" id="transactionHistoryBtn"
+                            style="background:#f0f9ff;color:#0284c7;border:1px solid #bae6fd;border-radius:10px;font-size:0.82rem;">
+                            <i class="fa-solid fa-list d-block mb-1 fs-6"></i>Transaction History
+                        </button>
                     </div>
                 </div>
 
@@ -457,26 +461,26 @@
     </div>
     <!-- Wallet Recharge Modal end-->
 
-    <!-- Wallet History Modal start -->
-    <div class="modal fade" id="walletHistoryModal" tabindex="-1" aria-labelledby="walletHistoryModalLabel" aria-hidden="true">
+    <!-- Member Transaction History Modal start -->
+    <div class="modal fade" id="memberTransactionHistoryModal" tabindex="-1" aria-labelledby="memberTransactionHistoryModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="walletHistoryModalLabel">Wallet History</h5>
+                    <h5 class="modal-title fs-5 fw-semibold" id="memberTransactionHistoryModalLabel">Member Transaction History</h5>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <div class="bg-light p-2">
                         <table class="table border-0 m-0 wallet-table">
-                            <tbody id="walletHistoryTbody"></tbody>
+                            <tbody id="memberTransactionHistoryTbody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Wallet History Modal end -->
+    <!-- Member Transaction History Modal end -->
 
     <!-- Wallet Recharge Confirmation Modal start-->
     <div class="modal fade" id="confirmRechargeModal" tabindex="-1">

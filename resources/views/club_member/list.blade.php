@@ -970,6 +970,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Wallet History Modal start -->
+    <div class="modal fade" id="walletHistoryModal" tabindex="-1" aria-labelledby="walletHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-5 fw-semibold" id="walletHistoryModalLabel">Wallet History</h5>
+                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
+                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bg-light p-2">
+                        <table class="table border-0 m-0 wallet-table">
+                            <tbody id="walletHistoryTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Wallet History Modal end -->
+
 @endsection
 
 @section('customJS')

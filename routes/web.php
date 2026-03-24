@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/membership-plan/{id}', [ClubMemberController::class, 'membershipPlan'])->name('club-member.membership-plan');
         Route::get('/fetch-wallet-balance/{id}', [ClubMemberController::class, 'fetchWalletBalance'])->name('club-member.fetch-wallet-balance');
         Route::get('/fetch-wallet-history/{id}', [ClubMemberController::class, 'fetchWalletHistory'])->name('club-member.fetch-wallet-history');
+        Route::get('/member-ledger/{id}', [ClubMemberController::class, 'memberLedger'])->name('club-member.member-ledger');
         Route::post('/recharge-wallet-balance', [ClubMemberController::class, 'rechargeWalletBalance'])->name('club-member.recharge-wallet-balance');
         Route::post('member-addon/purchase', [ClubMemberController::class,'purchaseAddOn'])->name('club-member.member-addon.purchase');
         Route::post('member-addon/list',[ClubMemberController::class, 'memberAddonList'])->name('club-member.member-addon.list');
@@ -92,6 +93,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/update', [SwimmingMemberController::class, 'update'])->name('swimming-member.update');
         Route::get('/membership-plan/{id}', [SwimmingMemberController::class, 'membershipPlan'])->name('swimming-member.membership-plan');
         Route::get('/fetch-wallet-balance/{id}', [SwimmingMemberController::class, 'fetchWalletBalance'])->name('swimming-member.fetch-wallet-balance');
+        Route::get('/member-ledger/{id}', [SwimmingMemberController::class, 'memberLedger'])->name('swimming-member.member-ledger');
         Route::post('/recharge-wallet-balance', [SwimmingMemberController::class, 'rechargeWalletBalance'])->name('swimming-member.recharge-wallet-balance');
         // swimming member locker route start
         Route::post('locker/purchase', [SwimmingMemberController::class, 'purchaseLocker'])->name('swimming-member.locker.purchase');

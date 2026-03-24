@@ -31,8 +31,8 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Name</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Phone</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Card Number
-                                </th>
+                                {{-- <th class="text-white fw-medium align-middle text-nowrap">Card Number
+                                </th> --}}
                                 <th class="text-white fw-medium align-middle text-nowrap">Exp. Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Approve by
                                 </th>
@@ -57,7 +57,7 @@
                                         @endif
                                     </td>
                                     <td class="text-nowrap">{{$member->phone}}</td>
-                                    <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
+                                    {{-- <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td> --}}
                                     <td class="text-nowrap {{ $planExpired ? 'text-danger fw-semibold' : '' }}">
                                         {{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
                                         @if($planExpired)
@@ -720,7 +720,7 @@
                             <div class="col-lg-12">
                                 <label for="" class="form-label fw-semibold text-dark my-3"><span
                                         class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
-                                            class="fa-regular fa-regular fa-credit-card"></i></span> Card
+                                            class="fa-regular fa-regular fa-credit-card"></i></span> Plan
                                     Details</label>
                                 <div class="row">
                                     <div class="col-12">
@@ -771,7 +771,7 @@
                                                 placeholder="Card No.">
                                         </div>
                                     </div> --}}
-                                    <div class="col-md-6 col-xl-4">
+                                    {{-- <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
                                             <select name="swim_card_id" id="" class="form-select py-2 shadow-none" required>
@@ -782,7 +782,7 @@
 
                                             </select>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Payment Mode</small></label>
@@ -1088,7 +1088,7 @@
                             <div class="col-lg-12">
                                 <label for="" class="form-label fw-semibold text-dark my-3"><span
                                         class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2"><i
-                                            class="fa-regular fa-regular fa-credit-card"></i></span> Card
+                                            class="fa-regular fa-regular fa-credit-card"></i></span> Plan
                                     Details</label>
                                 <div class="row">
                                     <div class="col-12">
@@ -1099,7 +1099,7 @@
 
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    {{-- <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
                                             <select name="swim_card_id" id="swim_card_no" class="form-select py-2 shadow-none">
@@ -1116,7 +1116,7 @@
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Current Card No.</small></label>
                                             <p id="current_card_no"></p>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
 
                             </div>
@@ -1163,12 +1163,12 @@
                                 </td>
                                 <td class="pe-3"><small id="memberCode">GH231</small></td>
                             </tr>
-                            <tr>
+                            {{-- <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Card No:</small>
                                 </td>
                                 <td class="pe-3"><small id="memberCardNo">12345abcd</small></td>
-                            </tr>
+                            </tr> --}}
                             {{-- <tr>
                                 <td class="text-secondary ps-3">
                                     <small>Card No:</small>
@@ -1891,7 +1891,7 @@
                         $('#memberName').text(response.data.name);
                         $('#memberClubName').text(response.data.club_details.name)
                         $('#memberCode').text(response.data.member_code)
-                        $('#memberCardNo').text(response.data.card_details?.card_no || '-')
+                        // $('#memberCardNo').text(response.data.card_details?.card_no || '-')
 
                         $('#memberApprovedBy').text(response.data.latest_approval?.checker?.name ?? '-');
 
@@ -2018,7 +2018,7 @@
                         let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
                         $('input[name="swim_membership_plan_type"]').prop('checked', false);
                         $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
-                        $('#current_card_no').text(response.data.card_details.card_no);
+                        // $('#current_card_no').text(response.data.card_details.card_no);
                         // console.log(response.purchase_history);
                         $('#current_membership').text(response.data.purchase_history[0].membership_plan_type.name)
 
