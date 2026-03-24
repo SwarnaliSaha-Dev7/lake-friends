@@ -97,6 +97,9 @@
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletRechargeBtn"
                                             title="Wallet Recharge" data-id="{{$member->id}}"><small><i
                                             class="fa-solid fa-wallet"></i></small></button>
+                                    <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn walletHistoryBtn"
+                                            title="Wallet History" data-id="{{$member->id}}"><small><i
+                                            class="fa-solid fa-list"></i></small></button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn lockerBtn" data-bs-toggle="modal" data-bs-target="#lockerModal"
                                         title="Locker Purchase" data-id="{{$member->id}}">
                                         {{-- title="Locker Purchase" data-id="{{$member->id}}" data-has-locker="{{ $member->has_locker ? 1 : 0 }}"> --}}
@@ -1427,26 +1430,30 @@
                             response.data.walletTransactionHistory.forEach(function(transaction) {
                                 let amount = transaction.amount;
                                 let direction = transaction.direction;
-                                let date = new Date(transaction.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+                                // let txnType = (transaction.txn_type || '-').toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+                                let txnTypeRaw = transaction.txn_type || '-';
+                                if (txnTypeRaw === 'spend') {   // change value if spend
+                                    txnTypeRaw = 'restaurant food order';
+                                }
+                                let txnType = txnTypeRaw.toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+
+                                let createdAt = transaction.created_at
+                                    ? new Date(transaction.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                                    : '-';
                                 let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
                                 let sign = direction == 'credit' ? '+' : '-';
-                                let label = direction == 'credit' ? 'Added By' : 'Used';
                                 let maker = transaction.creator?.name ?? '-';
                                 let remarks = transaction.payment?.remarks ?? '';
 
                                 let row = `
                                     <tr>
                                         <td class="border-secondary bg-transparent align-middle lh-sm">
-                                            <small class="fw-semibold">${label}:</small>
-                                            <small class="text-black-50">${maker}</small>
-
-                                            ${remarks ? `<br>
-                                            <small class="fw-semibold">Remarks:</small>
-                                            <small class="text-black-50">${remarks}</small>` : ''}
-
+                                            <div class="fw-semibold">${txnType}</div>
+                                            <small class="text-black-50">By: ${maker}</small><br>
+                                            <small class="text-black-50">Date: ${createdAt}</small>
+                                            ${remarks ? `<br><small class="text-black-50">Remarks: ${remarks}</small>` : ''}
                                         </td>
-
-
                                         <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
                                             ${sign}₹${amount}
                                         </td>
@@ -1474,6 +1481,73 @@
                 }
             });
 
+        });
+
+        $(document).on('click', '.walletHistoryBtn', function() {
+            let memberId = $(this).data('id');
+            let originalBtn = $(this).prop('outerHTML');
+            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
+
+            $.ajax({
+                url: '{{route("club-member.fetch-wallet-history", ":memberId")}}'.replace(':memberId', memberId),
+                type: 'GET',
+                success: function(response){
+                    if (response.statusCode == 200) {
+                        let tbody = $('#walletHistoryTbody');
+                        tbody.empty();
+
+                        if(response.data.length > 0){
+                            response.data.forEach(function(transaction) {
+                                let amount = transaction.amount;
+                                let direction = transaction.direction;
+
+                                // let txnType = (transaction.txn_type || '-').toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+                                let txnTypeRaw = transaction.txn_type || '-';
+                                if (txnTypeRaw === 'spend') {   // change value if spend
+                                    txnTypeRaw = 'restaurant food order';
+                                }
+                                let txnType = txnTypeRaw.toString().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+
+                                let createdAt = transaction.created_at
+                                    ? new Date(transaction.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                                    : '-';
+                                let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
+                                let sign = direction == 'credit' ? '+' : '-';
+                                let maker = transaction.creator?.name ?? '-';
+                                let remarks = transaction.payment?.remarks ?? '';
+
+                                let row = `
+                                    <tr>
+                                        <td class="border-secondary bg-transparent align-middle lh-sm">
+                                            <div class="fw-semibold">${txnType}</div>
+                                            <small class="text-black-50">By: ${maker}</small><br>
+                                            <small class="text-black-50">Date: ${createdAt}</small>
+                                            ${remarks ? `<br><small class="text-black-50">Remarks: ${remarks}</small>` : ''}
+                                        </td>
+                                        <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
+                                            ${sign}₹${amount}
+                                        </td>
+                                    </tr>`;
+
+                                tbody.append(row);
+                            });
+                        } else {
+                            tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
+                        }
+
+                        $('.spinner-border').replaceWith(originalBtn);
+                        $('#walletHistoryModal').modal('show');
+                    }
+                    else{
+                        toastr.error('Something Went Wrong');
+                        $('.spinner-border').replaceWith(originalBtn);
+                    }
+                },
+                error: function(){
+                    toastr.error('Something Went Wrong.');
+                    $('.spinner-border').replaceWith(originalBtn);
+                }
+            });
         });
 
         // walletRechargeForm, confirmRechargeBtn handlers moved to base/scripts.blade.php (global)

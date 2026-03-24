@@ -944,6 +944,7 @@ class ClubMemberController extends Controller
             ])
                 ->where('member_id', $id)
                 ->orderBy('created_at', 'DESC')
+                ->limit(5)
                 ->get();
 
             $data = [
@@ -955,6 +956,30 @@ class ClubMemberController extends Controller
                 'data' => $data,
                 'statusCode' => 200,
                 'message' => 'Wallet Balance Fetched successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    public function fetchWalletHistory($id)
+    {
+        try {
+            $walletTransactionHistory = WalletTransaction::with([
+                'creator:id,name',
+                'payment:id,wallet_transaction_id,remarks'
+            ])
+                ->where('member_id', $id)
+                ->orderBy('created_at', 'DESC')
+                ->get();
+
+            return response()->json([
+                'data' => $walletTransactionHistory,
+                'statusCode' => 200,
+                'message' => 'Wallet History Fetched successfully'
             ]);
         } catch (\Throwable $th) {
             return response()->json([
