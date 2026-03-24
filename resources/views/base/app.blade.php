@@ -67,7 +67,9 @@
 
                 <!-- Gradient Header -->
                 <div class="p-4 text-white position-relative" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);">
-                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal">
+                        <i class="fa-regular fa-circle-xmark"></i>
+                    </button>
                     <div class="d-flex align-items-center gap-3">
                         <div id="cardMemberAvatar"
                             class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-5 flex-shrink-0"
