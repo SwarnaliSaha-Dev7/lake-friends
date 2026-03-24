@@ -222,6 +222,9 @@
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
                                                 </div>
+                                                <div class="mt-2">
+                                                    <img class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -293,6 +296,9 @@
                                                     <small class="text-muted">
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <img class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -500,6 +506,9 @@
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
                                                 </div>
+                                                <div class="mt-2">
+                                                    <img id="member_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -571,6 +580,9 @@
                                                     <small class="text-muted">
                                                         JPG, JPEG & PNG, max file size 5MB
                                                     </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <img id="spouse_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -1161,6 +1173,20 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
+        $(document).on('change', '.profile-image', function () {
+            let file = this.files && this.files[0];
+            let $preview = $(this).closest('.file-upload-box').find('.upload-preview');
+            if (!file || !$preview.length) {
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                $preview.attr('src', e.target.result).removeClass('d-none');
+            };
+            reader.readAsDataURL(file);
+        });
+
         function calculateGST() {
             // Get values from inputs
             let taxable = parseFloat($('#taxable_amount').val()) || 0;
@@ -1649,6 +1675,13 @@
                     // $('#club_member_photo').html(data.image);
                     const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
                     $('#club_member_photo').text(imageName);
+                    if (data.image) {
+                        $('#member_image_preview')
+                            .attr('src', '/' + data.image.replace(/^\/+/, ''))
+                            .removeClass('d-none');
+                    } else {
+                        $('#member_image_preview').addClass('d-none').attr('src', '');
+                    }
 
 
                     $('#club_status').val(data.status);
@@ -1664,6 +1697,13 @@
                     let spouseImageName = data.member_details.details.spouse_image
                     spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
                     $('#spouse_photo').text(spouseImageName);
+                    if (data.member_details.details.spouse_image) {
+                        $('#spouse_image_preview')
+                            .attr('src', '/' + data.member_details.details.spouse_image.replace(/^\/+/, ''))
+                            .removeClass('d-none');
+                    } else {
+                        $('#spouse_image_preview').addClass('d-none').attr('src', '');
+                    }
 
                     // $('#member_image_preview').attr('src', data.image);
                     // $('#spouse_image_preview').attr('src', details.spouse_image);

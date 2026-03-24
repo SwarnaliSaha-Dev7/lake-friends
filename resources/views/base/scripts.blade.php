@@ -102,13 +102,26 @@
                             var walletBal = parseFloat(walletDetails && walletDetails.current_balance ? walletDetails.current_balance : 0).toFixed(2);
                             $('#cardMemberWallet').text('Rs.' + walletBal);
 
-                            // Avatar initials
+                            // Avatar image (fallback to initials)
                             var nameParts = memberName.trim().split(' ');
                             var initials = '';
                             for (var ni = 0; ni < Math.min(nameParts.length, 2); ni++) {
                                 if (nameParts[ni]) initials += nameParts[ni][0].toUpperCase();
                             }
-                            $('#cardMemberAvatar').text(initials);
+                            var avatarUrl = response.data.image
+                                ? '/' + response.data.image.replace(/^\/+/, '')
+                                : '';
+                            if (avatarUrl) {
+                                $('#cardMemberAvatar')
+                                    .css({ 'background-image': 'none' })
+                                    .html('<img src="' + avatarUrl + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">');
+                            } else {
+                                $('#cardMemberAvatar')
+                                    .text(initials)
+                                    .empty()
+                                    .text(initials)
+                                    .css({ 'background-image': 'none' });
+                            }
 
                             // Card status badge
                             var cardStatusVal = response.cardStatus || '';

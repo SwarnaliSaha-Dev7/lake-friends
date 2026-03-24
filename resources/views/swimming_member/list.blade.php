@@ -669,6 +669,9 @@
                                                         Image format, PNG & JPEG, max file size 5MB
                                                     </small>
                                                 </div>
+                                                <div class="mt-2">
+                                                    <img class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -709,6 +712,9 @@
                                                     <small class="text-muted">
                                                         Image format, PNG & JPEG, max file size 5MB
                                                     </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <img class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -1025,6 +1031,9 @@
                                                         Image format, PNG & JPEG, max file size 5MB
                                                     </small>
                                                 </div>
+                                                <div class="mt-2">
+                                                    <img id="swim_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -1077,6 +1086,9 @@
                                                     <small class="text-muted">
                                                         Image format, PNG & JPEG, max file size 5MB
                                                     </small>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <img id="swim_guardian_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -1682,6 +1694,20 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
+        $(document).on('change', '.profile-image', function () {
+            let file = this.files && this.files[0];
+            let $preview = $(this).closest('.file-upload-box').find('.upload-preview');
+            if (!file || !$preview.length) {
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                $preview.attr('src', e.target.result).removeClass('d-none');
+            };
+            reader.readAsDataURL(file);
+        });
+
         function calculateGST() {
             // Get values from inputs
             let taxable = parseFloat($('#taxable_amount').val()) || 0;
@@ -2013,8 +2039,22 @@
                         $('#swim_guardian_occupation').val(response.data.member_details.details['guardian_occupation']);
                         // console.log(fileNameFromPath(response.data.image))
                         $('#swim_member_photo_name').text(fileNameFromPath(response.data.image));
+                        if (response.data.image) {
+                            $('#swim_image_preview')
+                                .attr('src', '/' + response.data.image.replace(/^\/+/, ''))
+                                .removeClass('d-none');
+                        } else {
+                            $('#swim_image_preview').addClass('d-none').attr('src', '');
+                        }
                         // console.log(fileNameFromPath(fileNameFromPath(response.data.member_details.details['guardian_image'])))
                         $('#swim_guardian_photo_name').text(fileNameFromPath(response.data.member_details.details['guardian_image']));
+                        if (response.data.member_details.details['guardian_image']) {
+                            $('#swim_guardian_image_preview')
+                                .attr('src', '/' + response.data.member_details.details['guardian_image'].replace(/^\/+/, ''))
+                                .removeClass('d-none');
+                        } else {
+                            $('#swim_guardian_image_preview').addClass('d-none').attr('src', '');
+                        }
                         let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
                         $('input[name="swim_membership_plan_type"]').prop('checked', false);
                         $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
