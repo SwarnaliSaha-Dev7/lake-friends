@@ -520,11 +520,9 @@ class ClubMemberController extends Controller
             if (!$hasStoredExpiryFine && $latestPurchase && $latestPurchase->expiry_date) {
                 $expiry = Carbon::parse($latestPurchase->expiry_date);
                 if ($expiry->isPast() && $latestPurchase->membershipPlanType) {
-                    $plan         = $latestPurchase->membershipPlanType;
-                    $durationDays = max(1, (int) $plan->duration_months * 30);
-                    $perDay       = round((float) $plan->price / $durationDays, 4);
+                    $plan = $latestPurchase->membershipPlanType;
 
-                    // Get grace days & max cap from fine_rules (plan-specific or global)
+                    // Get fine rule for this plan (plan-specific only — expiry fine is plan-type scoped)
                     $fineRule = FineRule::where('club_id', $clubId)
                         ->where('rule_type', 'membership_expiry')
                         ->where('membership_plan_type_id', $plan->id)
@@ -534,30 +532,36 @@ class ClubMemberController extends Controller
                             ->whereNull('membership_plan_type_id')
                             ->first();
 
-                    $graceDays    = (int) ($fineRule?->grace_days ?? 0);
-                    $maxCap       = $fineRule?->max_fine_cap ? (float) $fineRule->max_fine_cap : null;
+                    // Only show fine if a rule is configured for this plan
+                    if ($fineRule) {
+                        $perDay       = (float) ($fineRule->per_day_fine_amount ?? 0);
+                        $graceDays    = (int) ($fineRule->grace_days ?? 0);
+                        $maxCap       = $fineRule->max_fine_cap ? (float) $fineRule->max_fine_cap : null;
 
-                    $daysExpired  = (int) $expiry->diffInDays(Carbon::today());
-                    $billableDays = max(0, $daysExpired - $graceDays);
-                    $fineAmount   = round($billableDays * $perDay, 2);
+                        $daysExpired  = (int) $expiry->diffInDays(Carbon::today());
+                        $billableDays = max(0, $daysExpired - $graceDays);
+                        $fineAmount   = round($billableDays * $perDay, 2);
 
-                    if ($maxCap && $fineAmount > $maxCap) {
-                        $fineAmount = $maxCap;
+                        if ($maxCap && $fineAmount > $maxCap) {
+                            $fineAmount = $maxCap;
+                        }
+
+                        $suggestedFine = [
+                            'amount'   => $fineAmount,
+                            'days'     => $billableDays,
+                            'per_day'  => $perDay,
+                            'has_fine' => $fineAmount > 0,
+                        ];
                     }
-
-                    $suggestedFine = [
-                        'amount'   => $fineAmount,
-                        'days'     => $billableDays,
-                        'per_day'  => $perDay,
-                        'has_fine' => $fineAmount > 0,
-                    ];
                 }
             }
 
             // Calculate projected FY minimum spend shortfall (even if FY not yet closed)
+            // Only applicable for plans marked as is_minimum_spend_applicable
             $fyShortfalls = [];
-            $spendRule = \App\Models\MinimumSpendRule::where('club_id', $clubId)->first();
-            if ($spendRule) {
+            $activePlan   = $latestPurchase?->membershipPlanType;
+            $spendRule    = \App\Models\MinimumSpendRule::where('club_id', $clubId)->first();
+            if ($spendRule && $activePlan?->is_minimum_spend_applicable) {
                 $today      = Carbon::today();
                 $monthlyMin = (float) $spendRule->minimum_amount / 12;
 
@@ -1517,6 +1521,14 @@ class ClubMemberController extends Controller
 
     private function recordFyShortfallAtRenewal(Member $member, int $clubId): void
     {
+        // Only applicable for Annual/Annual Silver plan types
+        $activePurchase = $member->purchaseHistory()
+            ->where('status', 'active')
+            ->latest('expiry_date')
+            ->with('membershipPlanType')
+            ->first();
+        if (!$activePurchase?->membershipPlanType?->is_minimum_spend_applicable) return;
+
         $spendRule = \App\Models\MinimumSpendRule::where('club_id', $clubId)->first();
         if (!$spendRule) return;
 

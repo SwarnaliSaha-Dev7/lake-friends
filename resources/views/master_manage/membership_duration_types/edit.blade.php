@@ -44,9 +44,19 @@
                 <div class="form-part mb-3">
                     <label for="" class="form-label w-100"><small></small></label>
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" value="1" {{ old('is_lifetime', $membership_duration_types->is_lifetime) ? 'checked' : '' }} id="is_lifetime" name="is_lifetime">
-                        <label class="form-check-label" for="checkDefault">
+                        <input class="form-check-input" type="checkbox" value="1"
+                            {{ old('is_lifetime', $membership_duration_types->is_lifetime) ? 'checked' : '' }}
+                            id="is_lifetime" name="is_lifetime">
+                        <label class="form-check-label" for="is_lifetime">
                             <small>Is Lifetime</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="1"
+                            {{ old('is_minimum_spend_applicable', $membership_duration_types->is_minimum_spend_applicable) ? 'checked' : '' }}
+                            id="is_minimum_spend_applicable" name="is_minimum_spend_applicable">
+                        <label class="form-check-label" for="is_minimum_spend_applicable">
+                            <small>Minimum Spend Applicable</small>
                         </label>
                     </div>
                 </div>

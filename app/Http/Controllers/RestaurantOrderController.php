@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
+use App\Models\OrderSession;
 use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
 use App\Models\StockLedger;
@@ -21,28 +22,27 @@ class RestaurantOrderController extends Controller
     public function history(Request $request)
     {
         try {
-            $clubId     = club_id();
-            $page_title = 'Order History';
-            $title      = 'Order History';
-
+            $clubId    = club_id();
             $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
             $endDate   = $request->input('end_date',   now()->toDateString());
 
-            $orders = RestaurantOrder::where('club_id', $clubId)
+            // Sessions in date range
+            $sessions = OrderSession::where('club_id', $clubId)
                 ->whereDate('created_at', '>=', $startDate)
                 ->whereDate('created_at', '<=', $endDate)
-                ->with(['member', 'items.foodItem'])
+                ->with(['member', 'orders.items.foodItem'])
                 ->latest()
                 ->get();
 
-            $active        = $orders->whereNotIn('status', ['cancelled']);
-            $totalOrders   = $active->count();
-            $totalRevenue  = $active->sum('net_amount');
-            $totalDiscount = $active->sum('discount_amount');
+            $activeSessions = $sessions->where('status', 'billed');
+
+            $totalOrders   = $activeSessions->count();
+            $totalRevenue  = $activeSessions->sum('net_amount');
+            $totalDiscount = $activeSessions->sum('discount_amount');
             $avgOrder      = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
 
             return view('restaurant_orders.history', compact(
-                'title', 'page_title', 'orders', 'startDate', 'endDate',
+                'sessions', 'startDate', 'endDate',
                 'totalOrders', 'totalRevenue', 'totalDiscount', 'avgOrder'
             ));
         } catch (\Throwable $th) {
@@ -160,24 +160,23 @@ class RestaurantOrderController extends Controller
             $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
             $endDate   = $request->input('end_date',   now()->toDateString());
 
-            $orders = RestaurantOrder::where('club_id', $clubId)
+            $sessions = OrderSession::where('club_id', $clubId)
                 ->whereDate('created_at', '>=', $startDate)
                 ->whereDate('created_at', '<=', $endDate)
                 ->whereNotIn('status', ['cancelled'])
-                ->with(['member'])
+                ->with(['member', 'orders'])
                 ->latest()
                 ->get();
 
-            $active        = $orders;
-            $totalOrders   = $active->count();
-            $totalRevenue  = $active->sum('net_amount');
-            $totalDiscount = $active->sum('discount_amount');
+            $totalOrders   = $sessions->count();
+            $totalRevenue  = $sessions->sum('net_amount');
+            $totalDiscount = $sessions->sum('discount_amount');
             $avgOrder      = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
 
-            $byDate = $orders->groupBy(fn($o) => $o->created_at->toDateString());
+            $byDate = $sessions->groupBy(fn($s) => $s->created_at->toDateString());
 
             $pdf = Pdf::loadView('restaurant_orders.report_pdf', compact(
-                'orders', 'byDate', 'startDate', 'endDate',
+                'sessions', 'byDate', 'startDate', 'endDate',
                 'totalOrders', 'totalRevenue', 'totalDiscount', 'avgOrder'
             ))->setPaper('a4', 'portrait');
 

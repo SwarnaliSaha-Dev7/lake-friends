@@ -6,6 +6,7 @@ use App\Models\FinancialYear;
 use App\Models\Member;
 use App\Models\MemberFine;
 use App\Models\MemberFinancialSummary;
+use App\Models\MembershipPurchaseHistory;
 use App\Models\MinimumSpendRule;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -17,21 +18,19 @@ class ProcessYearEndFines extends Command
 {
     protected $signature = 'fines:process-year-end {--club_id= : Specific club ID (optional)} {--fy_label= : FY label e.g. 2025-2026 (optional, defaults to closing FY)}';
 
-    protected $description = 'Process year-end minimum spend shortfall fines and wallet carry-forward/forfeit for all members';
+    protected $description = 'Process year-end minimum spend shortfall fines and wallet carry-forward/forfeit for Annual and Annual Silver members';
 
     public function handle()
     {
         $today = Carbon::today();
 
         // Default: process the FY that just closed (run on April 1)
-        // FY closes on March 31, so "closing FY" = previous FY if today is April 1
         if ($this->option('fy_label')) {
             $fyLabel = $this->option('fy_label');
             [$fyStartYear, $fyEndYear] = explode('-', $fyLabel);
             $fyStart = Carbon::create((int)$fyStartYear, 4, 1);
             $fyEnd   = Carbon::create((int)$fyEndYear, 3, 31);
         } else {
-            // If today is April 1+, process previous FY (Apr 1 last year – Mar 31 this year)
             if ($today->month >= 4) {
                 $fyStart = Carbon::create($today->year - 1, 4, 1);
                 $fyEnd   = Carbon::create($today->year, 3, 31);
@@ -45,7 +44,6 @@ class ProcessYearEndFines extends Command
 
         $this->info("Processing FY: {$fyLabel} ({$fyStart->toDateString()} to {$fyEnd->toDateString()})");
 
-        // Get clubs to process
         $clubIds = $this->option('club_id')
             ? [(int)$this->option('club_id')]
             : DB::table('clubs')->pluck('id')->toArray();
@@ -65,10 +63,9 @@ class ProcessYearEndFines extends Command
             return;
         }
 
-        $annualMin  = (float) $spendRule->minimum_amount; // ₹3600
-        $monthlyMin = $annualMin / 12;                    // ₹300
+        $annualMin  = (float) $spendRule->minimum_amount;
+        $monthlyMin = $annualMin / 12;
 
-        // Get or create the FinancialYear record
         $fy = FinancialYear::firstOrCreate(
             ['club_id' => $clubId, 'fy_label' => $fyLabel],
             ['start_date' => $fyStart->toDateString(), 'end_date' => $fyEnd->toDateString(), 'is_closed' => false]
@@ -79,16 +76,25 @@ class ProcessYearEndFines extends Command
             return;
         }
 
-        // Get all active members in this club
-        $members = Member::where('club_id', $clubId)->where('status', 'active')->get();
+        // Only process active members whose current plan has is_minimum_spend_applicable = true
+        $memberIds = MembershipPurchaseHistory::where('club_id', $clubId)
+            ->where('status', 'active')
+            ->whereHas('membershipPlanType', fn($q) => $q->where('is_minimum_spend_applicable', true))
+            ->pluck('member_id')
+            ->unique()
+            ->toArray();
 
-        $this->info("Club {$clubId}: Processing {$members->count()} members for FY {$fyLabel}");
+        $members = Member::where('club_id', $clubId)
+            ->where('status', 'active')
+            ->whereIn('id', $memberIds)
+            ->get();
+
+        $this->info("Club {$clubId}: Processing {$members->count()} Annual/Annual Silver members for FY {$fyLabel}");
 
         foreach ($members as $member) {
             $this->processMember($member, $fy, $fyStart, $fyEnd, $monthlyMin);
         }
 
-        // Mark FY as closed
         $fy->update(['is_closed' => true]);
         $this->info("Club {$clubId}: FY {$fyLabel} marked as closed.");
     }
@@ -97,7 +103,7 @@ class ProcessYearEndFines extends Command
     {
         DB::beginTransaction();
         try {
-            // Pro-rate minimum spend: from first purchase start_date or FY start, whichever is later
+            // Pro-rate minimum spend based on join date
             $firstPurchase  = $member->purchaseHistory()->orderBy('start_date')->first();
             $joinDate       = $firstPurchase
                 ? Carbon::parse($firstPurchase->start_date)->startOfMonth()
@@ -106,7 +112,6 @@ class ProcessYearEndFines extends Command
             $months         = (int) $effectiveStart->diffInMonths($fyEnd->copy()->addDay());
             $minimumRequired = round($monthlyMin * $months, 2);
 
-            // Get or create financial summary
             $summary = MemberFinancialSummary::firstOrCreate(
                 ['club_id' => $member->club_id, 'member_id' => $member->id, 'financial_year_id' => $fy->id],
                 ['minimum_spend_required' => $minimumRequired, 'total_recharge' => 0, 'total_spend' => 0,
@@ -116,53 +121,57 @@ class ProcessYearEndFines extends Command
             $totalSpend = (float) $summary->total_spend;
             $shortfall  = max(0, $minimumRequired - $totalSpend);
 
-            // Get current wallet balance
             $wallet  = Wallet::where('member_id', $member->id)->first();
             $balance = $wallet ? (float) $wallet->current_balance : 0;
 
             if ($shortfall > 0) {
-                // Forfeit remaining wallet balance (scenario 2 & 3)
-                if ($balance > 0 && $wallet) {
-                    $wallet->decrement('current_balance', $balance);
+                // Forfeit only up to shortfall amount (not entire wallet)
+                $forfeited = min($balance, $shortfall);
+
+                if ($forfeited > 0 && $wallet) {
+                    $wallet->decrement('current_balance', $forfeited);
                     WalletTransaction::create([
                         'wallet_id'  => $wallet->id,
                         'member_id'  => $member->id,
-                        'amount'     => $balance,
+                        'amount'     => $forfeited,
                         'direction'  => 'debit',
                         'txn_type'   => 'forfeit',
                         'created_by' => 1,
                     ]);
-                    $summary->update(['forfeited_amount' => $balance]);
+                    $summary->update(['forfeited_amount' => $forfeited]);
                 }
 
-                // Create shortfall fine only if not already recorded (any status — paid at renewal counts)
-                $alreadyRecorded = MemberFine::where('club_id', $member->club_id)
-                    ->where('member_id', $member->id)
-                    ->where('financial_year_id', $fy->id)
-                    ->where('fine_type', 'minimum_spend_shortfall')
-                    ->exists();
+                // Fine = remaining shortfall after wallet forfeiture
+                $fineAmount = $shortfall - $forfeited;
 
-                if (!$alreadyRecorded) {
-                    MemberFine::create([
-                        'club_id'            => $member->club_id,
-                        'member_id'          => $member->id,
-                        'financial_year_id'  => $fy->id,
-                        'fine_type'          => 'minimum_spend_shortfall',
-                        'fine_amount'        => $shortfall,
-                        'reference_amount'   => $shortfall,
-                        'fine_date'          => $fyEnd->toDateString(),
-                        'status'             => 'pending',
-                        'notes'              => "FY {$fy->fy_label} minimum spend shortfall",
-                    ]);
+                if ($fineAmount > 0) {
+                    $alreadyRecorded = MemberFine::where('club_id', $member->club_id)
+                        ->where('member_id', $member->id)
+                        ->where('financial_year_id', $fy->id)
+                        ->where('fine_type', 'minimum_spend_shortfall')
+                        ->exists();
+
+                    if (!$alreadyRecorded) {
+                        MemberFine::create([
+                            'club_id'            => $member->club_id,
+                            'member_id'          => $member->id,
+                            'financial_year_id'  => $fy->id,
+                            'fine_type'          => 'minimum_spend_shortfall',
+                            'fine_amount'        => $fineAmount,
+                            'reference_amount'   => $shortfall,
+                            'fine_date'          => $fyEnd->toDateString(),
+                            'status'             => 'pending',
+                            'notes'              => "FY {$fy->fy_label}: shortfall ₹{$shortfall}, forfeited ₹{$forfeited}, fine ₹{$fineAmount}",
+                        ]);
+                    }
                 }
 
                 $summary->update(['shortfall_amount' => $shortfall]);
-                $this->line("  Member {$member->id} ({$member->name}): Shortfall ₹{$shortfall}, Forfeited ₹{$balance}");
+                $this->line("  Member {$member->id} ({$member->name}): Shortfall ₹{$shortfall}, Forfeited ₹{$forfeited}, Fine ₹{$fineAmount}");
             } else {
-                // No shortfall — carry forward remaining balance (scenario 4)
-                $surplus = $totalSpend - $minimumRequired;
+                // No shortfall — remaining wallet carries forward (scenario 4)
                 $summary->update(['carry_forward_amount' => $balance, 'shortfall_amount' => 0]);
-                $this->line("  Member {$member->id} ({$member->name}): No shortfall. Surplus ₹{$surplus}, Carry forward ₹{$balance}");
+                $this->line("  Member {$member->id} ({$member->name}): No shortfall. Carry forward ₹{$balance}");
             }
 
             DB::commit();

@@ -84,6 +84,17 @@
                 <i class="fa-solid fa-boxes-stacked fs-2 opacity-50"></i>
             </div>
         </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
+                style="background: linear-gradient(135deg, #11cdef, #0a7bb5);">
+                <div>
+                    <div class="small mb-1 opacity-75">Closing Stock Value</div>
+                    <div class="fs-4 fw-bold">Rs {{ number_format($totalClosingAmount, 0) }}</div>
+                    <div class="small opacity-75" style="font-size:10px;">Based on serving price</div>
+                </div>
+                <i class="fa-solid fa-indian-rupee-sign fs-2 opacity-50"></i>
+            </div>
+        </div>
     </div>
 
     {{-- Report Table --}}
@@ -112,9 +123,13 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Type</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Size</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Opening</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Opening Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">IN from Godown (+)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">IN Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">OUT Sales (−)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">OUT Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Closing</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Closing Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -153,8 +168,17 @@
                                     </td>
                                     <td class="text-nowrap">{{ $sizeMl ? $sizeMl . ' ml' : '—' }}</td>
                                     <td class="text-nowrap">{{ $fmtQty($row['opening_qty']) }}</td>
+                                    <td class="text-nowrap text-muted">
+                                        {{ $row['opening_amount'] > 0 ? 'Rs '.number_format($row['opening_amount'], 2) : '—' }}
+                                    </td>
                                     <td class="text-nowrap text-success fw-semibold">{{ $fmtQty($row['in_qty'], '+') }}</td>
+                                    <td class="text-nowrap text-success">
+                                        {{ $row['in_amount'] > 0 ? 'Rs '.number_format($row['in_amount'], 2) : '—' }}
+                                    </td>
                                     <td class="text-nowrap text-danger fw-semibold">{{ $fmtQty($row['out_qty'], '−') }}</td>
+                                    <td class="text-nowrap text-danger">
+                                        {{ $row['out_amount'] > 0 ? 'Rs '.number_format($row['out_amount'], 2) : '—' }}
+                                    </td>
                                     <td class="text-nowrap fw-bold">
                                         {{ $fmtQty($closing) }}
                                         @if($isOut && $row['opening_qty'] > 0)
@@ -165,9 +189,25 @@
                                             </span>
                                         @endif
                                     </td>
+                                    <td class="text-nowrap fw-semibold text-primary">
+                                        {{ $row['closing_amount'] > 0 ? 'Rs '.number_format($row['closing_amount'], 2) : '—' }}
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
+                        <tfoot>
+                            <tr class="fw-bold" style="background-color: #f0f0f0;">
+                                <td colspan="5" class="text-end pe-3">Total</td>
+                                <td class="text-nowrap">—</td>
+                                <td class="text-nowrap">Rs {{ number_format($totalOpeningAmount, 2) }}</td>
+                                <td class="text-nowrap">—</td>
+                                <td class="text-nowrap text-success">Rs {{ number_format($totalInAmount, 2) }}</td>
+                                <td class="text-nowrap">—</td>
+                                <td class="text-nowrap text-danger">Rs {{ number_format($totalOutAmount, 2) }}</td>
+                                <td class="text-nowrap">—</td>
+                                <td class="text-nowrap text-primary">Rs {{ number_format($totalClosingAmount, 2) }}</td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>

@@ -33,18 +33,19 @@
         tfoot td { padding: 7px 8px; font-size: 10px; font-weight: bold; }
 
         .text-right { text-align: right; }
+        .text-center { text-align: center; }
         .footer { margin-top: 14px; text-align: right; font-size: 9px; color: #999; }
 
         .badge { padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: bold; }
-        .badge-success  { background: #e8f5e9; color: #2e7d32; }
-        .badge-primary  { background: #e3f2fd; color: #1565c0; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
         .badge-warning  { background: #fff8e1; color: #f57f17; }
+        .badge-open     { background: #fff3e0; color: #e65100; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Restaurant Order Report</h1>
+        <h1>Order Session Report</h1>
         <p>
             Period:
             @if($startDate === $endDate)
@@ -53,13 +54,13 @@
                 {{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} &mdash; {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}
             @endif
         </p>
-        <p style="color:#999;font-size:9px;">Generated: {{ now()->format('d M Y, h:i A') }} &nbsp;|&nbsp; Excludes cancelled orders</p>
+        <p style="color:#999;font-size:9px;">Generated: {{ now()->format('d M Y, h:i A') }} &nbsp;|&nbsp; Excludes cancelled sessions</p>
     </div>
 
     {{-- Summary Cards --}}
     <div class="summary-cards">
         <div class="card card-blue">
-            <div class="card-label">Total Orders</div>
+            <div class="card-label">Total Sessions</div>
             <div class="card-value">{{ $totalOrders }}</div>
         </div>
         <div class="card card-green">
@@ -71,58 +72,64 @@
             <div class="card-value">Rs {{ number_format($totalDiscount, 2) }}</div>
         </div>
         <div class="card card-purple">
-            <div class="card-label">Avg Order Value</div>
+            <div class="card-label">Avg Bill Value</div>
             <div class="card-value">Rs {{ number_format($avgOrder, 2) }}</div>
         </div>
     </div>
 
     {{-- Date-wise breakdown --}}
-    @foreach($byDate as $date => $dayOrders)
+    @foreach($byDate as $date => $daySessions)
         @php
-            $dayRevenue  = $dayOrders->sum('net_amount');
-            $dayDiscount = $dayOrders->sum('discount_amount');
+            $dayRevenue  = $daySessions->sum('net_amount');
+            $dayDiscount = $daySessions->sum('discount_amount');
         @endphp
         <div class="date-group">
             <div class="date-heading">
                 {{ \Carbon\Carbon::parse($date)->format('l, d M Y') }}
-                &nbsp;&nbsp;|&nbsp;&nbsp; {{ $dayOrders->count() }} orders
+                &nbsp;&nbsp;|&nbsp;&nbsp; {{ $daySessions->count() }} sessions
                 &nbsp;&nbsp;|&nbsp;&nbsp; Revenue: Rs {{ number_format($dayRevenue, 2) }}
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Order No</th>
+                        <th>Session No</th>
                         <th>Member</th>
                         <th>Time</th>
+                        <th class="text-center">Rounds</th>
                         <th>Status</th>
                         <th class="text-right">Subtotal</th>
+                        <th class="text-right">GST</th>
                         <th class="text-right">Discount</th>
                         <th class="text-right">Net Amount</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($dayOrders as $order)
+                    @foreach($daySessions as $session)
+                        @php
+                            $roundCount = $session->orders->whereNotIn('status', ['cancelled'])->count();
+                        @endphp
                         <tr>
-                            <td>{{ $order->order_no }}</td>
-                            <td>{{ $order->member->name ?? '—' }}</td>
-                            <td>{{ $order->created_at->format('h:i A') }}</td>
+                            <td>{{ $session->session_no }}</td>
+                            <td>{{ $session->member->name ?? '—' }}</td>
+                            <td>{{ $session->created_at->format('h:i A') }}</td>
+                            <td class="text-center">{{ $roundCount }}</td>
                             <td>
-                                @if($order->status === 'delivered')
-                                    <span class="badge badge-primary">Delivered</span>
-                                @elseif($order->status === 'paid')
-                                    <span class="badge badge-success">Paid</span>
+                                @if($session->status === 'billed')
+                                    <span class="badge badge-success">Billed</span>
                                 @else
-                                    <span class="badge badge-warning">{{ ucfirst($order->status) }}</span>
+                                    <span class="badge badge-open">{{ ucfirst($session->status) }}</span>
                                 @endif
                             </td>
-                            <td class="text-right">Rs {{ number_format($order->taxable_amount, 2) }}</td>
-                            <td class="text-right">Rs {{ number_format($order->discount_amount, 2) }}</td>
-                            <td class="text-right">Rs {{ number_format($order->net_amount, 2) }}</td>
+                            <td class="text-right">Rs {{ number_format($session->taxable_amount, 2) }}</td>
+                            <td class="text-right">Rs {{ number_format($session->gst_amount, 2) }}</td>
+                            <td class="text-right">Rs {{ number_format($session->discount_amount, 2) }}</td>
+                            <td class="text-right">Rs {{ number_format($session->net_amount, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tr class="subtotal-row">
-                    <td colspan="4">Day Total</td>
+                    <td colspan="5">Day Total</td>
+                    <td class="text-right"></td>
                     <td class="text-right"></td>
                     <td class="text-right">Rs {{ number_format($dayDiscount, 2) }}</td>
                     <td class="text-right">Rs {{ number_format($dayRevenue, 2) }}</td>
@@ -135,7 +142,8 @@
     <table style="margin-top:8px;">
         <tfoot>
             <tr>
-                <td colspan="5">Grand Total ({{ $totalOrders }} orders)</td>
+                <td colspan="6">Grand Total ({{ $totalOrders }} sessions)</td>
+                <td class="text-right"></td>
                 <td class="text-right">Rs {{ number_format($totalDiscount, 2) }}</td>
                 <td class="text-right">Rs {{ number_format($totalRevenue, 2) }}</td>
             </tr>

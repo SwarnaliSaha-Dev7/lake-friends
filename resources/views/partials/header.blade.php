@@ -46,6 +46,7 @@
                             in_array($nType, ['stock_added','stock_adjusted'])                             => route('godown-stock.index'),
                             in_array($nType, ['bar_transfer_pending'])                                     => route('barStockApproval.list'),
                             in_array($nType, ['bar_transfer_done'])                                        => route('bar-stock.index'),
+                            in_array($nType, ['liquor_item_create','liquor_item_delete','liquor_price_update'])     => route('liquorApproval.list'),
                             in_array($nType, ['liquor_serving_add','liquor_serving_update','liquor_serving_delete']) => route('liquorServingApproval.list'),
                             in_array($nType, ['offer_create','offer_update','offer_delete'])               => route('offerApproval.list'),
                             in_array($nType, ['food_item_create','food_item_update','food_item_delete'])   => route('foodItemPriceApproval.list'),

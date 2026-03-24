@@ -21,6 +21,7 @@ class FoodItem extends Model
         'sku',
         'unit',
         'size_ml',
+        'price',
         'is_beer',
         'low_stock_alert_qty',
         'is_active',

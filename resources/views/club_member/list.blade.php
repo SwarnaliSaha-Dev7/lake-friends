@@ -707,86 +707,74 @@
     <!-- View Profile Modal -->
     <div class="modal fade" id="viewprofile" tabindex="-1" aria-labelledby="viewprofileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="viewprofileModalLabel">Member Plan Details</h5>
-                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
-                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table border-0 membership-plan-table" cellspacing="1" cellpadding="1">
-                        <tbody>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Member’s Name:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberName">Soumen Das</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Club Name:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberClubName">Soumen Das</small></td>
-                            </tr>
-                            <!-- <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Member’s Id:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberCode">GH231</small></td>
-                            </tr> -->
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Card No:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberCardNo">12345abcd</small></td>
-                            </tr>
-                            <!-- <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Card No:</small>
-                                </td>
-                                <td class="pe-3"><small>12345abcd</small></td>
-                            </tr> -->
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Current Active Plan:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberPlan">Gold</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Plan Expiry Date:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberPlanExpiry">12-31-2006</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Current Wallet Balance:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberWallet">₹2,450.00</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Approved By:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberApprovedBy">₹2,450.00</small></td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="modal-content border-0 shadow-sm overflow-hidden">
 
-                    <!-- Pending Fines Section -->
-                    <div id="pendingFinesSection" style="display:none;">
-                        <div class="px-3 pb-2 pt-1">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="fa-solid fa-triangle-exclamation text-danger"></i>
-                                <span class="fw-semibold text-danger small">Pending Fines</span>
+                {{-- Header --}}
+                <div class="modal-header border-0 pb-0 px-4 pt-4" style="background: linear-gradient(135deg, #7367f0, #5e50ee);">
+                    <div class="d-flex align-items-center gap-3 w-100">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                            style="width:46px;height:46px;background:rgba(255,255,255,0.2);">
+                            <i class="fa-solid fa-user text-white" style="font-size:18px;"></i>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="fw-bold text-white text-truncate" style="font-size:16px;" id="memberName">—</div>
+                            <div class="text-white opacity-75" style="font-size:12px;" id="memberClubName">—</div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    {{-- Wallet strip --}}
+                    <div class="w-100 mt-3 mb-0 pb-3 d-flex align-items-center justify-content-between">
+                        <span class="text-white opacity-75" style="font-size:12px;"><i class="fa-solid fa-wallet me-1"></i>Wallet Balance</span>
+                        <span class="fw-bold text-white" style="font-size:17px;" id="memberWallet">₹0</span>
+                    </div>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-4" style="background:#f8f8fb;">
+
+                    {{-- Info grid --}}
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-credit-card me-1"></i>Card No</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberCardNo">—</div>
                             </div>
-                            <div id="pendingFinesList"></div>
-                            <div class="d-flex justify-content-between border-top pt-2 mt-1">
-                                <small class="fw-semibold">Total Pending Fine</small>
-                                <small class="fw-bold text-danger" id="totalPendingFine"></small>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-user-check me-1"></i>Approved By</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberApprovedBy">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-id-badge me-1"></i>Current Plan</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberPlan">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-regular fa-calendar-xmark me-1"></i>Plan Expiry</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberPlanExpiry">—</div>
                             </div>
                         </div>
                     </div>
+
+                    {{-- Pending Fines --}}
+                    <div id="pendingFinesSection" style="display:none;">
+                        <div class="rounded-3 p-3" style="background:#fff3f3;border:1px solid #f5c6c6;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                                <span class="fw-semibold text-danger" style="font-size:13px;">Pending Fines</span>
+                            </div>
+                            <div id="pendingFinesList"></div>
+                            <div class="d-flex justify-content-between border-top border-danger border-opacity-25 pt-2 mt-1">
+                                <span class="fw-semibold" style="font-size:12px;">Total</span>
+                                <span class="fw-bold text-danger" style="font-size:13px;" id="totalPendingFine"></span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

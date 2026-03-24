@@ -56,28 +56,33 @@
     <table class="summary-cards">
         <tr>
             <td class="card card-blue">
-                <div class="card-label">Total Opening Stock</div>
+                <div class="card-label">Opening Stock</div>
                 <div class="card-value">{{ number_format($totalOpening) }} BTL</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalOpeningAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-green">
                 <div class="card-label">Total IN (Period)</div>
                 <div class="card-value">+{{ number_format($totalIn) }} BTL</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalInAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-orange">
                 <div class="card-label">Total OUT (Period)</div>
                 <div class="card-value">-{{ number_format($totalOut) }} BTL</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalOutAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-red">
                 <div class="card-label">Transferred to Bar</div>
                 <div class="card-value">-{{ number_format($totalTransfer) }} BTL</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalTransferAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-purple">
-                <div class="card-label">Total Closing Stock</div>
+                <div class="card-label">Closing Stock</div>
                 <div class="card-value">{{ number_format($totalClosing) }} BTL</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalClosingAmount, 0) }}</div>
             </td>
         </tr>
     </table>
@@ -89,20 +94,25 @@
                 <th>#</th>
                 <th>Item Name</th>
                 <th>Category</th>
-                <th>Size (ml)</th>
-                <th>Opening Stock</th>
+                <th>Size</th>
+                <th>Opening BTL</th>
+                <th>Opening Value</th>
                 <th>IN (+)</th>
+                <th>IN Value</th>
                 <th>OUT (-)</th>
+                <th>OUT Value</th>
                 <th>To Bar (-)</th>
-                <th>Closing Stock</th>
+                <th>Transfer Value</th>
+                <th>Closing BTL</th>
+                <th>Closing Value</th>
             </tr>
         </thead>
         <tbody>
             @foreach($reportData as $index => $row)
                 @php
-                    $alertQty   = (int) ($row['item']->low_stock_alert_qty ?? 0);
-                    $isOut      = $row['closing_qty'] === 0;
-                    $isLow      = !$isOut && $alertQty > 0 && $row['closing_qty'] <= $alertQty;
+                    $alertQty = (int) ($row['item']->low_stock_alert_qty ?? 0);
+                    $isOut    = $row['closing_qty'] === 0;
+                    $isLow    = !$isOut && $alertQty > 0 && $row['closing_qty'] <= $alertQty;
                 @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
@@ -110,17 +120,20 @@
                     <td>{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                     <td>{{ $row['item']->size_ml ? $row['item']->size_ml.' ml' : '—' }}</td>
                     <td>{{ $row['opening_qty'] }} BTL</td>
+                    <td>{{ $row['opening_amount'] > 0 ? 'Rs '.number_format($row['opening_amount'], 2) : '—' }}</td>
                     <td class="text-success">{{ $row['in_qty'] > 0 ? '+'.$row['in_qty'] : '—' }}</td>
+                    <td class="text-success">{{ $row['in_amount'] > 0 ? 'Rs '.number_format($row['in_amount'], 2) : '—' }}</td>
                     <td class="text-danger">{{ $row['out_qty'] > 0 ? '-'.$row['out_qty'] : '—' }}</td>
+                    <td class="text-danger">{{ $row['out_amount'] > 0 ? 'Rs '.number_format($row['out_amount'], 2) : '—' }}</td>
                     <td style="color:#ea5455; font-weight:bold;">{{ $row['transfer_qty'] > 0 ? '-'.$row['transfer_qty'] : '—' }}</td>
+                    <td style="color:#ea5455;">{{ $row['transfer_amount'] > 0 ? 'Rs '.number_format($row['transfer_amount'], 2) : '—' }}</td>
                     <td>
                         {{ $row['closing_qty'] }} BTL
-                        @if($isOut)
-                            <span class="badge-danger">Out</span>
-                        @elseif($isLow)
-                            <span class="badge-warning">Low</span>
+                        @if($isOut) <span class="badge-danger">Out</span>
+                        @elseif($isLow) <span class="badge-warning">Low</span>
                         @endif
                     </td>
+                    <td style="color:#0d6efd; font-weight:bold;">{{ $row['closing_amount'] > 0 ? 'Rs '.number_format($row['closing_amount'], 2) : '—' }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -128,10 +141,15 @@
             <tr>
                 <td colspan="4" style="text-align:right; padding-right:10px;">Total</td>
                 <td>{{ $totalOpening }} BTL</td>
+                <td>Rs {{ number_format($totalOpeningAmount, 2) }}</td>
                 <td class="text-success">+{{ $totalIn }}</td>
+                <td class="text-success">Rs {{ number_format($totalInAmount, 2) }}</td>
                 <td class="text-danger">-{{ $totalOut }}</td>
+                <td class="text-danger">Rs {{ number_format($totalOutAmount, 2) }}</td>
                 <td style="color:#ea5455;">-{{ $totalTransfer }}</td>
+                <td style="color:#ea5455;">Rs {{ number_format($totalTransferAmount, 2) }}</td>
                 <td>{{ $totalClosing }} BTL</td>
+                <td style="color:#0d6efd;">Rs {{ number_format($totalClosingAmount, 2) }}</td>
             </tr>
         </tfoot>
     </table>

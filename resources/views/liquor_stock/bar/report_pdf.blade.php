@@ -60,25 +60,25 @@
             <td class="card card-blue">
                 <div class="card-label">Opening Stock</div>
                 <div class="card-value">{{ number_format($totalOpening, 2) }} BTL</div>
-                <div class="card-sub">bottle equivalents</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalOpeningAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-green">
                 <div class="card-label">IN from Godown</div>
                 <div class="card-value">+{{ number_format($totalIn, 2) }} BTL</div>
-                <div class="card-sub">bottle equivalents</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalInAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-orange">
                 <div class="card-label">OUT (Sales)</div>
                 <div class="card-value">-{{ number_format($totalOut, 2) }} BTL</div>
-                <div class="card-sub">bottle equivalents</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalOutAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-purple">
                 <div class="card-label">Closing Stock</div>
                 <div class="card-value">{{ number_format($totalClosing, 2) }} BTL</div>
-                <div class="card-sub">bottle equivalents</div>
+                <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalClosingAmount, 0) }}</div>
             </td>
         </tr>
     </table>
@@ -93,24 +93,28 @@
                 <th>Item Name</th>
                 <th>Category</th>
                 <th>Type</th>
-                <th>Size (ml)</th>
+                <th>Size</th>
                 <th>Opening</th>
+                <th>Opening Value</th>
                 <th>IN (+)</th>
+                <th>IN Value</th>
                 <th>OUT (-)</th>
+                <th>OUT Value</th>
                 <th>Closing</th>
+                <th>Closing Value</th>
             </tr>
         </thead>
         <tbody>
             @foreach($reportData as $index => $row)
                 @php
-                    $alertQty    = (int) ($row['item']->low_stock_alert_qty ?? 0);
-                    $isBeer      = $row['is_beer'];
-                    $sizeMl      = $row['size_ml'];
-                    $unit        = $row['unit'];
-                    $closing     = $row['closing_qty'];
+                    $alertQty     = (int) ($row['item']->low_stock_alert_qty ?? 0);
+                    $isBeer       = $row['is_beer'];
+                    $sizeMl       = $row['size_ml'];
+                    $unit         = $row['unit'];
+                    $closing      = $row['closing_qty'];
                     $closingBtlEq = $isBeer ? $closing : ($sizeMl > 0 ? floor($closing / $sizeMl) : 0);
-                    $isOut       = $closing === 0 && $row['opening_qty'] > 0;
-                    $isLow       = !$isOut && $alertQty > 0 && $closingBtlEq <= $alertQty;
+                    $isOut        = $closing === 0 && $row['opening_qty'] > 0;
+                    $isLow        = !$isOut && $alertQty > 0 && $closingBtlEq <= $alertQty;
 
                     $fmtQty = function($qty, $prefix = '') use ($isBeer, $sizeMl, $unit) {
                         if ($qty <= 0) return '—';
@@ -128,27 +132,40 @@
                     <td>{{ $row['item']->name }}</td>
                     <td>{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                     <td>
-                        @if($isBeer)
-                            <span class="badge-beer">Beer</span>
-                        @else
-                            <span class="badge-spirit">Spirit</span>
+                        @if($isBeer) <span class="badge-beer">Beer</span>
+                        @else <span class="badge-spirit">Spirit</span>
                         @endif
                     </td>
                     <td>{{ $sizeMl ? $sizeMl . ' ml' : '—' }}</td>
                     <td>{{ $fmtQty($row['opening_qty']) }}</td>
+                    <td>{{ $row['opening_amount'] > 0 ? 'Rs '.number_format($row['opening_amount'], 2) : '—' }}</td>
                     <td class="text-success">{{ $fmtQty($row['in_qty'], '+') }}</td>
+                    <td class="text-success">{{ $row['in_amount'] > 0 ? 'Rs '.number_format($row['in_amount'], 2) : '—' }}</td>
                     <td class="text-danger">{{ $fmtQty($row['out_qty'], '-') }}</td>
+                    <td class="text-danger">{{ $row['out_amount'] > 0 ? 'Rs '.number_format($row['out_amount'], 2) : '—' }}</td>
                     <td>
                         {{ $fmtQty($closing) }}
-                        @if($isOut)
-                            <span class="badge-danger">Empty</span>
-                        @elseif($isLow)
-                            <span class="badge-warning">Low</span>
+                        @if($isOut) <span class="badge-danger">Empty</span>
+                        @elseif($isLow) <span class="badge-warning">Low</span>
                         @endif
                     </td>
+                    <td style="color:#5e50ee; font-weight:bold;">{{ $row['closing_amount'] > 0 ? 'Rs '.number_format($row['closing_amount'], 2) : '—' }}</td>
                 </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" style="text-align:right; padding-right:10px;">Total</td>
+                <td>—</td>
+                <td>Rs {{ number_format($totalOpeningAmount, 2) }}</td>
+                <td>—</td>
+                <td class="text-success">Rs {{ number_format($totalInAmount, 2) }}</td>
+                <td>—</td>
+                <td class="text-danger">Rs {{ number_format($totalOutAmount, 2) }}</td>
+                <td>—</td>
+                <td style="color:#5e50ee;">Rs {{ number_format($totalClosingAmount, 2) }}</td>
+            </tr>
+        </tfoot>
     </table>
 
     <div class="footer">Bar Stock Report &mdash; Lake Friends Club</div>

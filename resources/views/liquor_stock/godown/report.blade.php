@@ -90,6 +90,16 @@
                 <i class="fa-solid fa-boxes-stacked fs-2 opacity-50"></i>
             </div>
         </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
+                style="background: linear-gradient(135deg, #11cdef, #0a7bb5);">
+                <div>
+                    <div class="small mb-1 opacity-75">Closing Stock Value</div>
+                    <div class="fs-4 fw-bold">Rs {{ number_format($totalClosingAmount, 0) }}</div>
+                </div>
+                <i class="fa-solid fa-indian-rupee-sign fs-2 opacity-50"></i>
+            </div>
+        </div>
     </div>
 
     {{-- Report Table --}}
@@ -116,10 +126,15 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Category</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Size (ml)</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Opening Stock</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Opening Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">IN (+)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">IN Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">OUT (−)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">OUT Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">To Bar (−)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Transfer Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Closing Stock</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Closing Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -135,14 +150,26 @@
                                     <td class="text-nowrap">{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                                     <td class="text-nowrap">{{ $row['item']->size_ml ? $row['item']->size_ml.' ml' : '—' }}</td>
                                     <td class="text-nowrap">{{ $row['opening_qty'] }} BTL</td>
+                                    <td class="text-nowrap text-muted">
+                                        {{ $row['opening_amount'] > 0 ? 'Rs '.number_format($row['opening_amount'], 2) : '—' }}
+                                    </td>
                                     <td class="text-nowrap text-success fw-semibold">
                                         {{ $row['in_qty'] > 0 ? '+'.$row['in_qty'] : '—' }}
+                                    </td>
+                                    <td class="text-nowrap text-success">
+                                        {{ $row['in_amount'] > 0 ? 'Rs '.number_format($row['in_amount'], 2) : '—' }}
                                     </td>
                                     <td class="text-nowrap text-danger fw-semibold">
                                         {{ $row['out_qty'] > 0 ? '−'.$row['out_qty'] : '—' }}
                                     </td>
+                                    <td class="text-nowrap text-danger">
+                                        {{ $row['out_amount'] > 0 ? 'Rs '.number_format($row['out_amount'], 2) : '—' }}
+                                    </td>
                                     <td class="text-nowrap fw-semibold" style="color: #ea5455;">
                                         {{ $row['transfer_qty'] > 0 ? '−'.$row['transfer_qty'] : '—' }}
+                                    </td>
+                                    <td class="text-nowrap" style="color: #ea5455;">
+                                        {{ $row['transfer_amount'] > 0 ? 'Rs '.number_format($row['transfer_amount'], 2) : '—' }}
                                     </td>
                                     <td class="text-nowrap fw-bold">
                                         {{ $row['closing_qty'] }} BTL
@@ -154,6 +181,9 @@
                                             </span>
                                         @endif
                                     </td>
+                                    <td class="text-nowrap fw-semibold text-primary">
+                                        {{ $row['closing_amount'] > 0 ? 'Rs '.number_format($row['closing_amount'], 2) : '—' }}
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -161,10 +191,15 @@
                             <tr class="fw-bold" style="background-color: #f0f0f0;">
                                 <td colspan="4" class="text-end pe-3">Total</td>
                                 <td class="text-nowrap">{{ $totalOpening }} BTL</td>
+                                <td class="text-nowrap">Rs {{ number_format($totalOpeningAmount, 2) }}</td>
                                 <td class="text-nowrap text-success">+{{ $totalIn }}</td>
+                                <td class="text-nowrap text-success">Rs {{ number_format($totalInAmount, 2) }}</td>
                                 <td class="text-nowrap text-danger">−{{ $totalOut }}</td>
-                                <td class="text-nowrap fw-semibold" style="color: #ea5455;">−{{ $totalTransfer }}</td>
+                                <td class="text-nowrap text-danger">Rs {{ number_format($totalOutAmount, 2) }}</td>
+                                <td class="text-nowrap" style="color:#ea5455;">−{{ $totalTransfer }}</td>
+                                <td class="text-nowrap" style="color:#ea5455;">Rs {{ number_format($totalTransferAmount, 2) }}</td>
                                 <td class="text-nowrap">{{ $totalClosing }} BTL</td>
+                                <td class="text-nowrap text-primary">Rs {{ number_format($totalClosingAmount, 2) }}</td>
                             </tr>
                         </tfoot>
                     </table>

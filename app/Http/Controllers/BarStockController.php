@@ -6,6 +6,7 @@ use App\Models\ActionApproval;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
+use App\Models\LiquorServing;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
 use App\Models\User;
@@ -243,8 +244,16 @@ class BarStockController extends Controller
 
         $liquorItems = FoodItem::where('club_id', $club_id)
             ->where('item_type', 'liquor')
-            ->with(['foodItemCat'])
+            ->with(['foodItemCat', 'foodItemPrice'])
             ->get();
+
+        // Price per ml from first active serving per item (spirits only)
+        $servingPrices = LiquorServing::whereIn('food_item_id', $liquorItems->pluck('id'))
+            ->where('is_active', 1)
+            ->orderBy('volume_ml')
+            ->get()
+            ->groupBy('food_item_id')
+            ->map(fn($g) => $g->first());
 
         // All bar movements before period → opening
         $beforeFrom = StockLedger::where('warehouse_id', $warehouse->id)
@@ -275,7 +284,7 @@ class BarStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring) {
+        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $servingPrices) {
             $before     = $beforeFrom->get($item->id, collect());
             $beforeIn   = (int) $before->where('direction', 'in')->sum('total');
             $beforeOut  = (int) $before->where('direction', 'out')->sum('total');
@@ -284,37 +293,53 @@ class BarStockController extends Controller
             $outQty     = (int) ($outDuring[$item->id] ?? 0);
             $closingQty = max(0, $openingQty + $inQty - $outQty);
 
-            // Convert to bottle equivalents for totals (ml / size_ml for spirits)
-            $sizeMl     = (int) ($item->size_ml ?? 1);
-            $isBeer     = (bool) $item->is_beer;
-            $unit       = $isBeer ? 'BTL' : 'ml';
-            $toBottles  = fn($qty) => $isBeer ? $qty : ($sizeMl > 0 ? round($qty / $sizeMl, 2) : 0);
+            $sizeMl    = (int) ($item->size_ml ?? 1);
+            $isBeer    = (bool) $item->is_beer;
+            $unit      = $isBeer ? 'BTL' : 'ml';
+            $toBottles = fn($qty) => $isBeer ? $qty : ($sizeMl > 0 ? round($qty / $sizeMl, 2) : 0);
+
+            // Amount: beer → food item price per BTL, spirit → serving price per ml
+            if ($isBeer) {
+                $amountRate = (float) ($item->foodItemPrice->price ?? 0);
+            } else {
+                $serving    = $servingPrices->get($item->id);
+                $amountRate = ($serving && $serving->volume_ml > 0)
+                    ? $serving->price / $serving->volume_ml
+                    : 0;
+            }
 
             return [
-                'item'           => $item,
-                'unit'           => $unit,
-                'is_beer'        => $isBeer,
-                'size_ml'        => $sizeMl,
-                'opening_qty'    => $openingQty,
-                'in_qty'         => $inQty,
-                'out_qty'        => $outQty,
-                'closing_qty'    => $closingQty,
-                // Bottle equivalents for summary totals
-                'opening_btl'    => $toBottles($openingQty),
-                'in_btl'         => $toBottles($inQty),
-                'out_btl'        => $toBottles($outQty),
-                'closing_btl'    => $toBottles($closingQty),
+                'item'            => $item,
+                'unit'            => $unit,
+                'is_beer'         => $isBeer,
+                'size_ml'         => $sizeMl,
+                'opening_qty'     => $openingQty,
+                'in_qty'          => $inQty,
+                'out_qty'         => $outQty,
+                'closing_qty'     => $closingQty,
+                'opening_btl'     => $toBottles($openingQty),
+                'in_btl'          => $toBottles($inQty),
+                'out_btl'         => $toBottles($outQty),
+                'closing_btl'     => $toBottles($closingQty),
+                'opening_amount'  => round($openingQty * $amountRate, 2),
+                'in_amount'       => round($inQty      * $amountRate, 2),
+                'out_amount'      => round($outQty     * $amountRate, 2),
+                'closing_amount'  => round($closingQty * $amountRate, 2),
             ];
         });
 
         return [
-            'reportData'   => $reportData,
-            'totalOpening' => $reportData->sum('opening_btl'),
-            'totalIn'      => $reportData->sum('in_btl'),
-            'totalOut'     => $reportData->sum('out_btl'),
-            'totalClosing' => $reportData->sum('closing_btl'),
-            'from'         => $from,
-            'to'           => $to,
+            'reportData'          => $reportData,
+            'totalOpening'        => $reportData->sum('opening_btl'),
+            'totalIn'             => $reportData->sum('in_btl'),
+            'totalOut'            => $reportData->sum('out_btl'),
+            'totalClosing'        => $reportData->sum('closing_btl'),
+            'totalOpeningAmount'  => $reportData->sum('opening_amount'),
+            'totalInAmount'       => $reportData->sum('in_amount'),
+            'totalOutAmount'      => $reportData->sum('out_amount'),
+            'totalClosingAmount'  => $reportData->sum('closing_amount'),
+            'from'                => $from,
+            'to'                  => $to,
         ];
     }
 

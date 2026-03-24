@@ -936,38 +936,71 @@
             updateLiquorRowTotal($row);
         });
 
-        /* ---- Open Create Order ---- */
+        /* ---- Open Create Order (always via session) ---- */
         $('#createOrderBtn').on('click', function () {
-            var now = new Date();
-            var dd  = String(now.getDate()).padStart(2, '0');
-            var mm  = String(now.getMonth() + 1).padStart(2, '0');
-            var yy  = now.getFullYear();
-            var hh  = String(now.getHours()).padStart(2, '0');
-            var mi  = String(now.getMinutes()).padStart(2, '0');
+            var memberId   = $('#cardentry').data('member-id');
+            var memberName = $('#cardMemberName').text();
+            var memberCode = $('#cardMemberCode').text();
+            var $btn       = $(this);
 
-            $('#orderMemberName').text($('#cardMemberName').text());
-            $('#orderMemberMeta').text($('#cardMemberPlan').text() + ' member | Member\'s Id: ' + $('#cardMemberCode').text());
-            $('#orderDate').text(dd + '-' + mm + '-' + yy);
-            $('#orderTime').text(hh + ':' + mi);
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
-            $('#foodTableBody').html('<tr id="foodEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No food items added.</td></tr>');
-            $('#liquorTableBody').html('<tr id="liquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');
-            recalc();
-
-            $('#createOrderModal').modal('show');
-
-            if (!itemsLoaded) {
-                $.get('{{ route("getOrderItems") }}', function (res) {
-                    if (res.statusCode == 200) {
-                        allFoodItems   = res.foodItems;
-                        allLiquorItems = res.liquorItems;
-                        itemsLoaded    = true;
+            // Auto-create or get existing open session for this member
+            $.ajax({
+                url:         '{{ route("order-sessions.store") }}',
+                type:        'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ _token: '{{ csrf_token() }}', member_id: memberId }),
+                success: function (res) {
+                    $btn.prop('disabled', false).html('<i class="fa-solid fa-cart-plus d-block mb-1 fs-6"></i>Create Order');
+                    if (res.statusCode !== 200) {
+                        toastr.error(res.message || 'Could not open session.');
+                        return;
                     }
-                    addFoodRow();
-                });
-            } else {
-                addFoodRow();
-            }
+
+                    window.currentOrderSession = {
+                        id:         res.session.id,
+                        memberName: memberName,
+                        memberCode: memberCode,
+                        memberId:   memberId,
+                    };
+
+                    var now = new Date();
+                    var dd  = String(now.getDate()).padStart(2, '0');
+                    var mm  = String(now.getMonth() + 1).padStart(2, '0');
+                    var yy  = now.getFullYear();
+                    var hh  = String(now.getHours()).padStart(2, '0');
+                    var mi  = String(now.getMinutes()).padStart(2, '0');
+
+                    $('#orderMemberName').text(memberName);
+                    $('#orderMemberMeta').text($('#cardMemberPlan').text() + ' member | Member\'s Id: ' + memberCode);
+                    $('#orderDate').text(dd + '-' + mm + '-' + yy);
+                    $('#orderTime').text(hh + ':' + mi);
+
+                    $('#foodTableBody').html('<tr id="foodEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No food items added.</td></tr>');
+                    $('#liquorTableBody').html('<tr id="liquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');
+                    recalc();
+
+                    $('#createOrderModal').modal('show');
+
+                    if (!itemsLoaded) {
+                        $.get('{{ route("getOrderItems") }}', function (itemRes) {
+                            if (itemRes.statusCode == 200) {
+                                allFoodItems   = itemRes.foodItems;
+                                allLiquorItems = itemRes.liquorItems;
+                                itemsLoaded    = true;
+                            }
+                            addFoodRow();
+                        });
+                    } else {
+                        addFoodRow();
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<i class="fa-solid fa-cart-plus d-block mb-1 fs-6"></i>Create Order');
+                    toastr.error('Something went wrong.');
+                }
+            });
         });
 
         /* ---- Add food / liquor rows via button ---- */
@@ -1146,6 +1179,11 @@
             loadWalletData(url, memberId, memberType, { keepCardEntry: true });
         });
 
+        // Clear session context when create order modal is closed
+        $('#createOrderModal').on('hidden.bs.modal', function () {
+            window.currentOrderSession = null;
+        });
+
         /* ---- Place Order ---- */
         $('#placeOrderBtn').on('click', function () {
             var items = [];
@@ -1218,34 +1256,57 @@
             var gst           = Math.round((foodSubtotal - foodDiscount) * GST_RATE * 100) / 100;
             var grand         = parseFloat((subtotal - totalDiscount + gst).toFixed(2));
 
-            var memberId = $('#cardentry').data('member-id');
-            var $btn     = $(this);
+            var memberId      = $('#cardentry').data('member-id');
+            var sessionCtx    = window.currentOrderSession || null;
+            var isSessionOrder = sessionCtx && sessionCtx.id;
+            var orderUrl      = isSessionOrder
+                ? '{{ url("order-sessions") }}/' + sessionCtx.id + '/orders'
+                : '{{ route("restaurant-orders.store") }}';
+
+            var orderPayload = {
+                _token:          '{{ csrf_token() }}',
+                items:           items,
+                taxable_amount:  parseFloat(subtotal.toFixed(2)),
+                discount_amount: parseFloat(totalDiscount.toFixed(2)),
+                gst_amount:      gst,
+                net_amount:      grand,
+            };
+            if (!isSessionOrder) {
+                orderPayload.member_id = memberId;
+            }
+
+            var $btn = $(this);
             $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Processing...');
 
             $.ajax({
-                url:         '{{ route("restaurant-orders.store") }}',
+                url:         orderUrl,
                 type:        'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({
-                    _token:          '{{ csrf_token() }}',
-                    member_id:       memberId,
-                    items:           items,
-                    taxable_amount:  parseFloat(subtotal.toFixed(2)),
-                    discount_amount: parseFloat(totalDiscount.toFixed(2)),
-                    gst_amount:      gst,
-                    net_amount:      grand,
-                }),
+                data:        JSON.stringify(orderPayload),
                 success: function (response) {
                     if (response.statusCode == 200) {
-                        toastr.success('Order placed! Order No: ' + response.order_no);
-                        $('#createOrderModal').modal('hide');
-                        $('#cardMemberWallet').text('Rs.' + response.wallet_balance);
+                        if (isSessionOrder) {
+                            toastr.success('Order added! Order No: ' + response.order_no);
+                            $('#createOrderModal').modal('hide');
+                            // Fire custom event so session list page can update the running total
+                            $(document).trigger('sessionOrderAdded', {
+                                sessionId:    sessionCtx.id,
+                                pendingTotal: response.pending_total,
+                                orderNo:      response.order_no,
+                                orderId:      response.order_id,
+                            });
+                        } else {
+                            toastr.success('Order placed! Order No: ' + response.order_no);
+                            $('#createOrderModal').modal('hide');
+                            $('#cardMemberWallet').text('Rs.' + response.wallet_balance);
+                        }
                     } else if (response.statusCode == 422 && response.wallet_balance) {
-                        toastr.error(
-                            'Insufficient wallet balance.<br>Available: Rs.' + response.wallet_balance +
-                            ' &nbsp;|&nbsp; Required: Rs.' + response.required_amount,
-                            '', { escapeHtml: false }
-                        );
+                        var msg = 'Insufficient wallet balance.<br>Available: Rs.' + response.wallet_balance
+                            + ' &nbsp;|&nbsp; Required: Rs.' + response.required_amount;
+                        if (isSessionOrder && response.session_pending) {
+                            msg += '<br>Session pending: Rs.' + response.session_pending;
+                        }
+                        toastr.error(msg, '', { escapeHtml: false });
                     } else {
                         toastr.error(response.message || 'Something went wrong.');
                     }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-use App\Models\MembershipDurationType;
+use App\Models\MembershipPlanType as MembershipDurationType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -47,26 +47,27 @@ class MembershipDurationTypesManageController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'              => ['required', 'string', 'max:255',
-                                    Rule::unique('membership_duration_types')
-                                        ->where(function ($query) use ($request) {
-                                            return $query->where('club_id', $request->user()->club_id)
-                                                        ->whereNull('deleted_at');
-                                        }),
-                                    ],
-            'duration_months'   => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
-            'is_lifetime'       => 'nullable | boolean'
+            'name'                         => ['required', 'string', 'max:255',
+                                              Rule::unique('membership_plan_types')
+                                                  ->where(function ($query) use ($request) {
+                                                      return $query->where('club_id', $request->user()->club_id)
+                                                                  ->whereNull('deleted_at');
+                                                  }),
+                                              ],
+            'duration_months'              => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
+            'is_lifetime'                  => 'nullable|boolean',
+            'is_minimum_spend_applicable'  => 'nullable|boolean',
         ]);
 
         $user = auth()->user();
         $club_id = $user->club_id;
 
         $store = MembershipDurationType::create([
-
-            'name'              => $request->name,
-            'duration_months'   => $request->has('is_lifetime') ? null : $request->duration_months,
-            'is_lifetime'       => $request->has('is_lifetime') ? 1 : 0,
-            'club_id'           => $club_id,
+            'name'                        => $request->name,
+            'duration_months'             => $request->has('is_lifetime') ? null : $request->duration_months,
+            'is_lifetime'                 => $request->has('is_lifetime') ? 1 : 0,
+            'is_minimum_spend_applicable' => $request->has('is_minimum_spend_applicable') ? 1 : 0,
+            'club_id'                     => $club_id,
         ]);
 
         return redirect()
@@ -113,22 +114,24 @@ class MembershipDurationTypesManageController extends Controller
                                                             ->firstOrFail();
 
         $data = $request->validate([
-            'name'              => ['required', 'string', 'max:255',
-                                    Rule::unique('membership_duration_types')
-                                    ->ignore($id)
-                                    ->where(function ($query) use ($request) {
-                                        return $query->where('club_id', $request->user()->club_id)
-                                                    ->whereNull('deleted_at');
-                                        }),
-                                    ],
-            'duration_months'   => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
-            'is_lifetime'       => 'nullable | boolean'
+            'name'                        => ['required', 'string', 'max:255',
+                                             Rule::unique('membership_plan_types')
+                                             ->ignore($id)
+                                             ->where(function ($query) use ($request) {
+                                                 return $query->where('club_id', $request->user()->club_id)
+                                                             ->whereNull('deleted_at');
+                                                 }),
+                                             ],
+            'duration_months'             => 'required_without:is_lifetime|nullable|integer|min:1|max:12',
+            'is_lifetime'                 => 'nullable|boolean',
+            'is_minimum_spend_applicable' => 'nullable|boolean',
         ]);
 
         $membership_duration_types->update([
-            'name'              => $request->name,
-            'duration_months'   => $request->has('is_lifetime') ? null : $request->duration_months,
-            'is_lifetime'       => $request->has('is_lifetime') ? 1 : 0,
+            'name'                        => $request->name,
+            'duration_months'             => $request->has('is_lifetime') ? null : $request->duration_months,
+            'is_lifetime'                 => $request->has('is_lifetime') ? 1 : 0,
+            'is_minimum_spend_applicable' => $request->has('is_minimum_spend_applicable') ? 1 : 0,
         ]);
 
         return redirect()

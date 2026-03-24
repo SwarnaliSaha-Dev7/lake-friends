@@ -214,6 +214,38 @@ class ApprovalNotification extends Notification
                 }
                 break;
 
+            case 'liquor_item_create':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['item_name'] ?? $payload['name'] ?? 'a liquor item';
+                $title            = 'Liquor Item Add Approval';
+                $message          = "New liquor item \"{$itemName}\" has been added and is waiting for your approval.";
+                $notificationType = 'liquor_item_create';
+                break;
+
+            case 'liquor_item_delete':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['item_name'] ?? $payload['name'] ?? 'a liquor item';
+                $title            = 'Liquor Item Delete Approval';
+                $message          = "Deletion request for liquor item \"{$itemName}\" is waiting for your approval.";
+                $notificationType = 'liquor_item_delete';
+                break;
+
+            case 'liquor_price_update':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $payload['item_name'] ?? 'a liquor item';
+                $oldPrice         = $payload['old_price'] ?? 0;
+                $newPrice         = $payload['new_price'] ?? 0;
+                $title            = 'Liquor Price Update Approval';
+                $message          = "Price update request for \"{$itemName}\" (₹{$oldPrice} → ₹{$newPrice}) is waiting for your approval.";
+                $notificationType = 'liquor_price_update';
+                break;
+
             case 'liquor_serving_create':
             case 'liquor_serving_update':
             case 'liquor_serving_delete':

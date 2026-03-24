@@ -44,7 +44,7 @@
                 </ul>
             </li>
 
-            <li><a href="javascript:void(0)"><i class="fa-solid fa-warehouse"></i> Liquor Stock Manage</a>
+            <li><a href="javascript:void(0)"><i class="fa-solid fa-warehouse"></i> Liquor Stock</a>
                 <ul class="list-unstyled" style="{{ request()->routeIs('godown-stock.*') || request()->routeIs('bar-stock.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('godown-stock.index') ? 'active' : '' }}"><a href="{{ route('godown-stock.index') }}">Godown Stock List</a></li>
                     <li class="{{ request()->routeIs('godown-stock.report') ? 'active' : '' }}"><a href="{{ route('godown-stock.report') }}">Godown Report</a></li>
@@ -56,9 +56,9 @@
             <li class="{{ request()->routeIs('manage-offers.*') ? 'active' : '' }}"><a href="{{ route('manage-offers.index') }}"><i class="fa-solid fa-tag"></i> Offer Manage</a></li>
 
             <li><a href="javascript:void(0)"><i class="fa-brands fa-first-order"></i> Order</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('restaurant-orders.*') || request()->routeIs('food-report.*') ? 'display: block;' : 'display: none;' }}">
-                    <li class="{{ request()->routeIs('restaurant-orders.index') ? 'active' : '' }}">
-                        <a href="{{ route('restaurant-orders.index') }}">Current Order List</a>
+                <ul class="list-unstyled" style="{{ request()->routeIs('restaurant-orders.*') || request()->routeIs('food-report.*') || request()->routeIs('order-sessions.*') ? 'display: block;' : 'display: none;' }}">
+                    <li class="{{ request()->routeIs('order-sessions.*') ? 'active' : '' }}">
+                        <a href="{{ route('order-sessions.index') }}">Order Sessions</a>
                     </li>
                     <li class="{{ request()->routeIs('restaurant-orders.history') ? 'active' : '' }}">
                         <a href="{{ route('restaurant-orders.history') }}">Order History</a>

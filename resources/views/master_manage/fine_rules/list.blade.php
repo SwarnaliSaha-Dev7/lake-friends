@@ -44,13 +44,8 @@
                                             <span class="badge bg-secondary">Global (Default)</span>
                                         @endif
                                     </td>
-                                    <td class="text-nowrap text-muted small">
-                                        @if($rule->membershipPlanType)
-                                            ₹{{ $rule->membershipPlanType->price }} ÷ {{ $rule->membershipPlanType->duration_months * 30 }} days
-                                            = ₹{{ number_format($rule->membershipPlanType->price / ($rule->membershipPlanType->duration_months * 30), 2) }}/day
-                                        @else
-                                            Auto (plan price ÷ duration)
-                                        @endif
+                                    <td class="text-nowrap fw-semibold">
+                                        ₹{{ number_format($rule->per_day_fine_amount, 2) }}/day
                                     </td>
                                     <td class="text-nowrap">{{ $rule->grace_days ?? 0 }} days</td>
                                     <td class="text-nowrap">{{ $rule->max_fine_cap ? '₹'.number_format($rule->max_fine_cap, 2) : '—' }}</td>
@@ -97,15 +92,17 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="alert alert-info py-2 small mb-3">
-                        <i class="fa-solid fa-circle-info me-1"></i>
-                        Per day fine is auto-calculated: <strong>Plan Price ÷ Duration (days)</strong>
-                    </div>
                     <div class="row">
                         <div class="col-6 mb-3">
-                            <label class="form-label mb-1"><small>Grace Days</small></label>
+                            <label class="form-label mb-1"><small>Per Day Fine (₹)</small></label>
+                            <input type="number" name="per_day_fine_amount" class="form-control shadow-none py-2"
+                                placeholder="e.g. 10" step="0.01" min="0" required value="10">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label mb-1"><small>Grace Days <span class="text-muted">(after expiry)</span></small></label>
                             <input type="number" name="grace_days" class="form-control shadow-none py-2"
-                                placeholder="0" min="0" value="0">
+                                placeholder="e.g. 76" min="0" value="76">
+                            <small class="text-muted">76 = April 1 → June 15</small>
                         </div>
                         <div class="col-6 mb-3">
                             <label class="form-label mb-1"><small>Max Fine Cap (₹) <span class="text-muted">optional</span></small></label>

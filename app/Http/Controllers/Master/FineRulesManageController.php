@@ -55,6 +55,7 @@ class FineRulesManageController extends Controller
 
         $request->validate([
             'membership_plan_type_id' => 'nullable|exists:membership_plan_types,id',
+            'per_day_fine_amount'     => 'required|numeric|min:0',
             'grace_days'              => 'nullable|integer|min:0',
             'max_fine_cap'            => 'nullable|numeric|min:0',
         ]);
@@ -74,7 +75,7 @@ class FineRulesManageController extends Controller
             'club_id'                 => $club_id,
             'membership_plan_type_id' => $request->membership_plan_type_id ?: null,
             'rule_type'               => 'membership_expiry',
-            'per_day_fine_amount'     => 0,
+            'per_day_fine_amount'     => $request->per_day_fine_amount,
             'grace_days'              => $request->grace_days ?? 0,
             'max_fine_cap'            => $request->max_fine_cap ?: null,
         ]);
@@ -127,13 +128,15 @@ class FineRulesManageController extends Controller
                                  ->firstOrFail();
 
         $request->validate([
-            'grace_days'  => 'nullable|integer|min:0',
-            'max_fine_cap'=> 'nullable|numeric|min:0',
+            'per_day_fine_amount' => 'required|numeric|min:0',
+            'grace_days'          => 'nullable|integer|min:0',
+            'max_fine_cap'        => 'nullable|numeric|min:0',
         ]);
 
         $fineRules->update([
-            'grace_days'  => $request->grace_days ?? 0,
-            'max_fine_cap'=> $request->max_fine_cap ?: null,
+            'per_day_fine_amount' => $request->per_day_fine_amount,
+            'grace_days'          => $request->grace_days ?? 0,
+            'max_fine_cap'        => $request->max_fine_cap ?: null,
         ]);
 
         return redirect()

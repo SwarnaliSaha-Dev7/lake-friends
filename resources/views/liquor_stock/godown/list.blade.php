@@ -81,6 +81,13 @@
                                 </tr>
                             @endforeach
                         </tbody>
+                        <tfoot>
+                            <tr class="fw-bold" style="background-color: #f0f0f0;">
+                                <td colspan="4" class="text-end pe-3">Total</td>
+                                <td class="text-nowrap">{{ $stockMap->sum('quantity') }} BTL</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>

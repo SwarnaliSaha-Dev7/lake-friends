@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActionApprovalController;
+use App\Http\Controllers\OrderSessionController;
 use App\Http\Controllers\RestaurantOrderController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\LoginPageController;
@@ -129,6 +130,18 @@ Route::middleware('auth')->group(function () {
     Route::get('restaurant-orders/{id}/invoice', [RestaurantOrderController::class, 'downloadInvoice'])->name('restaurant-orders.invoice');
     Route::patch('restaurant-orders/{id}/delivered', [RestaurantOrderController::class, 'markDelivered'])->name('restaurant-orders.delivered');
     Route::patch('restaurant-orders/{id}/cancel', [RestaurantOrderController::class, 'cancelOrder'])->name('restaurant-orders.cancel');
+
+    // Order Sessions (Tab / Running Bill)
+    Route::prefix('order-sessions')->group(function () {
+        Route::get('/',                                       [OrderSessionController::class, 'index'])->name('order-sessions.index');
+        Route::post('/',                                      [OrderSessionController::class, 'store'])->name('order-sessions.store');
+        Route::get('/{id}',                                  [OrderSessionController::class, 'show'])->name('order-sessions.show');
+        Route::post('/{id}/orders',                          [OrderSessionController::class, 'addOrder'])->name('order-sessions.add-order');
+        Route::patch('/{sessionId}/orders/{orderId}/cancel', [OrderSessionController::class, 'cancelOrder'])->name('order-sessions.cancel-order');
+        Route::patch('/{id}/generate-bill',                  [OrderSessionController::class, 'generateBill'])->name('order-sessions.generate-bill');
+        Route::patch('/{id}/cancel',                         [OrderSessionController::class, 'cancelSession'])->name('order-sessions.cancel');
+        Route::get('/{id}/invoice',                          [OrderSessionController::class, 'downloadInvoice'])->name('order-sessions.invoice');
+    });
 
     Route::resource('manage-food-items', FoodItemManageController::class);
     Route::prefix('manage-offer-approval')->controller(ActionApprovalController::class)->group(function () {

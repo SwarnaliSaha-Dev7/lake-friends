@@ -18,21 +18,19 @@
                     <small class="text-muted">Plan cannot be changed after creation.</small>
                 </div>
 
-                <div class="alert alert-info py-2 small mb-3">
-                    <i class="fa-solid fa-circle-info me-1"></i>
-                    Per day fine is auto-calculated: <strong>Plan Price ÷ Duration (days)</strong>
-                    @if($fineRules->membershipPlanType)
-                        <br>= ₹{{ $fineRules->membershipPlanType->price }} ÷ {{ $fineRules->membershipPlanType->duration_months * 30 }} days
-                        = ₹{{ number_format($fineRules->membershipPlanType->price / ($fineRules->membershipPlanType->duration_months * 30), 2) }}/day
-                    @endif
-                </div>
-
                 <div class="row">
                     <div class="col-6 mb-3">
-                        <label class="form-label mb-1 w-100"><small>Grace Days</small></label>
+                        <label class="form-label mb-1 w-100"><small>Per Day Fine (₹)</small></label>
+                        <input type="number" name="per_day_fine_amount" class="form-control py-2 shadow-none"
+                            placeholder="e.g. 10" step="0.01" min="0" required
+                            value="{{ old('per_day_fine_amount', $fineRules->per_day_fine_amount ?? 10) }}">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label mb-1 w-100"><small>Grace Days <span class="text-muted">(after expiry)</span></small></label>
                         <input type="number" name="grace_days" class="form-control py-2 shadow-none"
-                            placeholder="0" min="0"
-                            value="{{ old('grace_days', $fineRules->grace_days ?? 0) }}">
+                            placeholder="e.g. 76" min="0"
+                            value="{{ old('grace_days', $fineRules->grace_days ?? 76) }}">
+                        <small class="text-muted">76 = April 1 → June 15</small>
                     </div>
                     <div class="col-6 mb-3">
                         <label class="form-label mb-1 w-100"><small>Max Fine Cap (₹) <span class="text-muted">optional</span></small></label>

@@ -6,6 +6,7 @@ use App\Models\ActionApproval;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
+use App\Models\LiquorServing;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
 use App\Models\User;
@@ -329,8 +330,16 @@ class GodownStockController extends Controller
 
         $liquorItems = FoodItem::where('club_id', $club_id)
             ->where('item_type', 'liquor')
-            ->with(['foodItemCat'])
+            ->with(['foodItemCat', 'foodItemPrice'])
             ->get();
+
+        // Price per ml from first active serving per item (spirits only)
+        $servingPrices = LiquorServing::whereIn('food_item_id', $liquorItems->pluck('id'))
+            ->where('is_active', 1)
+            ->orderBy('volume_ml')
+            ->get()
+            ->groupBy('food_item_id')
+            ->map(fn($g) => $g->first());
 
         $beforeFrom = StockLedger::where('warehouse_id', $godown->id)
             ->where('location_id', $godownLocation->id)
@@ -368,7 +377,7 @@ class GodownStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $transferDuring) {
+        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $transferDuring, $servingPrices) {
             $before      = $beforeFrom->get($item->id, collect());
             $beforeIn    = (int) $before->where('direction', 'in')->sum('total');
             $beforeOut   = (int) $before->where('direction', 'out')->sum('total');
@@ -378,25 +387,50 @@ class GodownStockController extends Controller
             $transferQty = (int) ($transferDuring[$item->id] ?? 0);
             $closingQty  = max(0, $openingQty + $inQty - $outQty - $transferQty);
 
+            // Price per bottle
+            $isBeer  = (bool) ($item->is_beer ?? false);
+            $sizeMl  = (int) ($item->size_ml ?? 0);
+            if ($isBeer) {
+                // Beer: use food item price directly
+                $pricePerBtl = (float) ($item->foodItemPrice->price ?? 0);
+            } else {
+                // Spirit: (serving.price / serving.volume_ml) × size_ml
+                $serving     = $servingPrices->get($item->id);
+                $pricePerBtl = ($serving && $serving->volume_ml > 0 && $sizeMl > 0)
+                    ? round(($serving->price / $serving->volume_ml) * $sizeMl, 2)
+                    : 0;
+            }
+
             return [
-                'item'         => $item,
-                'opening_qty'  => $openingQty,
-                'in_qty'       => $inQty,
-                'out_qty'      => $outQty,
-                'transfer_qty' => $transferQty,
-                'closing_qty'  => $closingQty,
+                'item'             => $item,
+                'opening_qty'      => $openingQty,
+                'in_qty'           => $inQty,
+                'out_qty'          => $outQty,
+                'transfer_qty'     => $transferQty,
+                'closing_qty'      => $closingQty,
+                'price_per_btl'    => $pricePerBtl,
+                'opening_amount'   => round($openingQty  * $pricePerBtl, 2),
+                'in_amount'        => round($inQty       * $pricePerBtl, 2),
+                'out_amount'       => round($outQty      * $pricePerBtl, 2),
+                'transfer_amount'  => round($transferQty * $pricePerBtl, 2),
+                'closing_amount'   => round($closingQty  * $pricePerBtl, 2),
             ];
         });
 
         return [
-            'reportData'      => $reportData,
-            'totalOpening'    => $reportData->sum('opening_qty'),
-            'totalIn'         => $reportData->sum('in_qty'),
-            'totalOut'        => $reportData->sum('out_qty'),
-            'totalTransfer'   => $reportData->sum('transfer_qty'),
-            'totalClosing'    => $reportData->sum('closing_qty'),
-            'from'            => $from,
-            'to'              => $to,
+            'reportData'           => $reportData,
+            'totalOpening'         => $reportData->sum('opening_qty'),
+            'totalIn'              => $reportData->sum('in_qty'),
+            'totalOut'             => $reportData->sum('out_qty'),
+            'totalTransfer'        => $reportData->sum('transfer_qty'),
+            'totalClosing'         => $reportData->sum('closing_qty'),
+            'totalOpeningAmount'   => $reportData->sum('opening_amount'),
+            'totalInAmount'        => $reportData->sum('in_amount'),
+            'totalOutAmount'       => $reportData->sum('out_amount'),
+            'totalTransferAmount'  => $reportData->sum('transfer_amount'),
+            'totalClosingAmount'   => $reportData->sum('closing_amount'),
+            'from'                 => $from,
+            'to'                   => $to,
         ];
     }
 
