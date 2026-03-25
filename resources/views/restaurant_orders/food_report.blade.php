@@ -123,7 +123,7 @@
                                         }
                                     @endphp
                                     <tr>
-                                        <td class="text-nowrap fw-medium">{{ $order->order_no }}</td>
+                                        <td class="text-nowrap fw-medium">{{ $order->session->session_no ?? $order->order_no }}</td>
                                         <td class="text-nowrap">{{ $order->member->name ?? '—' }}</td>
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('d M Y, h:i A') }}</td>
                                         <td class="text-nowrap">{{ $item->foodItem->name ?? '—' }}</td>

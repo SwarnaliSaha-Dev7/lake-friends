@@ -80,19 +80,14 @@ class OrderSessionController extends Controller
                 ]);
             }
 
-            $date        = now()->format('Ymd');
-            $lastSession = OrderSession::where('club_id', $clubId)
-                ->whereDate('created_at', now())
-                ->latest('id')
-                ->value('session_no');
-            $lastNum   = $lastSession ? (int) substr($lastSession, -6) : 0;
-            $sessionNo = 'TAB/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
+            $sessionNo = generateSessionNo();
 
             $session = OrderSession::create([
                 'club_id'    => $clubId,
                 'member_id'  => $memberId,
                 'session_no' => $sessionNo,
                 'status'     => 'open',
+                'created_by' => Auth::id(),
             ]);
 
             $wallet = Wallet::where('member_id', $memberId)->first();
@@ -212,13 +207,7 @@ class OrderSessionController extends Controller
             }
 
             // Generate order number
-            $date      = now()->format('Ymd');
-            $lastOrder = RestaurantOrder::where('club_id', $clubId)
-                ->whereDate('created_at', now())
-                ->latest('id')
-                ->value('order_no');
-            $lastNum = $lastOrder ? (int) substr($lastOrder, -6) : 0;
-            $orderNo = 'ORD/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
+            $orderNo = generateOrderNo();
 
             // Create order (no wallet deduction, no bill_no/mr_no yet)
             $order = RestaurantOrder::create([
@@ -384,12 +373,15 @@ class OrderSessionController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
+            // Use session's original date for MR/Bill numbers (handles re-opened cancelled sessions)
+            $sessionDate = $session->created_at->toDateString();
+
             // Mark all pending orders as paid
             foreach ($pendingOrders as $order) {
                 $order->update([
                     'wallet_transactions_id' => $walletTxn->id,
-                    'mr_no'                  => generateMrNo(),
-                    'bill_no'                => generateBillNo(),
+                    'mr_no'                  => generateMrNo($sessionDate),
+                    'bill_no'                => generateBillNo($sessionDate),
                     'status'                 => 'paid',
                 ]);
             }
@@ -402,8 +394,8 @@ class OrderSessionController extends Controller
                 'gst_percentage'         => 10.00,
                 'gst_amount'             => $totalGst,
                 'net_amount'             => $totalNet,
-                'bill_no'                => generateBillNo(),
-                'mr_no'                  => generateMrNo(),
+                'bill_no'                => generateBillNo($sessionDate),
+                'mr_no'                  => generateMrNo($sessionDate),
                 'wallet_transactions_id' => $walletTxn->id,
             ]);
 
@@ -443,7 +435,11 @@ class OrderSessionController extends Controller
                 : $session->orders->where('status', 'pending');
 
             foreach ($ordersToReverse as $order) {
-                $this->restoreStock($order, $clubId);
+                // Only restore bar stock for open sessions (items not yet served).
+                // For billed sessions the items were already consumed — no stock reversal.
+                if (!$isBilled) {
+                    $this->restoreStock($order, $clubId);
+                }
                 $order->update(['status' => 'cancelled']);
             }
 
@@ -465,7 +461,7 @@ class OrderSessionController extends Controller
                 }
             }
 
-            $session->update(['status' => 'cancelled']);
+            $session->update(['status' => 'cancelled', 'cancelled_by' => Auth::id()]);
 
             DB::commit();
 

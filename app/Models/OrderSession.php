@@ -19,6 +19,8 @@ class OrderSession extends Model
         'bill_no',
         'mr_no',
         'wallet_transactions_id',
+        'created_by',
+        'cancelled_by',
     ];
 
     public function orders()
@@ -34,5 +36,15 @@ class OrderSession extends Model
     public function walletTransaction()
     {
         return $this->belongsTo(WalletTransaction::class, 'wallet_transactions_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'cancelled_by');
     }
 }

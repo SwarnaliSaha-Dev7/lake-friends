@@ -100,7 +100,9 @@
                                             $getQty   = $offerApplied['get_qty'] ?? 1;
                                             $setSize  = $buyQty + $getQty;
                                             $sets     = $setSize > 0 ? intdiv($item->quantity, $setSize) : 0;
-                                            $volLabel = ($sets * $buyQty) . ' BTL + ' . ($sets * $getQty) . ' Free = ' . $item->quantity . ' BTL';
+                                            $volLabel = $sets > 0
+                                                ? ($sets * $buyQty) . ' BTL + ' . ($sets * $getQty) . ' Free = ' . $item->quantity . ' BTL'
+                                                : $item->quantity . ' BTL';
                                         } else {
                                             $volLabel = $isBeer
                                                 ? $item->quantity . ' BTL'
@@ -118,7 +120,7 @@
                                         }
                                     @endphp
                                     <tr>
-                                        <td class="text-nowrap fw-medium">{{ $order->order_no }}</td>
+                                        <td class="text-nowrap fw-medium">{{ $order->session->session_no ?? $order->order_no }}</td>
                                         <td class="text-nowrap">{{ $order->member->name ?? '—' }}</td>
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('d M Y, h:i A') }}</td>
                                         <td class="text-nowrap">

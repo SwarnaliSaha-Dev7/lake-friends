@@ -62,7 +62,7 @@ class RestaurantOrderController extends Controller
                 ->whereDate('created_at', '<=', $endDate)
                 ->where('status', 'paid')
                 ->whereHas('items', fn($q) => $q->where('unit', 'plate'))
-                ->with(['member', 'items' => fn($q) => $q->where('unit', 'plate')->with('foodItem')])
+                ->with(['member', 'session', 'items' => fn($q) => $q->where('unit', 'plate')->with('foodItem')])
                 ->latest()
                 ->get();
 
@@ -410,13 +410,7 @@ class RestaurantOrderController extends Controller
             }
 
             // Generate order number
-            $date      = now()->format('Ymd');
-            $lastOrder = RestaurantOrder::where('club_id', $clubId)
-                ->whereDate('created_at', now())
-                ->latest('id')
-                ->value('order_no');
-            $lastNum = $lastOrder ? (int) substr($lastOrder, -6) : 0;
-            $orderNo = 'ORD/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
+            $orderNo = generateOrderNo();
 
             // Create restaurant order
             $order = RestaurantOrder::create([

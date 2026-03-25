@@ -56,15 +56,15 @@
             <li class="{{ request()->routeIs('manage-offers.*') ? 'active' : '' }}"><a href="{{ route('manage-offers.index') }}"><i class="fa-solid fa-tag"></i> Offer Manage</a></li>
 
             <li><a href="javascript:void(0)"><i class="fa-brands fa-first-order"></i> Order</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('restaurant-orders.*') || request()->routeIs('food-report.*') || request()->routeIs('order-sessions.*') || request()->routeIs('backdated-orders.*') ? 'display: block;' : 'display: none;' }}">
+                <ul class="list-unstyled" style="{{ request()->routeIs('restaurant-orders.*') || request()->routeIs('food-report.*') || request()->routeIs('order-sessions.*') || request()->routeIs('cancelled-bills.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('order-sessions.*') ? 'active' : '' }}">
                         <a href="{{ route('order-sessions.index') }}">Current Order</a>
                     </li>
-                    <li class="{{ request()->routeIs('backdated-orders.*') ? 'active' : '' }}">
-                        <a href="{{ route('backdated-orders.index') }}">Backdated Order</a>
-                    </li>
                     <li class="{{ request()->routeIs('restaurant-orders.history') ? 'active' : '' }}">
                         <a href="{{ route('restaurant-orders.history') }}">Order History</a>
+                    </li>
+                    <li class="{{ request()->routeIs('cancelled-bills.*') ? 'active' : '' }}">
+                        <a href="{{ route('cancelled-bills.index') }}">Cancelled Bills</a>
                     </li>
                     <li class="{{ request()->routeIs('food-report.*') ? 'active' : '' }}">
                         <a href="{{ route('food-report.index') }}">Food Report</a>

@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActionApprovalController;
-use App\Http\Controllers\BackdatedOrderController;
+use App\Http\Controllers\CancelledBillController;
 use App\Http\Controllers\OrderSessionController;
 use App\Http\Controllers\RestaurantOrderController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -135,9 +135,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('restaurant-orders/{id}/delivered', [RestaurantOrderController::class, 'markDelivered'])->name('restaurant-orders.delivered');
     Route::patch('restaurant-orders/{id}/cancel', [RestaurantOrderController::class, 'cancelOrder'])->name('restaurant-orders.cancel');
 
-    // Backdated Orders
-    Route::get('backdated-orders',  [BackdatedOrderController::class, 'index'])->name('backdated-orders.index');
-    Route::post('backdated-orders', [BackdatedOrderController::class, 'store'])->name('backdated-orders.store');
+
+    // Cancelled Bills
+    Route::get('cancelled-bills',                    [CancelledBillController::class, 'index'])->name('cancelled-bills.index');
+    Route::post('cancelled-bills/{id}/reorder',      [CancelledBillController::class, 'reorder'])->name('cancelled-bills.reorder');
 
     // Order Sessions (Tab / Running Bill)
     Route::prefix('order-sessions')->group(function () {

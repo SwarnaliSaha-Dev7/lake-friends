@@ -85,13 +85,6 @@
                                                 <i class="fa-solid fa-receipt me-1"></i>Bill
                                             </button>
 
-                                            {{-- Cancel Session --}}
-                                            <button class="btn btn-outline-danger btn-sm ms-1 fw-semibold px-2 py-1 cancel-session-btn"
-                                                data-id="{{ $session->id }}"
-                                                data-is-billed="0"
-                                                title="Cancel order">
-                                                <i class="fa-solid fa-xmark me-1"></i>Cancel
-                                            </button>
                                         @endif
 
                                         @if($isBilled)
@@ -103,8 +96,6 @@
                                             </a>
 
                                             {{-- Cancel Billed Session --}}
-                                            {{-- Hidden for now: cancel & refund after bill --}}
-                                            @if(false)
                                             <button class="btn btn-outline-danger btn-sm ms-1 fw-semibold px-2 py-1 cancel-session-btn"
                                                 data-id="{{ $session->id }}"
                                                 data-is-billed="1"
@@ -112,7 +103,6 @@
                                                 title="Cancel & refund">
                                                 <i class="fa-solid fa-rotate-left me-1"></i>Cancel & Refund
                                             </button>
-                                            @endif
                                         @endif
                                     </td>
                                 </tr>
@@ -287,10 +277,8 @@ $(document).ready(function () {
 
     /* ── Listen for session order added event ──────────────────────── */
     $(document).on('sessionOrderAdded', function (e, data) {
-        var $row = $('#session-row-' + data.sessionId);
-        $row.find('.session-pending-total').text('Rs ' + data.pendingTotal);
-        var count = parseInt($row.find('.session-order-count').text()) || 0;
-        $row.find('.session-order-count').text(count + 1);
+        toastr.success('Order added! Order No: ' + data.orderNo);
+        location.reload();
     });
 
     /* ── Generate Bill ─────────────────────────────────────────────── */
@@ -312,7 +300,7 @@ $(document).ready(function () {
                 if (res.statusCode === 200) {
                     toastr.success(res.message);
                     $('#generateBillModal').modal('hide');
-                    updateSessionRowBilled(id, res);
+                    location.reload();
                 } else {
                     toastr.error(res.message || 'Something went wrong.');
                 }
@@ -357,7 +345,7 @@ $(document).ready(function () {
                 if (res.statusCode === 200) {
                     toastr.success(res.message);
                     $('#cancelSessionModal').modal('hide');
-                    updateSessionRowCancelled(id);
+                    location.reload();
                 } else {
                     toastr.error(res.message || 'Something went wrong.');
                 }
@@ -459,9 +447,11 @@ $(document).ready(function () {
         if (!orders.length) {
             html += '<p class="text-muted text-center py-3">No orders in this session.</p>';
         } else {
+            var hasActiveOrders = orders.some(function (o) { return o.status !== 'cancelled'; });
             var roundNum = 0;
             orders.forEach(function (order) {
                 var isCancelled = order.status === 'cancelled';
+                if (isCancelled && hasActiveOrders) return;
                 if (!isCancelled) roundNum++;
                 var stClass   = { paid: 'text-success', pending: 'text-warning', cancelled: 'text-danger' }[order.status] || 'text-muted';
                 var headerBg  = isCancelled ? 'background:#fff5f5;' : 'background:#f8f9fa;';
@@ -489,7 +479,7 @@ $(document).ready(function () {
                         + '<td class="text-end text-muted small">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td>'
                         + '</tr>';
                 });
-                var roundLabel = isCancelled ? ('Cancelled — ' + order.order_no) : ('Round ' + roundNum + ' — ' + order.order_no);
+                var roundLabel = isCancelled ? ('Cancelled — ' + order.order_no) : ('Round ' + roundNum + ' — ' + session.session_no);
                 html += '<div class="mb-3 border rounded-3 overflow-hidden">'
                     + '<div class="px-3 py-2 d-flex justify-content-between align-items-center" style="' + headerBg + '">'
                     + '<span class="fw-semibold small">' + roundLabel + '</span>'

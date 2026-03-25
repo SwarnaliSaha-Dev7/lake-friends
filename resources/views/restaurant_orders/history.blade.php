@@ -234,7 +234,7 @@ $(document).ready(function () {
                     + '<td class="text-center text-muted small">' + it.quantity + '</td>'
                     + '<td class="text-end text-muted small">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td></tr>';
             });
-            var roundLabel = isCancelled ? ('Cancelled — ' + order.order_no) : ('Round ' + roundNum + ' — ' + order.order_no);
+            var roundLabel = isCancelled ? ('Cancelled — ' + order.order_no) : ('Round ' + roundNum + ' — ' + session.session_no);
             html += '<div class="mb-3 border rounded-3 overflow-hidden">'
                 + '<div class="px-3 py-2 d-flex justify-content-between align-items-center" style="' + headerBg + '">'
                 + '<span class="fw-semibold small">' + roundLabel + '</span>'

@@ -61,7 +61,7 @@
     <!-- card entry swipe Modal end -->
 
     <!-- ===================== Member Info Modal ===================== -->
-    <div class="modal fade" id="cardentry" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal fade" id="cardentry" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-focus="false">
         <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
             <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius:16px;">
 
@@ -172,7 +172,7 @@
 
 
     <!-- create order modal -->
-    <div class="modal fade" id="createOrderModal" tabindex="-1" aria-labelledby="createOrderModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createOrderModal" tabindex="-1" aria-labelledby="createOrderModalLabel" aria-hidden="true" data-bs-focus="false">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
@@ -829,6 +829,7 @@
     <script>
     $(document).ready(function () {
 
+
         var allFoodItems   = [];
         var allLiquorItems = [];
         var itemsLoaded    = false;
@@ -1326,21 +1327,9 @@
                 data:        JSON.stringify(orderPayload),
                 success: function (response) {
                     if (response.statusCode == 200) {
-                        if (isSessionOrder) {
-                            toastr.success('Order added! Order No: ' + response.order_no);
-                            $('#createOrderModal').modal('hide');
-                            // Fire custom event so session list page can update the running total
-                            $(document).trigger('sessionOrderAdded', {
-                                sessionId:    sessionCtx.id,
-                                pendingTotal: response.pending_total,
-                                orderNo:      response.order_no,
-                                orderId:      response.order_id,
-                            });
-                        } else {
-                            toastr.success('Order placed! Order No: ' + response.order_no);
-                            $('#createOrderModal').modal('hide');
-                            $('#cardMemberWallet').text('Rs.' + response.wallet_balance);
-                        }
+                        toastr.success('Order placed! Order No: ' + response.order_no);
+                        $('#createOrderModal').modal('hide');
+                        window.location.href = '{{ route("order-sessions.index") }}';
                     } else if (response.statusCode == 422 && response.wallet_balance) {
                         var msg = 'Insufficient wallet balance.<br>Available: Rs.' + response.wallet_balance
                             + ' &nbsp;|&nbsp; Required: Rs.' + response.required_amount;

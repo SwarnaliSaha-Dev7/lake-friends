@@ -48,7 +48,7 @@ class BarOrderController extends Controller
                 ->whereDate('created_at', now())
                 ->where('status', '!=', 'cancelled')
                 ->whereHas('items', fn($q) => $q->whereIn('unit', ['ml', 'btl']))
-                ->with(['member', 'items.foodItem'])
+                ->with(['member', 'session', 'items.foodItem'])
                 ->latest()
                 ->get();
 
@@ -132,7 +132,7 @@ class BarOrderController extends Controller
                 ->whereDate('created_at', '<=', $endDate)
                 ->where('status', 'paid')
                 ->whereHas('items', fn($q) => $q->whereIn('unit', ['ml', 'btl']))
-                ->with(['member', 'items.foodItem'])
+                ->with(['member', 'session', 'items.foodItem'])
                 ->latest()
                 ->get();
 
@@ -167,7 +167,7 @@ class BarOrderController extends Controller
                 ->whereDate('created_at', '<=', $endDate)
                 ->where('status', 'paid')
                 ->whereHas('items', fn($q) => $q->whereIn('unit', ['ml', 'btl']))
-                ->with(['member', 'items.foodItem'])
+                ->with(['member', 'session', 'items.foodItem'])
                 ->latest()
                 ->get();
 
@@ -336,14 +336,7 @@ class BarOrderController extends Controller
             }
 
             // Generate order number
-            $date      = now()->format('Ymd');
-            $lastOrder = RestaurantOrder::where('club_id', $clubId)
-                ->where('ac_head', self::AC_HEAD)
-                ->whereDate('created_at', now())
-                ->latest()
-                ->value('order_no');
-            $lastNum = $lastOrder ? (int) substr($lastOrder, -6) : 0;
-            $orderNo = 'BAR/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
+            $orderNo = generateOrderNo();
 
             // Create order
             $order = RestaurantOrder::create([
