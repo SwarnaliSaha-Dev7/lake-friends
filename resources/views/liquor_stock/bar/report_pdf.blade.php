@@ -41,13 +41,10 @@
 </head>
 <body>
 
-        <div class="modal-header d-flex gap-3 justify-content-between align-items-center border-0">
-            <img src="{{ public_path($clubDetails->logo) }}" alt="img" loading="lazy" fetchpriority="auto" style="max-width: 50px;">
-            <p class="m-0 lh-2">{{ $clubDetails->name }}</p>
-            <p class="m-0 lh-2">{{ $clubDetails->address }}</p>
-        </div>
-
     <div class="header">
+        <p style="margin:0 0 5px;"><img src="{{ public_path($clubDetails->logo) }}" alt="Club Logo" style="max-width:55px; max-height:55px;"></p>
+        <p style="margin:0 0 2px; font-size:14px; font-weight:700; color:#1e293b; text-align:center;">{{ $clubDetails->name }}</p>
+        <p style="margin:0 0 12px; font-size:9px; color:#64748b; text-align:center;">{{ $clubDetails->address }}</p>
         <h1>Bar Stock Report</h1>
         <p>
             Period:

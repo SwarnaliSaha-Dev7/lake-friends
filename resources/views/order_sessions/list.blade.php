@@ -11,7 +11,7 @@
                 <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
                     <h2 class="fs-5 common-heading mb-0 fw-semibold">Today's Sessions</h2>
                     <button class="btn btn-primary btn-sm fw-semibold px-3" id="openSessionBtn">
-                        <i class="fa-solid fa-plus me-1"></i> New Session
+                        <i class="fa-solid fa-plus me-1"></i> New Order
                     </button>
                 </div>
 

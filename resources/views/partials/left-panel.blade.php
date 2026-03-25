@@ -58,7 +58,7 @@
             <li><a href="javascript:void(0)"><i class="fa-brands fa-first-order"></i> Order</a>
                 <ul class="list-unstyled" style="{{ request()->routeIs('restaurant-orders.*') || request()->routeIs('food-report.*') || request()->routeIs('order-sessions.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('order-sessions.*') ? 'active' : '' }}">
-                        <a href="{{ route('order-sessions.index') }}">Order Sessions</a>
+                        <a href="{{ route('order-sessions.index') }}">Current Order</a>
                     </li>
                     <li class="{{ request()->routeIs('restaurant-orders.history') ? 'active' : '' }}">
                         <a href="{{ route('restaurant-orders.history') }}">Order History</a>

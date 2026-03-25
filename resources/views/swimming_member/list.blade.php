@@ -1148,67 +1148,54 @@
     <!-- View Profile Modal -->
     <div class="modal fade" id="viewprofile" tabindex="-1" aria-labelledby="viewprofileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="viewprofileModalLabel">Member Plan Details</h5>
-                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
-                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table border-0 membership-plan-table" cellspacing="1" cellpadding="1">
-                        <tbody>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Member’s Name:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberName">Soumen Das</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Club Name:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberClubName">Soumen Das</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Member’s Id:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberCode">GH231</small></td>
-                            </tr>
-                            {{-- <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Card No:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberCardNo">12345abcd</small></td>
-                            </tr> --}}
-                            {{-- <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Card No:</small>
-                                </td>
-                                <td class="pe-3"><small>12345abcd</small></td>
-                            </tr> --}}
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Current Active Plan:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberPlan">Gold</small></td>
-                            </tr>
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Plan Expiry Date:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberPlanExpiry">12-31-2006</small></td>
-                            </tr>
+            <div class="modal-content border-0 shadow-sm overflow-hidden">
 
-                            <tr>
-                                <td class="text-secondary ps-3">
-                                    <small>Approved By:</small>
-                                </td>
-                                <td class="pe-3"><small id="memberApprovedBy">₹2,450.00</small></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                {{-- Header --}}
+                <div class="modal-header border-0 pb-0 px-4 pt-4" style="background: linear-gradient(135deg, #0288d1, #0277bd);">
+                    <div class="d-flex align-items-center gap-3 w-100">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                            style="width:46px;height:46px;background:rgba(255,255,255,0.2);">
+                            <i class="fa-solid fa-person-swimming text-white" style="font-size:18px;"></i>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="fw-bold text-white text-truncate" style="font-size:16px;" id="memberName">—</div>
+                            <div class="text-white opacity-75" style="font-size:12px;" id="memberClubName">—</div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="pb-3"></div>
                 </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-4" style="background:#f8f8fb;">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-id-card me-1"></i>Member ID</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberCode">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-user-check me-1"></i>Approved By</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberApprovedBy">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-id-badge me-1"></i>Current Plan</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberPlan">—</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-regular fa-calendar-xmark me-1"></i>Plan Expiry</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberPlanExpiry">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
