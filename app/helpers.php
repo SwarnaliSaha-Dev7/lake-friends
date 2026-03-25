@@ -1,5 +1,7 @@
 <?php
+use App\Models\OrderSession;
 use App\Models\PaymentHistory;
+use App\Models\RestaurantOrder;
 
 if (!function_exists('club_id')) {
     function club_id()
@@ -9,39 +11,79 @@ if (!function_exists('club_id')) {
 }
 
 if (!function_exists('generateMrNo')) {
-    function generateMrNo()
+    function generateMrNo($forDate = null)
     {
-        $clubId = club_id();
-        $date = now()->format('Ymd');
+        $clubId  = club_id();
+        $carbon  = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $dateStr = $carbon->format('Ymd');
+        $date    = $carbon->toDateString();
 
-        $lastMr = PaymentHistory::where('club_id', $clubId)
-            ->whereDate('created_at', now())
-            ->latest('created_at')
+        // Check latest mr_no across both orders and sessions for this date
+        $lastFromOrders = RestaurantOrder::where('club_id', $clubId)
+            ->whereDate('created_at', $date)
+            ->whereNotNull('mr_no')
+            ->latest('id')
             ->value('mr_no');
 
-        $lastNumber = $lastMr ? (int) substr($lastMr, -6) : 0;
+        $lastFromSessions = OrderSession::where('club_id', $clubId)
+            ->whereDate('created_at', $date)
+            ->whereNotNull('mr_no')
+            ->latest('id')
+            ->value('mr_no');
 
-        $nextNumber = $lastNumber + 1;
+        $lastFromPayments = PaymentHistory::where('club_id', $clubId)
+            ->whereDate('created_at', $date)
+            ->whereNotNull('mr_no')
+            ->latest('id')
+            ->value('mr_no');
 
-        return 'MR/LP/' . $date . '/' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        $nums = array_filter([
+            $lastFromOrders   ? (int) substr($lastFromOrders,   -6) : 0,
+            $lastFromSessions ? (int) substr($lastFromSessions, -6) : 0,
+            $lastFromPayments ? (int) substr($lastFromPayments, -6) : 0,
+        ]);
+
+        $lastNumber = $nums ? max($nums) : 0;
+
+        return 'MR/LP/' . $dateStr . '/' . str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
     }
 }
 
 if (!function_exists('generateBillNo')) {
-    function generateBillNo()
+    function generateBillNo($forDate = null)
     {
-        $clubId = club_id();
-        $date = now()->format('Ymd');
+        $clubId  = club_id();
+        $carbon  = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $dateStr = $carbon->format('Ymd');
+        $date    = $carbon->toDateString();
 
-        $lastBill = PaymentHistory::where('club_id', $clubId)
-            ->whereDate('created_at', now())
-            ->latest('created_at')
+        // Check latest bill_no across both orders and sessions for this date
+        $lastFromOrders = RestaurantOrder::where('club_id', $clubId)
+            ->whereDate('created_at', $date)
+            ->whereNotNull('bill_no')
+            ->latest('id')
             ->value('bill_no');
 
-        $lastNumber = $lastBill ? (int) substr($lastBill, -6) : 0;
+        $lastFromSessions = OrderSession::where('club_id', $clubId)
+            ->whereDate('created_at', $date)
+            ->whereNotNull('bill_no')
+            ->latest('id')
+            ->value('bill_no');
 
-        $nextNumber = $lastNumber + 1;
+        $lastFromPayments = PaymentHistory::where('club_id', $clubId)
+            ->whereDate('created_at', $date)
+            ->whereNotNull('bill_no')
+            ->latest('id')
+            ->value('bill_no');
 
-        return 'BILL/LP/' . $date . '/' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        $nums = array_filter([
+            $lastFromOrders   ? (int) substr($lastFromOrders,   -6) : 0,
+            $lastFromSessions ? (int) substr($lastFromSessions, -6) : 0,
+            $lastFromPayments ? (int) substr($lastFromPayments, -6) : 0,
+        ]);
+
+        $lastNumber = $nums ? max($nums) : 0;
+
+        return 'BILL/LP/' . $dateStr . '/' . str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
     }
 }

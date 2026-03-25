@@ -413,7 +413,7 @@ class RestaurantOrderController extends Controller
             $date      = now()->format('Ymd');
             $lastOrder = RestaurantOrder::where('club_id', $clubId)
                 ->whereDate('created_at', now())
-                ->latest()
+                ->latest('id')
                 ->value('order_no');
             $lastNum = $lastOrder ? (int) substr($lastOrder, -6) : 0;
             $orderNo = 'ORD/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);

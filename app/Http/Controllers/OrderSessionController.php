@@ -24,8 +24,8 @@ class OrderSessionController extends Controller
     {
         try {
             $clubId     = club_id();
-            $page_title = 'Order Sessions';
-            $title      = 'Order Sessions';
+            $page_title = 'Current Order';
+            $title      = 'Current Order';
 
             $sessions = OrderSession::where('club_id', $clubId)
                 ->whereDate('created_at', now())
@@ -35,6 +35,7 @@ class OrderSessionController extends Controller
 
             $members = Member::where('club_id', $clubId)
                 ->where('status', 'active')
+                ->with('cardDetails:cards.id,card_no')
                 ->orderBy('name')
                 ->get(['id', 'name', 'member_code']);
 
@@ -82,7 +83,7 @@ class OrderSessionController extends Controller
             $date        = now()->format('Ymd');
             $lastSession = OrderSession::where('club_id', $clubId)
                 ->whereDate('created_at', now())
-                ->latest()
+                ->latest('id')
                 ->value('session_no');
             $lastNum   = $lastSession ? (int) substr($lastSession, -6) : 0;
             $sessionNo = 'TAB/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
@@ -214,7 +215,7 @@ class OrderSessionController extends Controller
             $date      = now()->format('Ymd');
             $lastOrder = RestaurantOrder::where('club_id', $clubId)
                 ->whereDate('created_at', now())
-                ->latest()
+                ->latest('id')
                 ->value('order_no');
             $lastNum = $lastOrder ? (int) substr($lastOrder, -6) : 0;
             $orderNo = 'ORD/LP/' . $date . '/' . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);

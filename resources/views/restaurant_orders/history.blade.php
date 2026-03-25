@@ -161,7 +161,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-0 pb-0">
-                    <h2 class="modal-title fs-5 fw-semibold">Session Details</h2>
+                    <h2 class="modal-title fs-5 fw-semibold">Order Details</h2>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal">
                         <i class="fa-regular fa-circle-xmark"></i>
                     </button>
@@ -213,40 +213,43 @@ $(document).ready(function () {
         var orders = session.orders || [];
         var roundNum = 0;
         orders.forEach(function (order) {
-            if (order.status === 'cancelled') return;
-            roundNum++;
-            var stClass = { paid: 'text-success', pending: 'text-warning' }[order.status] || 'text-muted';
+            var isCancelled = order.status === 'cancelled';
+            if (!isCancelled) roundNum++;
+            var stClass = { paid: 'text-success', pending: 'text-warning', cancelled: 'text-danger' }[order.status] || 'text-muted';
+            var headerBg = isCancelled ? 'background:#fff5f5;' : 'background:#f8f9fa;';
+            var rowStyle  = isCancelled ? ' style="opacity:0.6;text-decoration:line-through;"' : '';
             var itemRows = '';
             (order.items || []).forEach(function (it) {
                 var name = it.food_item ? it.food_item.name : '—';
                 var vol  = it.unit === 'btl' ? '1 BTL' : (it.metadata && it.metadata.volume_ml ? it.metadata.volume_ml + 'ml' : '');
                 var offerBadge = '';
-                if (it.offer_applied) {
+                if (it.offer_applied && !isCancelled) {
                     var of = it.offer_applied;
                     if (of.type_slug === 'b1g1') offerBadge = ' <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2" style="font-size:0.65rem;">B1G1</span>';
                     else if (of.type_slug === 'percentage' && of.discount_value) offerBadge = ' <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2" style="font-size:0.65rem;">' + of.discount_value + '% off</span>';
                     else if (of.type_slug === 'flat' && of.discount_value) offerBadge = ' <span class="badge bg-info-subtle text-info border border-info rounded-pill px-2" style="font-size:0.65rem;">Rs ' + of.discount_value + ' off</span>';
                 }
-                itemRows += '<tr><td class="text-muted small">' + name + offerBadge + '</td>'
+                itemRows += '<tr' + rowStyle + '><td class="text-muted small">' + name + offerBadge + '</td>'
                     + '<td class="text-center text-muted small">' + (vol || it.unit) + '</td>'
                     + '<td class="text-center text-muted small">' + it.quantity + '</td>'
                     + '<td class="text-end text-muted small">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td></tr>';
             });
+            var roundLabel = isCancelled ? ('Cancelled — ' + order.order_no) : ('Round ' + roundNum + ' — ' + order.order_no);
             html += '<div class="mb-3 border rounded-3 overflow-hidden">'
-                + '<div class="px-3 py-2 d-flex justify-content-between align-items-center" style="background:#f8f9fa;">'
-                + '<span class="fw-semibold small">Round ' + roundNum + ' — ' + order.order_no + '</span>'
+                + '<div class="px-3 py-2 d-flex justify-content-between align-items-center" style="' + headerBg + '">'
+                + '<span class="fw-semibold small">' + roundLabel + '</span>'
                 + '<span class="small fw-medium ' + stClass + '">' + order.status.charAt(0).toUpperCase() + order.status.slice(1) + '</span>'
                 + '</div>'
                 + '<table class="table table-sm mb-0"><thead><tr>'
                 + '<th style="font-size:0.75rem;">Item</th><th class="text-center" style="font-size:0.75rem;">Vol</th>'
                 + '<th class="text-center" style="font-size:0.75rem;">Qty</th><th class="text-end" style="font-size:0.75rem;">Total</th>'
                 + '</tr></thead><tbody>' + itemRows + '</tbody></table>'
-                + '<div class="px-3 py-2 text-end border-top small fw-semibold text-muted">Round Total: Rs '
-                + parseFloat(parseFloat(order.taxable_amount) - parseFloat(order.discount_amount)).toFixed(2) + '</div>'
+                + (!isCancelled ? '<div class="px-3 py-2 text-end border-top small fw-semibold text-muted">Round Total: Rs '
+                + parseFloat(parseFloat(order.taxable_amount) - parseFloat(order.discount_amount)).toFixed(2) + '</div>' : '')
                 + '</div>';
         });
 
-        if (roundNum === 0) html += '<p class="text-muted text-center py-3">No orders in this session.</p>';
+        if (!orders.length) html += '<p class="text-muted text-center py-3">No orders in this session.</p>';
 
         var sessionSubtotal = 0, sessionDiscount = 0, sessionGst = 0;
         orders.forEach(function (o) {

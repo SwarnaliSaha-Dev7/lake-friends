@@ -115,6 +115,19 @@
                                 <div class="fw-semibold small text-truncate" id="cardMemberPlanExpiry">—</div>
                             </div>
                         </div>
+                        <div class="col-12 d-none" id="upcomingPlanRow">
+                            <div class="rounded-3 p-2 d-flex align-items-center justify-content-between gap-2"
+                                style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:1px solid #c4b5fd;">
+                                <div class="overflow-hidden">
+                                    <div class="mb-1" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:#6d28d9;">Upcoming Renewal</div>
+                                    <div class="fw-semibold small text-truncate" id="cardUpcomingPlanName" style="color:#4c1d95;">—</div>
+                                </div>
+                                <div class="text-end flex-shrink-0">
+                                    <div class="mb-1" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:#6d28d9;">Starts On</div>
+                                    <div class="fw-semibold small" id="cardUpcomingPlanStart" style="color:#4c1d95;">—</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Wallet -->
@@ -148,10 +161,6 @@
                         <button type="button" class="btn flex-fill py-2 fw-medium" id="membershipHistoryBtn"
                             style="background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:10px;font-size:0.82rem;">
                             <i class="fa-solid fa-clock-rotate-left d-block mb-1 fs-6"></i>Membership History
-                        </button>
-                        <button type="button" class="btn flex-fill py-2 fw-medium" id="transactionHistoryBtn"
-                            style="background:#f0f9ff;color:#0284c7;border:1px solid #bae6fd;border-radius:10px;font-size:0.82rem;">
-                            <i class="fa-solid fa-list d-block mb-1 fs-6"></i>Transaction History
                         </button>
                     </div>
                 </div>
@@ -902,7 +911,7 @@
             var $row = $(buildFoodRowHtml());
             $('#foodTableBody').append($row);
             $row.find('.food-item-sel').select2({
-                dropdownParent: $('#createOrderModal'),
+                dropdownParent: $('body'),
                 placeholder:    'Search food item...',
                 allowClear:     true,
                 width:          '100%',
@@ -915,7 +924,7 @@
             var $row = $(buildLiquorRowHtml());
             $('#liquorTableBody').append($row);
             $row.find('.liquor-item-sel').select2({
-                dropdownParent: $('#createOrderModal'),
+                dropdownParent: $('body'),
                 placeholder:    'Search liquor item...',
                 allowClear:     true,
                 width:          '100%',

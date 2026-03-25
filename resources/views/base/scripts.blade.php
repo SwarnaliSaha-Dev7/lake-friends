@@ -73,10 +73,26 @@
                             $('#cardMemberClubName').text(response.data.club_details.name);
                             $('#cardMemberCode').text(response.data.member_code);
                             $('#cardMemberCardNo').text(response.data.card_details.card_no);
-                            var latestPlan = response.data.purchase_history[0];
+                            var today = new Date(); today.setHours(0,0,0,0);
+                            var allPlans = response.data.purchase_history || [];
+
+                            // Separate upcoming (start_date > today) from current (start_date <= today)
+                            var upcomingPlan = null, activePlan = null;
+                            for (var pi = 0; pi < allPlans.length; pi++) {
+                                var p = allPlans[pi];
+                                var pStart = p.start_date ? new Date(p.start_date) : null;
+                                if (pStart) pStart.setHours(0,0,0,0);
+                                if (pStart && pStart > today) {
+                                    if (!upcomingPlan) upcomingPlan = p;
+                                } else {
+                                    if (!activePlan) activePlan = p;
+                                }
+                                if (upcomingPlan && activePlan) break;
+                            }
+                            var latestPlan = activePlan || allPlans[0];
+
                             $('#cardMemberPlan').text(latestPlan?.membership_plan_type?.name ?? '—');
                             var expiryDate = latestPlan?.expiry_date ?? null;
-                            var today = new Date(); today.setHours(0,0,0,0);
                             var isPlanExpired = false;
                             if (expiryDate) {
                                 var expiryObj = new Date(expiryDate); expiryObj.setHours(0,0,0,0);
@@ -96,6 +112,16 @@
                             } else {
                                 $expiryCard.css('background', '#f8f9fa');
                                 $('#cardMemberPlanExpiry').text(formatted);
+                            }
+
+                            // Upcoming renewal plan
+                            if (upcomingPlan) {
+                                var upStartObj = new Date(upcomingPlan.start_date);
+                                $('#cardUpcomingPlanName').text(upcomingPlan.membership_plan_type?.name ?? '—');
+                                $('#cardUpcomingPlanStart').text(upStartObj.toLocaleDateString('en-IN'));
+                                $('#upcomingPlanRow').removeClass('d-none');
+                            } else {
+                                $('#upcomingPlanRow').addClass('d-none');
                             }
 
                             var walletDetails = response.data.wallet_details;
