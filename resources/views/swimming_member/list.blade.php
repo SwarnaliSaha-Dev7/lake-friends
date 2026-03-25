@@ -1694,16 +1694,31 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
+        function toggleUploadContent($box, hasImage) {
+            if (!$box || !$box.length) {
+                return;
+            }
+            $box.find('.upload-content').toggleClass('d-none', hasImage);
+        }
+
         $(document).on('change', '.profile-image', function () {
             let file = this.files && this.files[0];
-            let $preview = $(this).closest('.file-upload-box').find('.upload-preview');
-            if (!file || !$preview.length) {
+            let $box = $(this).closest('.file-upload-box');
+            let $preview = $box.find('.upload-preview');
+            if (!$preview.length) {
+                return;
+            }
+
+            if (!file) {
+                $preview.addClass('d-none').attr('src', '');
+                toggleUploadContent($box, false);
                 return;
             }
 
             let reader = new FileReader();
             reader.onload = function(e) {
                 $preview.attr('src', e.target.result).removeClass('d-none');
+                toggleUploadContent($box, true);
             };
             reader.readAsDataURL(file);
         });
@@ -2039,21 +2054,27 @@
                         $('#swim_guardian_occupation').val(response.data.member_details.details['guardian_occupation']);
                         // console.log(fileNameFromPath(response.data.image))
                         $('#swim_member_photo_name').text(fileNameFromPath(response.data.image));
+                        const $swimBox = $('#swim_image_preview').closest('.file-upload-box');
                         if (response.data.image) {
                             $('#swim_image_preview')
                                 .attr('src', '/' + response.data.image.replace(/^\/+/, ''))
                                 .removeClass('d-none');
+                            toggleUploadContent($swimBox, true);
                         } else {
                             $('#swim_image_preview').addClass('d-none').attr('src', '');
+                            toggleUploadContent($swimBox, false);
                         }
                         // console.log(fileNameFromPath(fileNameFromPath(response.data.member_details.details['guardian_image'])))
                         $('#swim_guardian_photo_name').text(fileNameFromPath(response.data.member_details.details['guardian_image']));
+                        const $guardianBox = $('#swim_guardian_image_preview').closest('.file-upload-box');
                         if (response.data.member_details.details['guardian_image']) {
                             $('#swim_guardian_image_preview')
                                 .attr('src', '/' + response.data.member_details.details['guardian_image'].replace(/^\/+/, ''))
                                 .removeClass('d-none');
+                            toggleUploadContent($guardianBox, true);
                         } else {
                             $('#swim_guardian_image_preview').addClass('d-none').attr('src', '');
+                            toggleUploadContent($guardianBox, false);
                         }
                         let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
                         $('input[name="swim_membership_plan_type"]').prop('checked', false);

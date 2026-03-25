@@ -1161,16 +1161,31 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
 
+        function toggleUploadContent($box, hasImage) {
+            if (!$box || !$box.length) {
+                return;
+            }
+            $box.find('.upload-content').toggleClass('d-none', hasImage);
+        }
+
         $(document).on('change', '.profile-image', function () {
             let file = this.files && this.files[0];
-            let $preview = $(this).closest('.file-upload-box').find('.upload-preview');
-            if (!file || !$preview.length) {
+            let $box = $(this).closest('.file-upload-box');
+            let $preview = $box.find('.upload-preview');
+            if (!$preview.length) {
+                return;
+            }
+
+            if (!file) {
+                $preview.addClass('d-none').attr('src', '');
+                toggleUploadContent($box, false);
                 return;
             }
 
             let reader = new FileReader();
             reader.onload = function(e) {
                 $preview.attr('src', e.target.result).removeClass('d-none');
+                toggleUploadContent($box, true);
             };
             reader.readAsDataURL(file);
         });
@@ -1663,12 +1678,13 @@
                     // $('#club_member_photo').html(data.image);
                     const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
                     $('#club_member_photo').text(imageName);
+                    const $memberBox = $('#member_image_preview').closest('.file-upload-box');
                     if (data.image) {
-                        $('#member_image_preview')
-                            .attr('src', '/' + data.image.replace(/^\/+/, ''))
-                            .removeClass('d-none');
+                        $('#member_image_preview').attr('src', '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
+                        toggleUploadContent($memberBox, true);
                     } else {
                         $('#member_image_preview').addClass('d-none').attr('src', '');
+                        toggleUploadContent($memberBox, false);
                     }
 
 
@@ -1685,12 +1701,15 @@
                     let spouseImageName = data.member_details.details.spouse_image
                     spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
                     $('#spouse_photo').text(spouseImageName);
+                    const $spouseBox = $('#spouse_image_preview').closest('.file-upload-box');
                     if (data.member_details.details.spouse_image) {
                         $('#spouse_image_preview')
                             .attr('src', '/' + data.member_details.details.spouse_image.replace(/^\/+/, ''))
                             .removeClass('d-none');
+                        toggleUploadContent($spouseBox, true);
                     } else {
                         $('#spouse_image_preview').addClass('d-none').attr('src', '');
+                        toggleUploadContent($spouseBox, false);
                     }
 
                     // $('#member_image_preview').attr('src', data.image);
