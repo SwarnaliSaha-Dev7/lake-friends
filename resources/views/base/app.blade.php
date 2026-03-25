@@ -464,21 +464,28 @@
     <!-- Wallet Recharge Modal end-->
 
     <!-- Member Transaction History Modal start -->
-    <div class="modal fade" id="memberTransactionHistoryModal" tabindex="-1" aria-labelledby="memberTransactionHistoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fs-5 fw-semibold" id="memberTransactionHistoryModalLabel">Member Transaction History</h5>
-                    <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
-                        aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="bg-light p-2">
-                        <table class="table border-0 m-0 wallet-table">
-                            <tbody id="memberTransactionHistoryTbody"></tbody>
-                        </table>
+    <div class="modal fade" id="memberTransactionHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-sm overflow-hidden">
+
+                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);">
+                    <div class="d-flex align-items-center gap-3 w-100">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                            style="width:40px;height:40px;background:rgba(255,255,255,0.12);">
+                            <i class="fa-solid fa-clock-rotate-left text-white" style="font-size:15px;"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white" style="font-size:15px;">Transaction History</div>
+                            <div class="opacity-75 text-white" style="font-size:12px;" id="txnHistoryMemberName">—</div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal"></button>
                     </div>
                 </div>
+
+                <div class="modal-body p-0" style="background:#f8fafc;">
+                    <div id="memberTransactionHistoryTbody"></div>
+                </div>
+
             </div>
         </div>
     </div>

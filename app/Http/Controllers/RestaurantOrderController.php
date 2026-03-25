@@ -488,7 +488,7 @@ class RestaurantOrderController extends Controller
                 'member_id'  => $memberId,
                 'amount'     => $netAmount,
                 'direction'  => 'debit',
-                'txn_type'   => 'spend',
+                'txn_type'   => 'Restaurant Food Order',
                 'created_by' => Auth::id(),
             ]);
 

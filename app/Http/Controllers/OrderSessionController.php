@@ -379,7 +379,7 @@ class OrderSessionController extends Controller
                 'member_id'  => $session->member_id,
                 'amount'     => $totalNet,
                 'direction'  => 'debit',
-                'txn_type'   => 'spend',
+                'txn_type'   => 'Food and Liquor Order',
                 'created_by' => Auth::id(),
             ]);
 

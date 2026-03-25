@@ -1011,7 +1011,9 @@ class ClubMemberController extends Controller
                     ];
                 });
 
+            // Only include payment histories NOT linked to a wallet transaction (direct cash payments)
             $payments = PaymentHistory::where('member_id', $id)
+                ->whereNull('wallet_transaction_id')
                 ->get()
                 ->map(function ($p) {
                     return [

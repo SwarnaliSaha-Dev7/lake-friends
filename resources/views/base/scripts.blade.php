@@ -357,84 +357,86 @@
 
     /* Card punch popup → Transaction History button */
     $('#transactionHistoryBtn').on('click', function () {
-        let memberId = $('#cardentry').data('member-id');
+        let memberId   = $('#cardentry').data('member-id');
         let memberType = $('#cardentry').data('member-type');
+        let memberName = $('#cardMemberName').text() || '—';
 
-        if (!memberId || !memberType) {
-            toastr.error('Member data missing');
-            return;
-        }
+        if (!memberId || !memberType) { toastr.error('Member data missing'); return; }
 
-        if (!$('#memberTransactionHistoryModal').length) {
-            toastr.error('Transaction history modal not found');
-            return;
-        }
+        let container = $('#memberTransactionHistoryTbody');
+        $('#txnHistoryMemberName').text(memberName);
+        container.html('<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>');
 
-        let tbody = $('#memberTransactionHistoryTbody');
-        tbody.html('<tr><td colspan="2" class="text-center">Loading...</td></tr>');
-
-        let url = '';
-        if (memberType === 'club') {
-            url = '{{route("club-member.member-ledger", ":id")}}'.replace(':id', memberId);
-        } else if (memberType === 'swimming') {
-            url = '{{route("swimming-member.member-ledger", ":id")}}'.replace(':id', memberId);
-        } else {
-            toastr.error('Invalid member type');
-            return;
-        }
+        let url = memberType === 'club'
+            ? '{{route("club-member.member-ledger", ":id")}}'.replace(':id', memberId)
+            : '{{route("swimming-member.member-ledger", ":id")}}'.replace(':id', memberId);
 
         $.ajax({
             url: url,
             type: 'GET',
-            success: function(response){
+            success: function(response) {
                 if (response.statusCode == 200) {
-                    tbody.empty();
+                    container.empty();
 
-                    if(response.data.length > 0){
-                        response.data.forEach(function(entry) {
-                            let purpose = (entry.purpose || '-')
-                                .toString()
-                                .replace(/_/g, ' ')
-                                .replace(/\b\w/g, (m) => m.toUpperCase());
-                            let createdAt = entry.created_at
+                    if (response.data.length > 0) {
+                        response.data.forEach(function(entry, index, arr) {
+                            let purposeRaw = (entry.purpose || '').toLowerCase();
+                            let purpose    = (entry.purpose || '-').toString().replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+                            let direction  = entry.direction || 'debit';
+                            let isCredit   = direction === 'credit';
+                            let sign       = isCredit ? '+' : '-';
+                            let amtColor   = isCredit ? '#16a34a' : '#dc2626';
+                            let maker      = entry.maker || null;
+                            let remarks    = entry.remarks || '';
+                            let createdAt  = entry.created_at
                                 ? new Date(entry.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
                                 : '-';
-                            let direction = entry.direction || 'debit';
-                            let amountClass = direction == 'credit' ? 'text-success' : 'text-danger';
-                            let sign = direction == 'credit' ? '+' : '-';
-                            let maker = entry.maker ?? '-';
-                            let remarks = entry.remarks ?? '';
+
+                            // Icon based on transaction type
+                            let icon, iconBg, iconColor;
+                            if (purposeRaw.includes('recharge') || (isCredit && purposeRaw.includes('wallet'))) {
+                                icon = 'fa-wallet';      iconBg = '#dcfce7'; iconColor = '#16a34a';
+                            } else if (purposeRaw.includes('membership') || purposeRaw.includes('renewal') || purposeRaw.includes('plan')) {
+                                icon = 'fa-id-badge';    iconBg = '#f3e8ff'; iconColor = '#7c3aed';
+                            } else if (purposeRaw.includes('food') || purposeRaw.includes('restaurant')) {
+                                icon = 'fa-utensils';    iconBg = '#fff7ed'; iconColor = '#ea580c';
+                            } else if (purposeRaw.includes('bar') || purposeRaw.includes('liquor') || purposeRaw.includes('order')) {
+                                icon = 'fa-wine-bottle'; iconBg = '#eff6ff'; iconColor = '#2563eb';
+                            } else if (isCredit) {
+                                icon = 'fa-arrow-down';  iconBg = '#dcfce7'; iconColor = '#16a34a';
+                            } else {
+                                icon = 'fa-arrow-up';    iconBg = '#fee2e2'; iconColor = '#dc2626';
+                            }
+
+                            let borderBottom = index < arr.length - 1 ? 'border-bottom:1px solid #e9ecef;' : '';
 
                             let row = `
-                                <tr>
-                                    <td class="border-secondary bg-transparent align-middle lh-sm">
-                                        <div class="fw-semibold">${purpose}</div>
-                                        <small class="text-black-50">By: ${maker}</small><br>
-                                        <small class="text-black-50">Date: ${createdAt}</small>
-                                        ${remarks ? `<br><small class="text-black-50">Remarks: ${remarks}</small>` : ''}
-                                    </td>
-                                    <td class="${amountClass} text-end border-secondary bg-transparent align-middle">
-                                        ${sign}₹${entry.amount}
-                                    </td>
-                                </tr>`;
+                                <div class="d-flex align-items-center gap-3 px-4 py-3" style="background:#fff;${borderBottom}">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                        style="width:38px;height:38px;background:${iconBg};">
+                                        <i class="fa-solid ${icon}" style="font-size:14px;color:${iconColor};"></i>
+                                    </div>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="fw-semibold text-dark lh-sm" style="font-size:13px;">${purpose}</div>
+                                        ${maker ? `<div class="text-muted" style="font-size:11px;">By: ${maker}</div>` : ''}
+                                        <div class="text-muted" style="font-size:11px;">${createdAt}</div>
+                                        ${remarks ? `<div class="text-muted" style="font-size:11px;">Remarks: ${remarks}</div>` : ''}
+                                    </div>
+                                    <div class="fw-bold flex-shrink-0 ms-2" style="font-size:14px;color:${amtColor};">${sign}₹${parseFloat(entry.amount).toFixed(2)}</div>
+                                </div>`;
 
-                            tbody.append(row);
+                            container.append(row);
                         });
                     } else {
-                        tbody.append('<tr><td colspan="2" class="text-center">No transactions found</td></tr>');
+                        container.html('<div class="text-center text-muted py-5" style="font-size:13px;"><i class="fa-solid fa-inbox d-block mb-2 fs-4 opacity-40"></i>No transactions found</div>');
                     }
 
-                    // $('#cardentry').modal('hide');
-                    setTimeout(() => {
-                        $('#memberTransactionHistoryModal').modal('show');
-                    }, 300);
+                    setTimeout(() => { $('#memberTransactionHistoryModal').modal('show'); }, 300);
                 } else {
                     toastr.error('Failed to load transaction history');
                 }
             },
-            error: function(){
-                toastr.error('Something Went Wrong.');
-            }
+            error: function() { toastr.error('Something Went Wrong.'); }
         });
     });
 

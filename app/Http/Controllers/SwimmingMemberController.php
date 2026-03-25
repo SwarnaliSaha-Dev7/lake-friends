@@ -792,7 +792,24 @@ class SwimmingMemberController extends Controller
     public function memberLedger($id)
     {
         try {
+            $walletTxns = WalletTransaction::with('creator:id,name', 'payment:id,wallet_transaction_id,remarks')
+                ->where('member_id', $id)
+                ->get()
+                ->map(function ($t) {
+                    return [
+                        'source'     => 'wallet',
+                        'purpose'    => $t->txn_type,
+                        'direction'  => $t->direction,
+                        'amount'     => (float) $t->amount,
+                        'remarks'    => $t->payment?->remarks,
+                        'maker'      => $t->creator?->name,
+                        'created_at' => $t->created_at,
+                    ];
+                });
+
+            // Only include payment histories NOT linked to a wallet transaction (direct cash payments)
             $payments = PaymentHistory::where('member_id', $id)
+                ->whereNull('wallet_transaction_id')
                 ->get()
                 ->map(function ($p) {
                     return [
@@ -804,11 +821,14 @@ class SwimmingMemberController extends Controller
                         'maker'      => null,
                         'created_at' => $p->created_at,
                     ];
-                })
+                });
+
+            $ledger = $walletTxns
+                ->merge($payments)
                 ->sortByDesc('created_at')
                 ->values();
 
-            return response()->json(['statusCode' => 200, 'data' => $payments]);
+            return response()->json(['statusCode' => 200, 'data' => $ledger]);
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,

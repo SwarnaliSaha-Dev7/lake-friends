@@ -410,7 +410,7 @@ class BarOrderController extends Controller
                 'member_id'  => $memberId,
                 'amount'     => $netAmt,
                 'direction'  => 'debit',
-                'txn_type'   => 'spend',
+                'txn_type'   => 'Bar Order',
                 'created_by' => Auth::id(),
             ]);
 
