@@ -50,9 +50,10 @@ class OfferManageController extends Controller
 
         $liquorItems = $beerItems->merge($spiritServings)->unique('id')->values();
 
-        // Item IDs already in an active offer
+        // Item IDs already in a currently active (non-expired) offer
         $activeOfferIds = Offer::where('club_id', $club_id)
                             ->where('status', 'active')
+                            ->where('end_at', '>=', now()->toDateString())
                             ->pluck('id');
         $takenItemIds = OfferItem::whereIn('offer_id', $activeOfferIds)
                             ->pluck('food_items_id')->unique()->toArray();

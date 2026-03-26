@@ -21,7 +21,7 @@ class CancelledBillController extends Controller
         $clubId = club_id();
         [$fyStart, $fyEnd] = financialYearRange(now());
 
-        $sessions = OrderSession::with(['member', 'cancelledBy'])
+        $sessions = OrderSession::with(['member.walletDetails', 'cancelledBy'])
             ->where('club_id', $clubId)
             ->where('status', 'cancelled')
             ->whereBetween('created_at', [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])

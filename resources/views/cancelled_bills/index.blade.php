@@ -36,7 +36,8 @@
                                     data-id="{{ $session->id }}"
                                     data-session-no="{{ $session->session_no }}"
                                     data-member="{{ $session->member->name ?? '—' }}"
-                                    data-date="{{ $session->created_at->format('d M Y') }}">
+                                    data-date="{{ $session->created_at->format('d M Y') }}"
+                                    data-wallet="{{ number_format($session->member->walletDetails->current_balance ?? 0, 2) }}">
                                     <i class="fa-solid fa-pen-to-square me-1"></i>Edit Order
                                 </button>
                             </td>
@@ -199,9 +200,10 @@ $(function () {
         var memberName = $(this).data('member');
         var sessionNo  = $(this).data('session-no');
         var date       = $(this).data('date');
+        var wallet     = $(this).data('wallet');
 
         $('#cbOrderMemberName').text(memberName);
-        $('#cbOrderMeta').text('Session: ' + sessionNo);
+        $('#cbOrderMeta').text(memberName + ' | Wallet Balance: Rs.' + wallet);
         $('#cbOrderDate').text(date);
         $('#cbFoodTableBody').html('<tr id="cbFoodEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No food items added.</td></tr>');
         $('#cbLiquorTableBody').html('<tr id="cbLiquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');

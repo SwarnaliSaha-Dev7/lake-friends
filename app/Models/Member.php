@@ -31,6 +31,11 @@ class Member extends Model
         return $this->hasOne(MembershipFormDetail::class, 'member_id');
     }
 
+    public function membershipType(): BelongsTo
+    {
+        return $this->belongsTo(MembershipType::class, 'membership_type_id');
+    }
+
     public function cardDetails(): HasOneThrough
     {
         return $this->hasOneThrough(

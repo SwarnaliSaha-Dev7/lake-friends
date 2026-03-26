@@ -480,6 +480,7 @@ class ActionApprovalController extends Controller
                             'discount_value' => $new['discount_value'] ?? 0,
                             'start_at'       => $new['start_at'],
                             'end_at'         => $new['end_at'],
+                            'status'         => 'active',
                         ]);
 
                         OfferItem::where('offer_id', $offer->id)->delete();
@@ -786,7 +787,10 @@ class ActionApprovalController extends Controller
             } elseif ($data->module == 'offer') {
                 $offer = Offer::find($data->entity_id);
                 if ($offer) {
-                    $offer->update(['status' => 'rejected']);
+                    // create rejection → offer was never active, mark rejected
+                    // update/delete rejection → offer was already active, revert to active
+                    $revertStatus = $data->action_type === 'create' ? 'rejected' : 'active';
+                    $offer->update(['status' => $revertStatus]);
                 }
             } elseif ($data->module == 'liquor_item_create') {
                 $item = FoodItem::find($data->entity_id);

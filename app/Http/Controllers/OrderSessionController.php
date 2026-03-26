@@ -6,6 +6,7 @@ use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
 use App\Models\Member;
+use App\Models\MembershipType;
 use App\Models\OrderSession;
 use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
@@ -51,7 +52,7 @@ class OrderSessionController extends Controller
             $clubId   = club_id();
             $memberId = $request->input('member_id');
 
-            $member = Member::where('club_id', $clubId)->findOrFail($memberId);
+            $member = Member::with('membershipType')->where('club_id', $clubId)->findOrFail($memberId);
 
             // If member already has an open session today, return it
             $existing = OrderSession::where('club_id', $clubId)
@@ -73,6 +74,7 @@ class OrderSessionController extends Controller
                         'member_id'      => $member->id,
                         'member_name'    => $member->name,
                         'member_code'    => $member->member_code,
+                        'member_type'    => $member->membershipType?->name ?? '—',
                         'wallet_balance' => $wallet ? number_format($wallet->current_balance, 2) : '0.00',
                         'order_count'    => $existing->orders()->whereNotIn('status', ['cancelled'])->count(),
                         'pending_total'  => number_format($existing->orders()->where('status', 'pending')->sum('net_amount'), 2),
@@ -102,6 +104,7 @@ class OrderSessionController extends Controller
                     'member_id'      => $member->id,
                     'member_name'    => $member->name,
                     'member_code'    => $member->member_code,
+                    'member_type'    => $member->membershipType?->name ?? '—',
                     'wallet_balance' => $wallet ? number_format($wallet->current_balance, 2) : '0.00',
                     'order_count'    => 0,
                     'pending_total'  => '0.00',

@@ -80,14 +80,18 @@
                                         </td>
                                         <td class="text-nowrap">
                                             @php
+                                                $effectiveStatus = $offer->status;
+                                                if ($effectiveStatus === 'active' && $offer->end_at && \Carbon\Carbon::parse($offer->end_at)->endOfDay()->isPast()) {
+                                                    $effectiveStatus = 'expired';
+                                                }
                                                 $statusMap = [
                                                     'pending'  => ['label' => 'Pending',  'class' => 'text-warning'],
                                                     'active'   => ['label' => 'Active',   'class' => 'text-success'],
                                                     'rejected' => ['label' => 'Rejected', 'class' => 'text-danger'],
-                                                    'expired'  => ['label' => 'Expired',  'class' => 'text-secondary'],
+                                                    'expired'  => ['label' => 'Expired',  'class' => 'text-danger'],
                                                     'draft'    => ['label' => 'Draft',    'class' => 'text-muted'],
                                                 ];
-                                                $s = $statusMap[$offer->status] ?? ['label' => ucfirst($offer->status), 'class' => 'text-muted'];
+                                                $s = $statusMap[$effectiveStatus] ?? ['label' => ucfirst($effectiveStatus), 'class' => 'text-muted'];
                                             @endphp
                                             <span class="fw-medium {{ $s['class'] }}">{{ $s['label'] }}</span>
                                         </td>

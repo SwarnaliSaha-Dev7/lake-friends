@@ -1015,7 +1015,7 @@
                     var mi  = String(now.getMinutes()).padStart(2, '0');
 
                     $('#orderMemberName').text(memberName);
-                    $('#orderMemberMeta').text($('#cardMemberPlan').text() + ' member | Member\'s Id: ' + memberCode);
+                    $('#orderMemberMeta').text(res.session.member_type + ' | Wallet Balance: Rs.' + res.session.wallet_balance);
                     $('#orderDate').text(dd + '-' + mm + '-' + yy);
                     $('#orderTime').text(hh + ':' + mi);
 

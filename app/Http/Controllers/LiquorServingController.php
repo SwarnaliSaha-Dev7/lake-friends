@@ -73,6 +73,15 @@ class LiquorServingController extends Controller
                 ->where('is_beer', 0)
                 ->firstOrFail();
 
+            $duplicate = LiquorServing::where('club_id', $clubId)
+                ->where('food_item_id', $foodItem->id)
+                ->where('volume_ml', $request->volume_ml)
+                ->exists();
+
+            if ($duplicate) {
+                return response()->json(['statusCode' => 422, 'message' => $foodItem->name . ' ' . $request->volume_ml . 'ml already exists.']);
+            }
+
             $name = $foodItem->name . ' ' . $request->volume_ml . 'ml';
 
             $serving = LiquorServing::create([

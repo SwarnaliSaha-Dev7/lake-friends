@@ -121,7 +121,6 @@
                                 <option value="">-- Select Volume --</option>
                                 <option value="30">30 ml (Single Peg)</option>
                                 <option value="60">60 ml (Double Peg)</option>
-                                <option value="90">90 ml (Large Peg)</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -165,7 +164,6 @@
                                 <option value="">-- Select Volume --</option>
                                 <option value="30">30 ml (Single Peg)</option>
                                 <option value="60">60 ml (Double Peg)</option>
-                                <option value="90">90 ml (Large Peg)</option>
                             </select>
                         </div>
                         <div class="mb-3">
