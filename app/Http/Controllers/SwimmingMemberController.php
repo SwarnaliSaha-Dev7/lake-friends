@@ -331,7 +331,7 @@ class SwimmingMemberController extends Controller
                 'membership_type_id' => $membershipTypeId,
                 'entity_id' => $member->id,
                 'maker_user_id' => Auth::id(),
-                'request_payload' => json_encode($request->all())
+                'request_payload' => json_encode($requestData)
             ]);
 
             if (Auth::user()->hasRole('admin')) {

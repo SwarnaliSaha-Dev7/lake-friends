@@ -144,6 +144,10 @@ class LockerManageController extends Controller
                          ->where('id', $id)
                          ->firstOrFail();
 
+        if( $lockers->status == 'occupied'){
+            return redirect()->route('manage-lockers.index')->with('error', 'This locker is already assigned to a member and cannot be deleted.');
+        }
+
         $lockers->delete();
 
         return redirect()

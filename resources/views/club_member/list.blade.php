@@ -1000,6 +1000,7 @@
 
         const params = new URLSearchParams(window.location.search);
         const type = params.get('type');
+        const BASE_URL = "{{ url('/') }}";
 
         // Check if 'type' parameter is 'addMember'
         if (type === 'addMember') {
@@ -1664,9 +1665,8 @@
                     const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
                     $('#club_member_photo').text(imageName);
                     if (data.image) {
-                        $('#member_image_preview')
-                            .attr('src', '/' + data.image.replace(/^\/+/, ''))
-                            .removeClass('d-none');
+                        // $('#member_image_preview').attr('src', '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
+                        $('#member_image_preview').attr('src', BASE_URL + '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
                     } else {
                         $('#member_image_preview').addClass('d-none').attr('src', '');
                     }
@@ -1686,9 +1686,8 @@
                     spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
                     $('#spouse_photo').text(spouseImageName);
                     if (data.member_details.details.spouse_image) {
-                        $('#spouse_image_preview')
-                            .attr('src', '/' + data.member_details.details.spouse_image.replace(/^\/+/, ''))
-                            .removeClass('d-none');
+                        // $('#spouse_image_preview').attr('src', '/' + data.member_details.details.spouse_image.replace(/^\/+/, '')).removeClass('d-none');
+                        $('#spouse_image_preview').attr('src', BASE_URL + '/' + data.member_details.details.spouse_image.replace(/^\/+/, '')).removeClass('d-none');
                     } else {
                         $('#spouse_image_preview').addClass('d-none').attr('src', '');
                     }
