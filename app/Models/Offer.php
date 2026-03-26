@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class Offer extends Model
 {
+    use LogsModelChanges;
+
     protected $fillable = [
         'club_id', 'offer_type_id', 'name', 'applies_to',
         'discount_value', 'min_amount', 'buy_qty', 'get_qty',

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class StockLedger extends Model
 {
+    use LogsModelChanges;
+
     protected $table = 'stock_ledgers';
 
     protected $fillable = [

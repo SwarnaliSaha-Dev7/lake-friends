@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FoodItemPrice extends Model
 {
+    use LogsModelChanges;
     protected $fillable = [
         'item_id',
         'price',

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class RestaurantOrder extends Model
 {
+    use LogsModelChanges;
+
     protected $fillable = [
         'club_id',
         'session_id',

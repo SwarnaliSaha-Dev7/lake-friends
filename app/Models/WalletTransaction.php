@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class WalletTransaction extends Model
 {
+    use LogsModelChanges;
+
     protected $fillable = [
         'wallet_id',
         'member_id',

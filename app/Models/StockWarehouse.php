@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class StockWarehouse extends Model
 {
+    use LogsModelChanges;
+
     protected $table = 'stock_warehouses';
 
     protected $fillable = ['club_id', 'stock_name'];

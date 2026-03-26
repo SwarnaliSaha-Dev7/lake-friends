@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelChanges;
 use Illuminate\Database\Eloquent\Model;
 
 class FoodItemCurrentStock extends Model
 {
+    use LogsModelChanges;
     protected $table = 'food_item_current_stocks';
 
     protected $fillable = [
