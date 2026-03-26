@@ -76,13 +76,10 @@ class FoodItemManageController extends Controller
 
             $data = $request->validate([
                 'itemName'  => ['required', 'string', 'max:255',
-                                Rule::unique('food_items','name')
-                                ->where(function ($query) use ($club_id) {
-                                    return $query->where('club_id', $club_id)
-                                                    ->where('item_type','food')
-                                                    ->whereNull('deleted_at');
-                                            }),
-                            ],
+                    Rule::unique('food_items','name')->where(function ($query) use ($club_id) {
+                        return $query->where('club_id', $club_id)->where('item_type','food')->whereNull('deleted_at');
+                    }),
+                ],
                 'itemCat' => 'required',
 
                 // 'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',

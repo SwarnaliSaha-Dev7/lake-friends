@@ -739,6 +739,8 @@ class ActionApprovalController extends Controller
             }
 
             if ($data->module == 'member_create') {
+                DB::beginTransaction();
+
                 $cardMapping = MemberCardMapping::where('member_id', $data->entity_id)
                     ->latest()
                     ->first();
@@ -758,22 +760,31 @@ class ActionApprovalController extends Controller
                 $memberId = $data->entity_id;
                 $member = Member::find($memberId);
 
-
-                $member->update([
-                    'status'      => 'rejected'
-                ]);
-
-
-                $membershipPlanPurchase = MembershipPurchaseHistory::where('club_id', $clubId)
-                    ->where('member_id', $memberId)
-                    ->where('status', 'pending')
-                    ->first();
-
-                if ($membershipPlanPurchase) {
-                    $membershipPlanPurchase->update([
-                        'status' => 'cancelled'
+                if ($member) {
+                    $member->update([
+                        'status'      => 'rejected'
                     ]);
                 }
+
+                MembershipPurchaseHistory::where('club_id', $clubId)
+                                        ->where('member_id', $memberId)
+                                        ->latest('id')
+                                        ->delete();
+
+                PaymentHistory::where('member_id', $memberId)->delete();
+
+                MembershipFormDetail::where('member_id', $memberId)->delete();
+
+                $wallet = Wallet::where('member_id', $memberId)->first();
+                if ($wallet) {
+                    $wallet->delete();
+                }
+
+                if ($member) {
+                    $member->delete();
+                }
+
+                DB::commit();
             } elseif ($data->module == 'food_item_create') {
                 // Item was created with is_active=0; on rejection just delete it
                 $item = FoodItem::find($data->entity_id);

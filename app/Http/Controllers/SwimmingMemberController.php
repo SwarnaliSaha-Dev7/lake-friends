@@ -318,10 +318,10 @@ class SwimmingMemberController extends Controller
             //     'member_id' => $member->id
             // ]);
 
-            Wallet::create([
-                'member_id' => $member->id,
-                'current_balance' => 0
-            ]);
+            // Wallet::create([
+            //     'member_id' => $member->id,
+            //     'current_balance' => 0
+            // ]);
 
             $approval = ActionApproval::create([
                 'club_id' => $clubId,
