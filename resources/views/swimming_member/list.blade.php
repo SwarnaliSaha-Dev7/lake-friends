@@ -866,7 +866,7 @@
     </div>
     <!-- add Club Member Modal end  -->
 
-    <!-- edit Club Member Modal start -->
+    <!-- edit swimming Member Modal start -->
     <div class="modal fade" id="editswimmingmember" tabindex="-1" aria-labelledby="editswimmingmemberModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -1032,7 +1032,7 @@
                                                     </small>
                                                 </div>
                                                 <div class="mt-2">
-                                                    <img id="swim_image_preview" class="rounded d-none upload-preview" width="80" alt="Preview">
+                                                    <img id="swim_image_preview" src="" class="rounded d-none upload-preview" width="80" alt="Preview">
                                                 </div>
                                             </label>
                                             <span class="error-div text-danger"></span>
@@ -1143,7 +1143,7 @@
             </div>
         </div>
     </div>
-    <!-- add Club Member Modal end  -->
+    <!-- edit swimming Member Modal end  -->
 
     <!-- View Profile Modal -->
     <div class="modal fade" id="viewprofile" tabindex="-1" aria-labelledby="viewprofileModalLabel" aria-hidden="true">
@@ -1664,6 +1664,7 @@
 
         const params = new URLSearchParams(window.location.search);
         const type = params.get('type');
+        const BASE_URL = "{{ url('/') }}";
 
         // Check if 'type' parameter is 'addMember'
         if (type === 'addMember') {
@@ -2025,20 +2026,18 @@
                         $('#swim_guardian_name').val(response.data.member_details.details['guardian_name']);
                         $('#swim_guardian_occupation').val(response.data.member_details.details['guardian_occupation']);
                         // console.log(fileNameFromPath(response.data.image))
-                        $('#swim_member_photo_name').text(fileNameFromPath(response.data.image));
+                        // $('#swim_member_photo_name').text(fileNameFromPath(response.data.image));
                         if (response.data.image) {
-                            $('#swim_image_preview')
-                                .attr('src', '/' + response.data.image.replace(/^\/+/, ''))
-                                .removeClass('d-none');
+                            // $('#swim_image_preview').attr('src', '/' +  response.data.image.replace(/^\/+/, '')).removeClass('d-none');
+                            $('#swim_image_preview').attr('src', BASE_URL + '/' + response.data.image.replace(/^\/+/, '')).removeClass('d-none');
                         } else {
                             $('#swim_image_preview').addClass('d-none').attr('src', '');
                         }
                         // console.log(fileNameFromPath(fileNameFromPath(response.data.member_details.details['guardian_image'])))
-                        $('#swim_guardian_photo_name').text(fileNameFromPath(response.data.member_details.details['guardian_image']));
+                        // $('#swim_guardian_photo_name').text(fileNameFromPath(response.data.member_details.details['guardian_image']));
                         if (response.data.member_details.details['guardian_image']) {
-                            $('#swim_guardian_image_preview')
-                                .attr('src', '/' + response.data.member_details.details['guardian_image'].replace(/^\/+/, ''))
-                                .removeClass('d-none');
+                            // $('#swim_guardian_image_preview').attr('src', '/' + response.data.member_details.details['guardian_image'].replace(/^\/+/, '')).removeClass('d-none');
+                            $('#swim_guardian_image_preview').attr('src', BASE_URL + '/' + response.data.member_details.details['guardian_image'].replace(/^\/+/, '')).removeClass('d-none');
                         } else {
                             $('#swim_guardian_image_preview').addClass('d-none').attr('src', '');
                         }
@@ -2583,7 +2582,14 @@
 
 
                         if (data.image) {
-                            $('#receiptImage').attr('src', '/' + data.image);
+                            // console.log(data.image);
+                            // $('#receiptImage').attr('src', '/' + data.image);
+                            // $('#receiptImage').attr('src', data.image).removeClass('d-none');
+                            // $('#receiptImage').attr('src', '/lake-friends/' + data.image).removeClass('d-none');
+
+                            // const BASE_URL = "{{ url('/') }}";
+
+                            $('#receiptImage').attr('src', BASE_URL + '/' + data.image).removeClass('d-none');
                         }
 
                         $('#receiptModal').modal('show');

@@ -630,9 +630,12 @@
 
                          // Show current image
                         if(data.image){
-                            $('#edit_itemPreview')
-                                .attr('src', '/' + data.image)
-                                .removeClass('d-none');
+                            //$('#edit_itemPreview').attr('src', '/' + data.image).removeClass('d-none');
+                            $('#edit_itemPreview').attr('src', data.image).removeClass('d-none');
+                            $('#edit_uploadContent').hide();
+                        } else {
+                            $('#edit_itemPreview').addClass('d-none').attr('src', '');
+                            $('#edit_uploadContent').show();
                         }
 
                         // CHECK PENDING PRICE REQUEST

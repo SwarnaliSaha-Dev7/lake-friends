@@ -122,10 +122,22 @@
 <body>
 
     @php
-        $logoPath   = public_path('assets/images/logo.svg');
-        $logoBase64 = file_exists($logoPath)
-            ? 'data:image/svg+xml;base64,' . base64_encode(file_get_contents($logoPath))
-            : null;
+
+        // $logoPath   = public_path('assets/images/logo.svg');
+        // $logoBase64 = file_exists($logoPath)
+        //     ? 'data:image/svg+xml;base64,' . base64_encode(file_get_contents($logoPath))
+        //     : null;
+
+        $logoBase64 = null;
+
+        if (!empty($clubDetails?->logo)) {
+            $logoPath = public_path($clubDetails->logo);
+
+            if (file_exists($logoPath)) {
+                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode(file_get_contents($logoPath));
+            }
+        }
 
         $statusPillClass = $session->status === 'billed' ? 's-billed' : 's-cancelled';
         $sessionDate     = \Carbon\Carbon::parse($session->created_at)->format('d/m/Y');
@@ -140,8 +152,10 @@
                 @endif
             </td>
             <td style="vertical-align:middle;">
-                <div style="font-size:16px; font-weight:bold; color:#97A0AC; line-height:1.2;">Lake Friends Club</div>
-                <div style="font-size:10px; color:#6c757d; margin-top:2px;">Kolkata, West Bengal</div>
+                <div style="font-size:16px; font-weight:bold; color:#97A0AC; line-height:1.2;">
+                    {{ $clubDetails->name ?? '' }}
+                </div>
+                <div style="font-size:10px; color:#6c757d; margin-top:2px;">{{ $clubDetails->address ?? '' }}</div>
             </td>
             <td style="width:30%; text-align:right; vertical-align:middle;">
                 <div style="font-size:22px; font-weight:bold; color:#97A0AC; letter-spacing:2px; text-transform:uppercase;">Invoice</div>

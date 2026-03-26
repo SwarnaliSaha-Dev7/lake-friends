@@ -369,7 +369,7 @@
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
-                                            <select name="swim_sex" id="swim_member_sex" class="form-select py-2 shadow-none" required readonly>
+                                            <select name="swim_sex" id="swim_member_sex" class="form-select py-2 shadow-none" required disabled>
                                                 <option value="" hidden disabled selected>Sex</option>
                                                 <option value="male">Male</option>
                                                 <option value="female">Female</option>
@@ -563,7 +563,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h2 class="modal-title fs-5 fw-semibold" id="addclubmemberModalLabel">Edit Member</h2>
+                    <h2 class="modal-title fs-5 fw-semibold" id="addclubmemberModalLabel">Approval details</h2>
                     <button type="button" class="btn-close bg-transparent fs-5 lh-1" data-bs-dismiss="modal"
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
@@ -846,6 +846,7 @@
 <script>
     $(document).ready(function() {
 
+        const BASE_URL = "{{ url('/') }}";
 
         $('.rejectBtn').on('click', function(){
             $('#confirmRejectBtn').data('id', $(this).data('id'));
@@ -987,10 +988,12 @@
                             $('#clubCardDetailCol').hide();
                         }
 
-                        $("#club_image").attr("src", '/' + response.data['image']);
+                        // $("#club_image").attr("src", '/' + response.data['image']);
+                        $('#club_image').attr('src', BASE_URL + '/' + response.data['image'].replace(/^\/+/, '')).removeClass('d-none');
 
                         if (response.data['spouse_image']) {
-                            $("#club_spouse_image").attr("src", '/' + response.data['spouse_image']);
+                            // $("#club_spouse_image").attr("src", '/' + response.data['spouse_image']);
+                            $('#club_spouse_image').attr('src', BASE_URL + '/' + response.data['spouse_image'].replace(/^\/+/, '')).removeClass('d-none');
                         }
                         else{
                             $("#spouse_image_div").hide();
@@ -1062,9 +1065,11 @@
                         //     $('#swimCardDetailCol').hide();
                         // }
 
-                        $("#swim_image").attr("src", '/' + response.data['swim_image']);
+                        // $("#swim_image").attr("src", '/' + response.data['swim_image']);
+                        $('#swim_image').attr('src', BASE_URL + '/' + response.data['swim_image'].replace(/^\/+/, '')).removeClass('d-none');
 
-                        $("#swim_guardian_image").attr("src", '/' + response.data['swim_guardian_image']);
+                        // $("#swim_guardian_image").attr("src", '/' + response.data['swim_guardian_image']);
+                        $('#swim_guardian_image').attr('src', BASE_URL + '/' + response.data['swim_guardian_image'].replace(/^\/+/, '')).removeClass('d-none');
 
                         // console.log(response.purchase_history);
 
