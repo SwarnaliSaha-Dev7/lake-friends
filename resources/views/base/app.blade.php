@@ -712,10 +712,10 @@
                                 <small class="text-muted d-block">Name</small>
                                 <span class="fw-semibold" id="swim_renewal_member_name">—</span>
                             </div>
-                            <div class="col-md-6">
+                            {{-- <div class="col-md-6">
                                 <small class="text-muted d-block">Card No</small>
                                 <span class="fw-semibold" id="swim_renewal_card_no">—</span>
-                            </div>
+                            </div> --}}
                             <div class="col-md-6">
                                 <small class="text-muted d-block">Current Plan</small>
                                 <span class="fw-semibold" id="swim_renewal_current_plan">—</span>

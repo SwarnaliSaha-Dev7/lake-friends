@@ -917,7 +917,7 @@
                     const purchase = purchases[0];
 
                     $('#swim_renewal_member_name').text(d.name || '—');
-                    $('#swim_renewal_card_no').text(d.card_details?.card_no || '—');
+                    // $('#swim_renewal_card_no').text(d.card_details?.card_no || '—');
                     $('#swim_renewal_current_plan').text(purchase?.membership_plan_type?.name ?? '—');
                     $('#swim_renewal_expiry_date').text(
                         purchase?.expiry_date ? new Date(purchase.expiry_date).toLocaleDateString('en-IN') : '—'

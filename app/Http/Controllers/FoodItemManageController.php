@@ -308,28 +308,28 @@ class FoodItemManageController extends Controller
                 $image_path = $foodItem->image;
             }
 
-            $payload = [
-                'item_name'    => $request->itemName,
-                'category_id'  => $request->itemCat,
-                'image'        => $image_path,
-                'code'         => $request->itemCode,
-                'is_active'    => $request->itemstatus,
-                'old_name'     => $foodItem->name,
-            ];
+            // $payload = [
+            //     'item_name'    => $request->itemName,
+            //     'category_id'  => $request->itemCat,
+            //     'image'        => $image_path,
+            //     'code'         => $request->itemCode,
+            //     'is_active'    => $request->itemstatus,
+            //     'old_name'     => $foodItem->name,
+            // ];
 
-            $approval = ActionApproval::create([
-                'club_id'         => $club_id,
-                'module'          => 'food_item_update',
-                'action_type'     => 'update',
-                'entity_model'    => 'FoodItem',
-                'entity_id'       => $foodItem->id,
-                'maker_user_id'   => Auth::id(),
-                'request_payload' => json_encode($payload),
-            ]);
+            // $approval = ActionApproval::create([
+            //     'club_id'         => $club_id,
+            //     'module'          => 'food_item_update',
+            //     'action_type'     => 'update',
+            //     'entity_model'    => 'FoodItem',
+            //     'entity_id'       => $foodItem->id,
+            //     'maker_user_id'   => Auth::id(),
+            //     'request_payload' => json_encode($payload),
+            // ]);
 
-            $isAdmin = Auth::user()->hasRole('admin');
+            // $isAdmin = Auth::user()->hasRole('admin');
 
-            if ($isAdmin) {
+            // if ($isAdmin) {
                 $foodItem->update([
                     'name'        => $request->itemName,
                     'category_id' => $request->itemCat,
@@ -337,25 +337,26 @@ class FoodItemManageController extends Controller
                     'code'        => $request->itemCode,
                     'is_active'   => $request->itemstatus,
                 ]);
-                $approval->update([
-                    'checker_user_id'         => Auth::id(),
-                    'approved_or_rejected_at' => now(),
-                    'status'                  => 'approved',
-                ]);
-            }
+                // $approval->update([
+                //     'checker_user_id'         => Auth::id(),
+                //     'approved_or_rejected_at' => now(),
+                //     'status'                  => 'approved',
+                // ]);
+            // }
 
             DB::commit();
 
-            if (!$isAdmin) {
-                $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
-                Notification::send($approvers, new ApprovalNotification($approval));
-            }
+            // if (!$isAdmin) {
+            //     $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            //     Notification::send($approvers, new ApprovalNotification($approval));
+            // }
 
             return response()->json([
                 'statusCode' => 200,
-                'message'    => $isAdmin
-                    ? 'Food item updated successfully'
-                    : 'Food item update request sent for approval',
+                // 'message'    => $isAdmin
+                //     ? 'Food item updated successfully'
+                //     : 'Food item update request sent for approval',
+                'message' => 'Food item updated successfully',
             ]);
 
 

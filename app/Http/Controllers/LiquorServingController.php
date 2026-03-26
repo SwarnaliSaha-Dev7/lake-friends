@@ -187,13 +187,24 @@ class LiquorServingController extends Controller
 
             $newName = $serving->foodItem->name . ' ' . $request->volume_ml . 'ml';
 
+            $serving->fill([
+                'name'      => $newName,
+                'volume_ml' => $request->volume_ml,
+                'price'     => $request->price,
+            ]);
+
+            if (!$serving->isDirty()) {
+                DB::rollBack();
+                return response()->json(['statusCode' => 200, 'message' => 'No changes were made']);
+            }
+
             $payload = [
                 'serving_id' => $serving->id,
                 'item_name'  => $serving->foodItem->name ?? '—',
                 'old'        => [
-                    'name'      => $serving->name,
-                    'volume_ml' => $serving->volume_ml,
-                    'price'     => $serving->price,
+                    'name'      => $serving->getOriginal('name'),
+                    'volume_ml' => $serving->getOriginal('volume_ml'),
+                    'price'     => $serving->getOriginal('price'),
                 ],
                 'new'        => [
                     'name'      => $newName,
