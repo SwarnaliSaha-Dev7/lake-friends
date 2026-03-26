@@ -576,7 +576,8 @@
                                 toastr.error(response.error);
                             }
                             else{
-                                toastr.error("Something went wrong. Please try again.");
+                                toastr.error(response.message || 'Something went wrong.');
+                                // toastr.error("Something went wrong. Please try again.");
                                 //console.log(response);
                             }
                         }
@@ -716,7 +717,7 @@
                         }
                         else{
 
-                            toastr.error(response.error);
+                            toastr.error(response.message || 'Something went wrong.');
                         }
 
                     },

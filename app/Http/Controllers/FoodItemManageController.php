@@ -75,29 +75,43 @@ class FoodItemManageController extends Controller
             DB::beginTransaction();
 
             $data = $request->validate([
-                'itemName'  => ['required', 'string', 'max:255',
-                    Rule::unique('food_items','name')->where(function ($query) use ($club_id) {
-                        return $query->where('club_id', $club_id)->where('item_type','food')->whereNull('deleted_at');
-                    }),
-                ],
+                'itemName'  => ['required', 'string', 'max:255'],
                 'itemCat' => 'required',
 
                 // 'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',
 
                 'itemImage' => 'required|image|mimes:jpeg,png,jpg|max:5120',
 
-                'itemCode' => ['required','string','max:255',
-                                Rule::unique('food_items','code')
-                                    ->where(function ($query) use ($club_id) {
-                                        return $query->where('club_id', $club_id)
-                                                     ->where('item_type','food')
-                                                     ->whereNull('deleted_at');
-                                                }),
-                            ],
+                'itemCode' => ['required','string','max:255'],
 
                 'itemstatus' => 'required|boolean',
 
             ]);
+
+            $dupName = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'food')
+                ->whereNull('deleted_at')
+                ->where('category_id', $request->itemCat)
+                ->where('name', $request->itemName)
+                ->exists();
+
+            $dupCode = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'food')
+                ->whereNull('deleted_at')
+                ->where('category_id', $request->itemCat)
+                ->where('code', $request->itemCode)
+                ->exists();
+
+            if ($dupName || $dupCode) {
+                $message = $dupName && $dupCode
+                    ? 'Item name and code already exist in this category.'
+                    : ($dupName ? 'Item name already exists in this category.' : 'Item code already exists in this category.');
+
+                return response()->json([
+                    'statusCode' => 409,
+                    'message'    => $message,
+                ]);
+            }
 
             $dest_path  = 'uploads/images';
             $image_path = null;
@@ -253,29 +267,13 @@ class FoodItemManageController extends Controller
 
             $request->validate([
 
-                'itemName' => ['required', 'string', 'max:255',
-                                Rule::unique('food_items','name')
-                                ->ignore($id)
-                                ->where(function ($query) use ($club_id) {
-                                    return $query->where('club_id', $club_id)
-                                                    ->where('item_type','food')
-                                                    ->whereNull('deleted_at');
-                                            }),
-                              ],
+                'itemName' => ['required', 'string', 'max:255'],
 
                 'itemCat' => 'required',
 
                 // 'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',
 
-                'itemCode'   => ['required','string','max:255',
-                                Rule::unique('food_items','code')
-                                    ->ignore($id)
-                                    ->where(function ($query) use ($club_id) {
-                                        return $query->where('club_id', $club_id)
-                                                     ->where('item_type','food')
-                                                     ->whereNull('deleted_at');
-                                                }),
-                                ],
+                'itemCode'   => ['required','string','max:255'],
 
                 'itemstatus' => 'required|boolean',
 
@@ -285,6 +283,33 @@ class FoodItemManageController extends Controller
                                  ->where('id',$id)
                                  ->where('item_type','food')
                                  ->firstOrFail();
+
+            $dupName = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'food')
+                ->whereNull('deleted_at')
+                ->where('category_id', $request->itemCat)
+                ->where('name', $request->itemName)
+                ->where('id', '!=', $foodItem->id)
+                ->exists();
+
+            $dupCode = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'food')
+                ->whereNull('deleted_at')
+                ->where('category_id', $request->itemCat)
+                ->where('code', $request->itemCode)
+                ->where('id', '!=', $foodItem->id)
+                ->exists();
+
+            if ($dupName || $dupCode) {
+                $message = $dupName && $dupCode
+                    ? 'Item name and code already exist in this category.'
+                    : ($dupName ? 'Item name already exists in this category.' : 'Item code already exists in this category.');
+
+                return response()->json([
+                    'statusCode' => 409,
+                    'message'    => $message,
+                ]);
+            }
 
             $dest_path = 'uploads/images';
             $image_path = null;
