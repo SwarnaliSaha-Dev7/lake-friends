@@ -188,11 +188,13 @@
                                 $('#swimRenewalBtn').removeClass('d-none');
                                 $('#createOrderBtn').addClass('d-none');
                                 $('#cardWalletSection').addClass('d-none');
+                                $('#transactionHistoryBtn').addClass('d-none');
                             } else {
                                 $('#renewalBtn').removeClass('d-none');
                                 $('#swimRenewalBtn').addClass('d-none');
                                 $('#createOrderBtn').removeClass('d-none');
                                 $('#cardWalletSection').removeClass('d-none');
+                                $('#transactionHistoryBtn').removeClass('d-none');
                             }
 
                             $('#cardentry').modal('show');

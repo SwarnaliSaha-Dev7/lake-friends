@@ -438,11 +438,7 @@ class OrderSessionController extends Controller
                 : $session->orders->where('status', 'pending');
 
             foreach ($ordersToReverse as $order) {
-                // Only restore bar stock for open sessions (items not yet served).
-                // For billed sessions the items were already consumed — no stock reversal.
-                if (!$isBilled) {
-                    $this->restoreStock($order, $clubId);
-                }
+                $this->restoreStock($order, $clubId);
                 $order->update(['status' => 'cancelled']);
             }
 

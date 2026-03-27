@@ -162,6 +162,10 @@
                             style="background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:10px;font-size:0.82rem;">
                             <i class="fa-solid fa-clock-rotate-left d-block mb-1 fs-6"></i>Membership History
                         </button>
+                        <button type="button" class="btn flex-fill py-2 fw-medium d-none" id="transactionHistoryBtn"
+                            style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:10px;font-size:0.82rem;">
+                            <i class="fa-solid fa-receipt d-block mb-1 fs-6"></i>Transaction History
+                        </button>
                     </div>
                 </div>
 
