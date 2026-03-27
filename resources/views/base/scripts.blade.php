@@ -134,9 +134,17 @@
                             for (var ni = 0; ni < Math.min(nameParts.length, 2); ni++) {
                                 if (nameParts[ni]) initials += nameParts[ni][0].toUpperCase();
                             }
+
+                            let img_base_url = "{{ url('/') }}";
+
                             var avatarUrl = response.data.image
-                                ? '/' + response.data.image.replace(/^\/+/, '')
-                                : '';
+                            ? img_base_url + '/' + response.data.image.replace(/^\/+/, '')
+                            : '';
+
+                            // var avatarUrl = response.data.image
+                            //     ? '/' + response.data.image.replace(/^\/+/, '')
+                            //     : '';
+
                             if (avatarUrl) {
                                 $('#cardMemberAvatar')
                                     .css({ 'background-image': 'none' })
