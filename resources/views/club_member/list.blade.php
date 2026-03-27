@@ -1664,6 +1664,7 @@
                     // $('#club_member_photo').html(data.image);
                     // const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
                     // $('#club_member_photo').text(imageName);
+                    //comment
                     if (data.image) {
                         // $('#member_image_preview').attr('src', '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
                         $('#member_image_preview').attr('src', BASE_URL + '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
