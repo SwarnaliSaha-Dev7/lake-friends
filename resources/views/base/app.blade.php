@@ -491,7 +491,9 @@
                             <div class="fw-bold text-white" style="font-size:15px;">Transaction History</div>
                             <div class="opacity-75 text-white" style="font-size:12px;" id="txnHistoryMemberName">—</div>
                         </div>
-                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal">
+                            <i class="fa-regular fa-circle-xmark"></i>
+                        </button>
                     </div>
                 </div>
 
