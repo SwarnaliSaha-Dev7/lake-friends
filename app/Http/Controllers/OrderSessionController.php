@@ -163,8 +163,8 @@ class OrderSessionController extends Controller
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
             }
 
-            // Cumulative wallet check
-            $wallet = Wallet::where('member_id', $memberId)->first();
+            // Cumulative wallet check (locked to prevent concurrent double-spend)
+            $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
             if (!$wallet) {
                 return response()->json(['statusCode' => 422, 'message' => 'Wallet not found for this member.']);
             }
@@ -353,8 +353,8 @@ class OrderSessionController extends Controller
             $totalGst      = $pendingOrders->sum('gst_amount');
             $totalNet      = (float) $pendingOrders->sum('net_amount');
 
-            // Final wallet check
-            $wallet = Wallet::where('member_id', $session->member_id)->first();
+            // Final wallet check (locked to prevent concurrent double-spend)
+            $wallet = Wallet::where('member_id', $session->member_id)->lockForUpdate()->first();
             if (!$wallet) {
                 return response()->json(['statusCode' => 422, 'message' => 'Wallet not found.']);
             }

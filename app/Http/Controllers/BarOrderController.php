@@ -289,8 +289,8 @@ class BarOrderController extends Controller
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
             }
 
-            // Wallet check
-            $wallet = Wallet::where('member_id', $memberId)->first();
+            // Wallet check (locked to prevent concurrent double-spend)
+            $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
             if (!$wallet) {
                 return response()->json(['statusCode' => 422, 'message' => 'Wallet not found.']);
             }

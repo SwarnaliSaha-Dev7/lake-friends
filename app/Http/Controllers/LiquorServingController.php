@@ -185,6 +185,21 @@ class LiquorServingController extends Controller
                 ]);
             }
 
+            // Duplicate check: same item + volume must not exist (excluding current record)
+            $duplicate = LiquorServing::where('club_id', $clubId)
+                ->where('food_item_id', $serving->food_item_id)
+                ->where('volume_ml', $request->volume_ml)
+                ->where('id', '!=', $id)
+                ->exists();
+
+            if ($duplicate) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 422,
+                    'message'    => 'A serving with this item and volume already exists.',
+                ]);
+            }
+
             $newName = $serving->foodItem->name . ' ' . $request->volume_ml . 'ml';
 
             $serving->fill([

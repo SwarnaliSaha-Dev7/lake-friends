@@ -1229,8 +1229,9 @@ class SwimmingMemberController extends Controller
 
             DB::beginTransaction();
 
+            // Include 'pending' so a newly approved plan's expiry is used as base
             $lastPurchase = MembershipPurchaseHistory::where('member_id', $member->id)
-                ->where('status', 'active')
+                ->whereIn('status', ['active', 'pending'])
                 ->latest('expiry_date')
                 ->first();
 

@@ -41,122 +41,72 @@ if (!function_exists('financialYearRange')) {
 
 /* ── Sequence generators ──────────────────────────────────────────────────── */
 
+/**
+ * Atomically increments the sequence counter for the given name+FY and returns
+ * the next value. Uses a dedicated `sequences` table with a row-level lock
+ * (SELECT ... FOR UPDATE) to prevent duplicate numbers under concurrent requests.
+ * Must be called inside an active DB transaction.
+ */
+if (!function_exists('_nextSequenceValue')) {
+    function _nextSequenceValue(string $seqName, int $clubId, string $fy): int
+    {
+        // Single atomic SQL: insert with last_value=1, or increment if row exists.
+        // Safe under concurrent requests — no separate read-then-write race.
+        \Illuminate\Support\Facades\DB::statement(
+            "INSERT INTO sequences (club_id, sequence_name, fy_label, last_value)
+             VALUES (?, ?, ?, 1)
+             ON DUPLICATE KEY UPDATE last_value = last_value + 1",
+            [$clubId, $seqName, $fy]
+        );
+
+        return (int) \Illuminate\Support\Facades\DB::table('sequences')
+            ->where('club_id', $clubId)
+            ->where('sequence_name', $seqName)
+            ->where('fy_label', $fy)
+            ->value('last_value');
+    }
+}
+
 if (!function_exists('generateSessionNo')) {
     function generateSessionNo($forDate = null): string
     {
-        $clubId  = club_id();
-        $carbon  = $forDate ? \Carbon\Carbon::parse($forDate) : now();
-        $fy      = financialYearLabel($carbon);
-        [$fyStart, $fyEnd] = financialYearRange($carbon);
-
-        $last = OrderSession::where('club_id', $clubId)
-            ->whereBetween('created_at', [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])
-            ->whereNotNull('session_no')
-            ->latest('id')
-            ->value('session_no');
-
-        $lastNum = $last ? (int) substr($last, -4) : 0;
-
-        return 'LF/' . $fy . '/' . str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        $clubId = club_id();
+        $carbon = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $fy     = financialYearLabel($carbon);
+        $next   = _nextSequenceValue('session_no', $clubId, $fy);
+        return 'LF/' . $fy . '/' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }
 
 if (!function_exists('generateOrderNo')) {
     function generateOrderNo($forDate = null): string
     {
-        $clubId  = club_id();
-        $carbon  = $forDate ? \Carbon\Carbon::parse($forDate) : now();
-        $fy      = financialYearLabel($carbon);
-        [$fyStart, $fyEnd] = financialYearRange($carbon);
-
-        $last = RestaurantOrder::where('club_id', $clubId)
-            ->whereBetween('created_at', [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'])
-            ->whereNotNull('order_no')
-            ->latest('id')
-            ->value('order_no');
-
-        $lastNum = $last ? (int) substr($last, -4) : 0;
-
-        return 'LF/' . $fy . '/' . str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        $clubId = club_id();
+        $carbon = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $fy     = financialYearLabel($carbon);
+        $next   = _nextSequenceValue('order_no', $clubId, $fy);
+        return 'LF/' . $fy . '/' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }
 
 if (!function_exists('generateMrNo')) {
     function generateMrNo($forDate = null): string
     {
-        $clubId  = club_id();
-        $carbon  = $forDate ? \Carbon\Carbon::parse($forDate) : now();
-        $fy      = financialYearLabel($carbon);
-        [$fyStart, $fyEnd] = financialYearRange($carbon);
-
-        $range = [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'];
-
-        $lastFromOrders = RestaurantOrder::where('club_id', $clubId)
-            ->whereBetween('created_at', $range)
-            ->whereNotNull('mr_no')
-            ->latest('id')
-            ->value('mr_no');
-
-        $lastFromSessions = OrderSession::where('club_id', $clubId)
-            ->whereBetween('created_at', $range)
-            ->whereNotNull('mr_no')
-            ->latest('id')
-            ->value('mr_no');
-
-        $lastFromPayments = PaymentHistory::where('club_id', $clubId)
-            ->whereBetween('created_at', $range)
-            ->whereNotNull('mr_no')
-            ->latest('id')
-            ->value('mr_no');
-
-        $nums = array_filter([
-            $lastFromOrders   ? (int) substr($lastFromOrders,   -4) : 0,
-            $lastFromSessions ? (int) substr($lastFromSessions, -4) : 0,
-            $lastFromPayments ? (int) substr($lastFromPayments, -4) : 0,
-        ]);
-
-        $lastNum = $nums ? max($nums) : 0;
-
-        return 'LF/' . $fy . '/' . str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        $clubId = club_id();
+        $carbon = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $fy     = financialYearLabel($carbon);
+        $next   = _nextSequenceValue('mr_no', $clubId, $fy);
+        return 'LF/' . $fy . '/' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }
 
 if (!function_exists('generateBillNo')) {
     function generateBillNo($forDate = null): string
     {
-        $clubId  = club_id();
-        $carbon  = $forDate ? \Carbon\Carbon::parse($forDate) : now();
-        $fy      = financialYearLabel($carbon);
-        [$fyStart, $fyEnd] = financialYearRange($carbon);
-
-        $range = [$fyStart . ' 00:00:00', $fyEnd . ' 23:59:59'];
-
-        $lastFromOrders = RestaurantOrder::where('club_id', $clubId)
-            ->whereBetween('created_at', $range)
-            ->whereNotNull('bill_no')
-            ->latest('id')
-            ->value('bill_no');
-
-        $lastFromSessions = OrderSession::where('club_id', $clubId)
-            ->whereBetween('created_at', $range)
-            ->whereNotNull('bill_no')
-            ->latest('id')
-            ->value('bill_no');
-
-        $lastFromPayments = PaymentHistory::where('club_id', $clubId)
-            ->whereBetween('created_at', $range)
-            ->whereNotNull('bill_no')
-            ->latest('id')
-            ->value('bill_no');
-
-        $nums = array_filter([
-            $lastFromOrders   ? (int) substr($lastFromOrders,   -4) : 0,
-            $lastFromSessions ? (int) substr($lastFromSessions, -4) : 0,
-            $lastFromPayments ? (int) substr($lastFromPayments, -4) : 0,
-        ]);
-
-        $lastNum = $nums ? max($nums) : 0;
-
-        return 'LF/' . $fy . '/' . str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        $clubId = club_id();
+        $carbon = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $fy     = financialYearLabel($carbon);
+        $next   = _nextSequenceValue('bill_no', $clubId, $fy);
+        return 'LF/' . $fy . '/' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }

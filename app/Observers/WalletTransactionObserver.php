@@ -14,7 +14,14 @@ class WalletTransactionObserver
     public function created(WalletTransaction $txn): void
     {
         // Track debit transactions that count toward minimum spend
-        $spendTypes = ['spend', 'add_on_purchase', 'locker_purchase'];
+        $spendTypes = [
+            'spend',
+            'add_on_purchase',
+            'locker_purchase',
+            'Food and Liquor Order',
+            'Bar Order',
+            'Restaurant Food Order',
+        ];
         if (!in_array($txn->txn_type, $spendTypes) || $txn->direction !== 'debit') {
             return;
         }

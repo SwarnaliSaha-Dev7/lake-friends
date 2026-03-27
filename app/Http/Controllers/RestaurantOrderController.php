@@ -366,8 +366,8 @@ class RestaurantOrderController extends Controller
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
             }
 
-            // Check wallet balance
-            $wallet = Wallet::where('member_id', $memberId)->first();
+            // Check wallet balance (locked to prevent concurrent double-spend)
+            $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
             if (!$wallet) {
                 return response()->json(['statusCode' => 422, 'message' => 'Wallet not found for this member.']);
             }

@@ -207,6 +207,13 @@ class ActionApprovalController extends Controller
                 ]);
             }
 
+            if ($data->maker_user_id === Auth::id()) {
+                return response()->json([
+                    'statusCode' => 403,
+                    'message' => 'You cannot approve your own request.'
+                ]);
+            }
+
             if ($data->module == 'member_edit') {
                 $payloadJson = $data->request_payload;
                 $payload = json_decode($payloadJson);
@@ -738,6 +745,13 @@ class ActionApprovalController extends Controller
                 ]);
             }
 
+            if ($data->maker_user_id === Auth::id()) {
+                return response()->json([
+                    'statusCode' => 403,
+                    'message' => 'You cannot reject your own request.'
+                ]);
+            }
+
             if ($data->module == 'member_create') {
                 DB::beginTransaction();
 
@@ -879,8 +893,7 @@ class ActionApprovalController extends Controller
                     $refundAmount = $payload['locker_price'];
                     $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
                     if ($wallet) {
-                        $wallet->current_balance += $refundAmount;
-                        $wallet->save();
+                        $wallet->increment('current_balance', $refundAmount);
 
                         WalletTransaction::create([
                             'wallet_id' => $wallet->id,
@@ -911,8 +924,7 @@ class ActionApprovalController extends Controller
                 if ($refundAmount > 0) {
                     $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
                     if ($wallet) {
-                        $wallet->current_balance += $refundAmount;
-                        $wallet->save();
+                        $wallet->increment('current_balance', $refundAmount);
 
                         WalletTransaction::create([
                             'wallet_id'  => $wallet->id,
