@@ -34,8 +34,13 @@ class OrderSessionController extends Controller
                 ->latest()
                 ->get();
 
+            $clubMembershipTypeId = MembershipType::where('club_id', $clubId)
+                ->where('name', 'Club Membership')
+                ->value('id');
+
             $members = Member::where('club_id', $clubId)
                 ->where('status', 'active')
+                ->where('membership_type_id', $clubMembershipTypeId)
                 ->with('cardDetails:cards.id,card_no')
                 ->orderBy('name')
                 ->get(['id', 'name', 'member_code']);

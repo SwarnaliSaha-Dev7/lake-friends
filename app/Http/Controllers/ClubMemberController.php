@@ -388,6 +388,19 @@ class ClubMemberController extends Controller
                 return response()->json(['statusCode' => 404, 'message' => 'Membership plan not found']);
             }
 
+            // Block if a renewal request is already pending approval
+            $pendingRenewal = ActionApproval::where('club_id', $clubId)
+                ->where('module', 'plan_renewal')
+                ->where('status', 'pending')
+                ->whereHasMorph('entity', [MembershipPurchaseHistory::class], function ($q) use ($member) {
+                    $q->where('member_id', $member->id);
+                })
+                ->exists();
+
+            if ($pendingRenewal) {
+                return response()->json(['statusCode' => 422, 'message' => 'A renewal request is already pending approval for this member.']);
+            }
+
             DB::beginTransaction();
 
             // Start date: day after current expiry or today if already expired
