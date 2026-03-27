@@ -53,9 +53,9 @@ if (!function_exists('_nextSequenceValue')) {
         // Single atomic SQL: insert with last_value=1, or increment if row exists.
         // Safe under concurrent requests — no separate read-then-write race.
         \Illuminate\Support\Facades\DB::statement(
-            "INSERT INTO sequences (club_id, sequence_name, fy_label, last_value)
+            "INSERT INTO `sequences` (`club_id`, `sequence_name`, `fy_label`, `last_value`)
              VALUES (?, ?, ?, 1)
-             ON DUPLICATE KEY UPDATE last_value = last_value + 1",
+             ON DUPLICATE KEY UPDATE `last_value` = `last_value` + 1",
             [$clubId, $seqName, $fy]
         );
 
