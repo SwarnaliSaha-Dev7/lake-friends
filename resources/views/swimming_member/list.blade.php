@@ -803,28 +803,28 @@
                                                 placeholder="A/C Head" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
-                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt. (Min 500)</small></label>
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Taxable Amt.</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" id="taxable_amount" name="swim_taxable_amt"
-                                                placeholder="Taxable Amt. (Min 500)" required>
+                                                placeholder="Taxable Amt." required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>GST%</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" id="gstPercentage" name="swim_gst_percent"
                                                 placeholder="GST%" value="{{$gstPercentage}}" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>GST Amt</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="gstAmt" name="swim_gst_amt"
                                                 placeholder="GST Amt" readonly required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Receipt Amt</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="receiptAmt" name="swim_receipt_amt"
@@ -1151,7 +1151,7 @@
             <div class="modal-content border-0 shadow-sm overflow-hidden">
 
                 {{-- Header --}}
-                <div class="modal-header border-0 pb-0 px-4 pt-4" style="background: linear-gradient(135deg, #0288d1, #0277bd);">
+                <div class="modal-header border-0 px-4 pt-4" style="background: linear-gradient(135deg, #0288d1, #0277bd);">
                     <div class="d-flex align-items-center gap-3 w-100">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                             style="width:46px;height:46px;background:rgba(255,255,255,0.2);">
@@ -1161,7 +1161,7 @@
                             <div class="fw-bold text-white text-truncate" style="font-size:16px;" id="memberName">—</div>
                             <div class="text-white opacity-75" style="font-size:12px;" id="memberClubName">—</div>
                         </div>
-                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white ms-auto position-absolute fs-5" data-bs-dismiss="modal" aria-label="Close" style="right: 12px; top: 4px"><i class="fa-regular fa-circle-xmark"></i></button>
                     </div>
                     <div class="pb-3"></div>
                 </div>
