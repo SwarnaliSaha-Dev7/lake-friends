@@ -725,7 +725,7 @@
             <div class="modal-content border-0 shadow-sm overflow-hidden">
 
                 {{-- Header --}}
-                <div class="modal-header border-0 pb-0 px-4 pt-4" style="background: linear-gradient(135deg, #7367f0, #5e50ee);">
+                <div class="modal-header border-0 px-4 pt-4" style="background: linear-gradient(135deg, #7367f0, #5e50ee);">
                     <div class="d-flex align-items-center gap-3 w-100">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                             style="width:46px;height:46px;background:rgba(255,255,255,0.2);">
@@ -735,7 +735,7 @@
                             <div class="fw-bold text-white text-truncate" style="font-size:16px;" id="memberName">—</div>
                             <div class="text-white opacity-75" style="font-size:12px;" id="memberClubName">—</div>
                         </div>
-                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white ms-auto position-absolute fs-5" data-bs-dismiss="modal" aria-label="Close" style="right: 12px; top: 4px"><i class="fa-regular fa-circle-xmark"></i></button>
                     </div>
                     {{-- Wallet strip --}}
                     <div class="w-100 mt-3 mb-0 pb-3 d-flex align-items-center justify-content-between">
@@ -1662,8 +1662,8 @@
                     $('#club_member_phone').val(data.phone);
                     $('#club_member_address').val(data.address);
                     // $('#club_member_photo').html(data.image);
-                    const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
-                    $('#club_member_photo').text(imageName);
+                    // const imageName = data.image ? data.image.split('/').pop() : 'Passport size Image';
+                    // $('#club_member_photo').text(imageName);
                     if (data.image) {
                         // $('#member_image_preview').attr('src', '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
                         $('#member_image_preview').attr('src', BASE_URL + '/' + data.image.replace(/^\/+/, '')).removeClass('d-none');
@@ -1682,9 +1682,9 @@
                     $('#spouse_blood_grp').val(details.spouse_blood_grp);
                     $('#spouse_address').val(details.spouse_address);
 
-                    let spouseImageName = data.member_details.details.spouse_image
-                    spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
-                    $('#spouse_photo').text(spouseImageName);
+                    // let spouseImageName = data.member_details.details.spouse_image
+                    // spouseImageName = spouseImageName ? spouseImageName.split('/').pop() : 'Passport size Image';
+                    // $('#spouse_photo').text(spouseImageName);
                     if (data.member_details.details.spouse_image) {
                         // $('#spouse_image_preview').attr('src', '/' + data.member_details.details.spouse_image.replace(/^\/+/, '')).removeClass('d-none');
                         $('#spouse_image_preview').attr('src', BASE_URL + '/' + data.member_details.details.spouse_image.replace(/^\/+/, '')).removeClass('d-none');
