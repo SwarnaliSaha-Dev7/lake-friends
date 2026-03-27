@@ -1021,7 +1021,7 @@ class ClubMemberController extends Controller
                         'amount'     => (float) $t->amount,
                         'remarks'    => $t->payment?->remarks,
                         'maker'      => $t->creator?->name,
-                        'created_at' => $t->created_at,
+                        'created_at' => $t->created_at?->toDateTimeString(),
                     ];
                 });
 
@@ -1037,7 +1037,7 @@ class ClubMemberController extends Controller
                         'amount'     => (float) $p->net_amount,
                         'remarks'    => $p->remarks,
                         'maker'      => null,
-                        'created_at' => $p->created_at,
+                        'created_at' => $p->created_at?->toDateTimeString(),
                     ];
                 });
 
