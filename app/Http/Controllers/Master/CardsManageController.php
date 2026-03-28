@@ -4,7 +4,12 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\Card;
+use App\Models\Member;
+use App\Models\MemberCardMapping;
+use App\Models\MembershipPurchaseHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CardsManageController extends Controller
@@ -96,7 +101,32 @@ class CardsManageController extends Controller
                      ->where('id', $id)
                      ->firstOrFail();
 
-        return view('master_manage.cards.edit', compact('cards', 'page_title', 'title'));
+        $cardMapping = MemberCardMapping::where('card_id', $cards->id)->first();
+        $membershipExpiry = null;
+        $isMembershipExpired = false;
+        if ($cardMapping) {
+            $member = Member::find($cardMapping->member_id);
+            if ($member) {
+                $latestActive = MembershipPurchaseHistory::where('member_id', $member->id)
+                    ->where('status', 'active')
+                    ->latest('expiry_date')
+                    ->first();
+
+                $membershipExpiry = $latestActive?->expiry_date;
+                if ($membershipExpiry) {
+                    $isMembershipExpired = Carbon::parse($membershipExpiry)->isPast();
+                }
+            }
+        }
+
+        return view('master_manage.cards.edit', compact(
+            'cards',
+            'page_title',
+            'title',
+            'cardMapping',
+            'membershipExpiry',
+            'isMembershipExpired'
+        ));
     }
 
     /**
@@ -131,6 +161,59 @@ class CardsManageController extends Controller
         return redirect()
               ->route('manage-cards.index')
               ->with('success', 'Card updated successfully!');
+    }
+
+    public function delinkCard(Request $request)
+    {
+        try {
+            $request->validate([
+                'card_id' => ['required', 'integer'],
+            ]);
+
+            $clubId = club_id();
+
+            $card = Card::where('club_id', $clubId)->find($request->card_id);
+            if (!$card) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Card not found'
+                ]);
+            }
+
+            $cardMapping = MemberCardMapping::where('card_id', $card->id)->first();
+            if (!$cardMapping) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Card mapping not found'
+                ]);
+            }
+
+            $member = Member::where('club_id', $clubId)->find($cardMapping->member_id);
+            if (!$member) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Member not found'
+                ]);
+            }
+
+            DB::beginTransaction();
+
+            $cardMapping->delete();
+            $card->update(['is_assigned' => 0]);
+
+            DB::commit();
+
+            return response()->json([
+                'statusCode' => 200,
+                'message' => 'Card delinked successfully'
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'statusCode' => 500,
+                'message' => $th->getMessage()
+            ]);
+        }
     }
 
     /**

@@ -59,12 +59,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('manage-membership-duration-types', MembershipDurationTypesManageController::class);
         Route::resource('manage-card-types', CardTypesManageController::class);
         Route::resource('manage-cards', CardsManageController::class);
+        Route::post('manage-cards/delink', [CardsManageController::class, 'delinkCard'])->name('manage-cards.delink');
         Route::resource('manage-gst-rates', GstRatesManageController::class);
         Route::resource('manage-fine-rules', FineRulesManageController::class);
         Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
         Route::resource('manage-food-categories', FoodCategoryManageController::class);
         Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
         Route::resource('manage-lockers', LockerManageController::class);
+        Route::post('manage-lockers/delink', [LockerManageController::class, 'delink'])->name('manage-lockers.delink');
     });
     // master manage end
 

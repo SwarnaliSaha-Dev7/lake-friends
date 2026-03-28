@@ -36,11 +36,61 @@
             </div>
 
         </div>
-        <!-- <button class="btn btn-primary fw-semibold">Default</button> -->
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            @if(!empty($allocation))
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted">Allocation Expiry:</small>
+                    <span class="fw-semibold">
+                        {{ $allocationExpiry ? \Carbon\Carbon::parse($allocationExpiry)->format('d/m/Y') : '—' }}
+                    </span>
+                </div>
+
+                @if($isAllocationExpired)
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger fw-semibold"
+                        id="delinkLockerBtn"
+                        data-locker-id="{{ $lockers->id }}"
+                    >
+                        Delink From Member
+                    </button>
+                @endif
+            @endif
+        </div>
+
         <button class="btn btn-primary fw-semibold">Update</button>
     </form>
 
 @endsection
 
 @section('customJS')
+    <script>
+        $(document).on('click', '#delinkLockerBtn', function () {
+            const lockerId = $(this).data('locker-id');
+            if (!lockerId) return;
+
+            // if (!confirm('Are you sure you want to delink this locker from the member?')) return;
+
+            $.ajax({
+                url: '{{ route("manage-lockers.delink") }}',
+                type: 'POST',
+                data: {
+                    locker_id: lockerId,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    if (response.statusCode === 200) {
+                        toastr.success(response.message || 'Locker delinked successfully');
+                        location.reload();
+                    } else {
+                        toastr.error(response.message || 'Unable to delink locker');
+                    }
+                },
+                error: function (xhr) {
+                    const msg = xhr.responseJSON?.message || 'Unable to delink locker';
+                    toastr.error(msg);
+                }
+            });
+        });
+    </script>
 @endsection

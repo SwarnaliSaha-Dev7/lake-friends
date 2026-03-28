@@ -817,11 +817,14 @@ class ClubMemberController extends Controller
                     if ($card_no) {
                         $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
 
-                        $currentCard = Card::find($currentCardMapping->card_id);
-                        if ($currentCard) {
-                            $currentCard->update([
-                                'is_assigned' => 0
-                            ]);
+                        if($currentCardMapping){
+                            $currentCard = Card::find($currentCardMapping->card_id);
+
+                            if ($currentCard) {
+                                $currentCard->update([
+                                    'is_assigned' => 0
+                                ]);
+                            }
                         }
 
                         $newCard = Card::find($card_no);
@@ -830,9 +833,17 @@ class ClubMemberController extends Controller
                                 'is_assigned' => 1
                             ]);
 
-                            $currentCardMapping->update([
-                                'card_id' => $card_no
-                            ]);
+                            if($currentCardMapping){
+                                $currentCardMapping->update([
+                                    'card_id' => $card_no
+                                ]);
+                            }
+                            else{
+                                MemberCardMapping::create([
+                                    'card_id' => $card_no,
+                                    'member_id' => $member->id
+                                ]);
+                            }
                         }
                     }
                 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\Locker;
+use App\Models\LockerAllocation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -96,7 +98,23 @@ class LockerManageController extends Controller
                             ->where('id', $id)
                             ->firstOrFail();
 
-        return view('master_manage.lockers.edit', compact('lockers', 'page_title', 'title'));
+        $allocation = LockerAllocation::where('locker_id', $lockers->id)
+            ->latest()
+            ->first();
+        $allocationExpiry = $allocation?->end_date;
+        $isAllocationExpired = false;
+        if ($allocationExpiry) {
+            $isAllocationExpired = Carbon::parse($allocationExpiry)->isPast();
+        }
+
+        return view('master_manage.lockers.edit', compact(
+            'lockers',
+            'page_title',
+            'title',
+            'allocation',
+            'allocationExpiry',
+            'isAllocationExpired'
+        ));
     }
 
     /**
@@ -153,5 +171,49 @@ class LockerManageController extends Controller
         return redirect()
              ->route('manage-lockers.index')
              ->with('success', 'Locker deleted successfully!');
+    }
+
+    public function delink(Request $request)
+    {
+        try {
+            $request->validate([
+                'locker_id' => ['required'],
+            ]);
+
+            $user = auth()->user();
+            $club_id = $user->club_id;
+
+            $locker = Locker::where('club_id', $club_id)->find($request->locker_id);
+            if (!$locker) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Locker not found'
+                ]);
+            }
+
+            $allocation = LockerAllocation::where('locker_id', $locker->id)
+                ->latest()
+                ->first();
+
+            if (!$allocation) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Allocation not found'
+                ]);
+            }
+
+            $allocation->delete();
+            $locker->update(['status' => 'available']);
+
+            return response()->json([
+                'statusCode' => 200,
+                'message' => 'Locker delinked successfully'
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statusCode' => 500,
+                'message' => $th->getMessage()
+            ]);
+        }
     }
 }
