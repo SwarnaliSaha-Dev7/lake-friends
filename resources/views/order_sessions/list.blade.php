@@ -383,7 +383,7 @@ $(document).ready(function () {
             + '<td class="text-nowrap">'  + sl + '</td>'
             + '<td class="text-nowrap fw-medium">' + session.session_no + '</td>'
             + '<td class="text-nowrap"><div class="fw-medium">' + session.member_name + '</div>'
-            +   '<small class="text-muted">' + session.member_code + '</small></td>'
+            +   '<small class="text-muted">' + (session.member_code ?? '') + '</small></td>'
             + '<td class="text-nowrap text-center session-order-count">0</td>'
             + '<td class="text-nowrap fw-semibold session-pending-total">Rs 0.00</td>'
             + '<td class="text-nowrap"><span class="badge border rounded-pill px-3 py-1 bg-success-subtle text-success border-success session-status-badge">Open</span></td>'
