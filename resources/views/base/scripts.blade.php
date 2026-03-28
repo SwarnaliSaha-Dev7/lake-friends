@@ -258,9 +258,9 @@
         // console.log(memberType);
 
         if (!memberId || !memberType) {
-        toastr.error('Member data missing');
-        return;
-    }
+            toastr.error('Member data missing');
+            return;
+        }
 
         let url = '';
 
@@ -315,7 +315,7 @@
                                 <td class="bg-info p-3">Rs ${plan.fine_amount}</td>
                                 <td class="bg-info p-3">Rs ${plan.net_amount}</td>
                                 <td class="bg-info text-end p-3">
-                                    <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}">
+                                    <img src="{{ asset('assets/images') }}${tag}">
                                 </td>
                             </tr>
                         `;
@@ -677,10 +677,36 @@
                 if (response.statusCode == 200) {
                     let tbody = $('#membershipPlanTbody');
                     tbody.empty();
+                    let tag = '';
+                    let isActive = 0;
+                    let toDate = '';
                     response.data.forEach(function(plan) {
                         let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-                        let toDate   = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-                        let isActive = new Date(plan.expiry_date) >= new Date() && plan.status !== 'cancelled';
+                        
+                        if(plan.expiry_date){
+                            toDate   = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                            isActive = new Date(plan.expiry_date) >= new Date() && plan.status !== 'cancelled';
+                        }
+                        else{
+                            toDate = 'N/A';
+                            isActive = 1;
+                        }
+
+                        if(plan.status == 'cancelled'){
+                            isActive = 2;
+                        }
+
+                        if(isActive == 2){
+                            tag = '/cancelled-tag.svg';
+                        }
+                        else if(isActive == 1){
+                            tag = '/active-tag.svg';
+                        }
+                        else{
+                            tag = '/expire-tag.svg';
+                        }
+                        
+                        
                         tbody.append(`<tr>
                             <td class="bg-info align-middle p-3 text-nowrap">
                                 <small class="fw-semibold">From Date</small><br>
@@ -703,7 +729,7 @@
                                 <small class="text-black-50">Rs ${plan.net_amount}</small>
                             </td>
                             <td class="bg-info align-middle text-end p-3">
-                                <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}" alt="" width="${isActive ? 76 : 73}" height="${isActive ? 67 : 24}">
+                                <img src="{{ asset('assets/images') }}${tag}" alt="" width="${isActive ? 76 : 73}" height="${isActive ? 67 : 24}">
                             </td>
                         </tr>`);
                     });
