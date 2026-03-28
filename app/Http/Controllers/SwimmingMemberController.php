@@ -1164,7 +1164,8 @@ class SwimmingMemberController extends Controller
 
             $purchase = $member->purchaseHistory->first();
 
-            $date = $purchase?->start_date?->format('d-m-Y');
+            // $date = $purchase?->start_date?->format('d-m-Y');
+            $date = $member->created_at->format('d-m-Y');
 
             $data = [
                     'name' => $member->name,

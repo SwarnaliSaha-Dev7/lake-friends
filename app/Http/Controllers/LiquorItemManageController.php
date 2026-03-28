@@ -65,24 +65,49 @@ class LiquorItemManageController extends Controller
             DB::beginTransaction();
 
             $request->validate([
-                'itemName' => ['required', 'string', 'max:255',
-                    Rule::unique('food_items', 'name')->where(function ($q) use ($club_id) {
-                        return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
-                    }),
-                ],
+                'itemName' => ['required', 'string', 'max:255'],
+                // 'itemName' => ['required', 'string', 'max:255',
+                //     Rule::unique('food_items', 'name')->where(function ($q) use ($club_id) {
+                //         return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
+                //     }),
+                // ],
                 'itemCat'             => 'required',
                 'itemPrice'           => 'required|numeric|min:0|max:9999999999|decimal:0,2',
                 'itemImage'           => 'required|image|mimes:jpeg,png,jpg|max:5120',
-                'itemCode'            => ['required', 'string', 'max:255',
-                    Rule::unique('food_items', 'code')->where(function ($q) use ($club_id) {
-                        return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
-                    }),
-                ],
+                'itemCode'            => ['required', 'string', 'max:255'],
+                // 'itemCode'            => ['required', 'string', 'max:255',
+                //     Rule::unique('food_items', 'code')->where(function ($q) use ($club_id) {
+                //         return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
+                //     }),
+                // ],
                 'itemstatus'          => 'required|boolean',
                 'size_ml'             => 'nullable|numeric|min:0',
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
                 'is_beer'             => 'nullable|boolean',
             ]);
+
+            $dupName = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->whereNull('deleted_at')
+                ->where('name', $request->itemName)
+                ->exists();
+
+            $dupCode = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->whereNull('deleted_at')
+                ->where('code', $request->itemCode)
+                ->exists();
+
+            if ($dupName || $dupCode) {
+                $message = $dupName && $dupCode
+                    ? 'Item name and code already exist.'
+                    : ($dupName ? 'Item name already exists.' : 'Item code already exists.');
+
+                return response()->json([
+                    'statusCode' => 409,
+                    'message'    => $message,
+                ]);
+            }
 
             $isBeer = $request->boolean('is_beer');
             $unit   = $isBeer ? 'bottle' : 'ml';
@@ -204,17 +229,19 @@ class LiquorItemManageController extends Controller
             DB::beginTransaction();
 
             $request->validate([
-                'itemName' => ['required', 'string', 'max:255',
-                    Rule::unique('food_items', 'name')->ignore($id)->where(function ($q) use ($club_id) {
-                        return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
-                    }),
-                ],
+                'itemName' => ['required', 'string', 'max:255'],
+                // 'itemName' => ['required', 'string', 'max:255',
+                //     Rule::unique('food_items', 'name')->ignore($id)->where(function ($q) use ($club_id) {
+                //         return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
+                //     }),
+                // ],
                 'itemCat'             => 'required',
-                'itemCode'            => ['required', 'string', 'max:255',
-                    Rule::unique('food_items', 'code')->ignore($id)->where(function ($q) use ($club_id) {
-                        return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
-                    }),
-                ],
+                'itemCode'            => ['required', 'string', 'max:255'],
+                // 'itemCode'            => ['required', 'string', 'max:255',
+                //     Rule::unique('food_items', 'code')->ignore($id)->where(function ($q) use ($club_id) {
+                //         return $q->where('club_id', $club_id)->where('item_type', 'liquor')->whereNull('deleted_at');
+                //     }),
+                // ],
                 'itemstatus'          => 'required|boolean',
                 'size_ml'             => 'nullable|numeric|min:0',
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
@@ -225,6 +252,31 @@ class LiquorItemManageController extends Controller
                 ->where('id', $id)
                 ->where('item_type', 'liquor')
                 ->firstOrFail();
+
+            $dupName = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->whereNull('deleted_at')
+                ->where('name', $request->itemName)
+                ->where('id', '!=', $liquorItem->id)
+                ->exists();
+
+            $dupCode = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->whereNull('deleted_at')
+                ->where('code', $request->itemCode)
+                ->where('id', '!=', $liquorItem->id)
+                ->exists();
+
+            if ($dupName || $dupCode) {
+                $message = $dupName && $dupCode
+                    ? 'Item name and code already exist.'
+                    : ($dupName ? 'Item name already exists.' : 'Item code already exists.');
+
+                return response()->json([
+                    'statusCode' => 409,
+                    'message'    => $message,
+                ]);
+            }
 
             $isBeer     = $request->boolean('is_beer');
             $unit       = $isBeer ? 'bottle' : 'ml';

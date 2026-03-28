@@ -740,7 +740,8 @@
     function openRenewalModal(memberId) {
         $('#renewalForm')[0].reset();
         $('#renewal_member_id').val(memberId);
-        $('#renewal_gst_pct').val('{{ $globalGstPercentage ?? 0 }}');
+        // $('#renewal_gst_pct').val('{{ $globalGstPercentage ?? 0 }}');
+        $('#renewal_gst_pct').val('{{ $globalPlanPurchaseGstPercentage ?? 0 }}');
         $('#renewalFineAlert').hide();
         $('#renewalFineList').html('');
         $('#renewalTotalFine').text('₹0.00');
@@ -907,7 +908,8 @@
     function openSwimRenewalModal(memberId) {
         $('#swimRenewalForm')[0].reset();
         $('#swim_renewal_member_id').val(memberId);
-        $('#swim_renewal_gst_pct').val('{{ $globalGstPercentage ?? 0 }}');
+        // $('#swim_renewal_gst_pct').val('{{ $globalGstPercentage ?? 0 }}');
+        $('#swim_renewal_gst_pct').val('{{ $globalPlanPurchaseGstPercentage ?? 0 }}');
         $('#swimRenewalFineAlert').hide();
         $('#swimRenewalFineList').html('');
         $('#swimRenewalTotalFine').text('₹0.00');

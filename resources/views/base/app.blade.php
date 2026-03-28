@@ -647,7 +647,8 @@
                             </div>
                             <div class="col-md-6 col-xl-3">
                                 <label class="form-label w-100 mb-1"><small>GST%</small></label>
-                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="renewal_gst_pct" value="{{ $globalGstPercentage }}" min="0" step="0.01">
+                                {{-- <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="renewal_gst_pct" value="{{ $globalGstPercentage }}" min="0" step="0.01"> --}}
+                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="renewal_gst_pct" value="{{ $globalPlanPurchaseGstPercentage }}" min="0" step="0.01">
                             </div>
                             <div class="col-md-6 col-xl-3">
                                 <label class="form-label w-100 mb-1"><small>GST Amt</small></label>
@@ -784,7 +785,8 @@
                             </div>
                             <div class="col-md-6 col-xl-3">
                                 <label class="form-label w-100 mb-1"><small>GST%</small></label>
-                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="swim_renewal_gst_pct" value="{{ $globalGstPercentage }}" min="0" step="0.01">
+                                {{-- <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="swim_renewal_gst_pct" value="{{ $globalGstPercentage }}" min="0" step="0.01"> --}}
+                                <input type="number" class="form-control py-2 shadow-none" name="gst_percentage" id="swim_renewal_gst_pct" value="{{ $globalPlanPurchaseGstPercentage }}" min="0" step="0.01">
                             </div>
                             <div class="col-md-6 col-xl-3">
                                 <label class="form-label w-100 mb-1"><small>GST Amt</small></label>

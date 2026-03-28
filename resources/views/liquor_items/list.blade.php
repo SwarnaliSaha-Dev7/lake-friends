@@ -500,7 +500,7 @@ $(document).ready(function () {
                     $('#add_uploadContent').show();
                     setTimeout(function () { location.reload(); }, 1500);
                 } else {
-                    toastr.error(response.error || 'Something went wrong.');
+                    toastr.error(response.error || response.message || 'Something went wrong.');
                 }
             },
             error: function () {
@@ -586,7 +586,7 @@ $(document).ready(function () {
                     $('#editliquoritem').modal('hide');
                     setTimeout(function () { location.reload(); }, 1500);
                 } else {
-                    toastr.error(response.error || 'Something went wrong.');
+                    toastr.error(response.error || response.message || 'Something went wrong.');
                 }
             },
             error: function () {

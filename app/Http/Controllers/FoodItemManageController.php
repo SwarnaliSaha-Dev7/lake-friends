@@ -91,21 +91,21 @@ class FoodItemManageController extends Controller
             $dupName = FoodItem::where('club_id', $club_id)
                 ->where('item_type', 'food')
                 ->whereNull('deleted_at')
-                ->where('category_id', $request->itemCat)
+                // ->where('category_id', $request->itemCat)
                 ->where('name', $request->itemName)
                 ->exists();
 
             $dupCode = FoodItem::where('club_id', $club_id)
                 ->where('item_type', 'food')
                 ->whereNull('deleted_at')
-                ->where('category_id', $request->itemCat)
+                // ->where('category_id', $request->itemCat)
                 ->where('code', $request->itemCode)
                 ->exists();
 
             if ($dupName || $dupCode) {
                 $message = $dupName && $dupCode
-                    ? 'Item name and code already exist in this category.'
-                    : ($dupName ? 'Item name already exists in this category.' : 'Item code already exists in this category.');
+                    ? 'Item name and code already exist.'
+                    : ($dupName ? 'Item name already exists.' : 'Item code already exists.');
 
                 return response()->json([
                     'statusCode' => 409,
@@ -287,7 +287,7 @@ class FoodItemManageController extends Controller
             $dupName = FoodItem::where('club_id', $club_id)
                 ->where('item_type', 'food')
                 ->whereNull('deleted_at')
-                ->where('category_id', $request->itemCat)
+                // ->where('category_id', $request->itemCat)
                 ->where('name', $request->itemName)
                 ->where('id', '!=', $foodItem->id)
                 ->exists();
@@ -295,15 +295,15 @@ class FoodItemManageController extends Controller
             $dupCode = FoodItem::where('club_id', $club_id)
                 ->where('item_type', 'food')
                 ->whereNull('deleted_at')
-                ->where('category_id', $request->itemCat)
+                // ->where('category_id', $request->itemCat)
                 ->where('code', $request->itemCode)
                 ->where('id', '!=', $foodItem->id)
                 ->exists();
 
             if ($dupName || $dupCode) {
                 $message = $dupName && $dupCode
-                    ? 'Item name and code already exist in this category.'
-                    : ($dupName ? 'Item name already exists in this category.' : 'Item code already exists in this category.');
+                    ? 'Item name and code already exist.'
+                    : ($dupName ? 'Item name already exists.' : 'Item code already exists.');
 
                 return response()->json([
                     'statusCode' => 409,
