@@ -1913,7 +1913,7 @@
                         // let expiryDate = response.data.purchase_history[0].expiry_date;
                         // let formatted = new Date(expiryDate).toLocaleDateString('en-IN'); // d/m/y format
                         // $('#memberPlanExpiry').text(formatted);
-                        const purchase = response.data.purchase_history?.[0];
+                        const purchase = response.purchase_history;
 
                         $('#memberPlan').text(
                             purchase?.status === 'active'
@@ -1921,7 +1921,7 @@
                                 : 'No Active Plan'
                         );
                         // $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
-                        let formatted = 'NA';
+                        let formatted = 'N/A';
                         if (purchase?.status === 'active' && purchase?.expiry_date) {
                             formatted = new Date(purchase.expiry_date).toLocaleDateString('en-IN');
                         }
@@ -1960,7 +1960,9 @@
                 success: function(response){
                     if (response.statusCode == 200) {
                         toastr.success(response.message);
-
+                        setTimeout(() => {
+                            window.location.href = "{{ route('swimming-member.list') }}";
+                        }, 1500);
                         // $('.spinner-border').replaceWith(originalBtn);
                     }
                     else {
@@ -2041,12 +2043,12 @@
                         } else {
                             $('#swim_guardian_image_preview').addClass('d-none').attr('src', '');
                         }
-                        let planTypeId = response.data.purchase_history[0].membership_plan_type_id;
+                        let planTypeId = response.purchase_history.membership_plan_type_id;
                         $('input[name="swim_membership_plan_type"]').prop('checked', false);
                         $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
                         // $('#current_card_no').text(response.data.card_details.card_no);
                         // console.log(response.purchase_history);
-                        $('#current_membership').text(response.data.purchase_history[0].membership_plan_type.name)
+                        $('#current_membership').text(response.purchase_history.membership_plan_type.name)
 
                         $('.spinner-border').replaceWith(originalBtn);
                         $('#editswimmingmember').modal('show');
@@ -2065,71 +2067,71 @@
 
         });
 
-        $(document).on('click', '.membershipPlanBtn', function() {
-            let memberId = $(this).data('id');
-            let originalBtn = $(this).prop('outerHTML'); // save original button
-            $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
+        // $(document).on('click', '.membershipPlanBtn', function() {
+        //     let memberId = $(this).data('id');
+        //     let originalBtn = $(this).prop('outerHTML'); // save original button
+        //     $(this).replaceWith('<span class="spinner-border spinner-border-sm text-primary"></span>');
 
-            $.ajax({
-                url: '{{route("swimming-member.membership-plan", ":memberId")}}'.replace(':memberId', memberId),
-                type: 'GET',
-                success: function(response){
-                    if (response.statusCode == 200) {
-                        let tbody = $('#membershipPlanTbody');
-                        tbody.empty();
+        //     $.ajax({
+        //         url: '{{route("swimming-member.membership-plan", ":memberId")}}'.replace(':memberId', memberId),
+        //         type: 'GET',
+        //         success: function(response){
+        //             if (response.statusCode == 200) {
+        //                 let tbody = $('#membershipPlanTbody');
+        //                 tbody.empty();
 
-                        response.data.forEach(function(plan) {
-                            let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-                            let toDate = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-                            let today = new Date();
-                            let expiryDate = new Date(plan.expiry_date);
-                            let isActive = expiryDate >= today;
+        //                 response.data.forEach(function(plan) {
+        //                     let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+        //                     let toDate = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+        //                     let today = new Date();
+        //                     let expiryDate = new Date(plan.expiry_date);
+        //                     let isActive = expiryDate >= today;
 
-                            let row = `
-                                <tr>
-                                    <td class="bg-info align-middle p-3 text-nowrap">
-                                        <small class="fw-semibold">From Date</small> <br>
-                                        <small class="text-black-50">${fromDate}</small>
-                                    </td>
-                                    <td class="bg-info align-middle p-3 text-nowrap">
-                                        <small class="fw-semibold">To Date</small> <br>
-                                        <small class="text-black-50">${toDate}</small>
-                                    </td>
-                                    <td class="bg-info align-middle p-3 text-nowrap">
-                                        <small class="fw-semibold">Plan Type</small> <br>
-                                        <small class="text-black-50">${plan.membership_plan_type.name}</small>
-                                    </td>
-                                    <td class="bg-info align-middle p-3 text-nowrap">
-                                        <small class="fw-semibold">Fine</small> <br>
-                                        <small class="text-black-50">Rs ${plan.fine_amount}</small>
-                                    </td>
-                                    <td class="bg-info align-middle p-3 text-nowrap">
-                                        <small class="fw-semibold">Price</small> <br>
-                                        <small class="text-black-50">Rs ${plan.net_amount}</small>
-                                    </td>
-                                    <td class="bg-info align-middle text-end p-3">
-                                        <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}" alt="" width="${isActive ? 76 : 73}" height="${isActive ? 67 : 24}">
-                                    </td>
-                                </tr>`;
+        //                     let row = `
+        //                         <tr>
+        //                             <td class="bg-info align-middle p-3 text-nowrap">
+        //                                 <small class="fw-semibold">From Date</small> <br>
+        //                                 <small class="text-black-50">${fromDate}</small>
+        //                             </td>
+        //                             <td class="bg-info align-middle p-3 text-nowrap">
+        //                                 <small class="fw-semibold">To Date</small> <br>
+        //                                 <small class="text-black-50">${toDate}</small>
+        //                             </td>
+        //                             <td class="bg-info align-middle p-3 text-nowrap">
+        //                                 <small class="fw-semibold">Plan Type</small> <br>
+        //                                 <small class="text-black-50">${plan.membership_plan_type.name}</small>
+        //                             </td>
+        //                             <td class="bg-info align-middle p-3 text-nowrap">
+        //                                 <small class="fw-semibold">Fine</small> <br>
+        //                                 <small class="text-black-50">Rs ${plan.fine_amount}</small>
+        //                             </td>
+        //                             <td class="bg-info align-middle p-3 text-nowrap">
+        //                                 <small class="fw-semibold">Price</small> <br>
+        //                                 <small class="text-black-50">Rs ${plan.net_amount}</small>
+        //                             </td>
+        //                             <td class="bg-info align-middle text-end p-3">
+        //                                 <img src="{{ asset('assets/images') }}${isActive ? '/active-tag.svg' : '/expire-tag.svg'}" alt="" width="${isActive ? 76 : 73}" height="${isActive ? 67 : 24}">
+        //                             </td>
+        //                         </tr>`;
 
-                            tbody.append(row);
-                        });
+        //                     tbody.append(row);
+        //                 });
 
-                        $('.spinner-border').replaceWith(originalBtn);
-                        $('#membershipplan').modal('show')
-                    }
-                    else{
-                        // toastr.error('Something Went Wrong').
-                        // console.log(response);
-                    }
+        //                 $('.spinner-border').replaceWith(originalBtn);
+        //                 $('#membershipplan').modal('show')
+        //             }
+        //             else{
+        //                 // toastr.error('Something Went Wrong').
+        //                 // console.log(response);
+        //             }
 
-                },
-                error: function(){
-                    toastr.error('Something Went Wrong.');
-                }
-            });
+        //         },
+        //         error: function(){
+        //             toastr.error('Something Went Wrong.');
+        //         }
+        //     });
 
-        });
+        // });
 
         $(document).on('click', '.walletRechargeBtn', function() {
             let memberId = $(this).data('id');

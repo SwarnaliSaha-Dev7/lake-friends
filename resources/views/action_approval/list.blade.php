@@ -968,8 +968,13 @@
                         $('#club_member_email').val(response.data['email']);
                         $('#club_member_phone').val(response.data['phone']);
                         $('#club_member_address').val(response.data['address']);
-
-                        $('#club_status').val(response.data['club_status']);
+                        
+                        if(response.data['club_status']){
+                            $('#club_status').val(response.data['club_status']);
+                        }
+                        else{
+                            $('#club_status').val('pending');
+                        }
 
                         $('#club_member_blood_grp').val(response.data['blood_grp']);
 
@@ -1052,7 +1057,12 @@
                                 $('input[name="swim_disease[]"][value="' + disease + '"]').prop('checked', true);
                             });
                         }
-                        $('#swim_status').val(response.data['swim_status']);
+                        if(response.data['swim_status']){
+                            $('#swim_status').val(response.data['swim_status']);
+                        }
+                        else{
+                            $('#swim_status').val('pending');
+                        }
                         $('#swim_guardian_name').val(response.data['swim_guardian_name']);
                         $('#swim_guardian_occupation').val(response.data['swim_guardian_occupation']);
 

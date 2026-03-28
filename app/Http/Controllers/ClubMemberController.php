@@ -83,14 +83,14 @@ class ClubMemberController extends Controller
 
 
             $addonList = AddOn::where('club_id', $clubId)
-            ->where('is_active', 1)
-            ->get();
+                ->where('is_active', 1)
+                ->get();
 
             $lockers = Locker::where('is_active', 1)
-                                ->where('club_id', $clubId)
-                                ->where('status', 'available')
-                                ->select('id', 'locker_number')
-                                ->get();
+                ->where('club_id', $clubId)
+                ->where('status', 'available')
+                ->select('id', 'locker_number')
+                ->get();
 
             $lockerPrice = LockerPrice::where('club_id', $clubId)->first();
 
@@ -135,7 +135,7 @@ class ClubMemberController extends Controller
                 ->where('membership_type_id', $membershipTypeId)
                 ->where('club_id', $clubId)
                 ->exists();
-                // ->first();
+            // ->first();
 
             if ($exists) {
                 return response()->json([
@@ -505,7 +505,6 @@ class ClubMemberController extends Controller
                 ->with([
                     'memberDetails',
                     'cardDetails',
-                    'purchaseHistory.membershipPlanType',
                     'clubDetails',
                     'walletDetails',
                     'paymentHistory',
@@ -513,6 +512,17 @@ class ClubMemberController extends Controller
                     'pendingFines',
                 ])
                 ->find($id);
+
+            $purchase_history = MembershipPurchaseHistory::with('membershipPlanType')
+                ->where('member_id', $id)
+                ->where('start_date', '<=', Carbon::now()->toDateString())
+                ->where(function ($query) {
+                    $query->whereNull('expiry_date')
+                        ->orWhere('expiry_date', '>=', Carbon::now()->toDateString());
+                })
+                ->where('status', 'active')
+                ->first();
+
 
             // Calculate suggested fine based on membership plan's fine rule
             $suggestedFine = [
@@ -542,9 +552,9 @@ class ClubMemberController extends Controller
                         ->where('membership_plan_type_id', $plan->id)
                         ->first()
                         ?? FineRule::where('club_id', $clubId)
-                            ->where('rule_type', 'membership_expiry')
-                            ->whereNull('membership_plan_type_id')
-                            ->first();
+                        ->where('rule_type', 'membership_expiry')
+                        ->whereNull('membership_plan_type_id')
+                        ->first();
 
                     // Only show fine if a rule is configured for this plan
                     if ($fineRule) {
@@ -628,6 +638,7 @@ class ClubMemberController extends Controller
 
             return response()->json([
                 'data'           => $member,
+                'purchase_history' => $purchase_history,
                 'suggested_fine' => $suggestedFine,
                 'fy_shortfalls'  => $fyShortfalls,
                 'statusCode'     => 200,
@@ -853,8 +864,7 @@ class ClubMemberController extends Controller
                     'statusCode' => 200,
                     'message' => 'Member updated successfully'
                 ]);
-            }
-            else{
+            } else {
                 DB::commit();
                 return response()->json([
                     // 'data' => $data,
@@ -1155,7 +1165,7 @@ class ClubMemberController extends Controller
             }
 
             //ADMIN → skip approval
-            if(Auth::user()->hasRole('admin')){
+            if (Auth::user()->hasRole('admin')) {
 
                 try {
 
@@ -1183,15 +1193,15 @@ class ClubMemberController extends Controller
 
                     $locker = null;
 
-                    if($lockerAllocation){
+                    if ($lockerAllocation) {
                         $locker = Locker::find($lockerAllocation->locker_id);
                     }
 
-                    if($lockerAllocation){
+                    if ($lockerAllocation) {
                         $lockerAllocation->delete();
                     }
 
-                    if($locker){
+                    if ($locker) {
                         $locker->update([
                             'status' => 'available',
                         ]);
@@ -1210,12 +1220,9 @@ class ClubMemberController extends Controller
                         'statusCode' => 200,
                         'message' => 'Member Deleted successfully'
                     ]);
-
-
                 } catch (\Throwable $th) {
                     return $th->getMessage();
                 }
-
             }
 
             // If operator → send approval request
@@ -1242,16 +1249,16 @@ class ClubMemberController extends Controller
             ];
 
             ActionApproval::create([
-                            'club_id' => $clubId,
-                            'module' => 'member_delete',
-                            'action_type' => 'delete',
-                            'membership_type_id' => $memberDetail->membership_type_id,
-                            'entity_model' => 'Member',
-                            'entity_id' => $member->id,
-                            'maker_user_id' => Auth::id(),
-                            'status' => 'pending',
-                            'request_payload' => json_encode($payload)
-                        ]);
+                'club_id' => $clubId,
+                'module' => 'member_delete',
+                'action_type' => 'delete',
+                'membership_type_id' => $memberDetail->membership_type_id,
+                'entity_model' => 'Member',
+                'entity_id' => $member->id,
+                'maker_user_id' => Auth::id(),
+                'status' => 'pending',
+                'request_payload' => json_encode($payload)
+            ]);
 
             return response()->json([
                 'statusCode' => 200,
@@ -1318,7 +1325,7 @@ class ClubMemberController extends Controller
                 ]);
             }
 
-             //DEDUCT WALLET
+            //DEDUCT WALLET
             $wallet->current_balance -= $amount;
             $wallet->save();
 
@@ -1332,13 +1339,13 @@ class ClubMemberController extends Controller
                 $addon = AddOn::find($addonId);
 
                 $memberAddOn = MemberAddOn::create([
-                        'member_id' => $request->member_id,
-                        'add_on_id' => $addonId,
-                        'price' => $addon->price,
-                        'start_date'=> $startDate,
-                        'end_date'  => $endDate,
-                        'status'    => $addonStatus,
-                    ]);
+                    'member_id' => $request->member_id,
+                    'add_on_id' => $addonId,
+                    'price' => $addon->price,
+                    'start_date' => $startDate,
+                    'end_date'  => $endDate,
+                    'status'    => $addonStatus,
+                ]);
 
                 $memberAddOnIds[] = $memberAddOn->id;
             }
@@ -1419,7 +1426,6 @@ class ClubMemberController extends Controller
                 'message'    => 'Add-ons fetched successfully',
                 'data'       => $addons
             ]);
-
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,
@@ -1487,10 +1493,10 @@ class ClubMemberController extends Controller
             }
 
             $previousAllocations = LockerAllocation::where('member_id', $request->member_id)
-                                                    ->latest('id')
-                                                    ->first();
+                ->latest('id')
+                ->first();
 
-            if($previousAllocations){
+            if ($previousAllocations) {
                 Locker::where('id', $previousAllocations->locker_id)->update([
                     'status' => 'available'
                 ]);
@@ -1537,7 +1543,7 @@ class ClubMemberController extends Controller
                 'action_type' => 'create',
                 'entity_model' => 'Member',
                 'entity_id' => $request->member_id,
-                'membership_type_id' => $memberDtls->membership_type_id ,
+                'membership_type_id' => $memberDtls->membership_type_id,
                 'maker_user_id' => Auth::id(),
                 'request_payload' => json_encode($requestData)
             ]);
@@ -1553,14 +1559,13 @@ class ClubMemberController extends Controller
                 $lockerAllocation->update([
                     'status' => 'active'
                 ]);
-
             }
 
             if (Auth::user()->hasRole('operator')) {
 
                 $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+                    ->where('id', '!=', Auth::id())
+                    ->get();
 
 
                 Notification::send($approvers, new ApprovalNotification($approval));
@@ -1667,9 +1672,13 @@ class ClubMemberController extends Controller
         // Create or update as paid — prevents year-end command from double-charging
         \App\Models\MemberFine::firstOrCreate(
             ['club_id' => $clubId, 'member_id' => $member->id, 'financial_year_id' => $fy->id, 'fine_type' => 'minimum_spend_shortfall'],
-            ['fine_amount' => $shortfall, 'reference_amount' => $shortfall,
-             'fine_date' => $today->toDateString(), 'status' => 'paid',
-             'notes' => "FY {$fyLabel} shortfall collected at renewal"]
+            [
+                'fine_amount' => $shortfall,
+                'reference_amount' => $shortfall,
+                'fine_date' => $today->toDateString(),
+                'status' => 'paid',
+                'notes' => "FY {$fyLabel} shortfall collected at renewal"
+            ]
         );
     }
 

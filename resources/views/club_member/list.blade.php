@@ -1384,13 +1384,14 @@
                 url: '{{route("club-member.view", ":memberId")}}'.replace(':memberId', memberId),
                 type: 'GET',
                 success: function(response){
+                    console.log(response)
                     if (response.statusCode == 200) {
                         // console.log(response);
                         $('#memberName').text(response.data.name);
                         $('#memberClubName').text(response.data.club_details.name)
                         // $('#memberCode').text(response.data.member_code)
                         $('#memberCardNo').text(response.data.card_details?.card_no || '-')
-                        const purchase = response.data.purchase_history?.[0];
+                        const purchase = response.purchase_history;
 
                         $('#memberApprovedBy').text(response.data.latest_approval?.checker?.name ?? '-');
 
@@ -1400,7 +1401,7 @@
                                 : 'No Active Plan'
                         );
                         // $('#memberPlan').text(response.data.purchase_history[0].membership_plan_type.name)
-                        let formatted = 'NA';
+                        let formatted = 'N/A';
                         if (purchase?.status === 'active' && purchase?.expiry_date) {
                             formatted = new Date(purchase.expiry_date).toLocaleDateString('en-IN');
                         }
@@ -1699,7 +1700,7 @@
 
                     $('#current_card_no').text(data.card_details?.card_no || '-');
 
-                    $('#current_membership').text(data.purchase_history[0].membership_plan_type.name);
+                    $('#current_membership').text(response.purchase_history.membership_plan_type.name);
 
                     $('.spinner-border').replaceWith(originalBtn);
 

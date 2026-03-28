@@ -84,10 +84,10 @@ class SwimmingMemberController extends Controller
             // swimming locker part start
 
             $lockers = Locker::where('is_active', 1)
-                                ->where('club_id', $clubId)
-                                ->where('status', 'available')
-                                ->select('id', 'locker_number')
-                                ->get();
+                ->where('club_id', $clubId)
+                ->where('status', 'available')
+                ->select('id', 'locker_number')
+                ->get();
 
             $lockerPrice = LockerPrice::where('club_id', $clubId)->first();
 
@@ -141,8 +141,8 @@ class SwimmingMemberController extends Controller
             $clubId = club_id();
 
             $membershipType = MembershipType::where('name', 'Swimming Membership')
-            ->where('club_id', $clubId)
-            ->first();
+                ->where('club_id', $clubId)
+                ->first();
 
             $membershipTypeId = $membershipType->id;
 
@@ -150,7 +150,7 @@ class SwimmingMemberController extends Controller
                 ->where('membership_type_id', $membershipTypeId)
                 ->where('club_id', $clubId)
                 ->exists();
-                // ->first();
+            // ->first();
 
             if ($exists) {
                 return response()->json([
@@ -169,11 +169,11 @@ class SwimmingMemberController extends Controller
             );
 
             $lastMember = Member::where('club_id', $clubId)
-                                ->where('membership_type_id', $membershipTypeId)
-                                ->whereNotNull('member_code')
-                                ->orderBy('id', 'desc')
-                                ->lockForUpdate()
-                                ->first();
+                ->where('membership_type_id', $membershipTypeId)
+                ->whereNotNull('member_code')
+                ->orderBy('id', 'desc')
+                ->lockForUpdate()
+                ->first();
 
             if ($lastMember && $lastMember->member_code) {
                 $lastCode = (int) $lastMember->member_code;
@@ -606,8 +606,7 @@ class SwimmingMemberController extends Controller
                     'statusCode' => 200,
                     'message' => 'Member updated successfully'
                 ]);
-            }
-            else{
+            } else {
                 DB::commit();
                 return response()->json([
                     // 'data' => $data,
@@ -700,6 +699,16 @@ class SwimmingMemberController extends Controller
                 ])
                 ->find($id);
 
+            $purchase_history = MembershipPurchaseHistory::with('membershipPlanType')
+                ->where('member_id', $id)
+                ->where('start_date', '<=', Carbon::now()->toDateString())
+                ->where(function ($query) {
+                    $query->whereNull('expiry_date')
+                        ->orWhere('expiry_date', '>=', Carbon::now()->toDateString());
+                })
+                ->where('status', 'active')
+                ->first();
+
             // Calculate suggested expiry fine
             $suggestedFine = [
                 'amount'   => 0,
@@ -728,9 +737,9 @@ class SwimmingMemberController extends Controller
                         ->where('membership_plan_type_id', $plan->id)
                         ->first()
                         ?? FineRule::where('club_id', $clubId)
-                            ->where('rule_type', 'membership_expiry')
-                            ->whereNull('membership_plan_type_id')
-                            ->first();
+                        ->where('rule_type', 'membership_expiry')
+                        ->whereNull('membership_plan_type_id')
+                        ->first();
 
                     $graceDays    = (int) ($fineRule?->grace_days ?? 0);
                     $maxCap       = $fineRule?->max_fine_cap ? (float) $fineRule->max_fine_cap : null;
@@ -753,6 +762,7 @@ class SwimmingMemberController extends Controller
 
             return response()->json([
                 'data'           => $member,
+                'purchase_history' => $purchase_history,
                 'suggested_fine' => $suggestedFine,
                 'statusCode'     => 200,
                 'message'        => 'Member Fetched successfully'
@@ -848,7 +858,7 @@ class SwimmingMemberController extends Controller
             $walletTransactionHistory = WalletTransaction::with([
                 'creator:id,name',
                 'payment:id,wallet_transaction_id,remarks'
-                ])
+            ])
                 ->where('member_id', $id)
                 ->orderBy('created_at', 'DESC')
                 ->get();
@@ -996,10 +1006,10 @@ class SwimmingMemberController extends Controller
             }
 
             $previousAllocations = LockerAllocation::where('member_id', $request->member_id)
-                                                    ->latest('id')
-                                                    ->first();
+                ->latest('id')
+                ->first();
 
-            if($previousAllocations){
+            if ($previousAllocations) {
                 Locker::where('id', $previousAllocations->locker_id)->update([
                     'status' => 'available'
                 ]);
@@ -1058,7 +1068,7 @@ class SwimmingMemberController extends Controller
                 'action_type' => 'create',
                 'entity_model' => 'Member',
                 'entity_id' => $request->member_id,
-                'membership_type_id' => $memberDtls->membership_type_id ,
+                'membership_type_id' => $memberDtls->membership_type_id,
                 'maker_user_id' => Auth::id(),
                 'request_payload' => json_encode($requestData)
             ]);
@@ -1074,14 +1084,13 @@ class SwimmingMemberController extends Controller
                 $lockerAllocation->update([
                     'status' => 'active'
                 ]);
-
             }
 
             if (Auth::user()->hasRole('operator')) {
 
                 $approvers = User::role(['operator', 'admin'])
-                ->where('id', '!=', Auth::id())
-                ->get();
+                    ->where('id', '!=', Auth::id())
+                    ->get();
 
 
                 Notification::send($approvers, new ApprovalNotification($approval));
@@ -1095,9 +1104,7 @@ class SwimmingMemberController extends Controller
                 'statusCode' => 200,
                 'message' => 'Locker purchased successfully'
             ]);
-        }
-
-        catch (\Throwable $th) {
+        } catch (\Throwable $th) {
             DB::rollBack();
             return response()->json([
                 'statusCode' => 500,
@@ -1117,7 +1124,7 @@ class SwimmingMemberController extends Controller
             $paymentHistory = PaymentHistory::where('member_id', $memberId)
                 ->where('purpose', 'swim_locker_purchase')
                 ->orderBy('id', 'DESC')
-                ->get(['id','created_at', 'net_amount', 'payment_status']);
+                ->get(['id', 'created_at', 'net_amount', 'payment_status']);
 
             if ($allocation) {
                 $today = Carbon::today()->toDateString();
@@ -1147,11 +1154,11 @@ class SwimmingMemberController extends Controller
         try {
             $clubId = club_id();
 
-             $member = Member::where('club_id', $clubId)
-                             ->with([
-                                 'memberDetails',
-                                 ])
-                             ->find($id);
+            $member = Member::where('club_id', $clubId)
+                ->with([
+                    'memberDetails',
+                ])
+                ->find($id);
 
             if (!$member) {
                 return response()->json([
@@ -1167,25 +1174,24 @@ class SwimmingMemberController extends Controller
             $date = $purchase?->start_date?->format('d-m-Y');
 
             $data = [
-                    'name' => $member->name,
-                    'address' => $member->address,
-                    'phone' => $member->phone,
-                    'member_code' => $member->member_code,
-                    'age' => $details['age'] ?? '-',
-                    'height' => $details['height'] ?? '-',
-                    'weight' => $details['weight'] ?? '-',
-                    'pulse_rate' => $details['pulse_rate'] ?? '-',
-                    'police_station' => $details['police_station'] ?? '-',
-                    'gender' => $details['sex'] ?? '-',
-                    'image' => $details['image'] ?? $member->image,
-                    'date' => $date,
-                ];
+                'name' => $member->name,
+                'address' => $member->address,
+                'phone' => $member->phone,
+                'member_code' => $member->member_code,
+                'age' => $details['age'] ?? '-',
+                'height' => $details['height'] ?? '-',
+                'weight' => $details['weight'] ?? '-',
+                'pulse_rate' => $details['pulse_rate'] ?? '-',
+                'police_station' => $details['police_station'] ?? '-',
+                'gender' => $details['sex'] ?? '-',
+                'image' => $details['image'] ?? $member->image,
+                'date' => $date,
+            ];
 
             return response()->json([
                 'statusCode' => 200,
                 'data' => $data,
             ]);
-
         } catch (\Throwable $th) {
             return response()->json([
                 'statusCode' => 500,
@@ -1353,7 +1359,7 @@ class SwimmingMemberController extends Controller
             }
 
             //ADMIN → skip approval
-            if(Auth::user()->hasRole('admin')){
+            if (Auth::user()->hasRole('admin')) {
 
                 try {
 
@@ -1381,15 +1387,15 @@ class SwimmingMemberController extends Controller
 
                     $locker = null;
 
-                    if($lockerAllocation){
+                    if ($lockerAllocation) {
                         $locker = Locker::find($lockerAllocation->locker_id);
                     }
 
-                    if($lockerAllocation){
+                    if ($lockerAllocation) {
                         $lockerAllocation->delete();
                     }
 
-                    if($locker){
+                    if ($locker) {
                         $locker->update([
                             'status' => 'available',
                         ]);
@@ -1408,20 +1414,17 @@ class SwimmingMemberController extends Controller
                         'statusCode' => 200,
                         'message' => 'Member Deleted successfully'
                     ]);
-
-
                 } catch (\Throwable $th) {
                     return $th->getMessage();
                 }
-
             }
 
             // If operator → send approval request
 
             $existingRequest = ActionApproval::where('entity_id', $member->id)
-                            ->where('module', 'member_delete')
-                            ->where('status', 'pending')
-                            ->first();
+                ->where('module', 'member_delete')
+                ->where('status', 'pending')
+                ->first();
 
             if ($existingRequest) {
                 return response()->json([
@@ -1440,16 +1443,16 @@ class SwimmingMemberController extends Controller
             ];
 
             ActionApproval::create([
-                            'club_id' => $clubId,
-                            'module' => 'member_delete',
-                            'action_type' => 'delete',
-                            'membership_type_id' => $memberDetail->membership_type_id,
-                            'entity_model' => 'Member',
-                            'entity_id' => $member->id,
-                            'maker_user_id' => Auth::id(),
-                            'status' => 'pending',
-                            'request_payload' => json_encode($payload)
-                        ]);
+                'club_id' => $clubId,
+                'module' => 'member_delete',
+                'action_type' => 'delete',
+                'membership_type_id' => $memberDetail->membership_type_id,
+                'entity_model' => 'Member',
+                'entity_id' => $member->id,
+                'maker_user_id' => Auth::id(),
+                'status' => 'pending',
+                'request_payload' => json_encode($payload)
+            ]);
 
             return response()->json([
                 'statusCode' => 200,
