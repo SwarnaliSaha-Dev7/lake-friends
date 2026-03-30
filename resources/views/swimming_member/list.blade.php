@@ -2048,7 +2048,8 @@
                         $('input[name="swim_membership_plan_type"][value="' + planTypeId + '"]').prop('checked', true);
                         // $('#current_card_no').text(response.data.card_details.card_no);
                         // console.log(response.purchase_history);
-                        $('#current_membership').text(response.purchase_history.membership_plan_type.name)
+                        // $('#current_membership').text(response.purchase_history.membership_plan_type.name)
+                        $('#current_membership').text(response?.purchase_history?.membership_plan_type?.name ?? 'No Plan Taken');
 
                         $('.spinner-border').replaceWith(originalBtn);
                         $('#editswimmingmember').modal('show');

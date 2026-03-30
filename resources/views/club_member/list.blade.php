@@ -1700,7 +1700,8 @@
 
                     $('#current_card_no').text(data.card_details?.card_no || '-');
 
-                    $('#current_membership').text(response.purchase_history.membership_plan_type.name);
+                    // $('#current_membership').text(response.purchase_history.membership_plan_type.name);
+                    $('#current_membership').text(response?.purchase_history?.membership_plan_type?.name ?? 'No Plan Taken');
 
                     $('.spinner-border').replaceWith(originalBtn);
 

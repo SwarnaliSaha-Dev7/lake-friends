@@ -336,6 +336,7 @@ class DashboardController extends Controller
             if ($reportType === 'memberships') {
 
                 $rows = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereHas('member')
                     ->whereIn('status', ['active', 'pending'])
                     ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
                     ->when(!empty($typeIds), fn($q) => $q->whereIn('membership_type_id', $typeIds))
@@ -350,6 +351,7 @@ class DashboardController extends Controller
 
                 // Mark first vs renewal
                 $firstJoinMap = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereHas('member')
                     ->whereIn('status', ['active', 'pending', 'expired', 'cancelled'])
                     ->selectRaw('member_id, MIN(id) as first_id')
                     ->groupBy('member_id')
@@ -377,6 +379,7 @@ class DashboardController extends Controller
             if ($reportType === 'expiry_fines') {
 
                 $rows = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereHas('member')
                     ->whereIn('status', ['active', 'expired'])
                     ->whereBetween('expiry_date', [$start->toDateString(), $end->toDateString()])
                     ->when(!empty($typeIds), fn($q) => $q->whereIn('membership_type_id', $typeIds))
@@ -416,11 +419,13 @@ class DashboardController extends Controller
 
                 // First join per member
                 $firstJoinMap = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereHas('member')
                     ->selectRaw('member_id, MIN(id) as first_id')
                     ->groupBy('member_id')
                     ->pluck('first_id', 'member_id');
 
                 $rows = MembershipPurchaseHistory::where('club_id', $clubId)
+                    ->whereHas('member')
                     ->whereIn('status', ['active', 'pending'])
                     ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
                     ->when(!empty($typeIds), fn($q) => $q->whereIn('membership_type_id', $typeIds))

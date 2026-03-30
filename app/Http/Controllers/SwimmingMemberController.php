@@ -706,7 +706,8 @@ class SwimmingMemberController extends Controller
                     $query->whereNull('expiry_date')
                         ->orWhere('expiry_date', '>=', Carbon::now()->toDateString());
                 })
-                ->where('status', 'active')
+                // ->where('status', 'active')
+                ->whereIn('status', ['active', 'pending'])
                 ->first();
 
             // Calculate suggested expiry fine
