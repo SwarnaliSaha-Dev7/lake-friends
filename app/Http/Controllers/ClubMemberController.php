@@ -1016,8 +1016,21 @@ class ClubMemberController extends Controller
                 ->orderBy('created_at', 'DESC')
                 ->get();
 
+
+            $financialYearStart = now()->month >= 4
+            ? now()->startOfYear()->month(4)->startOfMonth()
+            : now()->subYear()->month(4)->startOfMonth();
+
+            $financialYearEnd = $financialYearStart->copy()->addYear()->subDay()->endOfDay();
+
+            $currentFinancialYearDebitSpend = WalletTransaction::where('member_id', $id)
+                ->where('direction', 'debit')
+                ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+                ->sum('amount');
+
             return response()->json([
                 'data' => $walletTransactionHistory,
+                'currentFinancialYearDebitSpend' => $currentFinancialYearDebitSpend,
                 'statusCode' => 200,
                 'message' => 'Wallet History Fetched successfully'
             ]);

@@ -981,6 +981,14 @@
                         aria-label="Close"><i class="fa-regular fa-circle-xmark"></i></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body py-2">
+                                <small class="text-muted">Total Spend</small>
+                                <div class="fw-semibold fs-5" id="walletHistoryTotalSpend">₹ 0</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="bg-light p-2">
                         <table class="table border-0 m-0 wallet-table">
                             <tbody id="walletHistoryTbody"></tbody>
@@ -1533,6 +1541,8 @@
                     if (response.statusCode == 200) {
                         let tbody = $('#walletHistoryTbody');
                         tbody.empty();
+                        let spend = parseFloat(response.currentFinancialYearDebitSpend || 0);
+                        $('#walletHistoryTotalSpend').text('₹ ' + spend.toFixed(2));
 
                         if(response.data.length > 0){
                             response.data.forEach(function(transaction) {
