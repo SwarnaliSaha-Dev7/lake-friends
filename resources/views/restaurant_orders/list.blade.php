@@ -176,7 +176,10 @@ $(document).ready(function () {
 
             for (var i = 0; i < items.length; i++) {
                 var it       = items[i];
-                var itemName = (it.food_item && it.food_item.name) ? it.food_item.name : '—';
+                var meta     = it.metadata || {};
+                var itemName = (meta.is_cocktail && meta.cocktail_name)
+                    ? meta.cocktail_name
+                    : ((it.food_item && it.food_item.name) ? it.food_item.name : '—');
                 var offerBadge = '';
                 if (it.offer_applied) {
                     var of = it.offer_applied;

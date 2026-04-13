@@ -124,7 +124,13 @@
                                         <td class="text-nowrap">{{ $order->member->name ?? '—' }}</td>
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('d M Y, h:i A') }}</td>
                                         <td class="text-nowrap">
-                                            {{ $item->foodItem->name ?? '—' }}
+                                            @if(!empty($item->metadata['is_cocktail']))
+                                                {{ $item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—') }}
+                                                <span class="badge ms-1" style="font-size:0.62rem;background:#7c3aed;color:#fff;">Cocktail</span>
+                                                <br><small class="text-muted">base: {{ $item->foodItem->name ?? '—' }}</small>
+                                            @else
+                                                {{ $item->foodItem->name ?? '—' }}
+                                            @endif
                                             @if($offerLabel)
                                                 <br><span class="badge bg-danger rounded-pill px-2" style="font-size:0.65rem;">
                                                     <i class="fa-solid fa-tag me-1"></i>{{ $offerLabel }}

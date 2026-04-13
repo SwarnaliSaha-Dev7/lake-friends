@@ -234,9 +234,21 @@ class OrderSessionController extends Controller
 
             // Create order items + deduct bar stock for liquor
             foreach ($items as $item) {
-                $unit     = $item['unit'];
-                $isLiquor = in_array($unit, ['ml', 'btl']);
-                $volumeMl = ($unit === 'ml' && !empty($item['volume_ml'])) ? (int) $item['volume_ml'] : null;
+                $unit       = $item['unit'];
+                $isLiquor   = in_array($unit, ['ml', 'btl']);
+                $volumeMl   = ($unit === 'ml' && !empty($item['volume_ml'])) ? (int) $item['volume_ml'] : null;
+                $isCocktail = !empty($item['is_cocktail']);
+
+                $metadata = null;
+                if ($isCocktail && $volumeMl) {
+                    $metadata = [
+                        'volume_ml'     => $volumeMl,
+                        'is_cocktail'   => true,
+                        'cocktail_name' => $item['cocktail_name'] ?? '',
+                    ];
+                } elseif ($volumeMl) {
+                    $metadata = ['volume_ml' => $volumeMl];
+                }
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,
@@ -246,7 +258,7 @@ class OrderSessionController extends Controller
                     'unit_price'          => $item['unit_price'],
                     'offer_applied'       => !empty($item['offer_applied']) ? $item['offer_applied'] : null,
                     'total_amount'        => $item['total_amount'],
-                    'metadata'            => $volumeMl ? ['volume_ml' => $volumeMl] : null,
+                    'metadata'            => $metadata,
                 ]);
 
                 if ($isLiquor) {

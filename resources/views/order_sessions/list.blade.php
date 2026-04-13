@@ -459,8 +459,11 @@ $(document).ready(function () {
                 var items     = order.items || [];
                 var itemRows  = '';
                 items.forEach(function (it) {
-                    var name = it.food_item ? it.food_item.name : '—';
-                    var vol  = it.unit === 'btl' ? '1 BTL' : (it.metadata && it.metadata.volume_ml ? it.metadata.volume_ml + 'ml' : '');
+                    var meta = it.metadata || {};
+                    var name = (meta.is_cocktail && meta.cocktail_name)
+                        ? meta.cocktail_name
+                        : (it.food_item ? it.food_item.name : '—');
+                    var vol  = it.unit === 'btl' ? '1 BTL' : (meta.volume_ml ? meta.volume_ml + 'ml' : '');
                     var offerBadge = '';
                     if (it.offer_applied && !isCancelled) {
                         var of = it.offer_applied;

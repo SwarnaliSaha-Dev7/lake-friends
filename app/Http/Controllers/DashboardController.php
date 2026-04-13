@@ -263,7 +263,7 @@ class DashboardController extends Controller
                     ];
                 });
 
-            // Spirit servings: ml-wise menu items from liquor_servings
+            // Spirit servings + cocktails: ml-wise menu items from liquor_servings
             $spiritServings = LiquorServing::where('club_id', $clubId)
                 ->where('is_active', 1)
                 ->get()
@@ -273,6 +273,7 @@ class DashboardController extends Controller
                         'food_item_id' => $serving->food_item_id,
                         'name'         => $serving->name,
                         'is_beer'      => 0,
+                        'is_cocktail'  => (bool) $serving->is_cocktail,
                         'volume_ml'    => $serving->volume_ml,
                         'price'        => (float) $serving->price,
                         'bar_stock'    => (int) ($barStockMap[$serving->food_item_id] ?? 0),

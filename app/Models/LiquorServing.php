@@ -17,13 +17,15 @@ class LiquorServing extends Model
         'volume_ml',
         'price',
         'is_active',
+        'is_cocktail',
         'created_by',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'volume_ml' => 'integer',
-        'price'     => 'float',
+        'is_active'   => 'boolean',
+        'is_cocktail' => 'boolean',
+        'volume_ml'   => 'integer',
+        'price'       => 'float',
     ];
 
     public function foodItem()

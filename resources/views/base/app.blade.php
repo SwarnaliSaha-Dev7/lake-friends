@@ -868,6 +868,8 @@
                     + ' data-food-item-id="' + it.food_item_id + '"'
                     + ' data-price="' + it.price + '"'
                     + ' data-is-beer="' + (it.is_beer ? '1' : '0') + '"'
+                    + ' data-is-cocktail="' + (it.is_cocktail ? '1' : '0') + '"'
+                    + ' data-cocktail-name="' + (it.is_cocktail ? it.name : '') + '"'
                     + ' data-volume-ml="' + (it.volume_ml || 0) + '"'
                     + ' data-bar-stock="' + (it.bar_stock || 0) + '">'
                     + it.name + '</option>';
@@ -1263,19 +1265,23 @@
                 var itemId     = $opt.val();
                 if (!itemId) { valid = false; return false; }
 
-                var foodItemId = $opt.attr('data-food-item-id') || itemId;
-                var isBeer     = $(this).find('.liquor-is-beer').val() === '1';
-                var volumeMl   = parseInt($(this).find('.liquor-volume-ml').val()) || 0;
-                var lo         = readRowOffer($opt, liquorOfferMap);
-                var qty        = parseInt($(this).find('.liquor-qty-input').val()) || 1;
-                var disc       = rowTotalDiscount(lo.price, lo.ofType, lo.ofVal, qty, lo.buyQty, lo.getQty);
-                var deductQty  = isBeer ? qty : qty * volumeMl;
+                var foodItemId   = $opt.attr('data-food-item-id') || itemId;
+                var isBeer       = $(this).find('.liquor-is-beer').val() === '1';
+                var isCocktail   = $opt.attr('data-is-cocktail') === '1';
+                var cocktailName = $opt.attr('data-cocktail-name') || '';
+                var volumeMl     = parseInt($(this).find('.liquor-volume-ml').val()) || 0;
+                var lo           = readRowOffer($opt, liquorOfferMap);
+                var qty          = parseInt($(this).find('.liquor-qty-input').val()) || 1;
+                var disc         = rowTotalDiscount(lo.price, lo.ofType, lo.ofVal, qty, lo.buyQty, lo.getQty);
+                var deductQty    = isBeer ? qty : qty * volumeMl;
 
                 items.push({
                     food_item_id:  foodItemId,
                     quantity:      qty,
                     unit:          isBeer ? 'btl' : 'ml',
                     is_beer:       isBeer,
+                    is_cocktail:   isCocktail,
+                    cocktail_name: isCocktail ? cocktailName : null,
                     volume_ml:     isBeer ? null : volumeMl,
                     deduct_qty:    deductQty,
                     unit_price:    lo.price,
