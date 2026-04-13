@@ -6,7 +6,6 @@ use App\Models\ActionApproval;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
-use App\Models\LiquorServing;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
 use App\Models\User;
@@ -244,17 +243,41 @@ class BarStockController extends Controller
 
         $liquorItems = FoodItem::where('club_id', $club_id)
             ->where('item_type', 'liquor')
-            ->with(['foodItemCat', 'foodItemPrice'])
+            ->with(['foodItemCat'])
             ->get();
 
-        // Price per ml from first active serving per item (spirits only)
-        $servingPrices = LiquorServing::whereIn('food_item_id', $liquorItems->pluck('id'))
-            ->where('is_active', 1)
-            ->orderBy('volume_ml')
-            ->get()
-            ->groupBy('food_item_id')
-            ->map(fn($g) => $g->first());
+        $godownLocation = $this->getGodownLocation();
 
+        // ── Godown WAC (Weighted Average Cost) per item ───────────────────────
+        // Bar stock comes from godown, so its cost = godown purchase WAC
+        $wacRows = StockLedger::where('warehouse_id', $warehouse->id)
+            ->where('location_id', $godownLocation->id)
+            ->where('direction', 'in')
+            ->where('movement_type', 'purchase')
+            ->whereNotNull('unit_price')
+            ->where('created_at', '<=', $to)
+            ->select(
+                'food_items_id',
+                DB::raw('SUM(quantity * unit_price) as total_cost'),
+                DB::raw('SUM(quantity) as total_qty')
+            )
+            ->groupBy('food_items_id')
+            ->get()
+            ->keyBy('food_items_id');
+
+        // WAC per bottle (0 if no godown purchase data yet)
+        $wacPerBottle = $wacRows->mapWithKeys(fn($r) => [
+            $r->food_items_id => $r->total_qty > 0
+                ? round($r->total_cost / $r->total_qty, 2)
+                : 0,
+        ]);
+
+        // ── Current bar stock map (fallback for items with no ledger history) ──
+        $currentBarStockMap = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
+            ->where('location_id', $barLocation->id)
+            ->pluck('quantity', 'food_items_id');
+
+        // ── Qty movements ─────────────────────────────────────────────────────
         // All bar movements before period → opening
         $beforeFrom = StockLedger::where('warehouse_id', $warehouse->id)
             ->where('location_id', $barLocation->id)
@@ -284,47 +307,51 @@ class BarStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $servingPrices) {
+        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $wacPerBottle, $currentBarStockMap) {
             $before     = $beforeFrom->get($item->id, collect());
             $beforeIn   = (int) $before->where('direction', 'in')->sum('total');
             $beforeOut  = (int) $before->where('direction', 'out')->sum('total');
             $openingQty = max(0, $beforeIn - $beforeOut);
-            $inQty      = (int) ($inDuring[$item->id] ?? 0);
+            $inQty      = (int) ($inDuring[$item->id]  ?? 0);
             $outQty     = (int) ($outDuring[$item->id] ?? 0);
-            $closingQty = max(0, $openingQty + $inQty - $outQty);
+            $ledgerClosing = max(0, $openingQty + $inQty - $outQty);
+
+            // Fallback: ledger-এ data না থাকলে FoodItemCurrentStock থেকে qty নাও
+            $hasNoLedger = $openingQty === 0 && $inQty === 0;
+            $closingQty  = ($hasNoLedger && $ledgerClosing === 0)
+                ? (int) ($currentBarStockMap[$item->id] ?? 0)
+                : $ledgerClosing;
 
             $sizeMl    = (int) ($item->size_ml ?? 1);
             $isBeer    = (bool) $item->is_beer;
             $unit      = $isBeer ? 'BTL' : 'ml';
             $toBottles = fn($qty) => $isBeer ? $qty : ($sizeMl > 0 ? round($qty / $sizeMl, 2) : 0);
 
-            // Amount: beer → food item price per BTL, spirit → serving price per ml
-            if ($isBeer) {
-                $amountRate = (float) ($item->foodItemPrice->price ?? 0);
-            } else {
-                $serving    = $servingPrices->get($item->id);
-                $amountRate = ($serving && $serving->volume_ml > 0)
-                    ? $serving->price / $serving->volume_ml
-                    : 0;
-            }
+            // Cost rate per unit:
+            // Beer   → WAC per bottle
+            // Spirit → WAC per bottle ÷ size_ml = cost per ml
+            $wacBtl     = (float) ($wacPerBottle[$item->id] ?? 0);
+            $costPerUnit = $isBeer
+                ? $wacBtl
+                : ($sizeMl > 0 ? round($wacBtl / $sizeMl, 6) : 0);
 
             return [
-                'item'            => $item,
-                'unit'            => $unit,
-                'is_beer'         => $isBeer,
-                'size_ml'         => $sizeMl,
-                'opening_qty'     => $openingQty,
-                'in_qty'          => $inQty,
-                'out_qty'         => $outQty,
-                'closing_qty'     => $closingQty,
-                'opening_btl'     => $toBottles($openingQty),
-                'in_btl'          => $toBottles($inQty),
-                'out_btl'         => $toBottles($outQty),
-                'closing_btl'     => $toBottles($closingQty),
-                'opening_amount'  => round($openingQty * $amountRate, 2),
-                'in_amount'       => round($inQty      * $amountRate, 2),
-                'out_amount'      => round($outQty     * $amountRate, 2),
-                'closing_amount'  => round($closingQty * $amountRate, 2),
+                'item'           => $item,
+                'unit'           => $unit,
+                'is_beer'        => $isBeer,
+                'size_ml'        => $sizeMl,
+                'opening_qty'    => $openingQty,
+                'in_qty'         => $inQty,
+                'out_qty'        => $outQty,
+                'closing_qty'    => $closingQty,
+                'opening_btl'    => $toBottles($openingQty),
+                'in_btl'         => $toBottles($inQty),
+                'out_btl'        => $toBottles($outQty),
+                'closing_btl'    => $toBottles($closingQty),
+                'opening_amount' => round($openingQty * $costPerUnit, 2),
+                'in_amount'      => round($inQty      * $costPerUnit, 2),
+                'out_amount'     => round($outQty     * $costPerUnit, 2),
+                'closing_amount' => round($closingQty * $costPerUnit, 2),
             ];
         });
 

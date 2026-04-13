@@ -72,7 +72,7 @@ class LiquorItemManageController extends Controller
                 //     }),
                 // ],
                 'itemCat'             => 'required',
-                'itemPrice'           => 'required|numeric|min:0|max:9999999999|decimal:0,2',
+                'itemPrice'           => 'nullable|numeric|min:0|max:9999999999|decimal:0,2',
                 'itemImage'           => 'required|image|mimes:jpeg,png,jpg|max:5120',
                 'itemCode'            => ['required', 'string', 'max:255'],
                 // 'itemCode'            => ['required', 'string', 'max:255',
@@ -111,6 +111,7 @@ class LiquorItemManageController extends Controller
 
             $isBeer = $request->boolean('is_beer');
             $unit   = $isBeer ? 'bottle' : 'ml';
+            $price  = $isBeer ? (float) ($request->itemPrice ?? 0) : 0;
 
             $image_path = null;
             if ($request->hasFile('itemImage')) {
@@ -138,7 +139,7 @@ class LiquorItemManageController extends Controller
 
             FoodItemPrice::create([
                 'item_id'        => $foodItem->id,
-                'price'          => $request->itemPrice,
+                'price'          => $price,
                 'effective_from' => now(),
                 'is_active'      => 1,
             ]);
@@ -153,7 +154,7 @@ class LiquorItemManageController extends Controller
                 'is_beer'             => $isBeer,
                 'unit'                => $unit,
                 'low_stock_alert_qty' => $request->low_stock_alert_qty,
-                'price'               => $request->itemPrice,
+                'price'               => $price,
                 'image'               => $image_path,
             ];
 

@@ -61,6 +61,14 @@
                                     <td class="text-nowrap small">
                                         @if($isPurchase)
                                             <span class="text-success fw-semibold">+{{ $payload->quantity ?? '—' }} BTL</span>
+                                            @if(isset($payload->unit_price) && $payload->unit_price > 0)
+                                                <br>
+                                                <span class="text-muted">₹{{ number_format($payload->unit_price, 2) }}/BTL</span>
+                                                <br>
+                                                <span class="text-primary fw-semibold">
+                                                    Total: ₹{{ number_format($payload->quantity * $payload->unit_price, 2) }}
+                                                </span>
+                                            @endif
                                         @else
                                             <span class="text-muted">System: {{ $payload->system_qty ?? '—' }} BTL</span>
                                             <br>
