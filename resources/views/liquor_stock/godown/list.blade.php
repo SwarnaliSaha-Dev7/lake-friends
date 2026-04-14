@@ -238,7 +238,7 @@ $(document).ready(function () {
         $(this).next('.error-div').text('');
     });
 
-    $('.add-stock-btn').on('click', function (e) {
+    $(document).on('click', '.add-stock-btn', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
         var id = $(this).data('id');
@@ -328,7 +328,7 @@ $(document).ready(function () {
 
     var adjSystemQty = 0;
 
-    $('.adjust-stock-btn').on('click', function (e) {
+    $(document).on('click', '.adjust-stock-btn', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
 

@@ -345,27 +345,32 @@ class BarOrderController extends Controller
                 ]);
             }
 
-            // Stock check & deduction
+            // Stock check & deduction (aggregate per food_item_id first)
             $warehouse   = $this->getWarehouse($clubId);
             $barLocation = $this->getBarLocation();
 
+            $deductMap = [];
+            $isBeerMap = [];
             foreach ($items as $item) {
-                $deductQty  = (int) $item['deduct_qty'];
                 $foodItemId = (int) $item['food_item_id'];
+                $deductMap[$foodItemId] = ($deductMap[$foodItemId] ?? 0) + (int) $item['deduct_qty'];
+                $isBeerMap[$foodItemId] = (bool) $item['is_beer'];
+            }
 
+            foreach ($deductMap as $foodItemId => $totalDeduct) {
                 $stock = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
                     ->where('location_id', $barLocation->id)
                     ->where('food_items_id', $foodItemId)
                     ->first();
 
                 $available = $stock ? (int) $stock->quantity : 0;
-                if ($available < $deductQty) {
-                    $foodItem = FoodItem::find($foodItemId);
-                    $unit     = $item['is_beer'] ? 'BTL' : 'ml';
+                if ($available < $totalDeduct) {
+                    $foodItem  = FoodItem::find($foodItemId);
+                    $unitLabel = $isBeerMap[$foodItemId] ? 'BTL' : 'ml';
                     DB::rollBack();
                     return response()->json([
                         'statusCode' => 422,
-                        'message'    => "Insufficient bar stock for \"{$foodItem->name}\". Available: {$available} {$unit}.",
+                        'message'    => "Insufficient bar stock for \"{$foodItem->name}\". Available: {$available} {$unitLabel}, Required: {$totalDeduct} {$unitLabel}.",
                     ]);
                 }
             }
