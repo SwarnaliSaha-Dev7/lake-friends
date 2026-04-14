@@ -145,10 +145,10 @@
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-6" id="add_sizeWrapper">
                                 <div class="form-part mb-3">
                                     <label class="form-label"><small>Size (ml)</small></label>
-                                    <input type="number" name="size_ml" id="add_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="0">
+                                    <input type="number" name="size_ml" id="add_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="1">
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
@@ -253,10 +253,10 @@
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-6" id="edit_sizeWrapper">
                                 <div class="form-part mb-3">
                                     <label class="form-label"><small>Size (ml)</small></label>
-                                    <input type="number" name="size_ml" id="edit_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="0">
+                                    <input type="number" name="size_ml" id="edit_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="1">
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
@@ -386,19 +386,41 @@
 <script>
 $(document).ready(function () {
 
-    // ── Beer toggle: show/hide price field ──
+    // ── Beer toggle: show/hide price & size fields ──
     function toggleAddPrice() {
         if ($('#add_is_beer').is(':checked')) {
             $('#add_priceWrapper').show();
             $('#add_itemPrice').prop('required', true);
+            $('#add_sizeWrapper').hide();
+            $('#add_size_ml').val('').prop('required', false);
+            $('#add_size_ml').next('.error-div').text('');
+            $('#add_size_ml').removeClass('is-invalid');
         } else {
             $('#add_priceWrapper').hide();
             $('#add_itemPrice').val('').prop('required', false);
             $('#add_itemPrice').next('.error-div').text('');
+            $('#add_sizeWrapper').show();
+            $('#add_size_ml').prop('required', true);
         }
     }
     $('#add_is_beer').on('change', toggleAddPrice);
     toggleAddPrice(); // run on page load
+
+    // ── Edit beer toggle: show/hide size field ──
+    function toggleEditBeer() {
+        if ($('#edit_is_beer').is(':checked')) {
+            $('#edit_priceDivider, #edit_priceSection').show();
+            $('#edit_sizeWrapper').hide();
+            $('#edit_size_ml').val('').prop('required', false);
+            $('#edit_size_ml').next('.error-div').text('');
+            $('#edit_size_ml').removeClass('is-invalid');
+        } else {
+            $('#edit_priceDivider, #edit_priceSection').hide();
+            $('#edit_sizeWrapper').show();
+            $('#edit_size_ml').prop('required', true);
+        }
+    }
+    $('#edit_is_beer').on('change', toggleEditBeer);
 
     // ── ADD item image preview ──
     $('#add_itemImage').on('change', function () {
@@ -456,6 +478,18 @@ $(document).ready(function () {
         } else {
             $('#add_itemCode').next('.error-div').text('');
             $('#add_itemCode').removeClass('is-invalid');
+        }
+
+        if (!$('#add_is_beer').is(':checked')) {
+            var sizeMl = $('#add_size_ml').val();
+            if (sizeMl === '' || parseInt(sizeMl) < 1) {
+                $('#add_size_ml').next('.error-div').text('Size (ml) is required');
+                $('#add_size_ml').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#add_size_ml').next('.error-div').text('');
+                $('#add_size_ml').removeClass('is-invalid');
+            }
         }
 
         if ($('#add_is_beer').is(':checked')) {
@@ -558,12 +592,8 @@ $(document).ready(function () {
                 $('#edit_is_beer').prop('checked', isBeer);
                 $('#edit_itemPrice').val(data.food_item_price ? data.food_item_price.price : '');
 
-                // Show/hide price section based on is_beer
-                if (isBeer) {
-                    $('#edit_priceDivider, #edit_priceSection').show();
-                } else {
-                    $('#edit_priceDivider, #edit_priceSection').hide();
-                }
+                // Show/hide size & price section based on is_beer
+                toggleEditBeer();
 
                 if (data.image) {
                     // $('#edit_itemPreview').attr('src', '/' + data.image).removeClass('d-none');
@@ -595,6 +625,18 @@ $(document).ready(function () {
     // ── EDIT form submit ──
     $('#editLiquorItemForm').on('submit', function (e) {
         e.preventDefault();
+
+        if (!$('#edit_is_beer').is(':checked')) {
+            var editSizeMl = $('#edit_size_ml').val();
+            if (editSizeMl === '' || parseInt(editSizeMl) < 1) {
+                $('#edit_size_ml').next('.error-div').text('Size (ml) is required');
+                $('#edit_size_ml').addClass('is-invalid');
+                return;
+            } else {
+                $('#edit_size_ml').next('.error-div').text('');
+                $('#edit_size_ml').removeClass('is-invalid');
+            }
+        }
 
         var id = $('#edit_item_id').val();
         var formData = new FormData(this);

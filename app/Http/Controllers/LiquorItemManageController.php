@@ -81,7 +81,7 @@ class LiquorItemManageController extends Controller
                 //     }),
                 // ],
                 'itemstatus'          => 'required|boolean',
-                'size_ml'             => 'nullable|numeric|min:0',
+                'size_ml'             => $request->boolean('is_beer') ? 'nullable|numeric|min:0' : 'required|numeric|min:1',
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
                 'is_beer'             => 'nullable|boolean',
             ]);
@@ -244,7 +244,7 @@ class LiquorItemManageController extends Controller
                 //     }),
                 // ],
                 'itemstatus'          => 'required|boolean',
-                'size_ml'             => 'nullable|numeric|min:0',
+                'size_ml'             => $request->boolean('is_beer') ? 'nullable|numeric|min:0' : 'required|numeric|min:1',
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
                 'is_beer'             => 'nullable|boolean',
             ]);

@@ -267,6 +267,7 @@ $(document).ready(function () {
 
         // Populate the global createOrderModal with session member info
         $('#cardentry').data('member-id', window.currentOrderSession.memberId);
+        $('#cardentry').data('member-type', 'club');
         $('#cardMemberName').text(window.currentOrderSession.memberName);
         $('#cardMemberCode').text(window.currentOrderSession.memberCode);
         $('#cardMemberPlan').text('');
