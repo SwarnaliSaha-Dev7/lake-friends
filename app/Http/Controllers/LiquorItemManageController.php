@@ -81,7 +81,7 @@ class LiquorItemManageController extends Controller
                 //     }),
                 // ],
                 'itemstatus'          => 'required|boolean',
-                'size_ml'             => $request->boolean('is_beer') ? 'nullable|numeric|min:0' : 'required|numeric|min:1',
+                'size_ml'             => 'required|numeric|min:1',
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
                 'is_beer'             => 'nullable|boolean',
             ]);
@@ -112,6 +112,7 @@ class LiquorItemManageController extends Controller
             $isBeer = $request->boolean('is_beer');
             $unit   = $isBeer ? 'bottle' : 'ml';
             $price  = $isBeer ? (float) ($request->itemPrice ?? 0) : 0;
+            $sizeMl = (int) $request->size_ml;
 
             $image_path = null;
             if ($request->hasFile('itemImage')) {
@@ -132,7 +133,7 @@ class LiquorItemManageController extends Controller
                 'code'                => $request->itemCode,
                 'is_active'           => $isAdmin ? $request->itemstatus : 0,
                 'unit'                => $unit,
-                'size_ml'             => $request->size_ml,
+                'size_ml'             => $sizeMl,
                 'is_beer'             => $isBeer,
                 'low_stock_alert_qty' => $request->low_stock_alert_qty,
             ]);
@@ -150,7 +151,7 @@ class LiquorItemManageController extends Controller
                 'category_id'         => $request->itemCat,
                 'code'                => $request->itemCode,
                 'is_active'           => $request->itemstatus,
-                'size_ml'             => $request->size_ml,
+                'size_ml'             => $sizeMl,
                 'is_beer'             => $isBeer,
                 'unit'                => $unit,
                 'low_stock_alert_qty' => $request->low_stock_alert_qty,
@@ -244,7 +245,7 @@ class LiquorItemManageController extends Controller
                 //     }),
                 // ],
                 'itemstatus'          => 'required|boolean',
-                'size_ml'             => $request->boolean('is_beer') ? 'nullable|numeric|min:0' : 'required|numeric|min:1',
+                'size_ml'             => 'required|numeric|min:1',
                 'low_stock_alert_qty' => 'nullable|numeric|min:0',
                 'is_beer'             => 'nullable|boolean',
             ]);
@@ -281,6 +282,7 @@ class LiquorItemManageController extends Controller
 
             $isBeer     = $request->boolean('is_beer');
             $unit       = $isBeer ? 'bottle' : 'ml';
+            $sizeMl     = (int) $request->size_ml;
             $image_path = $liquorItem->image;
 
             if ($request->hasFile('itemImage')) {
@@ -299,7 +301,7 @@ class LiquorItemManageController extends Controller
                 'image'               => $image_path,
                 'code'                => $request->itemCode,
                 'is_active'           => $request->itemstatus,
-                'size_ml'             => $request->size_ml,
+                'size_ml'             => $sizeMl,
                 'is_beer'             => $isBeer,
                 'unit'                => $unit,
                 'low_stock_alert_qty' => $request->low_stock_alert_qty,

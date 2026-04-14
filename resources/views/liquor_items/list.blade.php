@@ -386,38 +386,26 @@
 <script>
 $(document).ready(function () {
 
-    // ── Beer toggle: show/hide price & size fields ──
+    // ── Beer toggle: show/hide price field only (size always required) ──
     function toggleAddPrice() {
         if ($('#add_is_beer').is(':checked')) {
             $('#add_priceWrapper').show();
             $('#add_itemPrice').prop('required', true);
-            $('#add_sizeWrapper').hide();
-            $('#add_size_ml').val('').prop('required', false);
-            $('#add_size_ml').next('.error-div').text('');
-            $('#add_size_ml').removeClass('is-invalid');
         } else {
             $('#add_priceWrapper').hide();
             $('#add_itemPrice').val('').prop('required', false);
             $('#add_itemPrice').next('.error-div').text('');
-            $('#add_sizeWrapper').show();
-            $('#add_size_ml').prop('required', true);
         }
     }
     $('#add_is_beer').on('change', toggleAddPrice);
     toggleAddPrice(); // run on page load
 
-    // ── Edit beer toggle: show/hide size field ──
+    // ── Edit beer toggle: show/hide price section only (size always required) ──
     function toggleEditBeer() {
         if ($('#edit_is_beer').is(':checked')) {
             $('#edit_priceDivider, #edit_priceSection').show();
-            $('#edit_sizeWrapper').hide();
-            $('#edit_size_ml').val('').prop('required', false);
-            $('#edit_size_ml').next('.error-div').text('');
-            $('#edit_size_ml').removeClass('is-invalid');
         } else {
             $('#edit_priceDivider, #edit_priceSection').hide();
-            $('#edit_sizeWrapper').show();
-            $('#edit_size_ml').prop('required', true);
         }
     }
     $('#edit_is_beer').on('change', toggleEditBeer);
@@ -480,16 +468,14 @@ $(document).ready(function () {
             $('#add_itemCode').removeClass('is-invalid');
         }
 
-        if (!$('#add_is_beer').is(':checked')) {
-            var sizeMl = $('#add_size_ml').val();
-            if (sizeMl === '' || parseInt(sizeMl) < 1) {
-                $('#add_size_ml').next('.error-div').text('Size (ml) is required');
-                $('#add_size_ml').addClass('is-invalid');
-                isValid = false;
-            } else {
-                $('#add_size_ml').next('.error-div').text('');
-                $('#add_size_ml').removeClass('is-invalid');
-            }
+        var sizeMl = $('#add_size_ml').val();
+        if (sizeMl === '' || parseInt(sizeMl) < 1) {
+            $('#add_size_ml').next('.error-div').text('Size (ml) is required');
+            $('#add_size_ml').addClass('is-invalid');
+            isValid = false;
+        } else {
+            $('#add_size_ml').next('.error-div').text('');
+            $('#add_size_ml').removeClass('is-invalid');
         }
 
         if ($('#add_is_beer').is(':checked')) {
@@ -626,16 +612,14 @@ $(document).ready(function () {
     $('#editLiquorItemForm').on('submit', function (e) {
         e.preventDefault();
 
-        if (!$('#edit_is_beer').is(':checked')) {
-            var editSizeMl = $('#edit_size_ml').val();
-            if (editSizeMl === '' || parseInt(editSizeMl) < 1) {
-                $('#edit_size_ml').next('.error-div').text('Size (ml) is required');
-                $('#edit_size_ml').addClass('is-invalid');
-                return;
-            } else {
-                $('#edit_size_ml').next('.error-div').text('');
-                $('#edit_size_ml').removeClass('is-invalid');
-            }
+        var editSizeMl = $('#edit_size_ml').val();
+        if (editSizeMl === '' || parseInt(editSizeMl) < 1) {
+            $('#edit_size_ml').next('.error-div').text('Size (ml) is required');
+            $('#edit_size_ml').addClass('is-invalid');
+            return;
+        } else {
+            $('#edit_size_ml').next('.error-div').text('');
+            $('#edit_size_ml').removeClass('is-invalid');
         }
 
         var id = $('#edit_item_id').val();
