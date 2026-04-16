@@ -132,6 +132,15 @@
                             <div class="error-div text-danger small"></div>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <small>Purchase Price per Bottle (₹) <span class="text-danger">*</span></small>
+                            </label>
+                            <input type="number" name="unit_price" id="stock_unit_price" class="form-control py-2 shadow-none"
+                                placeholder="e.g. 1500" min="0" step="0.01" required>
+                            <div class="text-muted mt-1" style="font-size:0.78rem;" id="stock_total_hint"></div>
+                            <div class="error-div text-danger small"></div>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label fw-semibold"><small>Notes (optional)</small></label>
                             <textarea name="notes" id="stock_notes" class="form-control py-2 shadow-none" rows="2"
                                 placeholder="e.g. Supplier name, invoice no."></textarea>
@@ -229,13 +238,15 @@ $(document).ready(function () {
         $(this).next('.error-div').text('');
     });
 
-    $('.add-stock-btn').on('click', function (e) {
+    $(document).on('click', '.add-stock-btn', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
         var id = $(this).data('id');
         $('#stock_item_select').val(id).trigger('change');
         $('#stock_quantity').val('');
+        $('#stock_unit_price').val('');
         $('#stock_notes').val('');
+        $('#stock_total_hint').text('');
         $('#addStockModal').modal('show');
         return false;
     });
@@ -244,7 +255,22 @@ $(document).ready(function () {
     $('#addStockModal').on('hidden.bs.modal', function () {
         $('#stock_item_select').val('').trigger('change');
         $('#stock_size_hint').text('');
+        $('#stock_total_hint').text('');
     });
+
+    // Live total value hint
+    function updateTotalHint() {
+        var qty   = parseFloat($('#stock_quantity').val())   || 0;
+        var price = parseFloat($('#stock_unit_price').val()) || 0;
+        if (qty > 0 && price > 0) {
+            var total = qty * price;
+            $('#stock_total_hint').text('Total purchase value: ₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        } else {
+            $('#stock_total_hint').text('');
+        }
+    }
+    $('#stock_quantity').on('input', updateTotalHint);
+    $('#stock_unit_price').on('input', updateTotalHint);
 
     $('#addStockForm').on('submit', function (e) {
         e.preventDefault();
@@ -263,6 +289,13 @@ $(document).ready(function () {
             isValid = false;
         } else {
             $('#stock_quantity').next('.error-div').text('');
+        }
+        var unitPrice = $('#stock_unit_price').val();
+        if (!unitPrice || parseFloat(unitPrice) < 0) {
+            $('#stock_unit_price').next('.error-div').text('Enter a valid purchase price.');
+            isValid = false;
+        } else {
+            $('#stock_unit_price').next('.error-div').text('');
         }
         if (!isValid) return;
 
@@ -295,7 +328,7 @@ $(document).ready(function () {
 
     var adjSystemQty = 0;
 
-    $('.adjust-stock-btn').on('click', function (e) {
+    $(document).on('click', '.adjust-stock-btn', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
 

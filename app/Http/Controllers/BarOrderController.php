@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
+use App\Models\LiquorServing;
 use App\Models\Member;
 use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
@@ -240,13 +241,13 @@ class BarOrderController extends Controller
                     }
                 });
 
-            $items = FoodItem::where('club_id', $clubId)
+            $regularItems = FoodItem::where('club_id', $clubId)
                 ->where('item_type', 'liquor')
                 ->where('is_active', 1)
                 ->with(['foodItemCat', 'foodItemPrice'])
                 ->get()
                 ->map(function ($item) use ($barStockMap, $offerMap) {
-                    $stock = (int) ($barStockMap[$item->id] ?? 0);
+                    $stock    = (int) ($barStockMap[$item->id] ?? 0);
                     $sizeMl   = (int) ($item->size_ml ?? 1);
                     $alertQty = (int) ($item->low_stock_alert_qty ?? 0);
                     $btlEq    = $item->is_beer ? $stock : ($sizeMl > 0 ? floor($stock / $sizeMl) : 0);
@@ -255,9 +256,11 @@ class BarOrderController extends Controller
 
                     return [
                         'id'          => $item->id,
+                        'serving_id'  => null,
                         'name'        => $item->name,
                         'category'    => $item->foodItemCat->name ?? '—',
                         'is_beer'     => (bool) $item->is_beer,
+                        'is_cocktail' => false,
                         'size_ml'     => (int) ($item->size_ml ?? 0),
                         'price'       => (float) ($item->foodItemPrice->price ?? 0),
                         'bar_stock'   => $stock,
@@ -268,6 +271,38 @@ class BarOrderController extends Controller
                         'offer'       => $offerMap[$item->id] ?? null,
                     ];
                 });
+
+            // ── Active cocktails ──────────────────────────────────────────────
+            $cocktails = LiquorServing::where('club_id', $clubId)
+                ->where('is_cocktail', true)
+                ->where('is_active', true)
+                ->with('foodItem')
+                ->get()
+                ->map(function ($serving) use ($barStockMap) {
+                    $baseItemId  = $serving->food_item_id;
+                    $stockMl     = (int) ($barStockMap[$baseItemId] ?? 0);
+                    $deductMl    = (int) ($serving->volume_ml ?? 1);
+                    $canMake     = $deductMl > 0 ? (int) floor($stockMl / $deductMl) : 0;
+
+                    return [
+                        'id'          => $baseItemId,   // base spirit food_item_id for stock deduction
+                        'serving_id'  => $serving->id,  // unique key for cocktail cart merge
+                        'name'        => $serving->name, // cocktail name
+                        'category'    => 'Cocktail',
+                        'is_beer'     => false,
+                        'is_cocktail' => true,
+                        'size_ml'     => $deductMl,      // ml deducted per order
+                        'price'       => (float) $serving->price,
+                        'bar_stock'   => $stockMl,
+                        'in_stock'    => $canMake > 0,
+                        'is_low'      => false,
+                        'btl_eq'      => $canMake,       // how many cocktails can be made
+                        'alert_qty'   => 0,
+                        'offer'       => null,
+                    ];
+                });
+
+            $items = $regularItems->concat($cocktails)->values();
 
             return response()->json(['statusCode' => 200, 'items' => $items]);
         } catch (\Throwable $th) {
@@ -310,27 +345,32 @@ class BarOrderController extends Controller
                 ]);
             }
 
-            // Stock check & deduction
+            // Stock check & deduction (aggregate per food_item_id first)
             $warehouse   = $this->getWarehouse($clubId);
             $barLocation = $this->getBarLocation();
 
+            $deductMap = [];
+            $isBeerMap = [];
             foreach ($items as $item) {
-                $deductQty  = (int) $item['deduct_qty'];
                 $foodItemId = (int) $item['food_item_id'];
+                $deductMap[$foodItemId] = ($deductMap[$foodItemId] ?? 0) + (int) $item['deduct_qty'];
+                $isBeerMap[$foodItemId] = (bool) $item['is_beer'];
+            }
 
+            foreach ($deductMap as $foodItemId => $totalDeduct) {
                 $stock = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
                     ->where('location_id', $barLocation->id)
                     ->where('food_items_id', $foodItemId)
                     ->first();
 
                 $available = $stock ? (int) $stock->quantity : 0;
-                if ($available < $deductQty) {
-                    $foodItem = FoodItem::find($foodItemId);
-                    $unit     = $item['is_beer'] ? 'BTL' : 'ml';
+                if ($available < $totalDeduct) {
+                    $foodItem  = FoodItem::find($foodItemId);
+                    $unitLabel = $isBeerMap[$foodItemId] ? 'BTL' : 'ml';
                     DB::rollBack();
                     return response()->json([
                         'statusCode' => 422,
-                        'message'    => "Insufficient bar stock for \"{$foodItem->name}\". Available: {$available} {$unit}.",
+                        'message'    => "Insufficient bar stock for \"{$foodItem->name}\". Available: {$available} {$unitLabel}, Required: {$totalDeduct} {$unitLabel}.",
                     ]);
                 }
             }
@@ -354,13 +394,26 @@ class BarOrderController extends Controller
 
             // Create order items + deduct bar stock
             foreach ($items as $item) {
-                $foodItemId = (int) $item['food_item_id'];
+                $foodItemId   = (int) $item['food_item_id'];
                 $isBeer       = (bool) $item['is_beer'];
+                $isCocktail   = (bool) ($item['is_cocktail'] ?? false);
                 $deductQty    = (int) $item['deduct_qty'];
                 $volumeMl     = $isBeer ? null : (int) $item['volume_ml'];
                 $quantity     = (int) $item['quantity'];
                 $unit         = $isBeer ? 'btl' : 'ml';
                 $offerApplied = $item['offer_applied'] ?? null;
+
+                $metadata = null;
+                if ($isCocktail) {
+                    $metadata = [
+                        'volume_ml'     => $volumeMl,
+                        'is_cocktail'   => true,
+                        'cocktail_name' => $item['name'] ?? '',
+                        'serving_id'    => $item['serving_id'] ?? null,
+                    ];
+                } elseif ($volumeMl) {
+                    $metadata = ['volume_ml' => $volumeMl];
+                }
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,
@@ -370,7 +423,7 @@ class BarOrderController extends Controller
                     'unit_price'          => (float) $item['unit_price'],
                     'total_amount'        => (float) $item['total_amount'],
                     'offer_applied'       => $offerApplied,
-                    'metadata'            => $volumeMl ? ['volume_ml' => $volumeMl] : null,
+                    'metadata'            => $metadata,
                 ]);
 
                 // Deduct from bar stock

@@ -609,8 +609,8 @@
 
                     toastr.success(response.message);
 
-                    // If opened from card punch popup, update balance & close modal (no redirect)
-                    if ($('#cardentry').hasClass('show')) {
+                    // If opened from card punch popup or create order modal, update balance & close (no redirect)
+                    if ($('#cardentry').hasClass('show') || $('#createOrderModal').hasClass('show')) {
                         let newBal = response.data ?? null;
                         if (newBal !== null) {
                             let balFormatted = parseFloat(newBal).toFixed(2);

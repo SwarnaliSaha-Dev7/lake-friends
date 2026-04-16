@@ -21,12 +21,19 @@ class LiquorServingController extends Controller
             $page_title = 'Liquor Menu';
             $title      = 'Liquor Menu';
 
+            // Spirits for regular serving; all liquor items for cocktail base
             $liquorItems = FoodItem::where('club_id', $clubId)
                 ->where('item_type', 'liquor')
                 ->where('is_beer', 0)
                 ->where('is_active', 1)
                 ->orderBy('name')
                 ->get(['id', 'name', 'size_ml']);
+
+            $allLiquorItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'liquor')
+                ->where('is_active', 1)
+                ->orderBy('name')
+                ->get(['id', 'name', 'size_ml', 'is_beer']);
 
             $servings = LiquorServing::where('club_id', $clubId)
                 ->with('foodItem')
@@ -46,7 +53,7 @@ class LiquorServingController extends Controller
             $pendingAnyIds    = $pendingByServing->keys()->toArray();
 
             return view('liquor_servings.index', compact(
-                'servings', 'liquorItems', 'page_title', 'title',
+                'servings', 'liquorItems', 'allLiquorItems', 'page_title', 'title',
                 'pendingCreateIds', 'pendingUpdateIds', 'pendingDeleteIds', 'pendingAnyIds'
             ));
         } catch (\Throwable $th) {
@@ -58,31 +65,45 @@ class LiquorServingController extends Controller
     {
         DB::beginTransaction();
         try {
-            $clubId  = club_id();
-            $isAdmin = Auth::user()->hasRole('admin');
+            $clubId     = club_id();
+            $isAdmin    = Auth::user()->hasRole('admin');
+            $isCocktail = (bool) $request->input('is_cocktail', false);
 
             $request->validate([
-                'food_item_id' => 'required|integer',
-                'volume_ml'    => 'required|integer|min:1',
-                'price'        => 'required|numeric|min:0|decimal:0,2',
+                'food_item_id'  => 'required|integer',
+                'volume_ml'     => 'required|integer|min:1',
+                'price'         => 'required|numeric|min:0|decimal:0,2',
+                'cocktail_name' => $isCocktail ? 'required|string|max:200' : 'nullable|string|max:200',
             ]);
 
-            $foodItem = FoodItem::where('club_id', $clubId)
+            $foodItemQuery = FoodItem::where('club_id', $clubId)
                 ->where('id', $request->food_item_id)
-                ->where('item_type', 'liquor')
-                ->where('is_beer', 0)
-                ->firstOrFail();
+                ->where('item_type', 'liquor');
 
-            $duplicate = LiquorServing::where('club_id', $clubId)
-                ->where('food_item_id', $foodItem->id)
-                ->where('volume_ml', $request->volume_ml)
-                ->exists();
-
-            if ($duplicate) {
-                return response()->json(['statusCode' => 422, 'message' => $foodItem->name . ' ' . $request->volume_ml . 'ml already exists.']);
+            // Regular servings: only non-beer spirits; cocktails: any liquor item as base
+            if (!$isCocktail) {
+                $foodItemQuery->where('is_beer', 0);
             }
 
-            $name = $foodItem->name . ' ' . $request->volume_ml . 'ml';
+            $foodItem = $foodItemQuery->firstOrFail();
+
+            // Duplicate check only for regular servings (same item + volume)
+            if (!$isCocktail) {
+                $duplicate = LiquorServing::where('club_id', $clubId)
+                    ->where('food_item_id', $foodItem->id)
+                    ->where('volume_ml', $request->volume_ml)
+                    ->where('is_cocktail', false)
+                    ->exists();
+
+                if ($duplicate) {
+                    DB::rollBack();
+                    return response()->json(['statusCode' => 422, 'message' => $foodItem->name . ' ' . $request->volume_ml . 'ml already exists.']);
+                }
+            }
+
+            $name = $isCocktail
+                ? trim($request->cocktail_name)
+                : $foodItem->name . ' ' . $request->volume_ml . 'ml';
 
             $serving = LiquorServing::create([
                 'club_id'      => $clubId,
@@ -91,6 +112,7 @@ class LiquorServingController extends Controller
                 'volume_ml'    => $request->volume_ml,
                 'price'        => $request->price,
                 'is_active'    => $isAdmin ? 1 : 0,
+                'is_cocktail'  => $isCocktail,
                 'created_by'   => Auth::id(),
             ]);
 
@@ -101,6 +123,7 @@ class LiquorServingController extends Controller
                 'item_name'    => $foodItem->name,
                 'volume_ml'    => $request->volume_ml,
                 'price'        => $request->price,
+                'is_cocktail'  => $isCocktail,
             ];
 
             $approval = ActionApproval::create([
@@ -127,7 +150,9 @@ class LiquorServingController extends Controller
 
             return response()->json([
                 'statusCode' => 200,
-                'message'    => $isAdmin ? 'Liquor menu item added successfully.' : 'Liquor menu item submitted for approval.',
+                'message'    => $isAdmin
+                    ? ($isCocktail ? 'Cocktail added successfully.' : 'Liquor menu item added successfully.')
+                    : ($isCocktail ? 'Cocktail submitted for approval.' : 'Liquor menu item submitted for approval.'),
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -165,12 +190,14 @@ class LiquorServingController extends Controller
             $clubId  = club_id();
             $isAdmin = Auth::user()->hasRole('admin');
 
-            $request->validate([
-                'volume_ml' => 'required|integer|min:1',
-                'price'     => 'required|numeric|min:0|decimal:0,2',
-            ]);
+            $serving    = LiquorServing::where('club_id', $clubId)->with('foodItem')->findOrFail($id);
+            $isCocktail = (bool) $serving->is_cocktail;
 
-            $serving = LiquorServing::where('club_id', $clubId)->with('foodItem')->findOrFail($id);
+            $request->validate([
+                'volume_ml'     => 'required|integer|min:1',
+                'price'         => 'required|numeric|min:0|decimal:0,2',
+                'cocktail_name' => $isCocktail ? 'required|string|max:200' : 'nullable|string|max:200',
+            ]);
 
             $pendingApproval = ActionApproval::where('club_id', $clubId)
                 ->where('entity_id', $id)
@@ -185,22 +212,27 @@ class LiquorServingController extends Controller
                 ]);
             }
 
-            // Duplicate check: same item + volume must not exist (excluding current record)
-            $duplicate = LiquorServing::where('club_id', $clubId)
-                ->where('food_item_id', $serving->food_item_id)
-                ->where('volume_ml', $request->volume_ml)
-                ->where('id', '!=', $id)
-                ->exists();
+            // Duplicate check only for regular servings (same item + volume, excluding self)
+            if (!$isCocktail) {
+                $duplicate = LiquorServing::where('club_id', $clubId)
+                    ->where('food_item_id', $serving->food_item_id)
+                    ->where('volume_ml', $request->volume_ml)
+                    ->where('is_cocktail', false)
+                    ->where('id', '!=', $id)
+                    ->exists();
 
-            if ($duplicate) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 422,
-                    'message'    => 'A serving with this item and volume already exists.',
-                ]);
+                if ($duplicate) {
+                    DB::rollBack();
+                    return response()->json([
+                        'statusCode' => 422,
+                        'message'    => 'A serving with this item and volume already exists.',
+                    ]);
+                }
             }
 
-            $newName = $serving->foodItem->name . ' ' . $request->volume_ml . 'ml';
+            $newName = $isCocktail
+                ? trim($request->cocktail_name)
+                : $serving->foodItem->name . ' ' . $request->volume_ml . 'ml';
 
             $serving->fill([
                 'name'      => $newName,
@@ -214,14 +246,15 @@ class LiquorServingController extends Controller
             }
 
             $payload = [
-                'serving_id' => $serving->id,
-                'item_name'  => $serving->foodItem->name ?? '—',
-                'old'        => [
+                'serving_id'  => $serving->id,
+                'item_name'   => $serving->foodItem->name ?? '—',
+                'is_cocktail' => $isCocktail,
+                'old'         => [
                     'name'      => $serving->getOriginal('name'),
                     'volume_ml' => $serving->getOriginal('volume_ml'),
                     'price'     => $serving->getOriginal('price'),
                 ],
-                'new'        => [
+                'new'         => [
                     'name'      => $newName,
                     'volume_ml' => $request->volume_ml,
                     'price'     => $request->price,
@@ -249,7 +282,7 @@ class LiquorServingController extends Controller
                 ]);
 
                 DB::commit();
-                return response()->json(['statusCode' => 200, 'message' => 'Liquor menu item updated successfully.']);
+                return response()->json(['statusCode' => 200, 'message' => $isCocktail ? 'Cocktail updated successfully.' : 'Liquor menu item updated successfully.']);
             }
 
             $approval = ActionApproval::create([

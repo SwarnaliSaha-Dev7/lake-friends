@@ -107,7 +107,13 @@
                                         <td class="text-nowrap">{{ $order->member->name ?? '—' }}</td>
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('h:i A') }}</td>
                                         <td class="text-nowrap">
-                                            {{ $item->foodItem->name ?? '—' }}
+                                            @if(!empty($item->metadata['is_cocktail']))
+                                                {{ $item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—') }}
+                                                <span class="badge ms-1" style="font-size:0.62rem;background:#7c3aed;color:#fff;">Cocktail</span>
+                                                <br><small class="text-muted">base: {{ $item->foodItem->name ?? '—' }}</small>
+                                            @else
+                                                {{ $item->foodItem->name ?? '—' }}
+                                            @endif
                                             @if($offerLabel)
                                                 <br>
                                                 <span class="badge bg-danger rounded-pill px-2" style="font-size:0.65rem;">
@@ -232,6 +238,7 @@
                                     <button type="button" class="btn btn-outline-secondary active bar-type-filter" data-filter="all">All</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="spirit">Spirit</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beer">Beer</button>
+                                    <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="cocktail">Cocktail</button>
                                 </div>
                             </div>
                             <div id="barItemsGrid" class="row g-2" style="max-height:420px;overflow-y:auto;">
@@ -375,25 +382,36 @@ $(document).ready(function () {
                 isB1g1Insufficient = item.bar_stock < b1g1Need;
             }
 
-            var remainder    = item.size_ml > 0 ? item.bar_stock % item.size_ml : item.bar_stock;
-            var btlBreakdown = item.btl_eq > 0
-                ? ' (' + item.btl_eq + ' BTL' + (remainder > 0 ? ' ' + remainder.toLocaleString() + ' ml' : '') + ')'
-                : '';
-            var stockDisplay = item.is_beer
-                ? item.bar_stock + ' BTL'
-                : item.bar_stock.toLocaleString() + ' ml' + btlBreakdown;
+            var stockDisplay, typeBadge, sizeTxt, itemType;
+            if (item.is_cocktail) {
+                stockDisplay = item.btl_eq + ' servings';
+                typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#7c3aed;">Cocktail</span>';
+                sizeTxt      = item.size_ml + ' ml';
+                itemType     = 'cocktail';
+            } else if (item.is_beer) {
+                stockDisplay = item.bar_stock + ' BTL';
+                typeBadge    = '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Beer</span>';
+                sizeTxt      = '';
+                itemType     = 'beer';
+            } else {
+                var remainder    = item.size_ml > 0 ? item.bar_stock % item.size_ml : item.bar_stock;
+                var btlBreakdown = item.btl_eq > 0
+                    ? ' (' + item.btl_eq + ' BTL' + (remainder > 0 ? ' ' + remainder.toLocaleString() + ' ml' : '') + ')'
+                    : '';
+                stockDisplay = item.bar_stock.toLocaleString() + ' ml' + btlBreakdown;
+                typeBadge    = '<span class="badge bg-info text-white" style="font-size:0.65rem;">Spirit</span>';
+                sizeTxt      = item.size_ml ? item.size_ml + ' ml' : '';
+                itemType     = 'spirit';
+            }
 
             var stockColor  = (isOut || isB1g1Insufficient) ? '#dc3545' : (isLow ? '#fd7e14' : '#198754');
             var stockLabel  = isOut ? 'Out of Stock'
                             : isB1g1Insufficient ? 'Insufficient for B1G1'
                             : (isLow ? 'Low Stock' : 'In Stock');
-            var cardBorder  = (isOut || isB1g1Insufficient) ? 'border-danger' : (isLow ? 'border-warning' : '');
-            var cardBg      = (isOut || isB1g1Insufficient) ? 'background:#fff5f5;' : (isLow ? 'background:#fffbf0;' : '');
-
-            var typeBadge = item.is_beer
-                ? '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Beer</span>'
-                : '<span class="badge bg-info text-white" style="font-size:0.65rem;">Spirit</span>';
-            var sizeTxt = item.size_ml ? item.size_ml + ' ml' : '';
+            var cardBorder  = (isOut || isB1g1Insufficient) ? 'border-danger' : (isLow ? 'border-warning' : item.is_cocktail ? 'border-purple' : '');
+            var cardBg      = (isOut || isB1g1Insufficient) ? 'background:#fff5f5;'
+                            : isLow ? 'background:#fffbf0;'
+                            : item.is_cocktail ? 'background:#faf5ff;' : '';
 
             var offerBadge = '';
             if (item.offer) {
@@ -409,13 +427,16 @@ $(document).ready(function () {
                 offerBadge = '<span class="badge bg-danger text-white rounded-pill px-2 mt-1" style="font-size:0.68rem;"><i class="fa-solid fa-tag me-1"></i>' + offerLabel + '</span>';
             }
 
-            html += '<div class="col-sm-6 col-md-4 bar-item-card" data-name="' + item.name.toLowerCase() + '" data-type="' + (item.is_beer ? 'beer' : 'spirit') + '">'
+            var priceLabel = item.is_beer ? '/BTL' : '/unit';
+            var servingId  = item.serving_id || '';
+
+            html += '<div class="col-sm-6 col-md-4 bar-item-card" data-name="' + item.name.toLowerCase() + '" data-type="' + itemType + '">'
                 + '<div class="border rounded-3 p-2 h-100 d-flex flex-column ' + cardBorder + '" style="font-size:0.82rem;' + cardBg + '">'
                 +   '<div class="d-flex align-items-start justify-content-between mb-1">'
                 +     '<span class="fw-semibold">' + item.name + '</span>'
                 +     typeBadge
                 +   '</div>'
-                +   '<div class="text-muted mb-1">' + item.category + (sizeTxt ? ' · ' + sizeTxt : '') + '</div>'
+                +   '<div class="text-muted mb-1">' + item.category + (sizeTxt ? ' · ' + sizeTxt + (item.is_cocktail ? ' deduct' : '') : '') + '</div>'
                 +   '<div class="mb-1 d-flex align-items-center gap-2">'
                 +     '<span class="fw-bold" style="color:' + stockColor + ';font-size:0.78rem;">'
                 +       '<i class="fa-solid fa-' + ((isOut || isB1g1Insufficient) ? 'circle-xmark' : (isLow ? 'triangle-exclamation' : 'circle-check')) + ' me-1"></i>'
@@ -424,11 +445,13 @@ $(document).ready(function () {
                 +     '<span class="text-muted" style="font-size:0.75rem;">' + stockDisplay + '</span>'
                 +   '</div>'
                 +   (offerBadge ? '<div class="mb-1">' + offerBadge + '</div>' : '')
-                +   '<div class="fw-bold text-primary mb-2">Rs ' + item.price.toFixed(2) + (item.is_beer ? '/BTL' : '/unit') + '</div>'
+                +   '<div class="fw-bold text-primary mb-2">Rs ' + item.price.toFixed(2) + priceLabel + '</div>'
                 +   '<button type="button" class="btn btn-sm btn-outline-primary mt-auto add-bar-item-btn"'
                 +     ' data-id="' + item.id + '"'
+                +     ' data-serving-id="' + servingId + '"'
                 +     ' data-name="' + item.name + '"'
                 +     ' data-is-beer="' + (item.is_beer ? '1' : '0') + '"'
+                +     ' data-is-cocktail="' + (item.is_cocktail ? '1' : '0') + '"'
                 +     ' data-size-ml="' + item.size_ml + '"'
                 +     ' data-price="' + item.price + '"'
                 +     ' data-stock="' + item.bar_stock + '"'
@@ -487,18 +510,39 @@ $(document).ready(function () {
 
     // ── Add item ────────────────────────────────────────────────────────────
     $(document).on('click', '.add-bar-item-btn', function () {
-        var $btn   = $(this);
-        var isBeer = $btn.data('is-beer') == '1';
-        var id     = $btn.data('id');
-        var name   = $btn.data('name');
-        var price  = parseFloat($btn.data('price'));
-        var stock  = parseInt($btn.data('stock'));
-        var sizeMl = parseInt($btn.data('size-ml')) || 0;
+        var $btn       = $(this);
+        var isBeer     = $btn.data('is-beer') == '1';
+        var isCocktail = $btn.data('is-cocktail') == '1';
+        var id         = $btn.data('id');
+        var servingId  = $btn.data('serving-id') || null;
+        var name       = $btn.data('name');
+        var price      = parseFloat($btn.data('price'));
+        var stock      = parseInt($btn.data('stock'));
+        var sizeMl     = parseInt($btn.data('size-ml')) || 0;
 
-        var barItem = barItems.find(function (bi) { return String(bi.id) === String(id); });
-        var offer   = barItem ? (barItem.offer || null) : null;
+        var barItem = barItems.find(function (bi) {
+            return isCocktail
+                ? String(bi.serving_id) === String(servingId)
+                : String(bi.id) === String(id) && !bi.is_cocktail;
+        });
+        var offer = barItem ? (barItem.offer || null) : null;
 
-        if (isBeer) {
+        if (isCocktail) {
+            // Direct add — no peg modal; deduct sizeMl per cocktail
+            var deductQty = sizeMl;
+            if (deductQty > stock) {
+                toastr.error('Not enough bar stock for this cocktail.');
+                return;
+            }
+            addToCart({
+                id: id, serving_id: servingId, name: name,
+                is_beer: false, is_cocktail: true,
+                volume_ml: sizeMl,
+                paid_qty: 1, free_qty: 0, quantity: 1,
+                deduct_qty: deductQty,
+                unit_price: price, bar_stock: stock, offer: null,
+            });
+        } else if (isBeer) {
             if (offer && offer.type_slug === 'b1g1') {
                 var buyQty = offer.buy_qty || 1;
                 var getQty = offer.get_qty || 1;
@@ -512,18 +556,18 @@ $(document).ready(function () {
                     return;
                 }
                 addToCart({
-                    id: id, name: name, is_beer: true, volume_ml: null,
-                    paid_qty: buyQty, free_qty: getQty,
+                    id: id, serving_id: null, name: name, is_beer: true, is_cocktail: false,
+                    volume_ml: null, paid_qty: buyQty, free_qty: getQty,
                     quantity: buyQty + getQty,
                     deduct_qty: buyQty + getQty,
                     unit_price: price, bar_stock: stock, offer: offer,
                 });
             } else {
-                addToCart({ id: id, name: name, is_beer: true, volume_ml: null, paid_qty: 1, free_qty: 0, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock, offer: offer });
+                addToCart({ id: id, serving_id: null, name: name, is_beer: true, is_cocktail: false, volume_ml: null, paid_qty: 1, free_qty: 0, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock, offer: offer });
             }
         } else {
             // Show peg size selector
-            currentPegItem = { id: id, name: name, is_beer: false, size_ml: sizeMl, unit_price: price, bar_stock: stock, offer: offer };
+            currentPegItem = { id: id, serving_id: null, name: name, is_beer: false, is_cocktail: false, size_ml: sizeMl, unit_price: price, bar_stock: stock, offer: offer };
             selectedPegMl  = 60;
             $('#pegItemName').text(name + (sizeMl ? ' (' + sizeMl + ' ml)' : ''));
             $('#customPegMl').val('');
@@ -564,16 +608,18 @@ $(document).ready(function () {
         }
 
         addToCart({
-            id: currentPegItem.id,
-            name: currentPegItem.name,
-            is_beer: false,
-            volume_ml: ml,
-            paid_qty: qty, free_qty: 0,
-            quantity: qty,
+            id:         currentPegItem.id,
+            serving_id: null,
+            name:       currentPegItem.name,
+            is_beer:    false,
+            is_cocktail: false,
+            volume_ml:  ml,
+            paid_qty:   qty, free_qty: 0,
+            quantity:   qty,
             deduct_qty: deductQty,
             unit_price: currentPegItem.unit_price,
-            bar_stock: currentPegItem.bar_stock,
-            offer: currentPegItem.offer,
+            bar_stock:  currentPegItem.bar_stock,
+            offer:      currentPegItem.offer,
         });
         $('#pegSizeModal').modal('hide');
     });
@@ -582,9 +628,12 @@ $(document).ready(function () {
         if (item.paid_qty === undefined) item.paid_qty = item.quantity;
         if (item.free_qty === undefined) item.free_qty = 0;
 
-        // Merge if same item + same volume_ml
+        // Merge: cocktails merge by serving_id; regular items merge by food_item_id + volume_ml
         var existing = cart.find(function (c) {
-            return c.id === item.id && c.volume_ml === item.volume_ml;
+            if (item.is_cocktail && c.is_cocktail) {
+                return String(c.serving_id) === String(item.serving_id);
+            }
+            return !c.is_cocktail && !item.is_cocktail && c.id === item.id && c.volume_ml === item.volume_ml;
         });
         if (existing) {
             var newDeduct = existing.deduct_qty + item.deduct_qty;
@@ -711,7 +760,10 @@ $(document).ready(function () {
             var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
             return {
                 food_item_id:  c.id,
+                serving_id:    c.serving_id || null,
+                name:          c.name,
                 is_beer:       c.is_beer,
+                is_cocktail:   c.is_cocktail || false,
                 volume_ml:     c.volume_ml,
                 quantity:      c.quantity,
                 paid_qty:      paidQty,
@@ -879,8 +931,17 @@ $(document).ready(function () {
                 var amt = parseFloat(it.total_amount);
                 liquorTotal += amt;
 
+                var displayName;
+                if (meta.is_cocktail) {
+                    displayName = (meta.cocktail_name || (it.food_item ? it.food_item.name : '—'))
+                        + ' <span class="badge ms-1" style="font-size:0.6rem;background:#7c3aed;color:#fff;">Cocktail</span>'
+                        + '<br><small class="text-muted">base: ' + (it.food_item ? it.food_item.name : '—') + '</small>';
+                } else {
+                    displayName = it.food_item ? it.food_item.name : '—';
+                }
+
                 rows += '<tr>'
-                    + '<td class="fw-medium">' + (it.food_item ? it.food_item.name : '—') + offerTag + '</td>'
+                    + '<td class="fw-medium">' + displayName + offerTag + '</td>'
                     + '<td class="text-center text-nowrap">' + volDesc + '</td>'
                     + '<td class="text-end text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
                     + '<td class="text-end text-nowrap">Rs ' + amt.toFixed(2) + '</td>'

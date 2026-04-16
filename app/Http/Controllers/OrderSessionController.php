@@ -183,7 +183,7 @@ class OrderSessionController extends Controller
                 ]);
             }
 
-            // Bar stock check for liquor items
+            // Bar stock check for liquor items (aggregate per food_item_id first)
             $liquorItems = array_filter($items, fn($i) => in_array($i['unit'] ?? '', ['ml', 'btl']));
             $warehouse   = null;
             $barLocation = null;
@@ -192,23 +192,29 @@ class OrderSessionController extends Controller
                 $warehouse   = $this->getWarehouse($clubId);
                 $barLocation = $this->getBarLocation();
 
+                // Aggregate total deduction per food_item_id to catch multi-row same-item orders
+                $deductMap = [];
+                $unitMap   = [];
                 foreach ($liquorItems as $item) {
                     $foodItemId = (int) $item['food_item_id'];
-                    $deductQty  = (int) $item['deduct_qty'];
+                    $deductMap[$foodItemId] = ($deductMap[$foodItemId] ?? 0) + (int) $item['deduct_qty'];
+                    $unitMap[$foodItemId]   = $item['unit'];
+                }
 
+                foreach ($deductMap as $foodItemId => $totalDeduct) {
                     $stock     = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
                         ->where('location_id', $barLocation->id)
                         ->where('food_items_id', $foodItemId)
                         ->first();
                     $available = $stock ? (int) $stock->quantity : 0;
 
-                    if ($available < $deductQty) {
-                        $foodItem = FoodItem::find($foodItemId);
-                        $unit     = ($item['unit'] === 'btl') ? 'BTL' : 'ml';
+                    if ($available < $totalDeduct) {
+                        $foodItem  = FoodItem::find($foodItemId);
+                        $unitLabel = ($unitMap[$foodItemId] === 'btl') ? 'BTL' : 'ml';
                         DB::rollBack();
                         return response()->json([
                             'statusCode' => 422,
-                            'message'    => "Insufficient bar stock for \"{$foodItem->name}\". Available: {$available} {$unit}.",
+                            'message'    => "Insufficient bar stock for \"{$foodItem->name}\". Available: {$available} {$unitLabel}, Required: {$totalDeduct} {$unitLabel}.",
                         ]);
                     }
                 }
@@ -234,9 +240,21 @@ class OrderSessionController extends Controller
 
             // Create order items + deduct bar stock for liquor
             foreach ($items as $item) {
-                $unit     = $item['unit'];
-                $isLiquor = in_array($unit, ['ml', 'btl']);
-                $volumeMl = ($unit === 'ml' && !empty($item['volume_ml'])) ? (int) $item['volume_ml'] : null;
+                $unit       = $item['unit'];
+                $isLiquor   = in_array($unit, ['ml', 'btl']);
+                $volumeMl   = ($unit === 'ml' && !empty($item['volume_ml'])) ? (int) $item['volume_ml'] : null;
+                $isCocktail = !empty($item['is_cocktail']);
+
+                $metadata = null;
+                if ($isCocktail && $volumeMl) {
+                    $metadata = [
+                        'volume_ml'     => $volumeMl,
+                        'is_cocktail'   => true,
+                        'cocktail_name' => $item['cocktail_name'] ?? '',
+                    ];
+                } elseif ($volumeMl) {
+                    $metadata = ['volume_ml' => $volumeMl];
+                }
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,
@@ -246,7 +264,7 @@ class OrderSessionController extends Controller
                     'unit_price'          => $item['unit_price'],
                     'offer_applied'       => !empty($item['offer_applied']) ? $item['offer_applied'] : null,
                     'total_amount'        => $item['total_amount'],
-                    'metadata'            => $volumeMl ? ['volume_ml' => $volumeMl] : null,
+                    'metadata'            => $metadata,
                 ]);
 
                 if ($isLiquor) {

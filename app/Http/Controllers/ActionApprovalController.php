@@ -672,6 +672,7 @@ class ActionApprovalController extends Controller
                     'movement_type'  => $payload->movement_type,
                     'direction'      => $payload->direction,
                     'quantity'       => $payload->quantity,
+                    'unit_price'     => isset($payload->unit_price) ? (float) $payload->unit_price : null,
                     'reference_type' => 'manual',
                 ]);
 

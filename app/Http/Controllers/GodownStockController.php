@@ -6,7 +6,6 @@ use App\Models\ActionApproval;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
-use App\Models\LiquorServing;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
 use App\Models\User;
@@ -77,6 +76,7 @@ class GodownStockController extends Controller
             $request->validate([
                 'food_items_id' => 'required|exists:food_items,id',
                 'quantity'      => 'required|integer|min:1',
+                'unit_price'    => 'required|numeric|min:0',
                 'notes'         => 'nullable|string|max:500',
             ]);
 
@@ -95,6 +95,7 @@ class GodownStockController extends Controller
                 'food_items_id'  => $foodItem->id,
                 'item_name'      => $foodItem->name,
                 'quantity'       => (int) $request->quantity,
+                'unit_price'     => (float) $request->unit_price,
                 'unit'           => 'bottle',
                 'size_ml'        => $foodItem->size_ml,
                 'notes'          => $request->notes,
@@ -113,6 +114,7 @@ class GodownStockController extends Controller
                     'movement_type'  => 'purchase',
                     'direction'      => 'in',
                     'quantity'       => $request->quantity,
+                    'unit_price'     => (float) $request->unit_price,
                     'reference_type' => 'manual',
                 ]);
 
@@ -330,17 +332,50 @@ class GodownStockController extends Controller
 
         $liquorItems = FoodItem::where('club_id', $club_id)
             ->where('item_type', 'liquor')
-            ->with(['foodItemCat', 'foodItemPrice'])
+            ->with(['foodItemCat'])
             ->get();
 
-        // Price per ml from first active serving per item (spirits only)
-        $servingPrices = LiquorServing::whereIn('food_item_id', $liquorItems->pluck('id'))
-            ->where('is_active', 1)
-            ->orderBy('volume_ml')
+        // ── WAC (Weighted Average Cost) per item ──────────────────────────────
+        // All purchase IN entries up to $to with a unit_price — used for cost valuation
+        $wacRows = StockLedger::where('warehouse_id', $godown->id)
+            ->where('location_id', $godownLocation->id)
+            ->where('direction', 'in')
+            ->where('movement_type', 'purchase')
+            ->whereNotNull('unit_price')
+            ->where('created_at', '<=', $to)
+            ->select(
+                'food_items_id',
+                DB::raw('SUM(quantity * unit_price) as total_cost'),
+                DB::raw('SUM(quantity) as total_qty')
+            )
+            ->groupBy('food_items_id')
             ->get()
-            ->groupBy('food_item_id')
-            ->map(fn($g) => $g->first());
+            ->keyBy('food_items_id');
 
+        // WAC per bottle per item (0 if no purchase data yet)
+        $wac = $wacRows->mapWithKeys(fn($r) => [
+            $r->food_items_id => $r->total_qty > 0
+                ? round($r->total_cost / $r->total_qty, 2)
+                : 0,
+        ]);
+
+        // ── IN amount during period (actual purchase cost per batch) ──────────
+        $inAmountDuring = StockLedger::where('warehouse_id', $godown->id)
+            ->where('location_id', $godownLocation->id)
+            ->where('direction', 'in')
+            ->where('movement_type', 'purchase')
+            ->whereNotNull('unit_price')
+            ->whereBetween('created_at', [$from, $to])
+            ->select('food_items_id', DB::raw('SUM(quantity * unit_price) as total'))
+            ->groupBy('food_items_id')
+            ->pluck('total', 'food_items_id');
+
+        // ── Current stock map (fallback for items with no ledger history) ────
+        $currentStockMap = FoodItemCurrentStock::where('warehouse_id', $godown->id)
+            ->where('location_id', $godownLocation->id)
+            ->pluck('quantity', 'food_items_id');
+
+        // ── Qty movements ─────────────────────────────────────────────────────
         $beforeFrom = StockLedger::where('warehouse_id', $godown->id)
             ->where('location_id', $godownLocation->id)
             ->where('created_at', '<', $from)
@@ -357,7 +392,7 @@ class GodownStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        // Actual OUT from godown (sales, adjustments out) — excludes transfers to bar
+        // Actual OUT from godown (adjustments out) — excludes transfers to bar
         $outDuring = StockLedger::where('warehouse_id', $godown->id)
             ->where('location_id', $godownLocation->id)
             ->whereBetween('created_at', [$from, $to])
@@ -377,43 +412,39 @@ class GodownStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $transferDuring, $servingPrices) {
+        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $transferDuring, $inAmountDuring, $wac, $currentStockMap) {
             $before      = $beforeFrom->get($item->id, collect());
             $beforeIn    = (int) $before->where('direction', 'in')->sum('total');
             $beforeOut   = (int) $before->where('direction', 'out')->sum('total');
             $openingQty  = max(0, $beforeIn - $beforeOut);
-            $inQty       = (int) ($inDuring[$item->id]      ?? 0);
-            $outQty      = (int) ($outDuring[$item->id]     ?? 0);
+            $inQty       = (int) ($inDuring[$item->id]       ?? 0);
+            $outQty      = (int) ($outDuring[$item->id]      ?? 0);
             $transferQty = (int) ($transferDuring[$item->id] ?? 0);
-            $closingQty  = max(0, $openingQty + $inQty - $outQty - $transferQty);
+            $ledgerClosing = max(0, $openingQty + $inQty - $outQty - $transferQty);
 
-            // Price per bottle
-            $isBeer  = (bool) ($item->is_beer ?? false);
-            $sizeMl  = (int) ($item->size_ml ?? 0);
-            if ($isBeer) {
-                // Beer: use food item price directly
-                $pricePerBtl = (float) ($item->foodItemPrice->price ?? 0);
-            } else {
-                // Spirit: (serving.price / serving.volume_ml) × size_ml
-                $serving     = $servingPrices->get($item->id);
-                $pricePerBtl = ($serving && $serving->volume_ml > 0 && $sizeMl > 0)
-                    ? round(($serving->price / $serving->volume_ml) * $sizeMl, 2)
-                    : 0;
-            }
+            // Fallback: যদি ledger-এ কোনো data না থাকে, FoodItemCurrentStock থেকে qty নাও
+            $hasNoLedger = $openingQty === 0 && $inQty === 0;
+            $closingQty  = ($hasNoLedger && $ledgerClosing === 0)
+                ? (int) ($currentStockMap[$item->id] ?? 0)
+                : $ledgerClosing;
+
+            // WAC per bottle — used for opening, out, transfer, closing valuation
+            $wacPerBtl   = (float) ($wac[$item->id] ?? 0);
+            $inAmount    = round((float) ($inAmountDuring[$item->id] ?? 0), 2);
 
             return [
-                'item'             => $item,
-                'opening_qty'      => $openingQty,
-                'in_qty'           => $inQty,
-                'out_qty'          => $outQty,
-                'transfer_qty'     => $transferQty,
-                'closing_qty'      => $closingQty,
-                'price_per_btl'    => $pricePerBtl,
-                'opening_amount'   => round($openingQty  * $pricePerBtl, 2),
-                'in_amount'        => round($inQty       * $pricePerBtl, 2),
-                'out_amount'       => round($outQty      * $pricePerBtl, 2),
-                'transfer_amount'  => round($transferQty * $pricePerBtl, 2),
-                'closing_amount'   => round($closingQty  * $pricePerBtl, 2),
+                'item'            => $item,
+                'opening_qty'     => $openingQty,
+                'in_qty'          => $inQty,
+                'out_qty'         => $outQty,
+                'transfer_qty'    => $transferQty,
+                'closing_qty'     => $closingQty,
+                'price_per_btl'   => $wacPerBtl,
+                'opening_amount'  => round($openingQty  * $wacPerBtl, 2),
+                'in_amount'       => $inAmount,
+                'out_amount'      => round($outQty      * $wacPerBtl, 2),
+                'transfer_amount' => round($transferQty * $wacPerBtl, 2),
+                'closing_amount'  => round($closingQty  * $wacPerBtl, 2),
             ];
         });
 

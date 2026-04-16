@@ -18,6 +18,7 @@ class StockLedger extends Model
         'movement_type',
         'direction',
         'quantity',
+        'unit_price',
         'reference_type',
     ];
 

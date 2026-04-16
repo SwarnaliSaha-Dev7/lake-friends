@@ -53,7 +53,13 @@
                                             <span class="text-secondary">Inactive</span>
                                         @endif
                                     </td>
-                                    <td class="text-nowrap">&#8377;{{ $items->foodItemPrice->price ?? '0' }}</td>
+                                    <td class="text-nowrap">
+                                        @if($items->is_beer)
+                                            &#8377;{{ $items->foodItemPrice->price ?? '0' }}
+                                        @else
+                                            <span class="text-muted small">Via Liquor Menu</span>
+                                        @endif
+                                    </td>
                                     <td class="text-nowrap">
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn editLiquorItem"
                                             data-id="{{ $items->id }}" title="Edit">
@@ -132,17 +138,17 @@
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-6" id="add_priceWrapper" style="display:none;">
                                 <div class="form-part mb-3">
-                                    <label class="form-label"><small>Item Price</small></label>
-                                    <input type="number" name="itemPrice" id="add_itemPrice" class="form-control py-2 shadow-none" placeholder="Item Price" min="0" step="0.01" required>
+                                    <label class="form-label"><small>Item Price (per bottle)</small></label>
+                                    <input type="number" name="itemPrice" id="add_itemPrice" class="form-control py-2 shadow-none" placeholder="Item Price" min="0" step="0.01">
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-6" id="add_sizeWrapper">
                                 <div class="form-part mb-3">
                                     <label class="form-label"><small>Size (ml)</small></label>
-                                    <input type="number" name="size_ml" id="add_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="0">
+                                    <input type="number" name="size_ml" id="add_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="1">
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
@@ -247,10 +253,10 @@
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-6" id="edit_sizeWrapper">
                                 <div class="form-part mb-3">
                                     <label class="form-label"><small>Size (ml)</small></label>
-                                    <input type="number" name="size_ml" id="edit_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="0">
+                                    <input type="number" name="size_ml" id="edit_size_ml" class="form-control py-2 shadow-none" placeholder="e.g. 750" min="1">
                                     <div class="error-div text-danger small"></div>
                                 </div>
                             </div>
@@ -303,8 +309,8 @@
                     </form>
 
                     {{-- Price Manage Section --}}
-                    <hr class="my-3">
-                    <div class="row">
+                    <hr class="my-3" id="edit_priceDivider">
+                    <div class="row" id="edit_priceSection">
                         <div class="col-12 mb-2">
                             <div class="form-label fw-semibold text-dark mb-0">
                                 <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
@@ -380,6 +386,30 @@
 <script>
 $(document).ready(function () {
 
+    // ── Beer toggle: show/hide price field only (size always required) ──
+    function toggleAddPrice() {
+        if ($('#add_is_beer').is(':checked')) {
+            $('#add_priceWrapper').show();
+            $('#add_itemPrice').prop('required', true);
+        } else {
+            $('#add_priceWrapper').hide();
+            $('#add_itemPrice').val('').prop('required', false);
+            $('#add_itemPrice').next('.error-div').text('');
+        }
+    }
+    $('#add_is_beer').on('change', toggleAddPrice);
+    toggleAddPrice(); // run on page load
+
+    // ── Edit beer toggle: show/hide price section only (size always required) ──
+    function toggleEditBeer() {
+        if ($('#edit_is_beer').is(':checked')) {
+            $('#edit_priceDivider, #edit_priceSection').show();
+        } else {
+            $('#edit_priceDivider, #edit_priceSection').hide();
+        }
+    }
+    $('#edit_is_beer').on('change', toggleEditBeer);
+
     // ── ADD item image preview ──
     $('#add_itemImage').on('change', function () {
         if (this.files[0]) {
@@ -438,14 +468,26 @@ $(document).ready(function () {
             $('#add_itemCode').removeClass('is-invalid');
         }
 
-        var price = $('#add_itemPrice').val();
-        if (price === '' || parseFloat(price) <= 0) {
-            $('#add_itemPrice').next('.error-div').text('Enter a valid price');
-            $('#add_itemPrice').addClass('is-invalid');
+        var sizeMl = $('#add_size_ml').val();
+        if (sizeMl === '' || parseInt(sizeMl) < 1) {
+            $('#add_size_ml').next('.error-div').text('Size (ml) is required');
+            $('#add_size_ml').addClass('is-invalid');
             isValid = false;
         } else {
-            $('#add_itemPrice').next('.error-div').text('');
-            $('#add_itemPrice').removeClass('is-invalid');
+            $('#add_size_ml').next('.error-div').text('');
+            $('#add_size_ml').removeClass('is-invalid');
+        }
+
+        if ($('#add_is_beer').is(':checked')) {
+            var price = $('#add_itemPrice').val();
+            if (price === '' || parseFloat(price) <= 0) {
+                $('#add_itemPrice').next('.error-div').text('Enter a valid price');
+                $('#add_itemPrice').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#add_itemPrice').next('.error-div').text('');
+                $('#add_itemPrice').removeClass('is-invalid');
+            }
         }
 
         if (!$('#add_itemstatus').val()) {
@@ -532,8 +574,12 @@ $(document).ready(function () {
                 $('#edit_size_ml').val(data.size_ml);
                 $('#edit_low_stock').val(data.low_stock_alert_qty);
                 $('#edit_itemstatus').val(data.is_active);
-                $('#edit_is_beer').prop('checked', data.is_beer == 1);
+                var isBeer = data.is_beer == 1;
+                $('#edit_is_beer').prop('checked', isBeer);
                 $('#edit_itemPrice').val(data.food_item_price ? data.food_item_price.price : '');
+
+                // Show/hide size & price section based on is_beer
+                toggleEditBeer();
 
                 if (data.image) {
                     // $('#edit_itemPreview').attr('src', '/' + data.image).removeClass('d-none');
@@ -565,6 +611,16 @@ $(document).ready(function () {
     // ── EDIT form submit ──
     $('#editLiquorItemForm').on('submit', function (e) {
         e.preventDefault();
+
+        var editSizeMl = $('#edit_size_ml').val();
+        if (editSizeMl === '' || parseInt(editSizeMl) < 1) {
+            $('#edit_size_ml').next('.error-div').text('Size (ml) is required');
+            $('#edit_size_ml').addClass('is-invalid');
+            return;
+        } else {
+            $('#edit_size_ml').next('.error-div').text('');
+            $('#edit_size_ml').removeClass('is-invalid');
+        }
 
         var id = $('#edit_item_id').val();
         var formData = new FormData(this);
