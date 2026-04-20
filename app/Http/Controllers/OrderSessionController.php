@@ -88,16 +88,17 @@ class OrderSessionController extends Controller
             }
 
             $sessionNo = generateSessionNo();
+            //fetch current balance
+            $wallet    = Wallet::where('member_id', $memberId)->first();
 
             $session = OrderSession::create([
-                'club_id'    => $clubId,
-                'member_id'  => $memberId,
-                'session_no' => $sessionNo,
-                'status'     => 'open',
-                'created_by' => Auth::id(),
+                'club_id'                => $clubId,
+                'member_id'              => $memberId,
+                'session_no'             => $sessionNo,
+                'status'                 => 'open',
+                'opening_wallet_balance' => $wallet ? (float) $wallet->current_balance : 0,
+                'created_by'             => Auth::id(),
             ]);
-
-            $wallet = Wallet::where('member_id', $memberId)->first();
 
             return response()->json([
                 'statusCode' => 200,

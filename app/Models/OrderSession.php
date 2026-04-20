@@ -14,6 +14,7 @@ class OrderSession extends Model
         'member_id',
         'session_no',
         'status',
+        'opening_wallet_balance',
         'taxable_amount',
         'discount_amount',
         'gst_percentage',
