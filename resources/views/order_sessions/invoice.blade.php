@@ -117,6 +117,38 @@
         .grand-total-row td { padding: 8px 10px !important; color: #fff !important; font-weight: bold; }
         .grand-total-row .bill-lbl { color: #fff !important; font-size: 12px; }
         .grand-total-row .bill-val { color: #fff !important; font-size: 14px; }
+
+        .simple-info-box {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 12px;
+        }
+        .simple-info-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #212529;
+            margin-bottom: 6px;
+        }
+        .simple-info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .simple-info-table td {
+            font-size: 11px;
+            padding: 3px 0;
+        }
+        .simple-info-table td:first-child {
+            color: #6c757d;
+            width: 70%;
+        }
+        .simple-info-table td:last-child {
+            color: #212529;
+            text-align: right;
+            font-weight: 600;
+            width: 30%;
+        }
     </style>
 </head>
 <body>
@@ -293,6 +325,56 @@
                 <td class="bill-val" style="font-size:14px;">Rs {{ number_format($session->net_amount, 2) }}</td>
             </tr>
         </table>
+    </div>
+
+    {{-- ===== Card Balance (simple) ===== --}}
+    <div class="simple-info-box">
+        <div class="simple-info-title">Card Balance</div>
+        <table class="simple-info-table">
+            <tr>
+                <td>Opening Balance</td>
+                <td>{{ number_format($cardBalanceInfo['opening_balance'] ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Last Topup</td>
+                <td>{{ number_format($cardBalanceInfo['last_topup'] ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>(Opening + Topup)</td>
+                <td>{{ number_format($cardBalanceInfo['opening_plus_topup'] ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Billed Amount</td>
+                <td>{{ number_format($cardBalanceInfo['billed_amount'] ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Closing Balance</td>
+                <td>{{ number_format($cardBalanceInfo['closing_balance'] ?? 0, 2) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {{-- ===== Minimum Usage Info (simple) ===== --}}
+    <div class="simple-info-box">
+        <div class="simple-info-title">Minimum Usage Info</div>
+        @if(!empty($minimumUsageInfo['applicable']))
+            <table class="simple-info-table">
+                <tr>
+                    <td>Minimum Charges</td>
+                    <td>{{ number_format($minimumUsageInfo['minimum_charges'] ?? 0, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Used So Far</td>
+                    <td>{{ number_format($minimumUsageInfo['used_so_far'] ?? 0, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Balance</td>
+                    <td>{{ number_format($minimumUsageInfo['balance'] ?? 0, 2) }}</td>
+                </tr>
+            </table>
+        @else
+            <div style="font-size:11px;color:#6c757d;">Not Applicable</div>
+        @endif
     </div>
 
 </body>

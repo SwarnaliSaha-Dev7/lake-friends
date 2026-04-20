@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
 use App\Models\Member;
+use App\Models\MembershipPurchaseHistory;
 use App\Models\MembershipType;
+use App\Models\MinimumSpendRule;
 use App\Models\OrderSession;
 use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
@@ -547,7 +550,106 @@ class OrderSessionController extends Controller
                     ];
                 })->values();
 
-            $pdf = Pdf::loadView('order_sessions.invoice', compact('session', 'foodItems', 'liquorItems'))
+            // --------------------------
+            // Card Balance (at bill time)
+            // --------------------------
+            $billTxnAt = $session->walletTransaction?->created_at ?? $session->updated_at ?? now();
+
+            $openingBalance = (float) ($session->opening_wallet_balance ?? 0);
+
+            // "Last Topup" as requested = total topups during this session window
+            $topupDuringSession = (float) WalletTransaction::where('member_id', $session->member_id)
+                ->where('direction', 'credit')
+                ->where('txn_type', 'recharge')
+                ->whereBetween('created_at', [$session->created_at, $billTxnAt])
+                ->sum('amount');
+
+            $billedAmount   = (float) ($session->net_amount ?? 0);
+            $openingPlusTop = $openingBalance + $topupDuringSession;
+            $closingBalance = $openingPlusTop - $billedAmount;
+
+            $cardBalanceInfo = [
+                'opening_balance'   => $openingBalance,
+                'last_topup'        => $topupDuringSession,
+                'opening_plus_topup'=> $openingPlusTop,
+                'billed_amount'     => $billedAmount,
+                'closing_balance'   => $closingBalance,
+            ];
+
+            // --------------------------
+            // Minimum Usage Info
+            // --------------------------
+            $sessionDate = Carbon::parse($session->created_at);
+            $fyStart = $sessionDate->month >= 4
+                ? Carbon::create($sessionDate->year, 4, 1)->startOfDay()
+                : Carbon::create($sessionDate->year - 1, 4, 1)->startOfDay();
+            $fyEnd = $sessionDate->month >= 4
+                ? Carbon::create($sessionDate->year + 1, 3, 31)->endOfDay()
+                : Carbon::create($sessionDate->year, 3, 31)->endOfDay();
+
+            $activePurchase = MembershipPurchaseHistory::where('club_id', $session->club_id)
+                ->where('member_id', $session->member_id)
+                ->where('status', 'active')
+                ->whereDate('start_date', '<=', $sessionDate->toDateString())
+                ->whereDate('expiry_date', '>=', $sessionDate->toDateString())
+                ->with('membershipPlanType:id,is_minimum_spend_applicable')
+                ->latest('start_date')
+                ->first();
+
+            $isMinimumSpendApplicable = (bool) ($activePurchase?->membershipPlanType?->is_minimum_spend_applicable ?? false);
+
+            $minimumUsageInfo = [
+                'applicable'      => $isMinimumSpendApplicable,
+                'minimum_charges' => 0.0,
+                'used_so_far'     => 0.0,
+                'balance'         => 0.0,
+            ];
+
+            if ($isMinimumSpendApplicable) {
+                $rule = MinimumSpendRule::where('club_id', $session->club_id)->first();
+                $annualMin = (float) ($rule->minimum_amount ?? 0);
+                $monthlyMin = $annualMin / 12;
+
+                // Pro-rated minimum based on first membership purchase start (same approach as observer)
+                $firstPurchase = MembershipPurchaseHistory::where('member_id', $session->member_id)
+                    ->orderBy('start_date')
+                    ->first();
+                $joinDate = $firstPurchase
+                    ? Carbon::parse($firstPurchase->start_date)->startOfMonth()
+                    : Carbon::parse($session->member->created_at)->startOfMonth();
+                $effectiveStart = $joinDate->gt($fyStart) ? $joinDate : $fyStart->copy();
+                $months = (int) $effectiveStart->diffInMonths($fyEnd->copy()->addDay());
+                $minimumCharges = round($monthlyMin * $months, 2);
+
+                // Used so far (FY to this bill): restaurant/bar + add-on + locker debits
+                $spendTypes = [
+                    'Food and Liquor Order',
+                    'Bar Order',
+                    'Restaurant Food Order',
+                    'add_on_purchase',
+                    'locker_purchase',
+                    'spend',
+                ];
+
+                $usedSoFar = (float) WalletTransaction::where('member_id', $session->member_id)
+                    ->where('direction', 'debit')
+                    ->whereIn('txn_type', $spendTypes)
+                    ->whereBetween('created_at', [$fyStart, $fyEnd])
+                    ->where('created_at', '<=', $billTxnAt)
+                    ->sum('amount');
+
+                $minimumUsageInfo['minimum_charges'] = $minimumCharges;
+                $minimumUsageInfo['used_so_far']     = $usedSoFar;
+                $minimumUsageInfo['balance']         = max(0, round($minimumCharges - $usedSoFar, 2));
+            }
+
+            $pdf = Pdf::loadView('order_sessions.invoice', compact(
+                'session',
+                'foodItems',
+                'liquorItems',
+                'cardBalanceInfo',
+                'minimumUsageInfo'
+            ))
                 ->setPaper('a4', 'portrait');
 
             $filename = 'invoice-' . str_replace('/', '-', $session->session_no) . '.pdf';
