@@ -100,6 +100,7 @@ class OrderSessionController extends Controller
                 'session_no'             => $sessionNo,
                 'status'                 => 'open',
                 'opening_wallet_balance' => $wallet ? (float) $wallet->current_balance : 0,
+                'topup_from_at'          => now(),
                 'created_by'             => Auth::id(),
             ]);
 
@@ -558,10 +559,12 @@ class OrderSessionController extends Controller
             $openingBalance = (float) ($session->opening_wallet_balance ?? 0);
 
             // "Last Topup" as requested = total topups during this session window
+            $topupFromAt = $session->topup_from_at ?? $session->created_at;
+
             $topupDuringSession = (float) WalletTransaction::where('member_id', $session->member_id)
                 ->where('direction', 'credit')
                 ->where('txn_type', 'recharge')
-                ->whereBetween('created_at', [$session->created_at, $billTxnAt])
+                ->whereBetween('created_at', [$topupFromAt, $billTxnAt])
                 ->sum('amount');
 
             $billedAmount   = (float) ($session->net_amount ?? 0);

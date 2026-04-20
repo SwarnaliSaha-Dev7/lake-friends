@@ -15,6 +15,7 @@ class OrderSession extends Model
         'session_no',
         'status',
         'opening_wallet_balance',
+        'topup_from_at',
         'taxable_amount',
         'discount_amount',
         'gst_percentage',

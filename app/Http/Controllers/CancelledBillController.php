@@ -10,6 +10,7 @@ use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -163,8 +164,16 @@ class CancelledBillController extends Controller
                 }
             }
 
-            // Re-open the cancelled session
-            $session->update(['status' => 'open']);
+            // Re-open the cancelled session.
+            // Financial window must restart from this reopen/edit moment:
+            // - opening balance snapshot should be refreshed
+            // - topup window should start now
+            $walletNow = (float) Wallet::where('member_id', $session->member_id)->value('current_balance');
+            $session->update([
+                'status'                 => 'open',
+                'opening_wallet_balance' => $walletNow,
+                'topup_from_at'          => now(),
+            ]);
 
             DB::commit();
 
