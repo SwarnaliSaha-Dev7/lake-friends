@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class OrderSession extends Model
 {
     use LogsModelChanges;
-    
+
     protected $fillable = [
         'club_id',
         'member_id',
@@ -26,6 +26,13 @@ class OrderSession extends Model
         'wallet_transactions_id',
         'created_by',
         'cancelled_by',
+        'minimum_spend_required',
+        'total_spend'
+    ];
+
+    protected $casts = [
+        'minimum_spend_required' => 'float',
+        'total_spend'            => 'float',
     ];
 
     public function orders()
