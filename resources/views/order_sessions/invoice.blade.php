@@ -335,6 +335,7 @@
                 <td>Opening Balance</td>
                 <td>{{ number_format($cardBalanceInfo['opening_balance'] ?? 0, 2) }}</td>
             </tr>
+            @if(($cardBalanceInfo['last_topup'] ?? 0) > 0)
             <tr>
                 <td>Last Topup</td>
                 <td>{{ number_format($cardBalanceInfo['last_topup'] ?? 0, 2) }}</td>
@@ -343,6 +344,7 @@
                 <td>(Opening + Topup)</td>
                 <td>{{ number_format($cardBalanceInfo['opening_plus_topup'] ?? 0, 2) }}</td>
             </tr>
+            @endif
             <tr>
                 <td>Billed Amount</td>
                 <td>{{ number_format($cardBalanceInfo['billed_amount'] ?? 0, 2) }}</td>
