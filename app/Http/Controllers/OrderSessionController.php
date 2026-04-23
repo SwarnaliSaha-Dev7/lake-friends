@@ -130,7 +130,7 @@ class OrderSessionController extends Controller
     public function show($id)
     {
         try {
-            $session = OrderSession::with(['member', 'orders.items.foodItem'])
+            $session = OrderSession::with(['member', 'orders.items.foodItem', 'walletTransaction'])
                 ->where('club_id', club_id())
                 ->findOrFail($id);
 
@@ -140,11 +140,46 @@ class OrderSessionController extends Controller
 
             $wallet = Wallet::where('member_id', $session->member_id)->first();
 
+            $billTxnAt = $session->walletTransaction?->created_at ?? $session->updated_at ?? now();
+
+            $openingBalance = (float) ($session->opening_wallet_balance ?? 0);
+            $topupFromAt    = $session->topup_from_at ?? $session->created_at;
+
+            $topupDuringSession = (float) WalletTransaction::where('member_id', $session->member_id)
+                ->where('direction', 'credit')
+                ->where('txn_type', 'recharge')
+                ->whereBetween('created_at', [$topupFromAt, $billTxnAt])
+                ->sum('amount');
+
+            $billedAmount   = (float) ($session->net_amount ?? 0);
+            $openingPlusTop = $openingBalance + $topupDuringSession;
+            $closingBalance = $openingPlusTop - $billedAmount;
+
+            $cardBalanceInfo = [
+                'opening_balance'    => $openingBalance,
+                'last_topup'         => $topupDuringSession,
+                'opening_plus_topup' => $openingPlusTop,
+                'billed_amount'      => $billedAmount,
+                'closing_balance'    => $closingBalance,
+            ];
+
+            $minimumRequired = (float) ($session->minimum_spend_required ?? 0);
+            $usedSoFar       = (float) ($session->total_spend ?? 0);
+
+            $minimumUsageInfo = [
+                'applicable'      => $minimumRequired > 0,
+                'minimum_charges' => $minimumRequired,
+                'used_so_far'     => $usedSoFar,
+                'balance'         => max(0, round($minimumRequired - $usedSoFar, 2)),
+            ];
+
             return response()->json([
                 'statusCode'     => 200,
                 'data'           => $session,
                 'pending_total'  => number_format($pendingTotal, 2),
                 'wallet_balance' => $wallet ? number_format($wallet->current_balance, 2) : '0.00',
+                'card_balance_info' => $cardBalanceInfo,
+                'minimum_usage_info' => $minimumUsageInfo,
             ]);
         } catch (\Throwable $th) {
             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);

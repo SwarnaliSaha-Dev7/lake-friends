@@ -193,14 +193,19 @@ $(document).ready(function () {
                 $('#viewSessionModalBody').html('<p class="text-danger text-center py-4">Failed to load session.</p>');
                 return;
             }
-            renderSessionModal(res.data, res.pending_total, res.wallet_balance);
+            renderSessionModal(res.data, res.pending_total, res.wallet_balance, res.card_balance_info, res.minimum_usage_info);
         }).fail(function () {
             $('#viewSessionModalBody').html('<p class="text-danger text-center py-4">Something went wrong.</p>');
         });
     });
 
     /* ── Session modal renderer ── */
-    function renderSessionModal(session, pendingTotal, walletBalance) {
+    function renderSessionModal(session, pendingTotal, walletBalance, cardBalanceInfo, minimumUsageInfo) {
+        function amount(value) {
+            var num = parseFloat(value);
+            return isNaN(num) ? '0.00' : num.toFixed(2);
+        }
+
         var statusColor = { open: 'text-warning', billed: 'text-success', cancelled: 'text-danger' };
         var sc = statusColor[session.status] || 'text-muted';
 
@@ -268,7 +273,33 @@ $(document).ready(function () {
             + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">GST (10%)</div><div class="col-4 text-center fw-semibold small">Rs ' + sessionGst.toFixed(2) + '</div></div>'
             + (sessionDiscount > 0 ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-warning small fw-medium">Offer Applied</div><div class="col-4 text-center fw-semibold small text-muted">-Rs ' + sessionDiscount.toFixed(2) + '</div></div>' : '')
             + '<div class="row py-1 bg-dark text-white rounded-3 mx-0 mt-1"><div class="col-8 text-end small">Grand Total</div><div class="col-4 text-center fw-bold">Rs ' + sessionNet.toFixed(2) + '</div></div>'
+            + '<div class="row mt-2"><div class="col-8 text-end text-muted small">Wallet Balance</div><div class="col-4 text-center fw-semibold text-success small">Rs ' + amount(walletBalance) + '</div></div>'
             + '</div>';
+
+        if (session.status === 'billed') {
+            cardBalanceInfo = cardBalanceInfo || {};
+            minimumUsageInfo = minimumUsageInfo || {};
+
+            html += '<div class="p-3 bg-white border rounded-3 mt-2">'
+                + '<div class="fw-semibold mb-2">Card Balance</div>'
+                + '<div class="row mb-1"><div class="col-8 text-muted small">Opening Balance</div><div class="col-4 text-end fw-semibold small">' + amount(cardBalanceInfo.opening_balance) + '</div></div>'
+                + ((parseFloat(cardBalanceInfo.last_topup) || 0) > 0
+                    ? '<div class="row mb-1"><div class="col-8 text-muted small">Last Topup</div><div class="col-4 text-end fw-semibold small">' + amount(cardBalanceInfo.last_topup) + '</div></div>'
+                      + '<div class="row mb-1"><div class="col-8 text-muted small">(Opening + Topup)</div><div class="col-4 text-end fw-semibold small">' + amount(cardBalanceInfo.opening_plus_topup) + '</div></div>'
+                    : '')
+                + '<div class="row mb-1"><div class="col-8 text-muted small">Billed Amount</div><div class="col-4 text-end fw-semibold small">' + amount(cardBalanceInfo.billed_amount) + '</div></div>'
+                + '<div class="row"><div class="col-8 text-muted small">Closing Balance</div><div class="col-4 text-end fw-semibold small">' + amount(cardBalanceInfo.closing_balance) + '</div></div>'
+                + '</div>';
+
+            html += '<div class="p-3 bg-white border rounded-3 mt-2">'
+                + '<div class="fw-semibold mb-2">Minimum Usage Info</div>'
+                + (minimumUsageInfo.applicable
+                    ? '<div class="row mb-1"><div class="col-8 text-muted small">Minimum Charges</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.minimum_charges) + '</div></div>'
+                      + '<div class="row mb-1"><div class="col-8 text-muted small">Used So Far</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.used_so_far) + '</div></div>'
+                      + '<div class="row"><div class="col-8 text-muted small">Balance</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.balance) + '</div></div>'
+                    : '<div class="small text-muted">Not Applicable</div>')
+                + '</div>';
+        }
 
         $('#viewSessionModalBody').html(html);
     }
