@@ -1664,7 +1664,7 @@
 
         const params = new URLSearchParams(window.location.search);
         const type = params.get('type');
-        const BASE_URL = "{{ url('/') }}";
+        const BASE_URL = "{{ url('/public') }}";
 
         // Check if 'type' parameter is 'addMember'
         if (type === 'addMember') {

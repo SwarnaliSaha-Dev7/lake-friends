@@ -39,7 +39,7 @@
                                         <!--    class="rounded-circle" alt="" loading="lazy" width="48" height="48"-->
                                         <!--    style="{{ $items->image ? '' : 'display:none;' }}">-->
                                         @if($items->image)
-                                            <img src="{{ $items->image }}" class="rounded-circle" alt="" loading="lazy" style="width:40px;height:40px;object-fit:cover;">
+                                            <img src="{{ asset($items->image) }}" class="rounded-circle" alt="" loading="lazy" style="width:40px;height:40px;object-fit:cover;">
                                         @else
                                             <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white flex-shrink-0" style="width:40px;height:40px;font-size:16px;"><i class="fa-solid fa-wine-bottle"></i></span>
                                         @endif
