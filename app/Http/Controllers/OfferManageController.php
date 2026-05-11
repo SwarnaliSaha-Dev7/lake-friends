@@ -48,7 +48,8 @@ class OfferManageController extends Controller
                         ->get(['food_item_id', 'name'])
                         ->map(fn($s) => ['id' => $s->food_item_id, 'name' => $s->name]);
 
-        $liquorItems = $beerItems->merge($spiritServings)->unique('id')->values();
+        // $liquorItems = $beerItems->merge($spiritServings)->unique('id')->values();
+        $liquorItems = collect($beerItems)->merge($spiritServings)->unique('id')->values();
 
         // Item IDs already in a currently active (non-expired) offer
         $activeOfferIds = Offer::where('club_id', $club_id)
