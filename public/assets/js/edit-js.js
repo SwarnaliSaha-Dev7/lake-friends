@@ -101,14 +101,36 @@ jQuery(function ($) {
     // notification js end
 
     // nav js start
-    $('.nav-menu ul > li > ul').parent().prepend('<i class="arw-nav"></i>');
-    function subMenu() {
-        $(this).parent('li').find('> ul').stop(true, true).slideToggle();
-        $(this).parents('li').siblings().find('ul').stop(true, true).slideUp();
-        $(this).toggleClass('actv');
-        $(this).parent().siblings().find('.arw-nav').removeClass('actv');
+    // Append arrow inside <a> so height:100% only covers the link, not the open submenu
+    $('.nav-menu ul > li > ul').parent().find('> a').append('<i class="arw-nav"></i>');
+
+    // Mark active parent arrow on page load (Blade renders display:block for active routes)
+    $('.nav-menu ul > li > ul').filter(function () {
+        return $(this).css('display') === 'block';
+    }).parent().find('> a > .arw-nav').addClass('actv');
+
+    // Preserve left panel scroll position across page navigations
+    var leftPanel = document.querySelector('.left-panel');
+    var savedScroll = sessionStorage.getItem('leftPanelScroll');
+    if (savedScroll !== null) {
+        leftPanel.scrollTop = parseInt(savedScroll, 10);
     }
-    $('.nav-menu ul > li > .arw-nav').on('click', subMenu);
+    $(leftPanel).on('scroll', function () {
+        sessionStorage.setItem('leftPanelScroll', leftPanel.scrollTop);
+    });
+    $('.nav-menu a[href]').not('[href="javascript:void(0)"]').on('click', function () {
+        sessionStorage.setItem('leftPanelScroll', leftPanel.scrollTop);
+    });
+
+    $('.nav-menu ul > li > a[href="javascript:void(0)"]').on('click', function (e) {
+        e.preventDefault();
+        var $li  = $(this).closest('li');
+        var $arw = $(this).find('.arw-nav');
+        $li.find('> ul').stop(true, true).slideToggle();
+        $li.siblings().find('> ul').stop(true, true).slideUp();
+        $arw.toggleClass('actv');
+        $li.siblings().find('.arw-nav').removeClass('actv');
+    });
     // nav js end
 
     // choose file js start

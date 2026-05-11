@@ -658,7 +658,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -702,7 +702,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -800,7 +800,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="swim_ac_head"
-                                                placeholder="A/C Head" required>
+                                                placeholder="A/C Head">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
@@ -847,7 +847,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="swim_remarks"
-                                                placeholder="Remarks" required>
+                                                placeholder="Remarks">
                                         </div>
                                     </div>
                                 </div>

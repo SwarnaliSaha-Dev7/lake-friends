@@ -277,7 +277,7 @@
                                 <div class="col-4 text-center fw-semibold" id="orderSubtotal">Rs 0</div>
                             </div>
                             <div class="row mb-2 border-bottom p-2">
-                                <div class="col-8 text-end text-muted">GST (10%)</div>
+                                <div class="col-8 text-end text-muted">GST ({{ $globalRestaurantGstPercentage }}%)</div>
                                 <div class="col-4 text-center fw-semibold" id="orderGst">Rs 0</div>
                             </div>
                             <div class="row mb-2 border-bottom p-2">
@@ -842,7 +842,7 @@
         var allFoodItems   = [];
         var allLiquorItems = [];
         var itemsLoaded    = false;
-        var GST_RATE       = 0.10;
+        var GST_RATE       = {{ $globalRestaurantGstPercentage / 100 }};
         var foodOfferMap   = {};   // item id → offer object
         var liquorOfferMap = {};   // item id → offer object
 

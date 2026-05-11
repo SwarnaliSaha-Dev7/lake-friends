@@ -15,38 +15,48 @@ class AppLayoutComposer
     {
         if (!Auth::check()) return;
 
-        $clubId = Auth::user()->club_id;
+        static $shared = null;
 
-        $clubMembershipType = MembershipType::where('name', 'Club Membership')
-            ->where('club_id', $clubId)->first();
+        if ($shared === null) {
+            $clubId = Auth::user()->club_id;
 
-        $renewalPlanTypes = $clubMembershipType
-            ? MembershipPlanType::where('membership_type_id', $clubMembershipType->id)
-                ->where('is_active', 1)->get()
-            : collect();
+            $clubMembershipType = MembershipType::where('name', 'Club Membership')
+                ->where('club_id', $clubId)->first();
 
-        $swimMembershipType = MembershipType::where('name', 'Swimming Membership')
-            ->where('club_id', $clubId)->first();
+            $renewalPlanTypes = $clubMembershipType
+                ? MembershipPlanType::where('membership_type_id', $clubMembershipType->id)
+                    ->where('is_active', 1)->get()
+                : collect();
 
-        $swimRenewalPlanTypes = $swimMembershipType
-            ? MembershipPlanType::where('membership_type_id', $swimMembershipType->id)
-                ->where('is_active', 1)->get()
-            : collect();
+            $swimMembershipType = MembershipType::where('name', 'Swimming Membership')
+                ->where('club_id', $clubId)->first();
 
-        $globalGstPercentage = GstRate::where('club_id', $clubId)
-            ->value('gst_percentage') ?? 0;
+            $swimRenewalPlanTypes = $swimMembershipType
+                ? MembershipPlanType::where('membership_type_id', $swimMembershipType->id)
+                    ->where('is_active', 1)->get()
+                : collect();
 
-        $globalPlanPurchaseGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type','plan_purchase')
-            ->value('gst_percentage') ?? 0;
+            $globalGstPercentage = GstRate::where('club_id', $clubId)
+                ->value('gst_percentage') ?? 0;
 
-        $globalBankList = Bank::where('club_id', $clubId)->get();
+            $globalPlanPurchaseGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type', 'plan_purchase')
+                ->value('gst_percentage') ?? 0;
 
-        $view->with([
-            'renewalPlanTypes'    => $renewalPlanTypes,
-            'swimRenewalPlanTypes' => $swimRenewalPlanTypes,
-            'globalGstPercentage' => $globalGstPercentage,
-            'globalPlanPurchaseGstPercentage' => $globalPlanPurchaseGstPercentage,
-            'globalBankList'      => $globalBankList,
-        ]);
+            $globalRestaurantGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')
+                ->value('gst_percentage') ?? 0;
+
+            $globalBankList = Bank::where('club_id', $clubId)->get();
+
+            $shared = [
+                'renewalPlanTypes'                => $renewalPlanTypes,
+                'swimRenewalPlanTypes'            => $swimRenewalPlanTypes,
+                'globalGstPercentage'             => $globalGstPercentage,
+                'globalPlanPurchaseGstPercentage' => $globalPlanPurchaseGstPercentage,
+                'globalRestaurantGstPercentage'   => $globalRestaurantGstPercentage,
+                'globalBankList'                  => $globalBankList,
+            ];
+        }
+
+        $view->with($shared);
     }
 }

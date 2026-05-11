@@ -38,9 +38,11 @@
                                         <!--<img src="{{ $items->image ? '/' . $items->image : '' }}"-->
                                         <!--    class="rounded-circle" alt="" loading="lazy" width="48" height="48"-->
                                         <!--    style="{{ $items->image ? '' : 'display:none;' }}">-->
-                                        <img src="{{ $items->image ?  $items->image : '' }}"
-                                            class="rounded-circle" alt="" loading="lazy" width="48" height="48"
-                                            style="{{ $items->image ? '' : 'display:none;' }}">
+                                        @if($items->image)
+                                            <img src="{{ $items->image }}" class="rounded-circle" alt="" loading="lazy" style="width:40px;height:40px;object-fit:cover;">
+                                        @else
+                                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white flex-shrink-0" style="width:40px;height:40px;font-size:16px;"><i class="fa-solid fa-wine-bottle"></i></span>
+                                        @endif
                                     </td>
                                     <td class="text-nowrap">{{ strtoupper($items->unit ?? 'ml') }}</td>
                                     <td class="text-nowrap">{{ $items->size_ml ?? '—' }}</td>
@@ -182,7 +184,7 @@
                                 <div class="form-part mb-3">
                                     <label class="form-label"><small>Item Image</small></label>
                                     <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                        <input type="file" name="itemImage" id="add_itemImage" class="file-input opacity-0 position-absolute start-0 w-100 add-item-image" required>
+                                        <input type="file" name="itemImage" id="add_itemImage" class="file-input opacity-0 position-absolute start-0 w-100 add-item-image">
                                         <div class="upload-content" id="add_uploadContent">
                                             <i class="fa-solid fa-arrow-up-from-bracket"></i>
                                             <small class="d-block text-muted">PNG & JPEG, max 5MB</small>
@@ -501,10 +503,7 @@ $(document).ready(function () {
 
         var imageFile = document.getElementById('add_itemImage');
         var imgErrorDiv = $(imageFile).closest('.form-part').find('.error-div');
-        if (imageFile.files.length === 0) {
-            imgErrorDiv.text('Image is required');
-            isValid = false;
-        } else {
+        if (imageFile.files.length > 0) {
             var f = imageFile.files[0];
             var allowed = ['image/jpeg', 'image/png'];
             var maxSize = 5 * 1024 * 1024;
@@ -517,6 +516,8 @@ $(document).ready(function () {
             } else {
                 imgErrorDiv.text('');
             }
+        } else {
+            imgErrorDiv.text('');
         }
 
         if (!isValid) return;

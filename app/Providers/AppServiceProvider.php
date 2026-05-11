@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
         WalletTransaction::observe(WalletTransactionObserver::class);
 
-        View::composer('base.app', AppLayoutComposer::class);
+        View::composer('*', AppLayoutComposer::class);
 
         Relation::morphMap([
             'Member'                     => \App\Models\Member::class,

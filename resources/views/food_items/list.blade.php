@@ -47,9 +47,13 @@
                                     <td class="text-nowrap">{{ $items->name }}</td>
                                     <td class="text-nowrap">{{ $items->code }}</td>
                                     <td class="text-nowrap">{{ $items->foodItemCat->name }}</td>
-                                    <td class="text-nowrap"><img src="{{ $items->image }}"
-                                            class="rounded-circle" alt="" loading="lazy" fetchpriority="auto"
-                                            width="64" height="64"></td>
+                                    <td class="text-nowrap">
+                                        @if($items->image)
+                                            <img src="{{ $items->image }}" class="rounded-circle" alt="" loading="lazy" fetchpriority="auto" style="width:40px;height:40px;object-fit:cover;">
+                                        @else
+                                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white flex-shrink-0" style="width:40px;height:40px;font-size:16px;"><i class="fa-solid fa-utensils"></i></span>
+                                        @endif
+                                    </td>
                                     <td class="text-success text-nowrap">
                                         @if(($items->is_active == 1))
                                             <span class="text-success text-nowrap">
@@ -137,7 +141,7 @@
                                 <div class="form-part mb-3">
                                     <label for="" class="form-label"><small>Item Image</small></label>
                                     <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                    <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image" placeholder="Item Image" required>
+                                    <input type="file" name="itemImage" id="itemImage" class="file-input opacity-0 position-absolute start-0 w-100 item-image" placeholder="Item Image">
                                     <div class="upload-content" id="add_uploadContent">
                                         <i class="upload-icon"><i
                                                 class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -461,10 +465,7 @@
                     let errorDiv   = $(this).closest('.form-part').find('.error-div');
                     let errors = [];
 
-                    if(fileInput.files.length == 0){
-                        errors.push('Image is required');
-                    }
-                    else {
+                    if(fileInput.files.length > 0) {
 
                         let file = fileInput.files[0];
                         let allowedtypes = ['image/jpeg','image/png'];

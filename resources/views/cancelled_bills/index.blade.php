@@ -186,7 +186,7 @@
 @section('customJS')
 <script>
 $(function () {
-    var GST_RATE       = 0.05;
+    var GST_RATE       = {{ $globalRestaurantGstPercentage / 100 }};
     var cbFoodItems    = [];
     var cbLiquorItems  = [];
     var cbFoodOfferMap  = {};

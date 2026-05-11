@@ -80,7 +80,7 @@ class FoodItemManageController extends Controller
 
                 // 'itemPrice' => 'required|numeric|min:0|max:9999999999|decimal:0,2',
 
-                'itemImage' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+                'itemImage' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
 
                 'itemCode' => ['required','string','max:255'],
 
