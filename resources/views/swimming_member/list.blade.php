@@ -1496,7 +1496,7 @@
                                 <td class="text-secondary ps-3">
                                     <small>FLEXI. TIME <br> (NOVICE / SWIMMER)</small>
                                 </td>
-                                <td class="pe-3"><img id="receiptImage" src="" alt="img" loading="lazy" fetchpriority="auto" width="60" height="60"></td>
+                                <td class="pe-3"><img id="receiptImage" src="" alt="img" loading="lazy" fetchpriority="auto" width="60" height="60" style="border-radius:4px; object-fit:cover;"></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
@@ -2584,15 +2584,12 @@
                         $('#receiptDate').text(data.date);
 
 
+                        const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' rx='4' fill='%23e9ecef'/%3E%3Ccircle cx='30' cy='22' r='10' fill='%23adb5bd'/%3E%3Cellipse cx='30' cy='46' rx='16' ry='10' fill='%23adb5bd'/%3E%3C/svg%3E";
+
                         if (data.image) {
-                            // console.log(data.image);
-                            // $('#receiptImage').attr('src', '/' + data.image);
-                            // $('#receiptImage').attr('src', data.image).removeClass('d-none');
-                            // $('#receiptImage').attr('src', '/lake-friends/' + data.image).removeClass('d-none');
-
-                            // const BASE_URL = "{{ url('/') }}";
-
-                            $('#receiptImage').attr('src', BASE_URL + '/' + data.image).removeClass('d-none');
+                            $('#receiptImage').attr('src', BASE_URL + '/' + data.image);
+                        } else {
+                            $('#receiptImage').attr('src', defaultAvatar);
                         }
 
                         $('#receiptModal').modal('show');

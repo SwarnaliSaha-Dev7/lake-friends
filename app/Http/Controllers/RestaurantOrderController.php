@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FoodItem;
+use App\Models\GstRate;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
 use App\Models\OrderSession;
@@ -415,6 +416,8 @@ class RestaurantOrderController extends Controller
                 }
             }
 
+            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
+
             // Generate order number
             $orderNo = generateOrderNo();
 
@@ -428,7 +431,7 @@ class RestaurantOrderController extends Controller
                 'ac_head'         => 'Restaurant Order',
                 'taxable_amount'  => $request->input('taxable_amount'),
                 'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => 10.00,
+                'gst_percentage'  => $restaurantGst,
                 'gst_amount'      => $request->input('gst_amount'),
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
