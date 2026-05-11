@@ -832,6 +832,7 @@
     </div>
     <!-- Swimming Member Renewal Modal end -->
 
+    @include('partials.quick-links')
     @include('base.scripts')
     @yield('customJS')
     <script>
