@@ -38,7 +38,7 @@
                                         <!--<img src="{{ $items->image ? '/' . $items->image : '' }}"-->
                                         <!--    class="rounded-circle" alt="" loading="lazy" width="48" height="48"-->
                                         <!--    style="{{ $items->image ? '' : 'display:none;' }}">-->
-                                        <img src="{{ $items->image ?  $items->image : '' }}"
+                                        <img src="{{ $items->image ?  asset($items->image) : '' }}"
                                             class="rounded-circle" alt="" loading="lazy" width="48" height="48"
                                             style="{{ $items->image ? '' : 'display:none;' }}">
                                     </td>

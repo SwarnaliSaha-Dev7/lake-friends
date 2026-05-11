@@ -47,7 +47,8 @@
                                     <td class="text-nowrap">{{ $items->name }}</td>
                                     <td class="text-nowrap">{{ $items->code }}</td>
                                     <td class="text-nowrap">{{ $items->foodItemCat->name }}</td>
-                                    <td class="text-nowrap"><img src="{{ $items->image }}"
+                                    {{-- <td class="text-nowrap"><img src="{{ $items->image }}" --}}
+                                    <td class="text-nowrap"><img src="{{ asset($items->image) }}"
                                             class="rounded-circle" alt="" loading="lazy" fetchpriority="auto"
                                             width="64" height="64"></td>
                                     <td class="text-success text-nowrap">

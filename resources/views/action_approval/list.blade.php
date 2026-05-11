@@ -846,7 +846,7 @@
 <script>
     $(document).ready(function() {
 
-        const BASE_URL = "{{ url('/') }}";
+        const BASE_URL = "{{ url('/public') }}";
 
         $('.rejectBtn').on('click', function(){
             $('#confirmRejectBtn').data('id', $(this).data('id'));
@@ -968,7 +968,7 @@
                         $('#club_member_email').val(response.data['email']);
                         $('#club_member_phone').val(response.data['phone']);
                         $('#club_member_address').val(response.data['address']);
-                        
+
                         if(response.data['club_status']){
                             $('#club_status').val(response.data['club_status']);
                         }
