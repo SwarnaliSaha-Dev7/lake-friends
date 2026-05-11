@@ -277,7 +277,7 @@
                                 <div class="col-4 text-center fw-semibold" id="orderSubtotal">Rs 0</div>
                             </div>
                             <div class="row mb-2 border-bottom p-2">
-                                <div class="col-8 text-end text-muted">GST (10%)</div>
+                                <div class="col-8 text-end text-muted">GST ({{ number_format($globalRestaurantGstPercentage ?? 0, 2) }}%)</div>
                                 <div class="col-4 text-center fw-semibold" id="orderGst">Rs 0</div>
                             </div>
                             <div class="row mb-2 border-bottom p-2">
@@ -841,7 +841,8 @@
         var allFoodItems   = [];
         var allLiquorItems = [];
         var itemsLoaded    = false;
-        var GST_RATE       = 0.10;
+        var GST_PCT        = parseFloat('{{ $globalRestaurantGstPercentage ?? 0 }}') || 0;
+        var GST_RATE       = GST_PCT / 100;
         var foodOfferMap   = {};   // item id → offer object
         var liquorOfferMap = {};   // item id → offer object
 
@@ -1324,6 +1325,7 @@
                 items:           items,
                 taxable_amount:  parseFloat(subtotal.toFixed(2)),
                 discount_amount: parseFloat(totalDiscount.toFixed(2)),
+                gst_percentage:  GST_PCT,
                 gst_amount:      gst,
                 net_amount:      grand,
             };

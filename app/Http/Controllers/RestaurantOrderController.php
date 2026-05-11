@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
+use App\Models\GstRate;
 use App\Models\Location;
 use App\Models\OrderSession;
 use App\Models\RestaurantOrder;
@@ -19,6 +20,13 @@ use Illuminate\Support\Facades\DB;
 
 class RestaurantOrderController extends Controller
 {
+    private function restaurantGstPercentage(int $clubId): float
+    {
+        return (float) (GstRate::where('club_id', $clubId)
+            ->where('gst_type', 'restaurant')
+            ->value('gst_percentage') ?? 0);
+    }
+
     public function history(Request $request)
     {
         try {
@@ -359,12 +367,20 @@ class RestaurantOrderController extends Controller
         try {
             $clubId    = club_id();
             $memberId  = $request->input('member_id');
-            $netAmount = (float) $request->input('net_amount');
             $items     = $request->input('items', []);
 
             if (empty($items)) {
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
             }
+
+            $taxableAmount = (float) $request->input('taxable_amount', 0);
+            $discountAmount = (float) $request->input('discount_amount', 0);
+            $gstPercentage = $this->restaurantGstPercentage($clubId);
+            $foodTaxableAmount = collect($items)
+                ->filter(fn($item) => ($item['unit'] ?? '') === 'plate')
+                ->sum(fn($item) => (float) ($item['total_amount'] ?? 0));
+            $gstAmount = round($foodTaxableAmount * $gstPercentage / 100, 2);
+            $netAmount = round($taxableAmount - $discountAmount + $gstAmount, 2);
 
             // Check wallet balance (locked to prevent concurrent double-spend)
             $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
@@ -426,10 +442,10 @@ class RestaurantOrderController extends Controller
                 'mr_no'           => generateMrNo(),
                 'bill_no'         => generateBillNo(),
                 'ac_head'         => 'Restaurant Order',
-                'taxable_amount'  => $request->input('taxable_amount'),
-                'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => 10.00,
-                'gst_amount'      => $request->input('gst_amount'),
+                'taxable_amount'  => $taxableAmount,
+                'discount_amount' => $discountAmount,
+                'gst_percentage'  => $gstPercentage,
+                'gst_amount'      => $gstAmount,
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
             ]);

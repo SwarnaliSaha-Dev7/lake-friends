@@ -39,6 +39,9 @@ class AppLayoutComposer
         $globalPlanPurchaseGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type','plan_purchase')
             ->value('gst_percentage') ?? 0;
 
+        $globalRestaurantGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type','restaurant')
+            ->value('gst_percentage') ?? 0;
+
         $globalBankList = Bank::where('club_id', $clubId)->get();
 
         $view->with([
@@ -46,6 +49,7 @@ class AppLayoutComposer
             'swimRenewalPlanTypes' => $swimRenewalPlanTypes,
             'globalGstPercentage' => $globalGstPercentage,
             'globalPlanPurchaseGstPercentage' => $globalPlanPurchaseGstPercentage,
+            'globalRestaurantGstPercentage' => $globalRestaurantGstPercentage,
             'globalBankList'      => $globalBankList,
         ]);
     }

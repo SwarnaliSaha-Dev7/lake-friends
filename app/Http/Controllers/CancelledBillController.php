@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
+use App\Models\GstRate;
 use App\Models\Location;
 use App\Models\OrderSession;
 use App\Models\RestaurantOrder;
@@ -17,6 +18,13 @@ use Illuminate\Support\Facades\DB;
 
 class CancelledBillController extends Controller
 {
+    private function restaurantGstPercentage(int $clubId): float
+    {
+        return (float) (GstRate::where('club_id', $clubId)
+            ->where('gst_type', 'restaurant')
+            ->value('gst_percentage') ?? 0);
+    }
+
     public function index()
     {
         $clubId = club_id();
@@ -96,10 +104,10 @@ class CancelledBillController extends Controller
                 'member_id'       => $session->member_id,
                 'order_no'        => $orderNo,
                 'ac_head'         => 'Restaurant Order',
-                'taxable_amount'  => $request->input('taxable_amount'),
-                'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => 10.00,
-                'gst_amount'      => $request->input('gst_amount'),
+                'taxable_amount'  => $taxableAmount,
+                'discount_amount' => $discountAmount,
+                'gst_percentage'  => $gstPercentage,
+                'gst_amount'      => $gstAmount,
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
             ]);

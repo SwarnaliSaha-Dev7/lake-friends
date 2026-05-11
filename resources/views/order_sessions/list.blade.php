@@ -504,19 +504,20 @@ $(document).ready(function () {
         }
 
         // Compute session-level subtotal, discount, gst from orders
-        var sessionSubtotal  = 0, sessionDiscount = 0, sessionGst = 0;
+        var sessionSubtotal  = 0, sessionDiscount = 0, sessionGst = 0, sessionGstPct = 0;
         (session.orders || []).forEach(function (o) {
             if (o.status === 'cancelled') return;
             sessionSubtotal  += parseFloat(o.taxable_amount)  || 0;
             sessionDiscount  += parseFloat(o.discount_amount) || 0;
             sessionGst       += parseFloat(o.gst_amount)      || 0;
+            sessionGstPct     = parseFloat(o.gst_percentage)  || sessionGstPct;
         });
         var sessionNet = sessionSubtotal - sessionDiscount + sessionGst;
 
         html += '<div class="p-3 bg-light border rounded-3 mt-2">'
             + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Subtotal</div>'
             + '<div class="col-4 text-center fw-semibold small">Rs ' + sessionSubtotal.toFixed(2) + '</div></div>'
-            + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">GST (10%)</div>'
+            + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">GST (' + sessionGstPct.toFixed(2) + '%)</div>'
             + '<div class="col-4 text-center fw-semibold small">Rs ' + sessionGst.toFixed(2) + '</div></div>'
             + (sessionDiscount > 0
                 ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-warning small fw-medium">Offer Applied</div>'

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\FinancialYear;
 use App\Models\FoodItem;
 use App\Models\FoodItemCurrentStock;
+use App\Models\GstRate;
 use App\Models\Location;
 use App\Models\Member;
 use App\Models\MemberFinancialSummary;
@@ -26,6 +27,13 @@ use Illuminate\Support\Facades\DB;
 
 class OrderSessionController extends Controller
 {
+    private function restaurantGstPercentage(int $clubId): float
+    {
+        return (float) (GstRate::where('club_id', $clubId)
+            ->where('gst_type', 'restaurant')
+            ->value('gst_percentage') ?? 0);
+    }
+
     public function index()
     {
         try {
@@ -198,12 +206,20 @@ class OrderSessionController extends Controller
             }
 
             $memberId  = $session->member_id;
-            $netAmount = (float) $request->input('net_amount');
             $items     = $request->input('items', []);
 
             if (empty($items)) {
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
             }
+
+            $taxableAmount = (float) $request->input('taxable_amount', 0);
+            $discountAmount = (float) $request->input('discount_amount', 0);
+            $gstPercentage = $this->restaurantGstPercentage($clubId);
+            $foodTaxableAmount = collect($items)
+                ->filter(fn($item) => ($item['unit'] ?? '') === 'plate')
+                ->sum(fn($item) => (float) ($item['total_amount'] ?? 0));
+            $gstAmount = round($foodTaxableAmount * $gstPercentage / 100, 2);
+            $netAmount = round($taxableAmount - $discountAmount + $gstAmount, 2);
 
             // Cumulative wallet check (locked to prevent concurrent double-spend)
             $wallet = Wallet::where('member_id', $memberId)->lockForUpdate()->first();
@@ -272,10 +288,10 @@ class OrderSessionController extends Controller
                 'member_id'       => $memberId,
                 'order_no'        => $orderNo,
                 'ac_head'         => 'Restaurant Order',
-                'taxable_amount'  => $request->input('taxable_amount'),
-                'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => 10.00,
-                'gst_amount'      => $request->input('gst_amount'),
+                'taxable_amount'  => $taxableAmount,
+                'discount_amount' => $discountAmount,
+                'gst_percentage'  => $gstPercentage,
+                'gst_amount'      => $gstAmount,
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
             ]);
@@ -412,6 +428,7 @@ class OrderSessionController extends Controller
             $totalDiscount = $pendingOrders->sum('discount_amount');
             $totalGst      = $pendingOrders->sum('gst_amount');
             $totalNet      = (float) $pendingOrders->sum('net_amount');
+            $gstPercentage = $this->restaurantGstPercentage($clubId);
 
             // Final wallet check (locked to prevent concurrent double-spend)
             $wallet = Wallet::where('member_id', $session->member_id)->lockForUpdate()->first();
@@ -532,7 +549,7 @@ class OrderSessionController extends Controller
                 'status'                 => 'billed',
                 'taxable_amount'         => $totalTaxable,
                 'discount_amount'        => $totalDiscount,
-                'gst_percentage'         => 10.00,
+                'gst_percentage'         => $gstPercentage,
                 'gst_amount'             => $totalGst,
                 'net_amount'             => $totalNet,
                 'bill_no'                => generateBillNo($sessionDate),
