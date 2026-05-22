@@ -1234,8 +1234,8 @@ class SwimmingMemberController extends Controller
                 : \Carbon\Carbon::parse($payment->created_at)->year;
 
             // Particulars line
-            $planName    = $purchase?->membershipPlanType?->name ?? 'Seasonal Swimming Fee';
-            $particulars = 'Seasonal Swimming Fee' . ($batch ? ' (' . $batch . ')' : '') . ' for the year ' . $season;
+            $planName    = $purchase?->membershipPlanType?->name ?? '';
+            $particulars = 'Seasonal Swimming Fee' . ($planName ? ' (' . $planName . ')' : '') . ' for the year ' . $season;
 
             // CGST = SGST = half of total GST
             $halfGst = round((float) $payment->gst_amount / 2, 2);
