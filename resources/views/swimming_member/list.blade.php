@@ -542,20 +542,20 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Police Station</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_police_station" id="swim_police_station"
-                                                placeholder="Police Station" required>
+                                                placeholder="Police Station">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Age</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_age" id=""
-                                                placeholder="Age" required>
+                                                placeholder="Age">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
-                                            <select name="swim_sex" id="" class="form-select py-2 shadow-none" required>
+                                            <select name="swim_sex" id="" class="form-select py-2 shadow-none">
                                                 <option value="" hidden disabled selected>Sex</option>
                                                 <option value="male">Male</option>
                                                 <option value="female">Female</option>
@@ -566,21 +566,21 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Height</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_height" id=""
-                                                placeholder="Height" required>
+                                                placeholder="Height">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Weight</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_weight" id=""
-                                                placeholder="Weight" required>
+                                                placeholder="Weight">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Pulse Rate</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_pulse_rate" id=""
-                                                placeholder="Pulse Rate" required>
+                                                placeholder="Pulse Rate">
                                         </div>
                                     </div>
                                     {{-- <div class="col-md-6 col-xl-4">
@@ -604,19 +604,19 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Batch</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_batch" id=""
-                                                placeholder="Batch" required>
+                                                placeholder="Batch">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Vaccination</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_vaccination" id=""
-                                                placeholder="Vaccination" required>
+                                                placeholder="Vaccination">
                                         </div>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="form-check mb-3">
-                                            <input class="form-check-input" type="checkbox" value="" name="swim_i_agree" id="flexCheck1" required>
+                                            <input class="form-check-input" type="checkbox" value="" name="swim_i_agree" id="flexCheck1">
                                             <label class="form-check-label" for="flexCheck1">
                                                 <small>I have gone through the rules & Regulations overleaf and undertake to abide by the same at my risk and cost.</small>
                                             </label>
@@ -688,14 +688,14 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Full Name</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name" required>
+                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name">
                                         </div>
                                     </div>
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Occupation</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id=""
-                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation" required>
+                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation">
                                         </div>
                                     </div>
                                     <div class="col-lg-4">
@@ -921,20 +921,20 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Police Station</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_member_police_station" id="swim_member_police_station"
-                                                placeholder="Police Station" required>
+                                                placeholder="Police Station">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Age</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_age" id="swim_member_age"
-                                                placeholder="Age" required>
+                                                placeholder="Age">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Sex</small></label>
-                                            <select name="swim_sex" id="swim_member_sex" class="form-select py-2 shadow-none" required>
+                                            <select name="swim_sex" id="swim_member_sex" class="form-select py-2 shadow-none">
                                                 <option value="" hidden disabled selected>Sex</option>
                                                 <option value="male">Male</option>
                                                 <option value="female">Female</option>
@@ -945,40 +945,40 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Height</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_height" id="swim_member_height"
-                                                placeholder="Height" required>
+                                                placeholder="Height">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Weight</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_weight" id="swim_member_weight"
-                                                placeholder="Weight" required>
+                                                placeholder="Weight">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Pulse Rate</small></label>
                                             <input type="number" class="form-control py-2 shadow-none" name="swim_pulse_rate" id="swim_member_pulse_rate"
-                                                placeholder="Pulse Rate" required>
+                                                placeholder="Pulse Rate">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Batch</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_batch" id="swim_member_batch"
-                                                placeholder="Batch" required>
+                                                placeholder="Batch">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Vaccination</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" name="swim_vaccination" id="swim_member_vaccination"
-                                                placeholder="Vaccination" required>
+                                                placeholder="Vaccination">
                                         </div>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="form-check mb-3">
-                                            <input class="form-check-input" type="checkbox" value="1" name="swim_i_agree" id="swim_member_i_agree" required>
+                                            <input class="form-check-input" type="checkbox" value="1" name="swim_i_agree" id="swim_member_i_agree">
                                             <label class="form-check-label" for="swim_member_i_agree">
                                                 <small>I have gone through the rules & Regulations overleaf and undertake to abide by the same at my risk and cost.</small>
                                             </label>
@@ -1062,14 +1062,14 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Full Name</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="swim_guardian_name"
-                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name" required>
+                                                placeholder="Father/Guardian’s Full Name" name="swim_guardian_name">
                                         </div>
                                     </div>
                                     <div class="col-lg-4">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Occupation</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="swim_guardian_occupation"
-                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation" required>
+                                                placeholder="Father/Guardian’s Occupation" name="swim_guardian_occupation">
                                         </div>
                                     </div>
                                     <div class="col-lg-4">
@@ -2575,6 +2575,7 @@
                         $('#receiptAddress').text(data.address);
                         $('#receiptPhone').text(data.phone);
                         $('#receiptPolice').text(data.police_station);
+                        // $('#receiptAge').text(data.age ? data.age + ' Years' : '-');
                         $('#receiptAge').text(data.age + ' Years');
                         $('#receiptHeight').text(data.height);
                         $('#receiptWeight').text(data.weight);

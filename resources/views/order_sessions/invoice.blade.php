@@ -357,9 +357,9 @@
     </div>
 
     {{-- ===== Minimum Usage Info (simple) ===== --}}
+    @if(!empty($minimumUsageInfo['applicable']))
     <div class="simple-info-box">
         <div class="simple-info-title">Minimum Usage Info</div>
-        @if(!empty($minimumUsageInfo['applicable']))
             <table class="simple-info-table">
                 <tr>
                     <td>Minimum Charges</td>
@@ -374,10 +374,10 @@
                     <td>{{ number_format($minimumUsageInfo['balance'] ?? 0, 2) }}</td>
                 </tr>
             </table>
-        @else
-            <div style="font-size:11px;color:#6c757d;">Not Applicable</div>
-        @endif
     </div>
+    {{-- @else
+        <div style="font-size:11px;color:#6c757d;">Not Applicable</div> --}}
+    @endif
 
 </body>
 </html>

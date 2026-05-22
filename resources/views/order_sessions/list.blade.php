@@ -543,14 +543,23 @@ $(document).ready(function () {
                 + '<div class="row"><div class="col-8 text-muted small">Closing Balance</div><div class="col-4 text-end fw-semibold small">' + amount(cardBalanceInfo.closing_balance) + '</div></div>'
                 + '</div>';
 
-            html += '<div class="p-3 bg-white border rounded-3 mt-2">'
-                + '<div class="fw-semibold mb-2">Minimum Usage Info</div>'
-                + (minimumUsageInfo.applicable
-                    ? '<div class="row mb-1"><div class="col-8 text-muted small">Minimum Charges</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.minimum_charges) + '</div></div>'
-                      + '<div class="row mb-1"><div class="col-8 text-muted small">Used So Far</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.used_so_far) + '</div></div>'
-                      + '<div class="row"><div class="col-8 text-muted small">Balance</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.balance) + '</div></div>'
-                    : '<div class="small text-muted">Not Applicable</div>')
-                + '</div>';
+            // html += '<div class="p-3 bg-white border rounded-3 mt-2">'
+            //     + '<div class="fw-semibold mb-2">Minimum Usage Info</div>'
+            //     + (minimumUsageInfo.applicable
+            //         ? '<div class="row mb-1"><div class="col-8 text-muted small">Minimum Charges</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.minimum_charges) + '</div></div>'
+            //           + '<div class="row mb-1"><div class="col-8 text-muted small">Used So Far</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.used_so_far) + '</div></div>'
+            //           + '<div class="row"><div class="col-8 text-muted small">Balance</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.balance) + '</div></div>'
+            //         : '<div class="small text-muted">Not Applicable</div>')
+            //     + '</div>';
+
+            if(minimumUsageInfo.applicable){
+                html += '<div class="p-3 bg-white border rounded-3 mt-2">'
+                    + '<div class="fw-semibold mb-2">Minimum Usage Info</div>'
+                    + '<div class="row mb-1"><div class="col-8 text-muted small">Minimum Charges</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.minimum_charges) + '</div></div>'
+                    + '<div class="row mb-1"><div class="col-8 text-muted small">Used So Far</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.used_so_far) + '</div></div>'
+                    + '<div class="row"><div class="col-8 text-muted small">Balance</div><div class="col-4 text-end fw-semibold small">' + amount(minimumUsageInfo.balance) + '</div></div>'
+                    + '</div>';
+            }
         }
 
         $('#viewSessionModalBody').html(html);
