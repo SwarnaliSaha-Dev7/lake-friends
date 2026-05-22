@@ -65,6 +65,7 @@ class DashboardController extends Controller
 
             $pendingApprovals = ActionApproval::where('club_id', $clubId)
                                               ->where('status', 'pending')
+                                              ->where('maker_user_id', '!=', $request->user()->id)
                                               ->count();
 
             $expiringSoon = Member::where('club_id', $clubId)
