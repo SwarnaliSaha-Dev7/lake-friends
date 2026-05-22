@@ -432,7 +432,7 @@
                                 <div class="form-part mb-3">
                                     <label class="form-label w-100 mb-1"><small>A/C Head</small></label>
                                     <input type="text" class="form-control py-2 shadow-none" name="wallet_ac_head"
-                                        placeholder="A/C Head" required>
+                                        placeholder="A/C Head">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -450,7 +450,7 @@
                                 <div class="form-part mb-3">
                                     <label class="form-label w-100 mb-1"><small>Remarks</small></label>
                                     <input type="text" class="form-control py-2 shadow-none" name="wallet_remarks"
-                                        placeholder="Remarks" required>
+                                        placeholder="Remarks">
                                 </div>
                             </div>
                         </div>
