@@ -456,6 +456,7 @@
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
                                                 <img src="" alt="" id="swim_image">
+                                                <span id="swim_image_placeholder" class="d-none d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:80px;height:80px;font-size:32px;"><i class="fa-regular fa-user"></i></span>
                                                 {{-- <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
@@ -510,6 +511,7 @@
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
                                                 <img src="" alt="" id="swim_guardian_image">
+                                                <span id="swim_guardian_image_placeholder" class="d-none d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:80px;height:80px;font-size:32px;"><i class="fa-regular fa-user"></i></span>
                                                 {{-- <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
@@ -627,6 +629,7 @@
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
                                                 <img src="" alt="" id="club_image">
+                                                <span id="club_image_placeholder" class="d-none d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:80px;height:80px;font-size:32px;"><i class="fa-regular fa-user"></i></span>
                                                 {{-- <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="image" accept=".jpg,.jpeg,.png" id="club_member_image">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
@@ -846,7 +849,7 @@
 <script>
     $(document).ready(function() {
 
-        const BASE_URL = "{{ url('/') }}";
+        const BASE_URL = "{{ url('/public') }}";
 
         $('.rejectBtn').on('click', function(){
             $('#confirmRejectBtn').data('id', $(this).data('id'));
@@ -968,7 +971,7 @@
                         $('#club_member_email').val(response.data['email']);
                         $('#club_member_phone').val(response.data['phone']);
                         $('#club_member_address').val(response.data['address']);
-                        
+
                         if(response.data['club_status']){
                             $('#club_status').val(response.data['club_status']);
                         }
@@ -993,8 +996,13 @@
                             $('#clubCardDetailCol').hide();
                         }
 
-                        // $("#club_image").attr("src", '/' + response.data['image']);
-                        $('#club_image').attr('src', BASE_URL + '/' + response.data['image'].replace(/^\/+/, '')).removeClass('d-none');
+                        if (response.data['image']) {
+                            $('#club_image').attr('src', BASE_URL + '/' + response.data['image'].replace(/^\/+/, '')).removeClass('d-none');
+                            $('#club_image_placeholder').addClass('d-none');
+                        } else {
+                            $('#club_image').hide();
+                            $('#club_image_placeholder').removeClass('d-none');
+                        }
 
                         if (response.data['spouse_image']) {
                             // $("#club_spouse_image").attr("src", '/' + response.data['spouse_image']);
@@ -1075,11 +1083,21 @@
                         //     $('#swimCardDetailCol').hide();
                         // }
 
-                        // $("#swim_image").attr("src", '/' + response.data['swim_image']);
-                        $('#swim_image').attr('src', BASE_URL + '/' + response.data['swim_image'].replace(/^\/+/, '')).removeClass('d-none');
+                        if (response.data['swim_image']) {
+                            $('#swim_image').attr('src', BASE_URL + '/' + response.data['swim_image'].replace(/^\/+/, '')).removeClass('d-none');
+                            $('#swim_image_placeholder').addClass('d-none');
+                        } else {
+                            $('#swim_image').hide();
+                            $('#swim_image_placeholder').removeClass('d-none');
+                        }
 
-                        // $("#swim_guardian_image").attr("src", '/' + response.data['swim_guardian_image']);
-                        $('#swim_guardian_image').attr('src', BASE_URL + '/' + response.data['swim_guardian_image'].replace(/^\/+/, '')).removeClass('d-none');
+                        if (response.data['swim_guardian_image']) {
+                            $('#swim_guardian_image').attr('src', BASE_URL + '/' + response.data['swim_guardian_image'].replace(/^\/+/, '')).removeClass('d-none');
+                            $('#swim_guardian_image_placeholder').addClass('d-none');
+                        } else {
+                            $('#swim_guardian_image').hide();
+                            $('#swim_guardian_image_placeholder').removeClass('d-none');
+                        }
 
                         // console.log(response.purchase_history);
 

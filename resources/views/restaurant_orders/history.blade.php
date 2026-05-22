@@ -270,7 +270,7 @@ $(document).ready(function () {
 
         html += '<div class="p-3 bg-light border rounded-3 mt-2">'
             + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Subtotal</div><div class="col-4 text-center fw-semibold small">Rs ' + sessionSubtotal.toFixed(2) + '</div></div>'
-            + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">GST (10%)</div><div class="col-4 text-center fw-semibold small">Rs ' + sessionGst.toFixed(2) + '</div></div>'
+            + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">GST ({{ $globalRestaurantGstPercentage }}%)</div><div class="col-4 text-center fw-semibold small">Rs ' + sessionGst.toFixed(2) + '</div></div>'
             + (sessionDiscount > 0 ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-warning small fw-medium">Offer Applied</div><div class="col-4 text-center fw-semibold small text-muted">-Rs ' + sessionDiscount.toFixed(2) + '</div></div>' : '')
             + '<div class="row py-1 bg-dark text-white rounded-3 mx-0 mt-1"><div class="col-8 text-end small">Grand Total</div><div class="col-4 text-center fw-bold">Rs ' + sessionNet.toFixed(2) + '</div></div>'
             + '<div class="row mt-2"><div class="col-8 text-end text-muted small">Wallet Balance</div><div class="col-4 text-center fw-semibold text-success small">Rs ' + amount(walletBalance) + '</div></div>'

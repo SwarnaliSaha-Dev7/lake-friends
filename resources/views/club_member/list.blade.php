@@ -211,7 +211,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="image" accept=".jpg,.jpeg,.png" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -351,7 +351,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>A/C Head</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="ac_head"
-                                                placeholder="A/C Head" required>
+                                                placeholder="A/C Head">
                                         </div>
                                     </div>
                                     <!-- <div class="col-md-6">
@@ -407,7 +407,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Remarks</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="remarks"
-                                                placeholder="Remarks" required>
+                                                placeholder="Remarks">
                                         </div>
                                     </div>
                                 </div>
@@ -646,7 +646,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>A/C Head</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="ac_head"
-                                                placeholder="A/C Head" required>
+                                                placeholder="A/C Head">
                                         </div>
                                     </div> -->
                                     <!-- <div class="col-md-6">
@@ -700,7 +700,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100"><small>Remarks</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="remarks"
-                                                placeholder="Remarks" required>
+                                                placeholder="Remarks">
                                         </div>
                                     </div> -->
                                 </div>
@@ -1008,7 +1008,7 @@
 
         const params = new URLSearchParams(window.location.search);
         const type = params.get('type');
-        const BASE_URL = "{{ url('/') }}";
+        const BASE_URL = "{{ url('/public') }}";
 
         // Check if 'type' parameter is 'addMember'
         if (type === 'addMember') {

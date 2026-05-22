@@ -73,7 +73,7 @@ class LiquorItemManageController extends Controller
                 // ],
                 'itemCat'             => 'required',
                 'itemPrice'           => 'nullable|numeric|min:0|max:9999999999|decimal:0,2',
-                'itemImage'           => 'required|image|mimes:jpeg,png,jpg|max:5120',
+                'itemImage'           => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
                 'itemCode'            => ['required', 'string', 'max:255'],
                 // 'itemCode'            => ['required', 'string', 'max:255',
                 //     Rule::unique('food_items', 'code')->where(function ($q) use ($club_id) {

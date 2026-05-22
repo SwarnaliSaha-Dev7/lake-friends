@@ -17,6 +17,7 @@ use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
+use App\Models\GstRate;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -173,11 +174,15 @@ class OrderSessionController extends Controller
                 'balance'         => max(0, round($minimumRequired - $usedSoFar, 2)),
             ];
 
+            $walletBalanceDisplay = $session->status === 'billed'
+                ? $closingBalance
+                : ($wallet ? (float) $wallet->current_balance : 0);
+
             return response()->json([
                 'statusCode'     => 200,
                 'data'           => $session,
                 'pending_total'  => number_format($pendingTotal, 2),
-                'wallet_balance' => $wallet ? number_format($wallet->current_balance, 2) : '0.00',
+                'wallet_balance' => round($walletBalanceDisplay, 2),
                 'card_balance_info' => $cardBalanceInfo,
                 'minimum_usage_info' => $minimumUsageInfo,
             ]);
@@ -197,9 +202,10 @@ class OrderSessionController extends Controller
                 return response()->json(['statusCode' => 422, 'message' => 'Session is no longer open.']);
             }
 
-            $memberId  = $session->member_id;
-            $netAmount = (float) $request->input('net_amount');
-            $items     = $request->input('items', []);
+            $memberId      = $session->member_id;
+            $netAmount     = (float) $request->input('net_amount');
+            $items         = $request->input('items', []);
+            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
 
             if (empty($items)) {
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
@@ -274,7 +280,7 @@ class OrderSessionController extends Controller
                 'ac_head'         => 'Restaurant Order',
                 'taxable_amount'  => $request->input('taxable_amount'),
                 'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => 10.00,
+                'gst_percentage'  => $restaurantGst,
                 'gst_amount'      => $request->input('gst_amount'),
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
@@ -527,12 +533,14 @@ class OrderSessionController extends Controller
                 }
             }
 
+            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
+
             // Update session totals
             $session->update([
                 'status'                 => 'billed',
                 'taxable_amount'         => $totalTaxable,
                 'discount_amount'        => $totalDiscount,
-                'gst_percentage'         => 10.00,
+                'gst_percentage'         => $restaurantGst,
                 'gst_amount'             => $totalGst,
                 'net_amount'             => $totalNet,
                 'bill_no'                => generateBillNo($sessionDate),

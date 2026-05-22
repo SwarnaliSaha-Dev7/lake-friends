@@ -4,6 +4,9 @@
         {{-- <p class="m-0">Overview of your member management system</p> --}}
     </div>
     <div class="item-right d-flex align-items-center position-relative">
+        <button id="qlToggle" title="Quick Links">
+            <i class="fa-solid fa-grip"></i> Quick Links
+        </button>
         <div class="notification position-relative">
             <a href="#" class="position-relative" id="notification"><i class="fa-regular fa-bell"></i>
                 <span

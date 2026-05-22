@@ -135,7 +135,7 @@
                                 if (nameParts[ni]) initials += nameParts[ni][0].toUpperCase();
                             }
 
-                            let img_base_url = "{{ url('/') }}";
+                            let img_base_url = "{{ url('/public') }}";
 
                             var avatarUrl = response.data.image
                             ? img_base_url + '/' + response.data.image.replace(/^\/+/, '')
@@ -682,7 +682,7 @@
                     let toDate = '';
                     response.data.forEach(function(plan) {
                         let fromDate = new Date(plan.start_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-                        
+
                         if(plan.expiry_date){
                             toDate   = new Date(plan.expiry_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
                             isActive = new Date(plan.expiry_date) >= new Date() && plan.status !== 'cancelled';
@@ -705,8 +705,8 @@
                         else{
                             tag = '/expire-tag.svg';
                         }
-                        
-                        
+
+
                         tbody.append(`<tr>
                             <td class="bg-info align-middle p-3 text-nowrap">
                                 <small class="fw-semibold">From Date</small><br>

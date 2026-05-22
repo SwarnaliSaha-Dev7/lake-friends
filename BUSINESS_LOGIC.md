@@ -4,6 +4,120 @@
 
 ---
 
+## Quick Navigation
+
+> **New here? Click any link below to jump directly to what you need.**
+
+<table>
+<tr>
+
+<td valign="top" width="20%">
+
+**Orders & Billing**
+
+» [Order Session (Tab)](#3-order-session-running-bill--tab)<br>
+» [Restaurant Orders](#4-restaurant-orders-direct-order)<br>
+» [Bar Orders](#5-bar-orders)<br>
+» [Cancelled Bills](#6-cancelled-bills-reorder)<br>
+» [Number Generation](#2-number-generation-system)<br>
+
+</td>
+
+<td valign="top" width="20%">
+
+**Members & Cards**
+
+» [Member Creation Flow](#member-creation-flow-operator)<br>
+» [Member Status Flow](#member-status-flow)<br>
+» [Card System](#member-card-system)<br>
+» [Plan Types & Renewal](#membership-plan-types)<br>
+» [Plan Renewal Flow](#plan-renewal-flow)<br>
+
+</td>
+
+<td valign="top" width="20%">
+
+**Stock & Inventory**
+
+» [Godown vs Bar](#stock-locations)<br>
+» [Godown → Bar Transfer](#stock-transfer-godown--bar)<br>
+» [Stock Deduction on Order](#stock-deduction-on-order-creation)<br>
+» [Stock Restore on Cancel](#stock-restoration-on-order-cancellation)<br>
+» [Beer vs Spirit Units](#beer-vs-spirit-units)<br>
+
+</td>
+
+<td valign="top" width="20%">
+
+**Wallet & Finance**
+
+» [Wallet System](#wallet-system)<br>
+» [Debit & Credit Flow](#transaction-flow)<br>
+» [Transaction Types](#transaction-types-txn_type)<br>
+» [Fine System](#13-fine-system)<br>
+» [GST Calculation](#15-gst-calculation)<br>
+» [Payment History](#paymenthistory)<br>
+
+</td>
+
+<td valign="top" width="20%">
+
+**Approvals & Masters**
+
+» [Maker-Checker Flow](#9-approval-workflow-maker-checker)<br>
+» [All Modules Table](#all-modules-and-their-approval-logic)<br>
+» [Offers & Discounts](#7-offers--promotions)<br>
+» [Liquor Servings (Pegs)](#10-liquor-serving-spirit-menu)<br>
+» [Locker Management](#14-locker-management)<br>
+» [Admin vs Operator](#16-role-based-access)<br>
+
+</td>
+
+</tr>
+</table>
+
+---
+
+### Common Scenarios — Step-by-Step Walkthroughs
+
+<table>
+<tr>
+
+<td valign="top" width="33%">
+
+**Member Places an Order**<br>
+» [Card punch → tab → bill](#scenario-1-member-arrives-and-places-a-foodliquor-order)
+
+**Bar Order (Immediate Pay)**<br>
+» [Select items → pay now](#scenario-2-bar-order-immediate-payment)
+
+</td>
+
+<td valign="top" width="33%">
+
+**Operator Creates an Offer**<br>
+» [Submit → admin approves](#scenario-3-operator-creates-an-offer)
+
+**Reorder a Cancelled Bill**<br>
+» [Reopen → backdate → bill](#scenario-4-reorder-from-a-cancelled-bill)
+
+</td>
+
+<td valign="top" width="34%">
+
+**Cancel & Refund After Billing**<br>
+» [Refund wallet, keep stock](#scenario-5-cancel--refund-a-billed-session)
+
+**Renewal with Pending Fines**<br>
+» [Fee + fine + GST → approve](#scenario-6-member-renewal-with-pending-fine)
+
+</td>
+
+</tr>
+</table>
+
+---
+
 ## Table of Contents
 
 1. [Project Overview](#1-project-overview)

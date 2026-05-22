@@ -658,7 +658,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -702,7 +702,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Father/Guardian’s Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png" required>
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="swim_guardian_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -800,7 +800,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>A/C Head</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="swim_ac_head"
-                                                placeholder="A/C Head" required>
+                                                placeholder="A/C Head">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-4">
@@ -847,7 +847,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Remarks</small></label>
                                             <input type="text" class="form-control py-2 shadow-none" id="" name="swim_remarks"
-                                                placeholder="Remarks" required>
+                                                placeholder="Remarks">
                                         </div>
                                     </div>
                                 </div>
@@ -1496,7 +1496,7 @@
                                 <td class="text-secondary ps-3">
                                     <small>FLEXI. TIME <br> (NOVICE / SWIMMER)</small>
                                 </td>
-                                <td class="pe-3"><img id="receiptImage" src="" alt="img" loading="lazy" fetchpriority="auto" width="60" height="60"></td>
+                                <td class="pe-3"><img id="receiptImage" src="" alt="img" loading="lazy" fetchpriority="auto" width="60" height="60" style="border-radius:4px; object-fit:cover;"></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
@@ -1664,7 +1664,7 @@
 
         const params = new URLSearchParams(window.location.search);
         const type = params.get('type');
-        const BASE_URL = "{{ url('/') }}";
+        const BASE_URL = "{{ url('/public') }}";
 
         // Check if 'type' parameter is 'addMember'
         if (type === 'addMember') {
@@ -2584,15 +2584,12 @@
                         $('#receiptDate').text(data.date);
 
 
+                        const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' rx='4' fill='%23e9ecef'/%3E%3Ccircle cx='30' cy='22' r='10' fill='%23adb5bd'/%3E%3Cellipse cx='30' cy='46' rx='16' ry='10' fill='%23adb5bd'/%3E%3C/svg%3E";
+
                         if (data.image) {
-                            // console.log(data.image);
-                            // $('#receiptImage').attr('src', '/' + data.image);
-                            // $('#receiptImage').attr('src', data.image).removeClass('d-none');
-                            // $('#receiptImage').attr('src', '/lake-friends/' + data.image).removeClass('d-none');
-
-                            // const BASE_URL = "{{ url('/') }}";
-
-                            $('#receiptImage').attr('src', BASE_URL + '/' + data.image).removeClass('d-none');
+                            $('#receiptImage').attr('src', BASE_URL + '/' + data.image);
+                        } else {
+                            $('#receiptImage').attr('src', defaultAvatar);
                         }
 
                         $('#receiptModal').modal('show');
