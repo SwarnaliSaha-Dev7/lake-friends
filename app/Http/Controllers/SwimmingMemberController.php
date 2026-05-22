@@ -167,6 +167,8 @@ class SwimmingMemberController extends Controller
                 'image',
                 'spouse_image'
             );
+            $iAgree = $request->has('swim_i_agree') ? 1 : 0;
+            $requestData['swim_i_agree'] = $iAgree;
 
             $lastMember = Member::where('club_id', $clubId)
                 ->where('membership_type_id', $membershipTypeId)
@@ -228,7 +230,7 @@ class SwimmingMemberController extends Controller
                     'pulse_rate' => $request->swim_pulse_rate,
                     'batch' => $request->swim_batch,
                     'vaccination' => $request->swim_vaccination,
-                    'i_agree' => 1,
+                    'i_agree' => $iAgree,
                     'disease' => $request->input('swim_disease', []),
                     'image' => $image_path,
                     'guardian_name' => ucwords($request->swim_guardian_name),
@@ -442,9 +444,11 @@ class SwimmingMemberController extends Controller
                 'swim_guardian_image',
                 'swim_image'
             );
+            $iAgree = $request->has('swim_i_agree') ? 1 : 0;
 
             $data['swim_image'] = $image_path;
             $data['swim_guardian_image'] = $guardian_image_path;
+            $data['swim_i_agree'] = $iAgree;
 
             // $card_no = $request->swim_card_id;
 
@@ -485,7 +489,7 @@ class SwimmingMemberController extends Controller
                 'pulse_rate' => $request->swim_pulse_rate,
                 'batch' => $request->swim_batch,
                 'vaccination' => $request->swim_vaccination,
-                'i_agree' => 1,
+                'i_agree' => $iAgree,
                 'disease' => $request->input('swim_disease', []),
                 'guardian_name' => $request->swim_guardian_name,
                 'guardian_occupation' => $request->swim_guardian_occupation
@@ -554,7 +558,7 @@ class SwimmingMemberController extends Controller
                             'pulse_rate' => $request->swim_pulse_rate,
                             'batch' => $request->swim_batch,
                             'vaccination' => $request->swim_vaccination,
-                            'i_agree' => 1,
+                            'i_agree' => $iAgree,
                             'disease' => $request->input('swim_disease', []),
                             'guardian_name' => $request->swim_guardian_name,
                             'guardian_occupation' => $request->swim_guardian_occupation,
@@ -1180,7 +1184,7 @@ class SwimmingMemberController extends Controller
                 'address' => $member->address,
                 'phone' => $member->phone,
                 'member_code' => $member->member_code,
-                'age' => $details['age'] ?? '-',
+                'age' => $details['age'] ?? null,
                 'height' => $details['height'] ?? '-',
                 'weight' => $details['weight'] ?? '-',
                 'pulse_rate' => $details['pulse_rate'] ?? '-',

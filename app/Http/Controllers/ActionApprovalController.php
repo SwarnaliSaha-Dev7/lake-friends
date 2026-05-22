@@ -286,36 +286,36 @@ class ActionApprovalController extends Controller
 
                 if ($membershipTypeName == 'Swimming Membership') {
 
-                    if ($member->image && $payload->swim_image != $member->image && file_exists(public_path($member->image))) {
+                    if ($member->image && ($payload->swim_image ?? null) != $member->image && file_exists(public_path($member->image))) {
                         unlink(public_path($member->image));
                     }
 
-                    if ($member->swim_guardian_image && $payload->swim_guardian_image != $memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
+                    if ($member->swim_guardian_image && ($payload->swim_guardian_image ?? null) != $memberDetail->details['guardian_image'] && file_exists(public_path($memberDetail->details['guardian_image']))) {
                         unlink(public_path($memberDetail->details['guardian_image']));
                     }
 
                     $member->update([
-                        'name'        => ucwords($payload->swim_name),
-                        'email'       => $payload->swim_email,
-                        'phone'       => $payload->swim_phone,
-                        'address'     => $payload->swim_address,
-                        'image'       => $payload->swim_image,
-                        'status'      => $payload->swim_status
+                        'name'        => ucwords($payload->swim_name ?? ''),
+                        'email'       => $payload->swim_email ?? null,
+                        'phone'       => $payload->swim_phone ?? null,
+                        'address'     => $payload->swim_address ?? null,
+                        'image'       => $payload->swim_image ?? null,
+                        'status'      => $payload->swim_status ?? $member->status
                     ]);
 
                     $details = [
-                        'police_station' => $payload->swim_member_police_station,
-                        'age' => $payload->swim_age,
-                        'sex' => $payload->swim_sex,
-                        'height' => $payload->swim_height,
-                        'weight' => $payload->swim_weight,
-                        'pulse_rate' => $payload->swim_pulse_rate,
-                        'batch' => $payload->swim_batch,
-                        'vaccination' => $payload->swim_vaccination,
-                        'i_agree' => 1,
-                        'guardian_name' => ucwords($payload->swim_guardian_name),
-                        'guardian_occupation' => $payload->swim_guardian_occupation,
-                        'guardian_image' => $payload->swim_guardian_image,
+                        'police_station' => $payload->swim_member_police_station ?? null,
+                        'age' => $payload->swim_age ?? null,
+                        'sex' => $payload->swim_sex ?? null,
+                        'height' => $payload->swim_height ?? null,
+                        'weight' => $payload->swim_weight ?? null,
+                        'pulse_rate' => $payload->swim_pulse_rate ?? null,
+                        'batch' => $payload->swim_batch ?? null,
+                        'vaccination' => $payload->swim_vaccination ?? null,
+                        'i_agree' => !empty($payload->swim_i_agree) ? 1 : 0,
+                        'guardian_name' => ucwords($payload->swim_guardian_name ?? ''),
+                        'guardian_occupation' => $payload->swim_guardian_occupation ?? null,
+                        'guardian_image' => $payload->swim_guardian_image ?? null,
                     ];
 
                     if (isset($payload->swim_disease)) {

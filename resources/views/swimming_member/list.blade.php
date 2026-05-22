@@ -1526,7 +1526,7 @@
                                 <td class="text-secondary ps-3">
                                     <small>Age:</small>
                                 </td>
-                                <td class="pe-3"><small id="receiptAge">35 Years</small></td>
+                                <td class="pe-3"><small id="receiptAge"></small></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary ps-3">
@@ -2575,8 +2575,7 @@
                         $('#receiptAddress').text(data.address);
                         $('#receiptPhone').text(data.phone);
                         $('#receiptPolice').text(data.police_station);
-                        // $('#receiptAge').text(data.age ? data.age + ' Years' : '-');
-                        $('#receiptAge').text(data.age + ' Years');
+                        $('#receiptAge').text(data.age ? data.age + ' Years' : '-');
                         $('#receiptHeight').text(data.height);
                         $('#receiptWeight').text(data.weight);
                         $('#receiptPulse').text(data.pulse_rate);
