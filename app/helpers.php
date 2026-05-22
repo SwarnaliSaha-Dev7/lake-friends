@@ -110,3 +110,46 @@ if (!function_exists('generateBillNo')) {
         return 'LF/' . $fy . '/' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }
+
+if (!function_exists('amountToWords')) {
+    function amountToWords(float $amount): string
+    {
+        $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+                 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+                 'Seventeen', 'Eighteen', 'Nineteen'];
+        $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+        $fn = function (int $n) use (&$fn, $ones, $tens): string {
+            if ($n === 0)   return '';
+            if ($n < 20)    return $ones[$n];
+            if ($n < 100)   return $tens[(int)($n / 10)] . ($n % 10 ? ' ' . $ones[$n % 10] : '');
+            return $ones[(int)($n / 100)] . ' Hundred' . ($n % 100 ? ' ' . $fn($n % 100) : '');
+        };
+
+        $rupees  = (int) $amount;
+        $paise   = (int) round(($amount - $rupees) * 100);
+
+        $parts = [];
+        if ($rupees >= 10000000) {
+            $parts[] = $fn((int)($rupees / 10000000)) . ' Crore';
+            $rupees %= 10000000;
+        }
+        if ($rupees >= 100000) {
+            $parts[] = $fn((int)($rupees / 100000)) . ' Lakh';
+            $rupees %= 100000;
+        }
+        if ($rupees >= 1000) {
+            $parts[] = $fn((int)($rupees / 1000)) . ' Thousand';
+            $rupees %= 1000;
+        }
+        if ($rupees > 0) {
+            $parts[] = $fn($rupees);
+        }
+
+        $words = 'Rupees ' . implode(' ', $parts);
+        if ($paise > 0) {
+            $words .= ' and ' . $fn($paise) . ' Paise';
+        }
+        return $words . ' only';
+    }
+}

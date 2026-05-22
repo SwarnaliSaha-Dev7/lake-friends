@@ -98,6 +98,9 @@
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn receiptBtn"  title="View Receipt"  data-id="{{$member->id}}">
                                             <small><i class="fa-solid fa-receipt"></i></small>
                                         </button>
+                                        <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn paymentReceiptBtn" title="Payment Receipt" data-id="{{$member->id}}">
+                                            <small><i class="fa-solid fa-file-invoice-dollar"></i></small>
+                                        </button>
 
                                         <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn swimPlanRenewalBtn"
                                             title="Plan Renewal" data-id="{{$member->id}}"><small><i
@@ -1570,6 +1573,169 @@
     </div>
     <!-- Receipt Modal End-->
 
+    <!-- Payment Receipt Modal Start -->
+    <div class="modal fade" id="paymentReceiptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header border-0 d-print-none justify-content-end">
+                    <button type="button" class="btn btn-sm btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="paymentReceiptPrintBtn">
+                        <i class="fa-solid fa-print me-1"></i>Print
+                    </button>
+                </div>
+                <div class="modal-body p-4" id="paymentReceiptContent">
+
+                    {{-- ===== Club Header ===== --}}
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
+                        <tr>
+                            <td style="width:12%; vertical-align:middle; padding-right:10px;">
+                                @if(!empty($clubDetails->logo))
+                                    <img src="{{ asset($clubDetails->logo) }}" alt="Logo" style="width:60px; height:auto; display:block;">
+                                @endif
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <div style="font-size:18px; font-weight:800; color:#1a1a2e; line-height:1.1; letter-spacing:1px; text-transform:uppercase;">
+                                    {{ $clubDetails->name ?? '' }}
+                                </div>
+                                <div style="font-size:10px; color:#555; margin-top:2px;">Training &amp; Coaching Centre of Aquatic Sports</div>
+                                <div style="font-size:10px; color:#555;">{{ $clubDetails->address ?? '' }}</div>
+                                <div style="font-size:9.5px; color:#666; margin-top:2px;">
+                                    Regd. Under Act XXI of 1860 &nbsp;|&nbsp; Affiliated With SCSF &amp; CDSA
+                                </div>
+                            </td>
+                            <td style="width:22%; text-align:right; vertical-align:middle;">
+                                <div style="font-size:22px; font-weight:800; color:#1a1a2e; letter-spacing:3px; text-transform:uppercase;">RECEIPT</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr style="border:none; border-top:2px solid #1a1a2e; margin:0 0 10px 0;">
+
+                    {{-- ===== Meta ===== --}}
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:12px;">
+                        <tr>
+                            <td style="width:55%; vertical-align:top; padding-right:10px;">
+                                <table style="border-collapse:collapse; width:100%;">
+                                    <tr>
+                                        <td style="color:#555; width:38%; padding:3px 0;">Date</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:600; color:#1a1a2e;" id="pr_date">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:#555; padding:3px 0;">Bill No</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:600; color:#1a1a2e;" id="pr_bill_no">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:#555; padding:3px 0;">Received from</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:700; color:#1a1a2e; text-transform:uppercase;" id="pr_received_from">—</td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="width:45%; vertical-align:top; border-left:1px solid #dee2e6; padding-left:12px;">
+                                <table style="border-collapse:collapse; width:100%;">
+                                    <tr>
+                                        <td style="color:#555; width:40%; padding:3px 0;">Season</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:600; color:#1a1a2e;" id="pr_season">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:#555; padding:3px 0;">Form No</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:600; color:#1a1a2e;" id="pr_form_no">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:#555; padding:3px 0;">Receipt No</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:600; color:#1a1a2e;" id="pr_receipt_no">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:#555; padding:3px 0;">Receipt Mode</td>
+                                        <td style="padding:3px 6px;">:</td>
+                                        <td style="font-weight:600; color:#1a1a2e;" id="pr_payment_mode">—</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    {{-- ===== Items Table ===== --}}
+                    <table style="width:100%; border-collapse:collapse; border:1px solid #333; font-size:12px; margin-bottom:8px;">
+                        <thead>
+                            <tr style="background:#1a1a2e; color:#fff;">
+                                <th style="padding:7px 10px; text-align:left; border-right:1px solid #444; width:44%;">PARTICULARS</th>
+                                <th style="padding:7px 8px; text-align:right; border-right:1px solid #444; width:12%;">AMOUNT</th>
+                                <th style="padding:7px 8px; text-align:right; border-right:1px solid #444; width:10%;">CGST</th>
+                                <th style="padding:7px 8px; text-align:right; border-right:1px solid #444; width:10%;">SGST</th>
+                                <th style="padding:7px 8px; text-align:right; border-right:1px solid #444; width:8%;">COINS</th>
+                                <th style="padding:7px 8px; text-align:right; width:14%;">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom:1px solid #dee2e6;">
+                                <td style="padding:8px 10px; border-right:1px solid #dee2e6;" id="pr_particulars">—</td>
+                                <td style="padding:8px; text-align:right; border-right:1px solid #dee2e6;" id="pr_taxable">—</td>
+                                <td style="padding:8px; text-align:right; border-right:1px solid #dee2e6;" id="pr_cgst">—</td>
+                                <td style="padding:8px; text-align:right; border-right:1px solid #dee2e6;" id="pr_sgst">—</td>
+                                <td style="padding:8px; text-align:center; border-right:1px solid #dee2e6; color:#999;">--</td>
+                                <td style="padding:8px; text-align:right; font-weight:600;" id="pr_total_row">—</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="background:#f8f9fa; border-top:2px solid #333;">
+                                <td style="padding:7px 10px; font-weight:700; border-right:1px solid #dee2e6;">Total</td>
+                                <td style="padding:7px 8px; text-align:right; border-right:1px solid #dee2e6; font-weight:600;" id="pr_total_taxable">—</td>
+                                <td style="padding:7px 8px; text-align:right; border-right:1px solid #dee2e6; font-weight:600;" id="pr_total_cgst">—</td>
+                                <td style="padding:7px 8px; text-align:right; border-right:1px solid #dee2e6; font-weight:600;" id="pr_total_sgst">—</td>
+                                <td style="padding:7px 8px; text-align:center; border-right:1px solid #dee2e6; color:#999;">--</td>
+                                <td style="padding:7px 8px; text-align:right; font-weight:700;" id="pr_grand_total">—</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    {{-- ===== Footer ===== --}}
+                    <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-top:6px;">
+                        <tr>
+                            <td colspan="2" style="padding:4px 0;">
+                                <strong>Rupees:</strong> <span id="pr_amount_words" style="font-style:italic; color:#333;">—</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:4px 0; width:60%;">
+                                <strong>Collected by:</strong> <span id="pr_collected_by">—</span>
+                            </td>
+                            <td style="padding:4px 0; text-align:right;">
+                                <strong>Printed At:</strong> <span id="pr_printed_at">—</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:12px 0 4px; color:#555; font-size:11px;">Applicant Copy</td>
+                            <td style="padding:12px 0 4px; text-align:right;">
+                                <span style="border-top:1px solid #333; display:inline-block; width:120px; text-align:center; padding-top:4px; font-size:11px; color:#555;">Signature</span>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>{{-- /modal-body --}}
+            </div>
+        </div>
+    </div>
+    <!-- Payment Receipt Modal End -->
+
+    <style>
+    @media print {
+        body.printing-payment-receipt * { visibility: hidden !important; }
+        body.printing-payment-receipt #paymentReceiptContent,
+        body.printing-payment-receipt #paymentReceiptContent * { visibility: visible !important; }
+        body.printing-payment-receipt #paymentReceiptContent {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100% !important;
+            padding: 20px !important;
+        }
+    }
+    </style>
+
     <!-- Add Locker Purchase Modal Start for swimming members-->
     <div class="modal fade" id="lockerModal" tabindex="-1">
         <div class="modal-dialog modal-md">
@@ -2604,6 +2770,57 @@
                     btn.html(original);
                 }
             });
+        });
+
+        // ── Payment Receipt ──────────────────────────────────────────────────
+        $(document).on('click', '.paymentReceiptBtn', function () {
+            let memberId = $(this).data('id');
+            let btn = $(this);
+            let original = btn.html();
+            btn.html('<span class="spinner-border spinner-border-sm"></span>');
+
+            $.ajax({
+                url: '{{ route("swimming-member.payment-receipt", ":id") }}'.replace(':id', memberId),
+                type: 'GET',
+                success: function (response) {
+                    if (response.statusCode == 200) {
+                        let d = response.data;
+                        $('#pr_date').text(d.date);
+                        $('#pr_bill_no').text(d.bill_no);
+                        $('#pr_received_from').text(d.received_from);
+                        $('#pr_season').text(d.season);
+                        $('#pr_form_no').text(d.form_no);
+                        $('#pr_receipt_no').text(d.receipt_no);
+                        $('#pr_payment_mode').text(d.payment_mode);
+                        $('#pr_particulars').text(d.particulars);
+                        $('#pr_taxable').text(d.taxable_amount);
+                        $('#pr_cgst').text(d.cgst);
+                        $('#pr_sgst').text(d.sgst);
+                        $('#pr_total_row').text(d.net_amount);
+                        $('#pr_total_taxable').text(d.taxable_amount);
+                        $('#pr_total_cgst').text(d.cgst);
+                        $('#pr_total_sgst').text(d.sgst);
+                        $('#pr_grand_total').text(d.net_amount);
+                        $('#pr_amount_words').text(d.amount_words);
+                        $('#pr_collected_by').text(d.collected_by);
+                        $('#pr_printed_at').text(d.printed_at);
+                        $('#paymentReceiptModal').modal('show');
+                    } else {
+                        toastr.error(response.message || 'Something went wrong');
+                    }
+                    btn.html(original);
+                },
+                error: function () {
+                    toastr.error('Something went wrong');
+                    btn.html(original);
+                }
+            });
+        });
+
+        $('#paymentReceiptPrintBtn').on('click', function () {
+            $('body').addClass('printing-payment-receipt');
+            window.print();
+            $('body').removeClass('printing-payment-receipt');
         });
 
     });

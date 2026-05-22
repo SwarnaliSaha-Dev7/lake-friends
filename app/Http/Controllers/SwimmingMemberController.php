@@ -1202,6 +1202,69 @@ class SwimmingMemberController extends Controller
         }
     }
 
+    public function getPaymentReceipt($id)
+    {
+        try {
+            $clubId = club_id();
+
+            $member = Member::where('club_id', $clubId)->findOrFail($id);
+
+            // Latest plan_purchase payment
+            $payment = PaymentHistory::where('member_id', $member->id)
+                ->where('club_id', $clubId)
+                ->where('purpose', 'plan_purchase')
+                ->latest()
+                ->first();
+
+            if (!$payment) {
+                return response()->json(['statusCode' => 404, 'message' => 'No payment record found.']);
+            }
+
+            // Linked purchase history with plan type
+            $purchase = MembershipPurchaseHistory::with('membershipPlanType')
+                ->find($payment->membership_purchase_history_id);
+
+            // Form details for batch name
+            $formDetail = MembershipFormDetail::where('member_id', $member->id)->latest()->first();
+            $batch      = $formDetail?->details['batch'] ?? '';
+
+            // Season = year from plan start_date
+            $season = $purchase?->start_date
+                ? \Carbon\Carbon::parse($purchase->start_date)->year
+                : \Carbon\Carbon::parse($payment->created_at)->year;
+
+            // Particulars line
+            $planName    = $purchase?->membershipPlanType?->name ?? 'Seasonal Swimming Fee';
+            $particulars = 'Seasonal Swimming Fee' . ($batch ? ' (' . $batch . ')' : '') . ' for the year ' . $season;
+
+            // CGST = SGST = half of total GST
+            $halfGst = round((float) $payment->gst_amount / 2, 2);
+
+            return response()->json([
+                'statusCode' => 200,
+                'data' => [
+                    'date'           => \Carbon\Carbon::parse($payment->created_at)->format('d-m-Y'),
+                    'bill_no'        => $payment->bill_no,
+                    'season'         => $season,
+                    'form_no'        => $member->member_code,
+                    'receipt_no'     => $payment->mr_no,
+                    'payment_mode'   => $payment->payment_mode ?? '—',
+                    'received_from'  => $member->name,
+                    'particulars'    => $particulars,
+                    'taxable_amount' => number_format((float) $payment->taxable_amount, 2),
+                    'cgst'           => number_format($halfGst, 2),
+                    'sgst'           => number_format($halfGst, 2),
+                    'net_amount'     => number_format((float) $payment->net_amount, 2),
+                    'amount_words'   => amountToWords((float) $payment->net_amount),
+                    'collected_by'   => Auth::user()->name,
+                    'printed_at'     => now()->format('d-m-Y h:iA'),
+                ],
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
+        }
+    }
+
 
     public function renew(Request $request)
     {

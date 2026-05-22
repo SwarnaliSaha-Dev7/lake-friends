@@ -107,6 +107,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/delete/{id}', [SwimmingMemberController::class, 'delete'])->name('swimming-member.delete');
 
         Route::get('/receipt/{id}', [SwimmingMemberController::class, 'getReceipt'])->name('swimming-member.receipt');
+        Route::get('/payment-receipt/{id}', [SwimmingMemberController::class, 'getPaymentReceipt'])->name('swimming-member.payment-receipt');
     });
 
     Route::prefix('manage-member-approval-status')->controller(ActionApprovalController::class)->group(function () {
