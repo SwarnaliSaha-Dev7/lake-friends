@@ -49,7 +49,8 @@ class AppServiceProvider extends ServiceProvider
             $clubDetails = Club::find(Auth::user()->club_id);
         }
         else{
-            $clubDetails = Club::where('name', 'LIKE', '%Lake Friends%')->first();
+            // $clubDetails = Club::where('name', 'LIKE', '%Lake Friends%')->first();
+            $clubDetails = Club::where('name', 'LIKE', '%Smart Club%')->first();
         }
 
         $view->with('clubDetails', $clubDetails);

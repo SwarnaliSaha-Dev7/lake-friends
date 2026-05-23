@@ -18,7 +18,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="login-right">
-                                <h2 class="mb-lg-0 mb-1"><strong>Lake Friend</strong></h2>
+                                <h2 class="mb-lg-0 mb-1"><strong>Smart Club</strong></h2>
                                 <h4 class="fw-medium">In services of sports</h4>
 
                                 <form method="POST" action="{{ route('login') }}">

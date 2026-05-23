@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lake Friends Login</title>
+    <title>Smart Club Login</title>
 </head>
 <body>
 
