@@ -33,6 +33,7 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Phone</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Card Number
                                 </th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Spouse Name</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Wallet</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Exp. Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Approve by
@@ -58,7 +59,14 @@
                                     @endif
                                 </td>
                                 <td class="text-nowrap">{{$member->phone}}</td>
-                                <td class="text-nowrap">{{ $member->cardDetails?->card_no ?? '-' }}</td>
+                                <td class="text-nowrap">
+                                    <div>{{ $member->cardDetails?->card_no ?? '-' }}</div>
+                                </td>
+                                <td class="text-nowrap">
+                                    @if(!empty($member->memberDetails?->details['spouse_name']))
+                                        <div>{{ $member->memberDetails->details['spouse_name'] }}</div>
+                                    @endif
+                                </td>
                                 <td class="text-nowrap">₹ {{$member->walletDetails?->current_balance ?? 0}}</td>
                                 <td class="text-nowrap {{ $planExpired ? 'text-danger fw-semibold' : '' }}">
                                     {{ isset($member->purchaseHistory[0]) ? \Carbon\Carbon::parse($member->purchaseHistory[0]->expiry_date)->format('d/m/Y') : 'N/A' }}
@@ -240,21 +248,21 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Name</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none text-only" id="" name="spouse_name"
+                                            <input type="text" class="form-control py-2 shadow-none text-only spouse-detail-input" id="" name="spouse_name"
                                                 placeholder="Spouse Full Name">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                                            <input type="email" class="form-control py-2 shadow-none" id="" name="spouse_email"
+                                            <input type="email" class="form-control py-2 shadow-none spouse-detail-input" id="" name="spouse_email"
                                                 placeholder="Email">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="spouse_phone" name="spouse_phone"
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input spouse-detail-input" id="spouse_phone" name="spouse_phone"
                                                 placeholder="Phone">
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -262,7 +270,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select id="" class="form-select py-2 shadow-none" name="spouse_blood_grp">
+                                            <select id="" class="form-select py-2 shadow-none spouse-detail-input" name="spouse_blood_grp">
                                                 <option value="">Blood Group</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -278,7 +286,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="spouse-address" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="spouse-address" name="spouse_address" rows="3"
+                                            <textarea class="form-control py-2 shadow-none spouse-detail-input" id="spouse-address" name="spouse_address" rows="3"
                                                 placeholder="Address"></textarea>
                                         </div>
                                     </div>
@@ -286,7 +294,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="spouse_image" accept=".jpg,.jpeg,.png">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image spouse-detail-input" name="spouse_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -337,6 +345,17 @@
                                                     <option value="{{$card->id}}">{{$card->card_no}}</option>
                                                 @endforeach
 
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Spouse Card No.</small></label>
+                                            <select name="spouse_card_id" class="form-select py-2 shadow-none spouse-card-select">
+                                                <option value="" selected>Spouse Card No.</option>
+                                                @foreach ($cards as $card)
+                                                    <option value="{{$card->id}}">{{$card->card_no}}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                     </div>
@@ -524,21 +543,21 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Name</small></label>
-                                            <input type="text" class="form-control py-2 shadow-none text-only" id="spouse_name" name="spouse_name"
+                                            <input type="text" class="form-control py-2 shadow-none text-only edit-spouse-detail-input" id="spouse_name" name="spouse_name"
                                                 placeholder="Spouse Full Name">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
-                                            <input type="email" class="form-control py-2 shadow-none" id="spouse_email" name="spouse_email"
-                                                placeholder="Email" readonly>
+                                            <input type="email" class="form-control py-2 shadow-none edit-spouse-detail-input" id="spouse_email" name="spouse_email"
+                                                placeholder="Email">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Phone</small></label>
-                                            <input type="tel" class="form-control py-2 shadow-none phone-input" id="edit_spouse_phone" name="spouse_phone"
+                                            <input type="tel" class="form-control py-2 shadow-none phone-input edit-spouse-detail-input" id="edit_spouse_phone" name="spouse_phone"
                                                 placeholder="Phone">
                                             <span class="error-div text-danger"></span>
                                         </div>
@@ -546,7 +565,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Blood Group</small></label>
-                                            <select id="spouse_blood_grp" class="form-select py-2 shadow-none" name="spouse_blood_grp">
+                                            <select id="spouse_blood_grp" class="form-select py-2 shadow-none edit-spouse-detail-input" name="spouse_blood_grp">
                                                 <option value="">Blood Group</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -562,7 +581,7 @@
                                     <div class="col-md-6">
                                         <div class="form-part mb-3">
                                             <label for="spouse-address" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
-                                            <textarea class="form-control py-2 shadow-none" id="spouse_address" name="spouse_address" rows="3"
+                                            <textarea class="form-control py-2 shadow-none edit-spouse-detail-input" id="spouse_address" name="spouse_address" rows="3"
                                                 placeholder="Address"></textarea>
                                         </div>
                                     </div>
@@ -570,7 +589,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Photo</small></label>
                                             <label class="file-upload-box position-relative text-center border rounded-3 w-100 p-2">
-                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image" name="spouse_image" id="spouse_image" accept=".jpg,.jpeg,.png">
+                                                <input type="file" class="file-input opacity-0 position-absolute start-0 w-100 profile-image edit-spouse-detail-input" name="spouse_image" id="spouse_image" accept=".jpg,.jpeg,.png">
                                                 <div class="upload-content">
                                                     <i class="upload-icon"><i
                                                             class="fa-solid fa-arrow-up-from-bracket"></i></i>
@@ -633,6 +652,23 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Current Card No.</small></label>
                                             <p id="current_card_no"></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-4">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Update Spouse Card No.</small></label>
+                                            <select name="spouse_card_id" id="spouse_card_no" class="form-select py-2 shadow-none edit-spouse-card-select">
+                                                <option value="" selected>Spouse Card No.</option>
+                                                @foreach ($cards as $card)
+                                                    <option value="{{$card->id}}">{{$card->card_no}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-xl-3">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Current Spouse Card No.</small></label>
+                                            <p id="current_spouse_card_no"></p>
                                         </div>
                                     </div>
                                     <!-- <div class="col-md-6 col-xl-4">
@@ -1184,6 +1220,38 @@
             reader.readAsDataURL(file);
         });
 
+        function hasSpouseDetails($form, detailSelector) {
+            let hasDetails = false;
+            $form.find(detailSelector).each(function () {
+                if ($(this).attr('type') === 'file') {
+                    if (this.files && this.files.length > 0) {
+                        hasDetails = true;
+                    }
+                } else if ($.trim($(this).val() || '') !== '') {
+                    hasDetails = true;
+                }
+            });
+            return hasDetails;
+        }
+
+        function syncSpouseCardRequired($form, detailSelector, cardSelector) {
+            $form.find(cardSelector).prop('required', hasSpouseDetails($form, detailSelector));
+        }
+
+        function syncEditSpouseCardRequired() {
+            let hasCurrentSpouseCard = $('#current_spouse_card_no').text().trim() !== '-';
+            let required = hasSpouseDetails($('#clubMemberEditForm'), '.edit-spouse-detail-input') && !hasCurrentSpouseCard;
+            $('#clubMemberEditForm').find('.edit-spouse-card-select').prop('required', required);
+        }
+
+        $(document).on('input change', '#club-member-form .spouse-detail-input', function () {
+            syncSpouseCardRequired($('#club-member-form'), '.spouse-detail-input', '.spouse-card-select');
+        });
+
+        $(document).on('input change', '#clubMemberEditForm .edit-spouse-detail-input', function () {
+            syncEditSpouseCardRequired();
+        });
+
         function calculateGST() {
             // Get values from inputs
             let taxable = parseFloat($('#taxable_amount').val()) || 0;
@@ -1324,7 +1392,16 @@
                 $('#gstPercentage').removeClass('is-invalid');
             }
 
+            let $createForm = $('#club-member-form');
+            if (hasSpouseDetails($createForm, '.spouse-detail-input') && !$createForm.find('.spouse-card-select').val()) {
+                toastr.error('Please select spouse card.');
+                isValid = false;
+            }
 
+            if ($createForm.find('[name="card_id"]').val() && $createForm.find('[name="card_id"]').val() === $createForm.find('[name="spouse_card_id"]').val()) {
+                toastr.error('Member card and spouse card must be different.');
+                isValid = false;
+            }
 
             if (!isValid) {
                 return isValid;
@@ -1689,6 +1766,7 @@
 
                     $('#spouse_name').val(details.spouse_name);
                     $('#spouse_email').val(details.spouse_email);
+                    $('#spouse_email').prop('readonly', !!details.spouse_email);
                     $('#edit_spouse_phone').val(details.spouse_phone);
                     $('#spouse_blood_grp').val(details.spouse_blood_grp);
                     $('#spouse_address').val(details.spouse_address);
@@ -1709,6 +1787,9 @@
                     // $('#card_no').val(data.card_details.id);
 
                     $('#current_card_no').text(data.card_details?.card_no || '-');
+                    $('#current_spouse_card_no').text(data.spouse_card_details?.card_no || '-');
+                    $('#spouse_card_no').val('');
+                    syncEditSpouseCardRequired();
 
                     // $('#current_membership').text(response.purchase_history.membership_plan_type.name);
                     $('#current_membership').text(response?.purchase_history?.membership_plan_type?.name ?? 'No Plan Taken');
@@ -1803,6 +1884,19 @@
 
             });
 
+
+            let $editForm = $('#clubMemberEditForm');
+            if (hasSpouseDetails($editForm, '.edit-spouse-detail-input') && $('#current_spouse_card_no').text().trim() === '-' && !$editForm.find('.edit-spouse-card-select').val()) {
+                toastr.error('Please select spouse card.');
+                isValid = false;
+            }
+
+            let selectedMemberCard = $editForm.find('[name="card_id"]').val();
+            let selectedSpouseCard = $editForm.find('[name="spouse_card_id"]').val();
+            if (selectedMemberCard && selectedSpouseCard && selectedMemberCard === selectedSpouseCard) {
+                toastr.error('Member card and spouse card must be different.');
+                isValid = false;
+            }
 
             if(!isValid){
                 return false;

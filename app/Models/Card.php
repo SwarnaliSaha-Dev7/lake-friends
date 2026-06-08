@@ -28,4 +28,9 @@ class Card extends Model
     {
         return $this->hasOne(MemberCardMapping::class, 'card_id');
     }
+
+    public function memberMappings()
+    {
+        return $this->hasMany(MemberCardMapping::class, 'card_id');
+    }
 }

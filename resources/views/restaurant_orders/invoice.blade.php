@@ -159,6 +159,14 @@
             default     => 's-pending',
         };
         $orderDate = \Carbon\Carbon::parse($order->created_at)->format('d/m/Y');
+        $orderSession = $order->session;
+        $billingMember = $orderSession?->member ?? $order->member;
+        $billingName = $orderSession?->order_person_name ?: ($billingMember->name ?? '—');
+        $billingEmail = $billingMember->email ?? '—';
+
+        if ($orderSession?->order_person_holder_type === 'spouse') {
+            $billingEmail = $billingMember?->memberDetails?->details['spouse_email'] ?? $billingEmail;
+        }
     @endphp
 
     {{-- ===== Club header ===== --}}
@@ -199,8 +207,8 @@
             </td>
             <td class="meta-right">
                 <div class="meta-heading">Billed to</div>
-                <div class="meta-label" style="margin-top:2px;">{{ $order->member->name ?? '—' }}</div>
-                <div class="meta-label" style="margin-top:2px;">{{ $order->member->email ?? '—' }}</div>
+                <div class="meta-label" style="margin-top:2px;">{{ $billingName }}</div>
+                <div class="meta-label" style="margin-top:2px;">{{ $billingEmail }}</div>
             </td>
         </tr>
     </table>

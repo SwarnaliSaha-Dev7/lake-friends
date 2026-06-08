@@ -104,7 +104,7 @@
                                     @endphp
                                     <tr>
                                         <td class="text-nowrap fw-medium">{{ $order->session->session_no ?? $order->order_no }}</td>
-                                        <td class="text-nowrap">{{ $order->member->name ?? '—' }}</td>
+                                        <td class="text-nowrap">{{ $order->session?->order_person_name ?: ($order->member->name ?? '—') }}</td>
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('h:i A') }}</td>
                                         <td class="text-nowrap">
                                             @if(!empty($item->metadata['is_cocktail']))

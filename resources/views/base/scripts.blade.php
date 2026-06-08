@@ -72,7 +72,11 @@
                             $('#cardMemberName').text(memberName);
                             $('#cardMemberClubName').text(response.data.club_details.name);
                             $('#cardMemberCode').text(response.data.member_code);
-                            $('#cardMemberCardNo').text(response.data.card_details.card_no);
+                            let scannedCardLabel = response.scanned_card_no || response.data.card_details?.card_no || '-';
+                            if (response.card_holder_type === 'spouse') {
+                                scannedCardLabel += ' (Spouse)';
+                            }
+                            $('#cardMemberCardNo').text(scannedCardLabel);
                             var today = new Date(); today.setHours(0,0,0,0);
                             var allPlans = response.data.purchase_history || [];
 
@@ -189,6 +193,7 @@
                             var memberTypeSlug = response.data.member_details?.membership_type?.name?.toLowerCase().includes('swim') ? 'swimming' : 'club';
                             $('#cardentry').data('member-id', response.data.id);
                             $('#cardentry').data('member-type', memberTypeSlug);
+                            $('#cardentry').data('card-holder-type', response.card_holder_type || 'member');
 
                             // Show/hide elements based on member type
                             if (memberTypeSlug === 'swimming') {

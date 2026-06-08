@@ -12,6 +12,8 @@ class OrderSession extends Model
     protected $fillable = [
         'club_id',
         'member_id',
+        'order_person_name',
+        'order_person_holder_type',
         'session_no',
         'status',
         'opening_wallet_balance',

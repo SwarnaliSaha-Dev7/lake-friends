@@ -28,14 +28,14 @@
                         <tr>
                             <td class="text-nowrap">{{ $loop->iteration }}</td>
                             <td class="text-nowrap fw-medium">{{ $session->session_no }}</td>
-                            <td class="text-nowrap">{{ $session->member->name ?? '—' }}</td>
+                            <td class="text-nowrap">{{ $session->order_person_name ?: ($session->member->name ?? '—') }}</td>
                             <td class="text-nowrap">{{ $session->created_at->format('d M Y') }}</td>
                             <td class="text-nowrap">{{ $session->cancelledBy->name ?? '—' }}</td>
                             <td class="text-nowrap">
                                 <button type="button" class="btn btn-primary btn-sm fw-semibold px-3 cb-edit-btn"
                                     data-id="{{ $session->id }}"
                                     data-session-no="{{ $session->session_no }}"
-                                    data-member="{{ $session->member->name ?? '—' }}"
+                                    data-member="{{ $session->order_person_name ?: ($session->member->name ?? '—') }}"
                                     data-date="{{ $session->created_at->format('d M Y') }}"
                                     data-wallet="{{ number_format($session->member->walletDetails->current_balance ?? 0, 2) }}">
                                     <i class="fa-solid fa-pen-to-square me-1"></i>Edit Order

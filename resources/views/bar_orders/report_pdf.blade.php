@@ -113,7 +113,7 @@
 
             $rowBuffer[] = [
                 'order_no'   => $order->order_no,
-                'member'     => $order->member->name ?? '—',
+                'member'     => $order->session?->order_person_name ?: ($order->member->name ?? '—'),
                 'datetime'   => $order->created_at->format('d M Y, h:i A'),
                 'item'       => $itemLabel,
                 'volume'     => $volLabel,

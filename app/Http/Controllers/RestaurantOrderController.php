@@ -31,7 +31,7 @@ class RestaurantOrderController extends Controller
             $sessions = OrderSession::where('club_id', $clubId)
                 ->whereDate('created_at', '>=', $startDate)
                 ->whereDate('created_at', '<=', $endDate)
-                ->with(['member', 'orders.items.foodItem'])
+                ->with(['member.memberDetails', 'orders.items.foodItem'])
                 ->latest()
                 ->get();
 
@@ -101,7 +101,7 @@ class RestaurantOrderController extends Controller
                 ->whereDate('created_at', '<=', $endDate)
                 ->where('status', 'paid')
                 ->whereHas('items', fn($q) => $q->where('unit', 'plate'))
-                ->with(['member', 'items' => fn($q) => $q->where('unit', 'plate')->with('foodItem')])
+                ->with(['member', 'session', 'items' => fn($q) => $q->where('unit', 'plate')->with('foodItem')])
                 ->latest()
                 ->get();
 
@@ -133,7 +133,7 @@ class RestaurantOrderController extends Controller
                     }
                     $rows[] = [
                         'order_no'   => $order->order_no,
-                        'member'     => $order->member->name ?? '—',
+                        'member'     => $order->session?->order_person_name ?: ($order->member->name ?? '—'),
                         'datetime'   => $order->created_at->format('d M Y, h:i A'),
                         'item'       => $item->foodItem->name ?? '—',
                         'qty'        => $item->quantity,
@@ -209,7 +209,7 @@ class RestaurantOrderController extends Controller
     public function show($id)
     {
         try {
-            $order = RestaurantOrder::with(['member', 'items.foodItem'])
+            $order = RestaurantOrder::with(['member.memberDetails', 'session.member.memberDetails', 'items.foodItem'])
                 ->where('club_id', club_id())
                 ->findOrFail($id);
 

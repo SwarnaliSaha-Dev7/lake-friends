@@ -45,7 +45,24 @@ class Member extends Model
             'id',
             'id',
             'card_id'
-        );
+        )->where('member_card_mappings.holder_type', 'member');
+    }
+
+    public function spouseCardDetails(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Card::class,
+            MemberCardMapping::class,
+            'member_id',
+            'id',
+            'id',
+            'card_id'
+        )->where('member_card_mappings.holder_type', 'spouse');
+    }
+
+    public function cardMappings(): HasMany
+    {
+        return $this->hasMany(MemberCardMapping::class, 'member_id');
     }
 
     public function paymentHistory(): HasMany

@@ -113,7 +113,7 @@
                         @endphp
                         <tr>
                             <td>{{ $session->session_no }}</td>
-                            <td>{{ $session->member->name ?? '—' }}</td>
+                            <td>{{ $session->order_person_name ?: ($session->member->name ?? '—') }}</td>
                             <td>{{ $session->created_at->format('h:i A') }}</td>
                             <td class="text-center">{{ $roundCount }}</td>
                             <td>

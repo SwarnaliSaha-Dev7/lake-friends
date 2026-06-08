@@ -103,6 +103,10 @@
                             @forelse($sessions as $session)
                                 @php
                                     $roundCount  = $session->orders->whereNotIn('status', ['cancelled'])->count();
+                                    $orderPersonEmail = $session->member->email ?? '—';
+                                    if ($session->order_person_holder_type === 'spouse') {
+                                        $orderPersonEmail = $session->member?->memberDetails?->details['spouse_email'] ?? $orderPersonEmail;
+                                    }
                                     $statusClass = match($session->status) {
                                         'billed'    => 'bg-success-subtle text-success border-success',
                                         'cancelled' => 'bg-danger-subtle text-danger border-danger',
@@ -114,8 +118,8 @@
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap fw-medium">{{ $session->session_no }}</td>
                                     <td class="text-nowrap">
-                                        <div class="fw-medium">{{ $session->member->name ?? '—' }}</div>
-                                        <small class="text-muted">{{ $session->member->email ?? '—' }}</small>
+                                        <div class="fw-medium">{{ $session->order_person_name ?: ($session->member->name ?? '—') }}</div>
+                                        <small class="text-muted">{{ $orderPersonEmail }}</small>
                                     </td>
                                     <td class="text-nowrap text-center">{{ $roundCount }}</td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($session->created_at)->format('d-m-Y') }}</td>
@@ -208,10 +212,11 @@ $(document).ready(function () {
 
         var statusColor = { open: 'text-warning', billed: 'text-success', cancelled: 'text-danger' };
         var sc = statusColor[session.status] || 'text-muted';
+        var orderPersonName = session.order_person_name || (session.member ? session.member.name : '—');
 
         var html = '<div class="mb-3 pb-2 border-bottom d-flex justify-content-between align-items-start">'
             + '<div><div class="fw-bold fs-6">' + session.session_no + '</div>'
-            + '<div class="text-muted small">' + (session.member ? session.member.name : '—') + '</div></div>'
+            + '<div class="text-muted small">' + orderPersonName + '</div></div>'
             + '<span class="fw-semibold ' + sc + '">' + session.status.charAt(0).toUpperCase() + session.status.slice(1) + '</span>'
             + '</div>';
 

@@ -173,6 +173,12 @@
 
         $statusPillClass = $session->status === 'billed' ? 's-billed' : 's-cancelled';
         $sessionDate     = \Carbon\Carbon::parse($session->created_at)->format('d/m/Y');
+        $billingName     = $session->order_person_name ?: ($session->member->name ?? '—');
+        $billingEmail    = $session->member->email ?? '—';
+
+        if ($session->order_person_holder_type === 'spouse') {
+            $billingEmail = $session->member?->memberDetails?->details['spouse_email'] ?? $billingEmail;
+        }
     @endphp
 
     {{-- ===== Club header ===== --}}
@@ -213,8 +219,8 @@
             </td>
             <td class="meta-right">
                 <div class="meta-heading">Billed to</div>
-                <div class="meta-label" style="margin-top:2px;">{{ $session->member->name ?? '—' }}</div>
-                <div class="meta-label" style="margin-top:2px;">{{ $session->member->email ?? '—' }}</div>
+                <div class="meta-label" style="margin-top:2px;">{{ $billingName }}</div>
+                <div class="meta-label" style="margin-top:2px;">{{ $billingEmail }}</div>
             </td>
         </tr>
     </table>

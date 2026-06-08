@@ -24,6 +24,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class OrderSessionController extends Controller
 {
@@ -47,7 +48,11 @@ class OrderSessionController extends Controller
             $members = Member::where('club_id', $clubId)
                 ->where('status', 'active')
                 ->where('membership_type_id', $clubMembershipTypeId)
-                ->with('cardDetails:cards.id,card_no')
+                ->with([
+                    'cardDetails:cards.id,card_no',
+                    'spouseCardDetails:cards.id,card_no',
+                    'memberDetails:id,member_id,details',
+                ])
                 ->orderBy('name')
                 ->get(['id', 'name', 'member_code']);
 
@@ -63,7 +68,9 @@ class OrderSessionController extends Controller
             $clubId   = club_id();
             $memberId = $request->input('member_id');
 
-            $member = Member::with('membershipType')->where('club_id', $clubId)->findOrFail($memberId);
+            $member = Member::with(['membershipType', 'memberDetails'])->where('club_id', $clubId)->findOrFail($memberId);
+            $holderType = $request->input('order_person_holder_type') === 'spouse' ? 'spouse' : 'member';
+            $orderPersonName = $this->resolveOrderPersonName($member, $holderType);
 
             // If member already has an open session today, return it
             $existing = OrderSession::where('club_id', $clubId)
@@ -84,6 +91,8 @@ class OrderSessionController extends Controller
                         'status'         => 'open',
                         'member_id'      => $member->id,
                         'member_name'    => $member->name,
+                        'order_person_name' => $existing->order_person_name ?: $member->name,
+                        'order_person_holder_type' => $existing->order_person_holder_type ?: 'member',
                         'member_code'    => $member->member_code,
                         'member_type'    => $member->membershipType?->name ?? '—',
                         'wallet_balance' => $wallet ? number_format($wallet->current_balance, 2) : '0.00',
@@ -100,6 +109,8 @@ class OrderSessionController extends Controller
             $session = OrderSession::create([
                 'club_id'                => $clubId,
                 'member_id'              => $memberId,
+                'order_person_name'      => $orderPersonName,
+                'order_person_holder_type' => $holderType,
                 'session_no'             => $sessionNo,
                 'status'                 => 'open',
                 'opening_wallet_balance' => $wallet ? (float) $wallet->current_balance : 0,
@@ -116,6 +127,8 @@ class OrderSessionController extends Controller
                     'status'         => 'open',
                     'member_id'      => $member->id,
                     'member_name'    => $member->name,
+                    'order_person_name' => $session->order_person_name ?: $member->name,
+                    'order_person_holder_type' => $session->order_person_holder_type ?: 'member',
                     'member_code'    => $member->member_code,
                     'member_type'    => $member->membershipType?->name ?? '—',
                     'wallet_balance' => $wallet ? number_format($wallet->current_balance, 2) : '0.00',
@@ -131,7 +144,7 @@ class OrderSessionController extends Controller
     public function show($id)
     {
         try {
-            $session = OrderSession::with(['member', 'orders.items.foodItem', 'walletTransaction'])
+            $session = OrderSession::with(['member.memberDetails', 'orders.items.foodItem', 'walletTransaction'])
                 ->where('club_id', club_id())
                 ->findOrFail($id);
 
@@ -630,7 +643,7 @@ class OrderSessionController extends Controller
     public function downloadInvoice($id)
     {
         try {
-            $session = OrderSession::with(['member', 'orders.items.foodItem'])
+            $session = OrderSession::with(['member.memberDetails', 'orders.items.foodItem'])
                 ->where('club_id', club_id())
                 ->findOrFail($id);
 
@@ -865,5 +878,17 @@ class OrderSessionController extends Controller
     private function getBarLocation(): Location
     {
         return Location::where('name', Location::BAR)->firstOrFail();
+    }
+
+    private function resolveOrderPersonName(Member $member, string $holderType): string
+    {
+        if ($holderType === 'spouse') {
+            $spouseName = $member->memberDetails?->details['spouse_name'] ?? null;
+            if ($spouseName) {
+                return Str::title($spouseName);
+            }
+        }
+
+        return $member->name;
     }
 }

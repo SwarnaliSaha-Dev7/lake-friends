@@ -1003,7 +1003,11 @@
                 url:         '{{ route("order-sessions.store") }}',
                 type:        'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ _token: '{{ csrf_token() }}', member_id: memberId }),
+                data: JSON.stringify({
+                    _token: '{{ csrf_token() }}',
+                    member_id: memberId,
+                    order_person_holder_type: $('#cardentry').data('card-holder-type') || 'member'
+                }),
                 success: function (res) {
                     $btn.prop('disabled', false).html('<i class="fa-solid fa-cart-plus d-block mb-1 fs-6"></i>Create Order');
                     if (res.statusCode !== 200) {

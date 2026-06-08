@@ -47,7 +47,7 @@
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap fw-medium">{{ $session->session_no }}</td>
                                     <td class="text-nowrap">
-                                        <div class="fw-medium">{{ $session->member->name ?? '—' }}</div>
+                                        <div class="fw-medium">{{ $session->order_person_name ?: ($session->member->name ?? '—') }}</div>
                                         <small class="text-muted">{{ $session->member->member_code ?? '' }}</small>
                                     </td>
                                     <td class="text-nowrap text-center session-order-count">{{ $orderCount }}</td>
@@ -137,7 +137,18 @@
                     <select class="form-select" id="sessionMemberSelect">
                         <option value="">— Select member —</option>
                         @foreach($members as $m)
-                            <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->cardDetails->card_no ?? $m->member_code }})</option>
+                            <option value="{{ $m->id }}" data-holder-type="member">
+                                {{ $m->name }} ({{ $m->cardDetails->card_no ?? $m->member_code }})
+                            </option>
+                            @php
+                                $spouseName = $m->memberDetails?->details['spouse_name'] ?? null;
+                                $spouseCardNo = $m->spouseCardDetails?->card_no;
+                            @endphp
+                            @if($spouseName)
+                                <option value="{{ $m->id }}" data-holder-type="spouse">
+                                    {{ $spouseName }}{{ $spouseCardNo ? ' (' . $spouseCardNo . ')' : '' }}
+                                </option>
+                            @endif
                         @endforeach
                     </select>
                 </div>
@@ -229,6 +240,7 @@ $(document).ready(function () {
     $('#confirmOpenSessionBtn').on('click', function () {
         var memberId = $('#sessionMemberSelect').val();
         if (!memberId) { toastr.warning('Please select a member.'); return; }
+        var holderType = $('#sessionMemberSelect option:selected').data('holder-type') || 'member';
 
         var $btn = $(this);
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Opening...');
@@ -237,7 +249,11 @@ $(document).ready(function () {
             url:         '{{ route("order-sessions.store") }}',
             type:        'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ _token: '{{ csrf_token() }}', member_id: memberId }),
+            data: JSON.stringify({
+                _token: '{{ csrf_token() }}',
+                member_id: memberId,
+                order_person_holder_type: holderType
+            }),
             success: function (res) {
                 if (res.statusCode === 200) {
                     toastr.success(res.message);
@@ -383,7 +399,7 @@ $(document).ready(function () {
         var row    = '<tr id="session-row-' + session.id + '">'
             + '<td class="text-nowrap">'  + sl + '</td>'
             + '<td class="text-nowrap fw-medium">' + session.session_no + '</td>'
-            + '<td class="text-nowrap"><div class="fw-medium">' + session.member_name + '</div>'
+            + '<td class="text-nowrap"><div class="fw-medium">' + (session.order_person_name || session.member_name) + '</div>'
             +   '<small class="text-muted">' + (session.member_code ?? '') + '</small></td>'
             + '<td class="text-nowrap text-center session-order-count">0</td>'
             + '<td class="text-nowrap fw-semibold session-pending-total">Rs 0.00</td>'
@@ -440,11 +456,12 @@ $(document).ready(function () {
 
         var statusColor = { open: 'text-success', billed: 'text-primary', cancelled: 'text-danger' };
         var sc = statusColor[session.status] || 'text-muted';
+        var orderPersonName = session.order_person_name || (session.member ? session.member.name : '—');
 
         var html = '<div class="mb-3 pb-2 border-bottom d-flex justify-content-between align-items-start">'
             + '<div>'
             + '<div class="fw-bold fs-6">' + session.session_no + '</div>'
-            + '<div class="text-muted small">' + (session.member ? session.member.name : '—') + '</div>'
+            + '<div class="text-muted small">' + orderPersonName + '</div>'
             + '</div>'
             + '<span class="fw-semibold ' + sc + '">' + session.status.charAt(0).toUpperCase() + session.status.slice(1) + '</span>'
             + '</div>';

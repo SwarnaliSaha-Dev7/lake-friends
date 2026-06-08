@@ -70,6 +70,7 @@ class ClubMemberController extends Controller
                 ->with([
                     'memberDetails',
                     'cardDetails',
+                    'spouseCardDetails',
                     'purchaseHistory',
                     'walletDetails',
                     'latestApproval.checker:id,name',
@@ -143,6 +144,37 @@ class ClubMemberController extends Controller
                     // 'message' => 'Email already exists'
                     'message' => 'Member already registered with this membership type'
                 ]);
+            }
+
+            $spouseDetailsProvided = $this->spouseDetailsProvided($request);
+
+            if (!$request->filled('card_id')) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Member card is required'
+                ]);
+            }
+
+            if ($spouseDetailsProvided && !$request->filled('spouse_card_id')) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Spouse card is required when spouse details are provided'
+                ]);
+            }
+
+            if ($request->filled('spouse_card_id') && (int) $request->card_id === (int) $request->spouse_card_id) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Member card and spouse card must be different'
+                ]);
+            }
+
+            if ($message = $this->validateAssignableCard($clubId, (int) $request->card_id)) {
+                return response()->json(['statusCode' => 422, 'message' => $message]);
+            }
+
+            if ($request->filled('spouse_card_id') && ($message = $this->validateAssignableCard($clubId, (int) $request->spouse_card_id))) {
+                return response()->json(['statusCode' => 422, 'message' => $message]);
             }
 
 
@@ -273,17 +305,10 @@ class ClubMemberController extends Controller
                 'remarks' => $request->remarks
             ]);
 
-            $currentCard = Card::find($request->card_id);
-            if ($currentCard) {
-                $currentCard->update([
-                    'is_assigned' => 1
-                ]);
+            $this->assignCardToMember($member->id, (int) $request->card_id, 'member', $clubId);
+            if ($request->filled('spouse_card_id')) {
+                $this->assignCardToMember($member->id, (int) $request->spouse_card_id, 'spouse', $clubId);
             }
-
-            $card_mapping = MemberCardMapping::create([
-                'card_id' => $request->card_id,
-                'member_id' => $member->id
-            ]);
 
             Wallet::create([
                 'member_id' => $member->id,
@@ -505,6 +530,7 @@ class ClubMemberController extends Controller
                 ->with([
                     'memberDetails',
                     'cardDetails',
+                    'spouseCardDetails',
                     'clubDetails',
                     'walletDetails',
                     'paymentHistory',
@@ -690,9 +716,62 @@ class ClubMemberController extends Controller
             //     ]);
             // }
 
-            DB::beginTransaction();
+            $member = Member::where('club_id', $clubId)
+                ->with(['cardDetails', 'spouseCardDetails'])
+                ->find($memberId);
 
-            $member = Member::find($memberId);
+            if (!$member) {
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Member Not Found'
+                ]);
+            }
+
+            $spouseDetailsProvided = $this->spouseDetailsProvided($request);
+            $hasSpouseCard = (bool) $member->spouseCardDetails;
+
+            if ($spouseDetailsProvided && !$hasSpouseCard && !$request->filled('spouse_card_id')) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Spouse card is required when spouse details are provided'
+                ]);
+            }
+
+            $primaryCardId = $request->filled('card_id') ? (int) $request->card_id : null;
+            $spouseCardId = $request->filled('spouse_card_id') ? (int) $request->spouse_card_id : null;
+            $currentPrimaryCardId = $member->cardDetails?->id;
+            $currentSpouseCardId = $member->spouseCardDetails?->id;
+
+            if ($primaryCardId && $spouseCardId && $primaryCardId === $spouseCardId) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Member card and spouse card must be different'
+                ]);
+            }
+
+            if ($primaryCardId && $currentSpouseCardId && $primaryCardId === (int) $currentSpouseCardId) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Member card and spouse card must be different'
+                ]);
+            }
+
+            if ($spouseCardId && $currentPrimaryCardId && $spouseCardId === (int) $currentPrimaryCardId) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Member card and spouse card must be different'
+                ]);
+            }
+
+            if ($primaryCardId && ($message = $this->validateAssignableCard($clubId, $primaryCardId, $memberId, 'member'))) {
+                return response()->json(['statusCode' => 422, 'message' => $message]);
+            }
+
+            if ($spouseCardId && ($message = $this->validateAssignableCard($clubId, $spouseCardId, $memberId, 'spouse'))) {
+                return response()->json(['statusCode' => 422, 'message' => $message]);
+            }
+
+            DB::beginTransaction();
 
             $dest_path = 'uploads/images';
             $image_path = null;
@@ -727,6 +806,15 @@ class ClubMemberController extends Controller
                 $spouse_image_path = $memberDetail->details['spouse_image'] ?? '';
             }
 
+            $existingSpouseEmail = $memberDetail->details['spouse_email'] ?? null;
+            if ($existingSpouseEmail && $request->spouse_email !== $existingSpouseEmail) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => 'Spouse email cannot be changed once submitted'
+                ]);
+            }
+
             $data = $request->except(
                 'image',
                 'spouse_image'
@@ -734,18 +822,6 @@ class ClubMemberController extends Controller
 
             $data['image'] = $image_path;
             $data['spouse_image'] = $spouse_image_path;
-
-            $card_no = $request->card_id;
-
-            if ($card_no) {
-
-                $newCard = Card::find($card_no);
-                if ($newCard) {
-                    $newCard->update([
-                        'is_assigned' => 1
-                    ]);
-                }
-            }
 
             //check if any update happend start
             $currentDetails = $memberDetail->details ?? [];
@@ -778,7 +854,8 @@ class ClubMemberController extends Controller
                 $detailsChanged ||
                 $request->hasFile('image') ||
                 $request->hasFile('spouse_image') ||
-                $request->filled('card_id')
+                $request->filled('card_id') ||
+                $request->filled('spouse_card_id')
             ) {
                 // return "changed";
                 $approval = ActionApproval::create([
@@ -824,39 +901,20 @@ class ClubMemberController extends Controller
 
 
 
-                    $card_no = $request->card_id;
+                    if ($primaryCardId) {
+                        $this->assignCardToMember($member->id, $primaryCardId, 'member', $clubId);
+                    }
 
-                    if ($card_no) {
-                        $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
+                    if ($spouseCardId) {
+                        $this->assignCardToMember($member->id, $spouseCardId, 'spouse', $clubId);
+                    }
+                } else {
+                    if ($primaryCardId) {
+                        $this->reserveCard($primaryCardId, $clubId);
+                    }
 
-                        if($currentCardMapping){
-                            $currentCard = Card::find($currentCardMapping->card_id);
-
-                            if ($currentCard) {
-                                $currentCard->update([
-                                    'is_assigned' => 0
-                                ]);
-                            }
-                        }
-
-                        $newCard = Card::find($card_no);
-                        if ($newCard) {
-                            $newCard->update([
-                                'is_assigned' => 1
-                            ]);
-
-                            if($currentCardMapping){
-                                $currentCardMapping->update([
-                                    'card_id' => $card_no
-                                ]);
-                            }
-                            else{
-                                MemberCardMapping::create([
-                                    'card_id' => $card_no,
-                                    'member_id' => $member->id
-                                ]);
-                            }
-                        }
+                    if ($spouseCardId) {
+                        $this->reserveCard($spouseCardId, $clubId);
                     }
                 }
 
@@ -1196,22 +1254,15 @@ class ClubMemberController extends Controller
 
                     DB::beginTransaction();
 
-                    $card_mapping = MemberCardMapping::where('member_id', $member->id)->first();
+                    $cardMappings = MemberCardMapping::where('member_id', $member->id)->get();
 
-                    $card = null;
+                    foreach ($cardMappings as $cardMapping) {
+                        $card = Card::find($cardMapping->card_id);
+                        $cardMapping->delete();
 
-                    if ($card_mapping) {
-                        $card = Card::find($card_mapping->card_id);
-                    }
-
-                    if ($card_mapping) {
-                        $card_mapping->delete();
-                    }
-
-                    if ($card) {
-                        $card->update([
-                            'is_assigned' => 0
-                        ]);
+                        if ($card) {
+                            $card->update(['is_assigned' => 0]);
+                        }
                     }
 
                     $lockerAllocation = LockerAllocation::where('member_id', $memberId)->first();
@@ -1638,6 +1689,73 @@ class ClubMemberController extends Controller
                 'error' => $th->getMessage(),
             ]);
         }
+    }
+
+    private function spouseDetailsProvided(Request $request): bool
+    {
+        return $request->filled('spouse_name')
+            || $request->filled('spouse_email')
+            || $request->filled('spouse_phone')
+            || $request->filled('spouse_blood_grp')
+            || $request->filled('spouse_address')
+            || $request->hasFile('spouse_image');
+    }
+
+    private function validateAssignableCard(int $clubId, int $cardId, ?int $memberId = null, ?string $holderType = null): ?string
+    {
+        $card = Card::where('club_id', $clubId)
+            ->where('status', 'active')
+            ->find($cardId);
+
+        if (!$card) {
+            return 'Selected card is not available';
+        }
+
+        $mapping = MemberCardMapping::where('card_id', $cardId)->first();
+
+        if ($mapping) {
+            $sameHolder = $memberId
+                && (int) $mapping->member_id === (int) $memberId
+                && (!$holderType || $mapping->holder_type === $holderType);
+
+            if (!$sameHolder) {
+                return 'Selected card is already assigned';
+            }
+        } elseif ((int) $card->is_assigned === 1) {
+            return 'Selected card is already assigned';
+        }
+
+        return null;
+    }
+
+    private function assignCardToMember(int $memberId, int $cardId, string $holderType, int $clubId): void
+    {
+        $mapping = MemberCardMapping::where('member_id', $memberId)
+            ->where('holder_type', $holderType)
+            ->first();
+
+        if ($mapping && (int) $mapping->card_id === $cardId) {
+            Card::where('club_id', $clubId)->where('id', $cardId)->update(['is_assigned' => 1]);
+            return;
+        }
+
+        if ($mapping) {
+            Card::where('club_id', $clubId)->where('id', $mapping->card_id)->update(['is_assigned' => 0]);
+            $mapping->update(['card_id' => $cardId]);
+        } else {
+            MemberCardMapping::create([
+                'card_id'     => $cardId,
+                'member_id'   => $memberId,
+                'holder_type' => $holderType,
+            ]);
+        }
+
+        Card::where('club_id', $clubId)->where('id', $cardId)->update(['is_assigned' => 1]);
+    }
+
+    private function reserveCard(int $cardId, int $clubId): void
+    {
+        Card::where('club_id', $clubId)->where('id', $cardId)->update(['is_assigned' => 1]);
     }
 
     private function recordFyShortfallAtRenewal(Member $member, int $clubId): void

@@ -341,43 +341,14 @@ class ActionApprovalController extends Controller
 
 
 
-                // $card_no = $payload->swim_card_id ?? $payload->card_id;
-                if (isset($payload->swim_card_id)) {
-                    $card_no = $payload->swim_card_id;
-                } elseif (isset($payload->card_id)) {
-                    $card_no = $payload->card_id;
-                } else {
-                    $card_no = 0;
+                if (isset($payload->swim_card_id) && $payload->swim_card_id) {
+                    $this->assignCardToMember($member->id, (int) $payload->swim_card_id, 'member', $clubId);
+                } elseif (isset($payload->card_id) && $payload->card_id) {
+                    $this->assignCardToMember($member->id, (int) $payload->card_id, 'member', $clubId);
                 }
 
-                if ($card_no) {
-                    $currentCardMapping = MemberCardMapping::where('member_id', $memberId)->first();
-
-                    if ($currentCardMapping) {
-                        $currentCard = Card::find($currentCardMapping->card_id);
-                        if ($currentCard) {
-                            $currentCard->update([
-                                'is_assigned' => 0
-                            ]);
-                        }
-                    }
-
-                    $newCard = Card::find($card_no);
-                    if ($newCard) {
-                        // $newCard->update([
-                        //     'is_assigned' => 1
-                        // ]);
-                        if ($currentCardMapping) {
-                            $currentCardMapping->update([
-                                'card_id' => $card_no
-                            ]);
-                        } else {
-                            $card_mapping = MemberCardMapping::create([
-                                'card_id' => $card_no,
-                                'member_id' => $member->id
-                            ]);
-                        }
-                    }
+                if (isset($payload->spouse_card_id) && $payload->spouse_card_id) {
+                    $this->assignCardToMember($member->id, (int) $payload->spouse_card_id, 'spouse', $clubId);
                 }
 
 
@@ -424,19 +395,15 @@ class ActionApprovalController extends Controller
 
                 if ($member) {
 
-                    $cardMapping = MemberCardMapping::where('member_id', $member->id)->first();
+                    $cardMappings = MemberCardMapping::where('member_id', $member->id)->get();
 
-                    if ($cardMapping) {
-
+                    foreach ($cardMappings as $cardMapping) {
                         $card = Card::find($cardMapping->card_id);
+                        $cardMapping->delete();
 
                         if ($card) {
-                            $card->update([
-                                'is_assigned' => 0
-                            ]);
+                            $card->update(['is_assigned' => 0]);
                         }
-
-                        $cardMapping->delete();
                     }
 
                     $lockerAllocation = LockerAllocation::where('member_id', $member->id)->first();
@@ -756,20 +723,15 @@ class ActionApprovalController extends Controller
             if ($data->module == 'member_create') {
                 DB::beginTransaction();
 
-                $cardMapping = MemberCardMapping::where('member_id', $data->entity_id)
-                    ->latest()
-                    ->first();
+                $cardMappings = MemberCardMapping::where('member_id', $data->entity_id)->get();
 
-                if ($cardMapping) {
+                foreach ($cardMappings as $cardMapping) {
                     $card = Card::find($cardMapping->card_id);
+                    $cardMapping->delete();
 
                     if ($card) {
-                        $card->update([
-                            'is_assigned' => 0
-                        ]);
+                        $card->update(['is_assigned' => 0]);
                     }
-
-                    $cardMapping->delete();
                 }
 
                 $memberId = $data->entity_id;
@@ -839,23 +801,14 @@ class ActionApprovalController extends Controller
                 $payloadJson = $data->request_payload;
                 $payload = json_decode($payloadJson);
 
-                if (isset($payload->swim_card_id)) {
-                    $card_id = $payload->swim_card_id;
-                } elseif (isset($payload->card_id)) {
-                    $card_id = $payload->card_id;
-                } else {
-                    $card_id = 0;
+                if (isset($payload->swim_card_id) && $payload->swim_card_id) {
+                    $this->releaseReservedCard((int) $payload->swim_card_id, (int) $data->entity_id, 'member');
+                } elseif (isset($payload->card_id) && $payload->card_id) {
+                    $this->releaseReservedCard((int) $payload->card_id, (int) $data->entity_id, 'member');
                 }
 
-                // $card_id = $payload->swim_card_id;
-                if ($card_id) {
-                    $card = Card::find($card_id);
-
-                    if ($card) {
-                        $card->update([
-                            'is_assigned' => 0
-                        ]);
-                    }
+                if (isset($payload->spouse_card_id) && $payload->spouse_card_id) {
+                    $this->releaseReservedCard((int) $payload->spouse_card_id, (int) $data->entity_id, 'spouse');
                 }
                 // return $payload;
             }elseif ($data->module == 'locker_purchase') {
@@ -1173,5 +1126,41 @@ class ActionApprovalController extends Controller
         } catch (\Throwable $th) {
             return $th->getMessage();
         }
+    }
+
+    private function assignCardToMember(int $memberId, int $cardId, string $holderType, int $clubId): void
+    {
+        $mapping = MemberCardMapping::where('member_id', $memberId)
+            ->where('holder_type', $holderType)
+            ->first();
+
+        if ($mapping && (int) $mapping->card_id === $cardId) {
+            Card::where('club_id', $clubId)->where('id', $cardId)->update(['is_assigned' => 1]);
+            return;
+        }
+
+        if ($mapping) {
+            Card::where('club_id', $clubId)->where('id', $mapping->card_id)->update(['is_assigned' => 0]);
+            $mapping->update(['card_id' => $cardId]);
+        } else {
+            MemberCardMapping::create([
+                'card_id'     => $cardId,
+                'member_id'   => $memberId,
+                'holder_type' => $holderType,
+            ]);
+        }
+
+        Card::where('club_id', $clubId)->where('id', $cardId)->update(['is_assigned' => 1]);
+    }
+
+    private function releaseReservedCard(int $cardId, int $memberId, string $holderType): void
+    {
+        $mapping = MemberCardMapping::where('card_id', $cardId)->first();
+
+        if ($mapping && (int) $mapping->member_id === $memberId && $mapping->holder_type === $holderType) {
+            return;
+        }
+
+        Card::where('id', $cardId)->update(['is_assigned' => 0]);
     }
 }

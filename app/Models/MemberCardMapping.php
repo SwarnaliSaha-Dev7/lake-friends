@@ -13,6 +13,12 @@ class MemberCardMapping extends Model
     protected $fillable = [
         'club_id',
         'member_id',
-        'card_id'
+        'card_id',
+        'holder_type',
     ];
+
+    public function card()
+    {
+        return $this->belongsTo(Card::class, 'card_id');
+    }
 }

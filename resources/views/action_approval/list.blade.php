@@ -754,6 +754,18 @@
                                         </div>
                                     </div>
 
+                                    <div class="col-md-6 col-xl-4" id="clubSpouseCardDetailCol">
+                                        <div class="form-part mb-3">
+                                            <label for="" class="form-label w-100 mb-1 w-100"><small>Spouse Card No.</small></label>
+                                            <select name="spouse_card_id" id="club_spouse_card_no" class="form-select py-2 shadow-none" disabled>
+                                                <option value="" selected="" hidden="" disabled="">Spouse Card No.</option>
+                                                @foreach ($cards as $card)
+                                                    <option value="{{$card->id}}">{{$card->card_no}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
                                 </div>
 
                             </div>
@@ -988,12 +1000,28 @@
                         $('#spouse_address').val(response.data['spouse_address']);
 
                         let card_no = response.data['card_id'];
-                        if (card_no) {
+                        let spouse_card_no = response.data['spouse_card_id'];
+                        if (card_no || spouse_card_no) {
                             $('#clubCardDetailCol').show();
-                            $('#club_card_no').val(response.data['card_id']);
+                            if (card_no) {
+                                $('#club_card_no').val(card_no).closest('.col-md-6').show();
+                            } else {
+                                $('#club_card_no').val('').closest('.col-md-6').hide();
+                            }
+
+                            if (spouse_card_no) {
+                                $('#clubSpouseCardDetailCol').show();
+                                $('#club_spouse_card_no').val(spouse_card_no);
+                            } else {
+                                $('#clubSpouseCardDetailCol').hide();
+                                $('#club_spouse_card_no').val('');
+                            }
                         }
                         else{
                             $('#clubCardDetailCol').hide();
+                            $('#club_card_no').val('');
+                            $('#clubSpouseCardDetailCol').hide();
+                            $('#club_spouse_card_no').val('');
                         }
 
                         if (response.data['image']) {

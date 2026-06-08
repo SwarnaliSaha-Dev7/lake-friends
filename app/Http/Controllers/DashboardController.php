@@ -143,6 +143,7 @@ class DashboardController extends Controller
             $clubId = club_id();
             $card = Card::with('memberMapping')
                 ->where('card_no', $cardNo)
+                ->where('club_id', $clubId)
                 ->first();
 
             if (!$card) {
@@ -166,6 +167,7 @@ class DashboardController extends Controller
                 ->with([
                     'memberDetails.membershipType',
                     'cardDetails',
+                    'spouseCardDetails',
                     'purchaseHistory.membershipPlanType',
                     'clubDetails',
                     'walletDetails',
@@ -184,6 +186,8 @@ class DashboardController extends Controller
                 'data' => $member,
                 'statusCode' => 200,
                 'cardStatus' => $cardStatus,
+                'card_holder_type' => $card->memberMapping->holder_type ?? 'member',
+                'scanned_card_no' => $card->card_no,
                 'message' => 'Member Fetched successfully.'
             ]);
         } catch (\Throwable $th) {
