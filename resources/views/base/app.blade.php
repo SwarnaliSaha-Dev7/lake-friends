@@ -192,6 +192,7 @@
                     <div class="d-flex justify-content-between align-items-start mb-4">
                         <div>
                             <h5 class="fw-bold mb-0" id="orderMemberName">—</h5>
+                            <p class="text-muted small mb-0" id="orderMemberCode">—</p>
                             <p class="text-muted small mb-0" id="orderMemberMeta">—</p>
                         </div>
                         <div class="text-end text-muted small">
@@ -1017,11 +1018,12 @@
                     }
 
                     var orderPersonName = res.session.order_person_name || memberName;
+                    var orderMemberCode = res.session.member_code || memberCode || '';
 
                     window.currentOrderSession = {
                         id:         res.session.id,
                         memberName: orderPersonName,
-                        memberCode: memberCode,
+                        memberCode: orderMemberCode,
                         memberId:   memberId,
                     };
 
@@ -1033,6 +1035,7 @@
                     var mi  = String(now.getMinutes()).padStart(2, '0');
 
                     $('#orderMemberName').text(orderPersonName);
+                    $('#orderMemberCode').text(orderMemberCode || '—');
                     $('#orderMemberMeta').text(res.session.member_type + ' | Wallet Balance: Rs.' + res.session.wallet_balance);
                     $('#orderDate').text(dd + '-' + mm + '-' + yy);
                     $('#orderTime').text(hh + ':' + mi);

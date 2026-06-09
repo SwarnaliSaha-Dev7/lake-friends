@@ -213,10 +213,13 @@ $(document).ready(function () {
         var statusColor = { open: 'text-warning', billed: 'text-success', cancelled: 'text-danger' };
         var sc = statusColor[session.status] || 'text-muted';
         var orderPersonName = session.order_person_name || (session.member ? session.member.name : '—');
+        var memberCode = session.member ? (session.member.member_code || '') : '';
 
         var html = '<div class="mb-3 pb-2 border-bottom d-flex justify-content-between align-items-start">'
             + '<div><div class="fw-bold fs-6">' + session.session_no + '</div>'
-            + '<div class="text-muted small">' + orderPersonName + '</div></div>'
+            + '<div class="text-muted small">' + orderPersonName + '</div>'
+            + (memberCode ? '<div class="text-muted small">' + memberCode + '</div>' : '')
+            + '</div>'
             + '<span class="fw-semibold ' + sc + '">' + session.status.charAt(0).toUpperCase() + session.status.slice(1) + '</span>'
             + '</div>';
 

@@ -36,6 +36,7 @@
                                     data-id="{{ $session->id }}"
                                     data-session-no="{{ $session->session_no }}"
                                     data-member="{{ $session->order_person_name ?: ($session->member->name ?? '—') }}"
+                                    data-member-code="{{ $session->member->member_code ?? '' }}"
                                     data-date="{{ $session->created_at->format('d M Y') }}"
                                     data-wallet="{{ number_format($session->member->walletDetails->current_balance ?? 0, 2) }}">
                                     <i class="fa-solid fa-pen-to-square me-1"></i>Edit Order
@@ -71,6 +72,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div>
                         <h5 class="fw-bold mb-0" id="cbOrderMemberName">—</h5>
+                        <p class="text-muted small mb-0">Member Code: <span id="cbOrderMemberCode">—</span></p>
                         <p class="text-muted small mb-0" id="cbOrderMeta">—</p>
                     </div>
                     <div class="text-end text-muted small">
@@ -198,12 +200,14 @@ $(function () {
     $(document).on('click', '.cb-edit-btn', function () {
         cbSessionId = $(this).data('id');
         var memberName = $(this).data('member');
+        var memberCode = $(this).data('member-code') || '—';
         var sessionNo  = $(this).data('session-no');
         var date       = $(this).data('date');
         var wallet     = $(this).data('wallet');
 
         $('#cbOrderMemberName').text(memberName);
-        $('#cbOrderMeta').text(memberName + ' | Wallet Balance: Rs.' + wallet);
+        $('#cbOrderMemberCode').text(memberCode);
+        $('#cbOrderMeta').text('Wallet Balance: Rs.' + wallet);
         $('#cbOrderDate').text(date);
         $('#cbFoodTableBody').html('<tr id="cbFoodEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No food items added.</td></tr>');
         $('#cbLiquorTableBody').html('<tr id="cbLiquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');
