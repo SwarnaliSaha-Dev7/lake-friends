@@ -78,6 +78,7 @@
                         </div>
                         <div class="overflow-hidden">
                             <div class="fw-semibold fs-6 text-truncate lh-sm" id="cardMemberName">—</div>
+                            <div class="small opacity-75 text-truncate" id="cardMemberCode">—</div>
                             <div class="small opacity-75 text-truncate" id="cardMemberClubName">—</div>
                             <div class="small opacity-75 text-truncate" id="cardMemberType" style="font-size:0.75rem;"></div>
                             <div class="d-flex gap-1 mt-1 flex-wrap">

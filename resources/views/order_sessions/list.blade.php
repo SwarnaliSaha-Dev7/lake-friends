@@ -48,7 +48,7 @@
                                     <td class="text-nowrap fw-medium">{{ $session->session_no }}</td>
                                     <td class="text-nowrap">
                                         <div class="fw-medium">{{ $session->order_person_name ?: ($session->member->name ?? '—') }}</div>
-                                        <small class="text-muted">{{ $session->member->member_code ?? '' }}</small>
+                                        {{-- <small class="text-muted">{{ $session->member->member_code ?? '' }}</small> --}}
                                     </td>
                                     <td class="text-nowrap text-center session-order-count">{{ $orderCount }}</td>
                                     <td class="text-nowrap fw-semibold session-pending-total">
@@ -400,7 +400,8 @@ $(document).ready(function () {
             + '<td class="text-nowrap">'  + sl + '</td>'
             + '<td class="text-nowrap fw-medium">' + session.session_no + '</td>'
             + '<td class="text-nowrap"><div class="fw-medium">' + (session.order_person_name || session.member_name) + '</div>'
-            +   '<small class="text-muted">' + (session.member_code ?? '') + '</small></td>'
+            // +   '<small class="text-muted">' + (session.member_code ?? '') + '</small>'
+            + '</td>'
             + '<td class="text-nowrap text-center session-order-count">0</td>'
             + '<td class="text-nowrap fw-semibold session-pending-total">Rs 0.00</td>'
             + '<td class="text-nowrap"><span class="badge border rounded-pill px-3 py-1 bg-success-subtle text-success border-success session-status-badge">Open</span></td>'
@@ -457,11 +458,13 @@ $(document).ready(function () {
         var statusColor = { open: 'text-success', billed: 'text-primary', cancelled: 'text-danger' };
         var sc = statusColor[session.status] || 'text-muted';
         var orderPersonName = session.order_person_name || (session.member ? session.member.name : '—');
+        var memberCode = session.member ? (session.member.member_code || '') : '';
 
         var html = '<div class="mb-3 pb-2 border-bottom d-flex justify-content-between align-items-start">'
             + '<div>'
             + '<div class="fw-bold fs-6">' + session.session_no + '</div>'
             + '<div class="text-muted small">' + orderPersonName + '</div>'
+            + (memberCode ? '<div class="text-muted small">' + memberCode + '</div>' : '')
             + '</div>'
             + '<span class="fw-semibold ' + sc + '">' + session.status.charAt(0).toUpperCase() + session.status.slice(1) + '</span>'
             + '</div>';

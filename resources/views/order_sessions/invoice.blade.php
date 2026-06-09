@@ -175,6 +175,7 @@
         $sessionDate     = \Carbon\Carbon::parse($session->created_at)->format('d/m/Y');
         $billingName     = $session->order_person_name ?: ($session->member->name ?? '—');
         $billingEmail    = $session->member->email ?? '—';
+        $billingMemberCode = $session->member->member_code ?? '—';
 
         if ($session->order_person_holder_type === 'spouse') {
             $billingEmail = $session->member?->memberDetails?->details['spouse_email'] ?? $billingEmail;
@@ -220,6 +221,9 @@
             <td class="meta-right">
                 <div class="meta-heading">Billed to</div>
                 <div class="meta-label" style="margin-top:2px;">{{ $billingName }}</div>
+                @if($billingMemberCode != '—')
+                <div class="meta-label" style="margin-top:2px;">Member Code: <span class="meta-value">{{ $billingMemberCode }}</span></div>
+                @endif
                 <div class="meta-label" style="margin-top:2px;">{{ $billingEmail }}</div>
             </td>
         </tr>

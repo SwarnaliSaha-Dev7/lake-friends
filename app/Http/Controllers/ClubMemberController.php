@@ -190,6 +190,20 @@ class ClubMemberController extends Controller
             // Generate Member Code (example)
             // $memberCode = 'LF-' . time();
 
+            // Get Plan Details
+            $plan = MembershipPlanType::where('id', $request->membership_plan_type_id)
+                ->where('is_active', 1)
+                ->first();
+            if (!$plan) {
+                DB::rollBack();
+                return response()->json([
+                    'statusCode' => 404,
+                    'message' => 'Membership plan not found'
+                ]);
+            }
+
+            $memberCode = $this->generateClubMemberCode($clubId, $membershipTypeId, $plan, $request->name);
+
 
 
             $dest_path = 'uploads/images';
@@ -206,7 +220,7 @@ class ClubMemberController extends Controller
             $member = Member::create([
                 'club_id'     => $clubId,
                 'membership_type_id' => $membershipTypeId,
-                // 'member_code' => $memberCode,
+                'member_code' => $memberCode,
                 'name'        => ucwords($request->name),
                 'email'       => $request->email,
                 'phone'       => $request->phone,
@@ -240,18 +254,6 @@ class ClubMemberController extends Controller
                     'spouse_image' => $spouse_image_path,
                 ]
             ]);
-
-            // Get Plan Details
-            $plan = MembershipPlanType::where('id', $request->membership_plan_type_id)
-                ->where('is_active', 1)
-                ->first();
-            if (!$plan) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 404,
-                    'message' => 'Membership plan not found'
-                ]);
-            }
 
             $startDate = Carbon::today();
 
@@ -1724,6 +1726,47 @@ class ClubMemberController extends Controller
         }
 
         return null;
+    }
+
+    private function generateClubMemberCode(int $clubId, int $membershipTypeId, MembershipPlanType $plan, string $memberName): string
+    {
+        $prefix = $this->clubMemberCodePrefix($plan->name, $memberName);
+        $lastMember = Member::withTrashed()
+            ->where('club_id', $clubId)
+            ->where('membership_type_id', $membershipTypeId)
+            ->whereNotNull('member_code')
+            ->lockForUpdate()
+            ->latest('id')
+            ->first();
+
+        $lastNumber = 0;
+        if ($lastMember && preg_match('/\/(\d+)$/', (string) $lastMember->member_code, $matches)) {
+            $lastNumber = (int) $matches[1];
+        }
+
+        return $prefix . '/' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function clubMemberCodePrefix(string $planName, string $memberName): string
+    {
+        $normalizedPlan = strtolower(trim($planName));
+
+        if ($normalizedPlan === 'annual silver') {
+            return 'AS';
+        }
+
+        if ($normalizedPlan === 'lifetime') {
+            return 'L';
+        }
+
+        if ($normalizedPlan === 'honorary members') {
+            return 'H';
+        }
+
+        $nameParts = preg_split('/\s+/', trim($memberName)) ?: [];
+        $namePart = count($nameParts) > 1 ? end($nameParts) : ($nameParts[0] ?? 'M');
+
+        return strtoupper(substr($namePart, 0, 1) ?: 'M');
     }
 
     private function validateAssignableCard(int $clubId, int $cardId, ?int $memberId = null, ?string $holderType = null): ?string

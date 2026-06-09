@@ -29,6 +29,7 @@
                         <thead>
                             <tr>
                                 <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Member Code</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Name</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Phone</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Card Number
@@ -50,6 +51,7 @@
                             @endphp
                             <tr>
                                 <td class="text-nowrap">{{ $loop->iteration }}</td>
+                                <td class="text-nowrap">{{ $member->member_code ?? '-' }}</td>
                                 <td class="text-nowrap">
                                     {{$member->name}}
                                     @if($member->pendingFines->isNotEmpty())

@@ -885,7 +885,8 @@ class OrderSessionController extends Controller
         if ($holderType === 'spouse') {
             $spouseName = $member->memberDetails?->details['spouse_name'] ?? null;
             if ($spouseName) {
-                return Str::title($spouseName);
+                // return Str::title($spouseName);
+                return $spouseName;
             }
         }
 
