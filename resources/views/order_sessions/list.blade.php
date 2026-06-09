@@ -71,7 +71,7 @@
                                             <button class="btn btn-outline-primary btn-sm ms-1 fw-semibold px-2 py-1 add-order-btn"
                                                 data-session-id="{{ $session->id }}"
                                                 data-member-id="{{ $session->member_id }}"
-                                                data-member-name="{{ $session->member->name ?? '' }}"
+                                                data-member-name="{{ $session->order_person_name ?: ($session->member->name ?? '') }}"
                                                 data-member-code="{{ $session->member->member_code ?? '' }}"
                                                 title="Add order to session">
                                                 <i class="fa-solid fa-plus me-1"></i>Add Order
@@ -408,7 +408,7 @@ $(document).ready(function () {
             +   '<button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn view-session-btn" data-id="' + session.id + '" title="View"><small><i class="fa-regular fa-eye"></i></small></button>'
             +   '<button class="btn btn-outline-primary btn-sm ms-1 fw-semibold px-2 py-1 add-order-btn"'
             +     ' data-session-id="' + session.id + '" data-member-id="' + session.member_id + '"'
-            +     ' data-member-name="' + session.member_name + '" data-member-code="' + session.member_code + '">'
+            +     ' data-member-name="' + (session.order_person_name || session.member_name) + '" data-member-code="' + session.member_code + '">'
             +     '<i class="fa-solid fa-plus me-1"></i>Add Order</button>'
             +   '<button class="btn btn-success btn-sm ms-1 fw-semibold px-2 py-1 generate-bill-btn"'
             +     ' data-id="' + session.id + '" data-session-no="' + session.session_no + '">'

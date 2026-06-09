@@ -1015,9 +1015,11 @@
                         return;
                     }
 
+                    var orderPersonName = res.session.order_person_name || memberName;
+
                     window.currentOrderSession = {
                         id:         res.session.id,
-                        memberName: memberName,
+                        memberName: orderPersonName,
                         memberCode: memberCode,
                         memberId:   memberId,
                     };
@@ -1029,7 +1031,7 @@
                     var hh  = String(now.getHours()).padStart(2, '0');
                     var mi  = String(now.getMinutes()).padStart(2, '0');
 
-                    $('#orderMemberName').text(memberName);
+                    $('#orderMemberName').text(orderPersonName);
                     $('#orderMemberMeta').text(res.session.member_type + ' | Wallet Balance: Rs.' + res.session.wallet_balance);
                     $('#orderDate').text(dd + '-' + mm + '-' + yy);
                     $('#orderTime').text(hh + ':' + mi);

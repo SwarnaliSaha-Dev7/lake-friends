@@ -820,7 +820,8 @@ class SwimmingMemberController extends Controller
                         'maker'      => $t->creator?->name,
                         'created_at' => $t->created_at,
                     ];
-                });
+                })
+                ->toBase();
 
             // Only include payment histories NOT linked to a wallet transaction (direct cash payments)
             $payments = PaymentHistory::where('member_id', $id)
@@ -836,7 +837,8 @@ class SwimmingMemberController extends Controller
                         'maker'      => null,
                         'created_at' => $p->created_at,
                     ];
-                });
+                })
+                ->toBase();
 
             $ledger = $walletTxns
                 ->merge($payments)

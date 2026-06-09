@@ -162,6 +162,13 @@ class ClubMemberController extends Controller
                 ]);
             }
 
+            if ($request->filled('spouse_card_id') && ($message = $this->validateSpouseIdentityDetails($request))) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => $message
+                ]);
+            }
+
             if ($request->filled('spouse_card_id') && (int) $request->card_id === (int) $request->spouse_card_id) {
                 return response()->json([
                     'statusCode' => 422,
@@ -737,6 +744,13 @@ class ClubMemberController extends Controller
                 ]);
             }
 
+            if ($request->filled('spouse_card_id') && ($message = $this->validateSpouseIdentityDetails($request))) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message' => $message
+                ]);
+            }
+
             $primaryCardId = $request->filled('card_id') ? (int) $request->card_id : null;
             $spouseCardId = $request->filled('spouse_card_id') ? (int) $request->spouse_card_id : null;
             $currentPrimaryCardId = $member->cardDetails?->id;
@@ -1116,7 +1130,8 @@ class ClubMemberController extends Controller
                         'maker'      => $t->creator?->name,
                         'created_at' => $t->created_at?->toDateTimeString(),
                     ];
-                });
+                })
+                ->toBase();
 
             // Only include payment histories NOT linked to a wallet transaction (direct cash payments)
             $payments = PaymentHistory::where('member_id', $id)
@@ -1132,7 +1147,8 @@ class ClubMemberController extends Controller
                         'maker'      => null,
                         'created_at' => $p->created_at?->toDateTimeString(),
                     ];
-                });
+                })
+                ->toBase();
 
             $ledger = $walletTxns
                 ->merge($payments)
@@ -1699,6 +1715,15 @@ class ClubMemberController extends Controller
             || $request->filled('spouse_blood_grp')
             || $request->filled('spouse_address')
             || $request->hasFile('spouse_image');
+    }
+
+    private function validateSpouseIdentityDetails(Request $request): ?string
+    {
+        if (!$request->filled('spouse_name') || !$request->filled('spouse_email') || !$request->filled('spouse_phone')) {
+            return 'Spouse name, email and phone are required when spouse card is selected';
+        }
+
+        return null;
     }
 
     private function validateAssignableCard(int $clubId, int $cardId, ?int $memberId = null, ?string $holderType = null): ?string

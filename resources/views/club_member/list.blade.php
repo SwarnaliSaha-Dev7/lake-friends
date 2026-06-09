@@ -336,7 +336,7 @@
                                             @endforeach
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-12 col-md-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Card No.</small></label>
                                             <select name="card_id" id="" class="form-select py-2 shadow-none" required>
@@ -348,7 +348,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-12 col-md-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Spouse Card No.</small></label>
                                             <select name="spouse_card_id" class="form-select py-2 shadow-none spouse-card-select">
@@ -636,7 +636,7 @@
                                             <p id="current_membership"></p>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-12 col-md-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Update Card No.</small></label>
                                             <select name="card_id" id="card_no" class="form-select py-2 shadow-none" >
@@ -648,13 +648,13 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    <div class="col-12 col-md-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Current Card No.</small></label>
                                             <p id="current_card_no"></p>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-4">
+                                    <div class="col-12 col-md-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Update Spouse Card No.</small></label>
                                             <select name="spouse_card_id" id="spouse_card_no" class="form-select py-2 shadow-none edit-spouse-card-select">
@@ -665,7 +665,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
+                                    <div class="col-12 col-md-3">
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Current Spouse Card No.</small></label>
                                             <p id="current_spouse_card_no"></p>
@@ -1238,6 +1238,40 @@
             $form.find(cardSelector).prop('required', hasSpouseDetails($form, detailSelector));
         }
 
+        function syncSpouseIdentityRequired($form, cardSelector) {
+            let spouseCardSelected = !!$form.find(cardSelector).val();
+            $form.find('[name="spouse_name"], [name="spouse_email"], [name="spouse_phone"]').prop('required', spouseCardSelected);
+        }
+
+        function validateSpouseIdentityWhenCardSelected($form, cardSelector) {
+            if (!$form.find(cardSelector).val()) {
+                return true;
+            }
+
+            let isValid = true;
+            let fields = [
+                { name: 'spouse_name', label: 'spouse name' },
+                { name: 'spouse_email', label: 'spouse email' },
+                { name: 'spouse_phone', label: 'spouse phone' },
+            ];
+
+            fields.forEach(function (field) {
+                let $field = $form.find('[name="' + field.name + '"]');
+                if ($.trim($field.val() || '') === '') {
+                    $field.addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $field.removeClass('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                toastr.error('Spouse name, email and phone are required when spouse card is selected.');
+            }
+
+            return isValid;
+        }
+
         function syncEditSpouseCardRequired() {
             let hasCurrentSpouseCard = $('#current_spouse_card_no').text().trim() !== '-';
             let required = hasSpouseDetails($('#clubMemberEditForm'), '.edit-spouse-detail-input') && !hasCurrentSpouseCard;
@@ -1246,10 +1280,20 @@
 
         $(document).on('input change', '#club-member-form .spouse-detail-input', function () {
             syncSpouseCardRequired($('#club-member-form'), '.spouse-detail-input', '.spouse-card-select');
+            syncSpouseIdentityRequired($('#club-member-form'), '.spouse-card-select');
         });
 
         $(document).on('input change', '#clubMemberEditForm .edit-spouse-detail-input', function () {
             syncEditSpouseCardRequired();
+            syncSpouseIdentityRequired($('#clubMemberEditForm'), '.edit-spouse-card-select');
+        });
+
+        $(document).on('change', '#club-member-form .spouse-card-select', function () {
+            syncSpouseIdentityRequired($('#club-member-form'), '.spouse-card-select');
+        });
+
+        $(document).on('change', '#clubMemberEditForm .edit-spouse-card-select', function () {
+            syncSpouseIdentityRequired($('#clubMemberEditForm'), '.edit-spouse-card-select');
         });
 
         function calculateGST() {
@@ -1393,6 +1437,10 @@
             }
 
             let $createForm = $('#club-member-form');
+            if (!validateSpouseIdentityWhenCardSelected($createForm, '.spouse-card-select')) {
+                isValid = false;
+            }
+
             if (hasSpouseDetails($createForm, '.spouse-detail-input') && !$createForm.find('.spouse-card-select').val()) {
                 toastr.error('Please select spouse card.');
                 isValid = false;
@@ -1886,6 +1934,10 @@
 
 
             let $editForm = $('#clubMemberEditForm');
+            if (!validateSpouseIdentityWhenCardSelected($editForm, '.edit-spouse-card-select')) {
+                isValid = false;
+            }
+
             if (hasSpouseDetails($editForm, '.edit-spouse-detail-input') && $('#current_spouse_card_no').text().trim() === '-' && !$editForm.find('.edit-spouse-card-select').val()) {
                 toastr.error('Please select spouse card.');
                 isValid = false;
