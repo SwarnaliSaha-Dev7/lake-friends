@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\FoodCategory;
+use App\Models\FoodItem;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -147,6 +148,14 @@ class FoodCategoryManageController extends Controller
                                 ->where('item_type','food')
                                 ->where('id', $id)
                                 ->firstOrFail();
+
+        $inUse = FoodItem::where('category_id', $foodCats->id)->exists();
+
+        if ($inUse) {
+            return redirect()
+                ->route('manage-food-categories.index')
+                ->with('error', 'Cannot delete this category. It is assigned to one or more Food items.');
+        }
 
         $foodCats->delete();
 

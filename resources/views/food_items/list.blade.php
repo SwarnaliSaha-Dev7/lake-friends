@@ -46,7 +46,7 @@
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">{{ $items->name }}</td>
                                     <td class="text-nowrap">{{ $items->code }}</td>
-                                    <td class="text-nowrap">{{ $items->foodItemCat->name }}</td>
+                                    <td class="text-nowrap">{{ $items->foodItemCat?->name }}</td>
                                     <td class="text-nowrap">
                                         @if($items->image)
                                             <img src="{{ asset($items->image) }}" class="rounded-circle" alt="" loading="lazy" fetchpriority="auto" style="width:40px;height:40px;object-fit:cover;">
