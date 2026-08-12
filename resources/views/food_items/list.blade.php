@@ -406,7 +406,7 @@
         $(document).ready(function(){
 
             $('.text-only').on('input', function() {
-                this.value = this.value.replace(/[^A-Za-z\s]/g, '');
+                this.value = this.value.replace(/[^A-Za-z0-9\s]/g, '');
             });
 
                 // ── ADD item image preview ──
