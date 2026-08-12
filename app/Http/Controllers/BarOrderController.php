@@ -241,16 +241,17 @@ class BarOrderController extends Controller
                     }
                 });
 
+            // ── Beer: sold whole-bottle, priced straight off the food item ─────
             $regularItems = FoodItem::where('club_id', $clubId)
                 ->where('item_type', 'liquor')
+                ->where('is_beer', 1)
                 ->where('is_active', 1)
                 ->with(['foodItemCat', 'foodItemPrice'])
                 ->get()
                 ->map(function ($item) use ($barStockMap, $offerMap) {
                     $stock    = (int) ($barStockMap[$item->id] ?? 0);
-                    $sizeMl   = (int) ($item->size_ml ?? 1);
                     $alertQty = (int) ($item->low_stock_alert_qty ?? 0);
-                    $btlEq    = $item->is_beer ? $stock : ($sizeMl > 0 ? floor($stock / $sizeMl) : 0);
+                    $btlEq    = $stock;
                     $isOut    = $stock === 0;
                     $isLow    = !$isOut && $alertQty > 0 && $btlEq <= $alertQty;
 
@@ -259,7 +260,7 @@ class BarOrderController extends Controller
                         'serving_id'  => null,
                         'name'        => $item->name,
                         'category'    => $item->foodItemCat->name ?? '—',
-                        'is_beer'     => (bool) $item->is_beer,
+                        'is_beer'     => true,
                         'is_cocktail' => false,
                         'size_ml'     => (int) ($item->size_ml ?? 0),
                         'price'       => (float) ($item->foodItemPrice->price ?? 0),
@@ -272,11 +273,14 @@ class BarOrderController extends Controller
                     ];
                 });
 
-            // ── Active cocktails ──────────────────────────────────────────────
-            $cocktails = LiquorServing::where('club_id', $clubId)
-                ->where('is_cocktail', true)
+            // ── Spirit pegs + cocktails: both are Liquor Serving entries with a
+            //    fixed volume and a price set on the serving itself — the raw
+            //    spirit food item has no sellable price of its own (see
+            //    LiquorItemManageController::store(), which always stores 0 for
+            //    non-beer items), so pricing must come from here, not the item. ──
+            $servings = LiquorServing::where('club_id', $clubId)
                 ->where('is_active', true)
-                ->with('foodItem')
+                ->with('foodItem.foodItemCat')
                 ->get()
                 ->map(function ($serving) use ($barStockMap) {
                     $baseItemId  = $serving->food_item_id;
@@ -285,24 +289,24 @@ class BarOrderController extends Controller
                     $canMake     = $deductMl > 0 ? (int) floor($stockMl / $deductMl) : 0;
 
                     return [
-                        'id'          => $baseItemId,   // base spirit food_item_id for stock deduction
-                        'serving_id'  => $serving->id,  // unique key for cocktail cart merge
-                        'name'        => $serving->name, // cocktail name
-                        'category'    => 'Cocktail',
+                        'id'          => $baseItemId,   // base spirit food_item_id, for stock deduction
+                        'serving_id'  => $serving->id,  // unique key per serving (peg size or cocktail)
+                        'name'        => $serving->name,
+                        'category'    => $serving->is_cocktail ? 'Cocktail' : ($serving->foodItem->foodItemCat->name ?? '—'),
                         'is_beer'     => false,
-                        'is_cocktail' => true,
-                        'size_ml'     => $deductMl,      // ml deducted per order
+                        'is_cocktail' => (bool) $serving->is_cocktail,
+                        'size_ml'     => $deductMl,      // ml deducted per serving
                         'price'       => (float) $serving->price,
                         'bar_stock'   => $stockMl,
                         'in_stock'    => $canMake > 0,
                         'is_low'      => false,
-                        'btl_eq'      => $canMake,       // how many cocktails can be made
+                        'btl_eq'      => $canMake,       // how many servings can be poured
                         'alert_qty'   => 0,
                         'offer'       => null,
                     ];
                 });
 
-            $items = $regularItems->concat($cocktails)->values();
+            $items = $regularItems->concat($servings)->values();
 
             return response()->json(['statusCode' => 200, 'items' => $items]);
         } catch (\Throwable $th) {

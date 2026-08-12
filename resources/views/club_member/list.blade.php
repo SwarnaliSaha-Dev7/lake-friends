@@ -811,6 +811,12 @@
                                 <div class="fw-semibold text-dark" style="font-size:13px;" id="memberPlanExpiry">—</div>
                             </div>
                         </div>
+                        <div class="col-6" id="spouseCardSection" style="display:none;">
+                            <div class="bg-white rounded-3 p-3 h-100" style="border:1px solid #ebebf5;">
+                                <div class="text-muted mb-1" style="font-size:11px;"><i class="fa-solid fa-credit-card me-1"></i>Spouse Card No</div>
+                                <div class="fw-semibold text-dark" style="font-size:13px;" id="memberSpouseCardNo">—</div>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Pending Fines --}}
@@ -1526,6 +1532,14 @@
                         $('#memberClubName').text(response.data.club_details.name)
                         // $('#memberCode').text(response.data.member_code)
                         $('#memberCardNo').text(response.data.card_details?.card_no || '-')
+
+                        if (response.data.spouse_card_details?.card_no) {
+                            $('#memberSpouseCardNo').text(response.data.spouse_card_details.card_no);
+                            $('#spouseCardSection').show();
+                        } else {
+                            $('#spouseCardSection').hide();
+                        }
+
                         const purchase = response.purchase_history;
 
                         $('#memberApprovedBy').text(response.data.latest_approval?.checker?.name ?? '-');

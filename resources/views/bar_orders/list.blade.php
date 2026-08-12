@@ -11,6 +11,9 @@
             <a href="{{ route('bar-orders.history') }}" class="btn btn-outline-secondary fw-semibold">
                 <i class="fa-solid fa-clock-rotate-left me-1"></i> History
             </a>
+            <button type="button" class="btn btn-primary fw-semibold" id="newBarOrderBtn">
+                <i class="fa-solid fa-plus me-1"></i> New Bar Order
+            </button>
         </div>
     </div>
 
@@ -48,7 +51,7 @@
         </div>
     </div>
 
-    {{-- Today's bar items table --}}
+    {{-- Today's bar orders table --}}
     <div class="row">
         <div class="col-12">
             <div class="member-list-part position-relative">
@@ -60,84 +63,81 @@
                                 <th class="text-white fw-medium text-nowrap">Order No</th>
                                 <th class="text-white fw-medium text-nowrap">Member</th>
                                 <th class="text-white fw-medium text-nowrap">Time</th>
-                                <th class="text-white fw-medium text-nowrap">Item</th>
-                                <th class="text-white fw-medium text-nowrap">Volume</th>
-                                <th class="text-white fw-medium text-nowrap">Unit Price</th>
+                                <th class="text-white fw-medium text-nowrap">Items</th>
                                 <th class="text-white fw-medium text-nowrap">Amount</th>
+                                <th class="text-white fw-medium text-nowrap">Status</th>
+                                <th class="text-white fw-medium text-nowrap">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @php $hasRows = false; $grandTotal = 0; @endphp
-                            @foreach($orders as $order)
-                                @foreach($order->items->whereIn('unit', ['ml', 'btl']) as $item)
-                                    @php
-                                        $hasRows      = true;
-                                        $isBeer       = $item->unit === 'btl';
-                                        $offerApplied = $item->offer_applied;
-                                        $grandTotal  += $item->total_amount;
-
-                                        // Qty label: B1G1 shows "1 BTL + 1 Free = 2 BTL"
-                                        if ($isBeer && $offerApplied && ($offerApplied['type_slug'] ?? '') === 'b1g1') {
-                                            $buyQty   = $offerApplied['buy_qty'] ?? 1;
-                                            $getQty   = $offerApplied['get_qty'] ?? 1;
-                                            $setSize  = $buyQty + $getQty;
-                                            $sets     = $setSize > 0 ? intdiv($item->quantity, $setSize) : 0;
-                                            $volLabel = $sets > 0
-                                                ? ($sets * $buyQty) . ' BTL + ' . ($sets * $getQty) . ' Free = ' . $item->quantity . ' BTL'
-                                                : $item->quantity . ' BTL';
-                                        } else {
-                                            $volLabel = $isBeer
-                                                ? $item->quantity . ' BTL'
-                                                : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
-                                        }
-
-                                        // Offer label from stored offer_applied
-                                        $offerLabel = null;
-                                        if ($offerApplied) {
-                                            $offerLabel = match($offerApplied['type_slug'] ?? '') {
-                                                'percentage' => ($offerApplied['discount_value'] ?? '') . '% OFF',
-                                                'flat'       => 'Rs ' . ($offerApplied['discount_value'] ?? '') . ' OFF',
-                                                'b1g1'       => 'Buy ' . ($offerApplied['buy_qty'] ?? 1) . ' Get ' . ($offerApplied['get_qty'] ?? 1),
-                                                default      => $offerApplied['offer_name'] ?? null,
-                                            };
-                                        }
-                                    @endphp
-                                    <tr>
-                                        <td class="text-nowrap fw-medium">{{ $order->session->session_no ?? $order->order_no }}</td>
-                                        <td class="text-nowrap">{{ $order->session?->order_person_name ?: ($order->member->name ?? '—') }}</td>
-                                        <td class="text-nowrap text-muted small">{{ $order->created_at->format('h:i A') }}</td>
-                                        <td class="text-nowrap">
-                                            @if(!empty($item->metadata['is_cocktail']))
-                                                {{ $item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—') }}
-                                                <span class="badge ms-1" style="font-size:0.62rem;background:#7c3aed;color:#fff;">Cocktail</span>
-                                                <br><small class="text-muted">base: {{ $item->foodItem->name ?? '—' }}</small>
-                                            @else
-                                                {{ $item->foodItem->name ?? '—' }}
-                                            @endif
-                                            @if($offerLabel)
-                                                <br>
-                                                <span class="badge bg-danger rounded-pill px-2" style="font-size:0.65rem;">
-                                                    <i class="fa-solid fa-tag me-1"></i>{{ $offerLabel }}
+                            @php $grandTotal = 0; @endphp
+                            @forelse($orders as $order)
+                                @php
+                                    $liquorItems = $order->items->whereIn('unit', ['ml', 'btl']);
+                                    $grandTotal += $order->net_amount;
+                                    $isDirectBarOrder = is_null($order->session_id);
+                                    $statusColors = [
+                                        'paid'      => 'bg-warning-subtle text-warning border-warning',
+                                        'pending'   => 'bg-warning-subtle text-warning border-warning',
+                                        'delivered' => 'bg-primary-subtle text-primary border-primary',
+                                        'cancelled' => 'bg-danger-subtle text-danger border-danger',
+                                    ];
+                                    $statusLabel = $order->status === 'delivered' ? 'Served' : ucfirst($order->status);
+                                @endphp
+                                <tr id="bar-order-row-{{ $order->id }}">
+                                    <td class="text-nowrap fw-medium">{{ $order->order_no }}</td>
+                                    <td class="text-nowrap">{{ $order->session?->order_person_name ?: ($order->member->name ?? '—') }}</td>
+                                    <td class="text-nowrap text-muted small">{{ $order->created_at->format('h:i A') }}</td>
+                                    <td>
+                                        @foreach($liquorItems as $item)
+                                            <div class="small text-nowrap">
+                                                {{ !empty($item->metadata['is_cocktail']) ? ($item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—')) : ($item->foodItem->name ?? '—') }}
+                                                <span class="text-muted">
+                                                    &times;{{ $item->quantity }} {{ $item->unit === 'btl' ? 'BTL' : 'ml' }}
                                                 </span>
-                                            @endif
-                                        </td>
-                                        <td class="text-nowrap">{{ $volLabel }}</td>
-                                        <td class="text-nowrap">Rs {{ number_format($item->unit_price, 2) }}</td>
-                                        <td class="text-nowrap fw-semibold">Rs {{ number_format($item->total_amount, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            @endforeach
-                            @if(!$hasRows)
+                                            </div>
+                                        @endforeach
+                                    </td>
+                                    <td class="text-nowrap fw-semibold">Rs {{ number_format($order->net_amount, 2) }}</td>
+                                    <td class="text-nowrap">
+                                        <span class="badge border rounded-pill px-3 py-1 {{ $statusColors[$order->status] ?? 'bg-secondary-subtle text-secondary border-secondary' }} bar-order-status-{{ $order->id }}">
+                                            {{ $statusLabel }}
+                                        </span>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1 view-bar-order-btn" data-id="{{ $order->id }}" title="View">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                        @if($isDirectBarOrder && in_array($order->status, ['paid', 'pending']))
+                                            <button type="button" class="btn btn-sm ms-1 px-2 py-1 fw-semibold text-white mark-served-btn" style="background:#4f46e5;" data-id="{{ $order->id }}">
+                                                <i class="fa-regular fa-circle-check me-1"></i>Served
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-1 px-2 py-1 fw-semibold cancel-bar-order-btn" data-id="{{ $order->id }}" data-amount="Rs {{ number_format($order->net_amount, 2) }}">
+                                                Cancel
+                                            </button>
+                                        @elseif($isDirectBarOrder && $order->status === 'delivered')
+                                            <button class="btn btn-sm ms-1 px-2 py-1 fw-semibold text-white" style="background:#4f46e5;pointer-events:none;" disabled>
+                                                <i class="fa-solid fa-circle-check me-1"></i>Served
+                                            </button>
+                                        @elseif($isDirectBarOrder && $order->status === 'cancelled')
+                                            <button class="btn btn-sm ms-1 px-2 py-1 fw-semibold text-white" style="background:#6c757d;pointer-events:none;" disabled>Cancelled</button>
+                                        @else
+                                            <span class="text-muted small ms-1">Via Session {{ $order->session->session_no ?? '' }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
                                 <tr>
                                     <td colspan="7" class="text-center text-muted py-4">No bar orders today.</td>
                                 </tr>
-                            @endif
+                            @endforelse
                         </tbody>
-                        @if($hasRows)
+                        @if($orders->isNotEmpty())
                         <tfoot>
                             <tr class="fw-bold" style="background:#f1f3f5;">
-                                <td colspan="6" class="text-end pe-3">Total</td>
+                                <td colspan="4" class="text-end pe-3">Total</td>
                                 <td class="text-nowrap text-primary">Rs {{ number_format($grandTotal, 2) }}</td>
+                                <td colspan="2"></td>
                             </tr>
                         </tfoot>
                         @endif
@@ -254,42 +254,6 @@
         </div>
     </div>
 
-    {{-- Peg size modal for spirits --}}
-    <div class="modal fade" id="pegSizeModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered" style="max-width:360px;">
-            <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
-                    <h6 class="modal-title fw-semibold" id="pegItemName"></h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Peg Size</label>
-                        <div class="btn-group w-100" role="group">
-                            <button type="button" class="btn btn-outline-primary peg-size-btn" data-ml="30">30 ml</button>
-                            <button type="button" class="btn btn-outline-primary peg-size-btn" data-ml="60">60 ml</button>
-                            <button type="button" class="btn btn-outline-primary peg-size-btn" data-ml="90">90 ml</button>
-                        </div>
-                        <div class="mt-2">
-                            <input type="number" id="customPegMl" class="form-control shadow-none"
-                                placeholder="Custom ml..." min="1">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Quantity <small class="text-muted">(pegs)</small></label>
-                        <input type="number" id="pegQty" class="form-control shadow-none" min="1" value="1">
-                    </div>
-                    <div class="p-2 rounded-3 bg-light small mb-2">
-                        Available: <strong id="pegAvailableDisplay"></strong>
-                    </div>
-                    <button type="button" class="btn btn-primary w-100 fw-semibold" id="confirmPegBtn">
-                        Add to Order
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     {{-- Cancel confirm modal --}}
     <div class="modal fade" id="cancelBarOrderModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered" style="max-width:360px;">
@@ -337,11 +301,9 @@
 <script>
 $(document).ready(function () {
 
-    var GST_PCT   = 10;
+    var GST_PCT   = 0; // Bar Orders are liquor-only — GST applies to restaurant (food) orders, not liquor.
     var barItems  = [];
     var cart      = [];   // [{id, name, is_beer, volume_ml, quantity, deduct_qty, unit_price, total}]
-    var currentPegItem = null;
-    var selectedPegMl  = 60;
 
     // ── Load bar items ──────────────────────────────────────────────────────
     function loadBarItems() {
@@ -394,11 +356,8 @@ $(document).ready(function () {
                 sizeTxt      = '';
                 itemType     = 'beer';
             } else {
-                var remainder    = item.size_ml > 0 ? item.bar_stock % item.size_ml : item.bar_stock;
-                var btlBreakdown = item.btl_eq > 0
-                    ? ' (' + item.btl_eq + ' BTL' + (remainder > 0 ? ' ' + remainder.toLocaleString() + ' ml' : '') + ')'
-                    : '';
-                stockDisplay = item.bar_stock.toLocaleString() + ' ml' + btlBreakdown;
+                // Spirit peg — fixed serving volume/price from Liquor Servings
+                stockDisplay = item.btl_eq + ' servings (' + item.bar_stock.toLocaleString() + ' ml left)';
                 typeBadge    = '<span class="badge bg-info text-white" style="font-size:0.65rem;">Spirit</span>';
                 sizeTxt      = item.size_ml ? item.size_ml + ' ml' : '';
                 itemType     = 'spirit';
@@ -521,26 +480,27 @@ $(document).ready(function () {
         var sizeMl     = parseInt($btn.data('size-ml')) || 0;
 
         var barItem = barItems.find(function (bi) {
-            return isCocktail
+            return servingId
                 ? String(bi.serving_id) === String(servingId)
                 : String(bi.id) === String(id) && !bi.is_cocktail;
         });
         var offer = barItem ? (barItem.offer || null) : null;
 
-        if (isCocktail) {
-            // Direct add — no peg modal; deduct sizeMl per cocktail
+        if (servingId) {
+            // Spirit peg or cocktail — fixed volume & price from Liquor Servings,
+            // added straight to cart (no free-form peg size, no raw-item price).
             var deductQty = sizeMl;
             if (deductQty > stock) {
-                toastr.error('Not enough bar stock for this cocktail.');
+                toastr.error('Not enough bar stock for "' + name + '".');
                 return;
             }
             addToCart({
                 id: id, serving_id: servingId, name: name,
-                is_beer: false, is_cocktail: true,
+                is_beer: false, is_cocktail: isCocktail,
                 volume_ml: sizeMl,
                 paid_qty: 1, free_qty: 0, quantity: 1,
                 deduct_qty: deductQty,
-                unit_price: price, bar_stock: stock, offer: null,
+                unit_price: price, bar_stock: stock, offer: offer,
             });
         } else if (isBeer) {
             if (offer && offer.type_slug === 'b1g1') {
@@ -566,62 +526,9 @@ $(document).ready(function () {
                 addToCart({ id: id, serving_id: null, name: name, is_beer: true, is_cocktail: false, volume_ml: null, paid_qty: 1, free_qty: 0, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock, offer: offer });
             }
         } else {
-            // Show peg size selector
-            currentPegItem = { id: id, serving_id: null, name: name, is_beer: false, is_cocktail: false, size_ml: sizeMl, unit_price: price, bar_stock: stock, offer: offer };
-            selectedPegMl  = 60;
-            $('#pegItemName').text(name + (sizeMl ? ' (' + sizeMl + ' ml)' : ''));
-            $('#customPegMl').val('');
-            $('#pegQty').val(1);
-            var stockMl = stock;
-            $('#pegAvailableDisplay').text(stockMl.toLocaleString() + ' ml');
-            $('.peg-size-btn').removeClass('active btn-primary').addClass('btn-outline-primary');
-            $('.peg-size-btn[data-ml="60"]').removeClass('btn-outline-primary').addClass('btn-primary active');
-            $('#pegSizeModal').modal('show');
+            // Spirit item with no Liquor Serving configured yet — nothing to sell it as.
+            toastr.error('"' + name + '" has no peg/serving price set up yet. Add one from Liquor Servings first.');
         }
-    });
-
-    // Peg size button selection
-    $(document).on('click', '.peg-size-btn', function () {
-        $('.peg-size-btn').removeClass('active btn-primary').addClass('btn-outline-primary');
-        $(this).removeClass('btn-outline-primary').addClass('btn-primary active');
-        selectedPegMl = parseInt($(this).data('ml'));
-        $('#customPegMl').val('');
-    });
-
-    $('#customPegMl').on('input', function () {
-        var val = parseInt($(this).val());
-        if (val > 0) {
-            selectedPegMl = val;
-            $('.peg-size-btn').removeClass('active btn-primary').addClass('btn-outline-primary');
-        }
-    });
-
-    $('#confirmPegBtn').on('click', function () {
-        var qty      = parseInt($('#pegQty').val()) || 1;
-        var ml       = selectedPegMl;
-        if (!ml || ml < 1) { toastr.warning('Select a peg size.'); return; }
-
-        var deductQty = qty * ml;
-        if (deductQty > currentPegItem.bar_stock) {
-            toastr.error('Not enough bar stock. Available: ' + currentPegItem.bar_stock.toLocaleString() + ' ml');
-            return;
-        }
-
-        addToCart({
-            id:         currentPegItem.id,
-            serving_id: null,
-            name:       currentPegItem.name,
-            is_beer:    false,
-            is_cocktail: false,
-            volume_ml:  ml,
-            paid_qty:   qty, free_qty: 0,
-            quantity:   qty,
-            deduct_qty: deductQty,
-            unit_price: currentPegItem.unit_price,
-            bar_stock:  currentPegItem.bar_stock,
-            offer:      currentPegItem.offer,
-        });
-        $('#pegSizeModal').modal('hide');
     });
 
     function addToCart(item) {
@@ -869,7 +776,8 @@ $(document).ready(function () {
                         .removeClass().addClass('badge border rounded-pill px-3 py-1 bg-danger-subtle text-danger border-danger bar-order-status-' + id)
                         .text('Cancelled');
                     var $row = $('#bar-order-row-' + id);
-                    $row.find('.mark-served-btn, .cancel-bar-order-btn').replaceWith(
+                    $row.find('.mark-served-btn, .cancel-bar-order-btn').remove();
+                    $row.find('td:last-child').append(
                         '<button class="btn btn-sm ms-1 px-2 py-1 fw-semibold text-white"'
                         + ' style="background:#6c757d;pointer-events:none;" disabled>Cancelled</button>'
                     );
