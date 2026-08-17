@@ -45,6 +45,9 @@ class AppLayoutComposer
             $globalRestaurantGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')
                 ->value('gst_percentage') ?? 0;
 
+            $globalBeverageGstPercentage = GstRate::where('club_id', $clubId)->where('gst_type', 'beverage')
+                ->value('gst_percentage') ?? 0;
+
             $globalBankList = Bank::where('club_id', $clubId)->get();
 
             $shared = [
@@ -53,6 +56,7 @@ class AppLayoutComposer
                 'globalGstPercentage'             => $globalGstPercentage,
                 'globalPlanPurchaseGstPercentage' => $globalPlanPurchaseGstPercentage,
                 'globalRestaurantGstPercentage'   => $globalRestaurantGstPercentage,
+                'globalBeverageGstPercentage'     => $globalBeverageGstPercentage,
                 'globalBankList'                  => $globalBankList,
             ];
         }

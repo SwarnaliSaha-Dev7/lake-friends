@@ -12,6 +12,7 @@ use App\Models\RestaurantOrderItem;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
 use App\Models\Offer;
+use App\Models\GstRate;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -270,6 +271,7 @@ class BarOrderController extends Controller
                         'btl_eq'      => $btlEq,
                         'alert_qty'   => $alertQty,
                         'offer'       => $offerMap[$item->id] ?? null,
+                        'gst_rate'    => 0, // liquor is GST-free in Bar Order — see BUSINESS_LOGIC.md GST section
                     ];
                 });
 
@@ -303,10 +305,45 @@ class BarOrderController extends Controller
                         'btl_eq'      => $canMake,       // how many servings can be poured
                         'alert_qty'   => 0,
                         'offer'       => null,
+                        'gst_rate'    => 0, // liquor is GST-free in Bar Order — see BUSINESS_LOGIC.md GST section
                     ];
                 });
 
-            $items = $regularItems->concat($servings)->values();
+            // ── Beverages: whole-unit sale like beer, but taxed at the beverage GST rate ──
+            $beverageGstRate = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'beverage')->value('gst_percentage') ?? 0);
+
+            $beverageItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'beverage')
+                ->where('is_active', 1)
+                ->with(['foodItemCat', 'foodItemPrice'])
+                ->get()
+                ->map(function ($item) use ($barStockMap, $offerMap, $beverageGstRate) {
+                    $stock    = (int) ($barStockMap[$item->id] ?? 0);
+                    $alertQty = (int) ($item->low_stock_alert_qty ?? 0);
+                    $isOut    = $stock === 0;
+                    $isLow    = !$isOut && $alertQty > 0 && $stock <= $alertQty;
+
+                    return [
+                        'id'          => $item->id,
+                        'serving_id'  => null,
+                        'name'        => $item->name,
+                        'category'    => $item->foodItemCat->name ?? '—',
+                        'is_beer'     => true,
+                        'is_beverage' => true,
+                        'is_cocktail' => false,
+                        'size_ml'     => (int) ($item->size_ml ?? 0),
+                        'price'       => (float) ($item->foodItemPrice->price ?? 0),
+                        'bar_stock'   => $stock,
+                        'in_stock'    => $stock > 0,
+                        'is_low'      => $isLow,
+                        'btl_eq'      => $stock,
+                        'alert_qty'   => $alertQty,
+                        'offer'       => $offerMap[$item->id] ?? null,
+                        'gst_rate'    => $beverageGstRate,
+                    ];
+                });
+
+            $items = $regularItems->concat($servings)->concat($beverageItems)->values();
 
             return response()->json(['statusCode' => 200, 'items' => $items]);
         } catch (\Throwable $th) {

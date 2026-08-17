@@ -9,13 +9,14 @@
 
             @role('admin')
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Master Manage</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('manage-operators.*') || request()->routeIs('manage-gst-rates.*') || request()->routeIs('manage-fine-rules.*') || request()->routeIs('manage-minimum-spend-rules.*') || request()->routeIs('manage-food-categories.*') || request()->routeIs('manage-liquor-categories.*') || request()->routeIs('manage-lockers.*') || request()->routeIs('manage-cards.*') ? 'display: block;' : 'display: none;' }}">
+                <ul class="list-unstyled" style="{{ request()->routeIs('manage-operators.*') || request()->routeIs('manage-gst-rates.*') || request()->routeIs('manage-fine-rules.*') || request()->routeIs('manage-minimum-spend-rules.*') || request()->routeIs('manage-food-categories.*') || request()->routeIs('manage-liquor-categories.*') || request()->routeIs('manage-beverage-categories.*') || request()->routeIs('manage-lockers.*') || request()->routeIs('manage-cards.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('manage-operators.*') ? 'active' : '' }}"><a href="{{ route('manage-operators.index') }}">Operator</a></li>
                     <li class="{{ request()->routeIs('manage-gst-rates.*') ? 'active' : '' }}"><a href="{{ route('manage-gst-rates.index') }}">GST Rate</a></li>
                     <li class="{{ request()->routeIs('manage-fine-rules.*') ? 'active' : '' }}"><a href="{{ route('manage-fine-rules.index') }}">Fine Rules</a></li>
                     <li class="{{ request()->routeIs('manage-minimum-spend-rules.*') ? 'active' : '' }}"><a href="{{ route('manage-minimum-spend-rules.index') }}">Minimum Spend Rules</a></li>
                     <li class="{{ request()->routeIs('manage-food-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-food-categories.index') }}">Food Categories</a></li>
                     <li class="{{ request()->routeIs('manage-liquor-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-liquor-categories.index') }}">Liquor Categories</a></li>
+                    <li class="{{ request()->routeIs('manage-beverage-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-beverage-categories.index') }}">Beverage Categories</a></li>
                     <li class="{{ request()->routeIs('manage-lockers.*') ? 'active' : '' }}"><a href="{{ route('manage-lockers.index') }}">Locker</a></li>
                     <li class="{{ request()->routeIs('manage-cards.*') ? 'active' : '' }}"><a href="{{ route('manage-cards.index') }}">Card Manage</a></li>
                 </ul>
@@ -43,6 +44,17 @@
                     <li class="{{ request()->routeIs('godown-stock.report') ? 'active' : '' }}"><a href="{{ route('godown-stock.report') }}">Godown Report</a></li>
                     <li class="{{ request()->routeIs('bar-stock.index') ? 'active' : '' }}"><a href="{{ route('bar-stock.index') }}">Bar Stock List</a></li>
                     <li class="{{ request()->routeIs('bar-stock.report') ? 'active' : '' }}"><a href="{{ route('bar-stock.report') }}">Bar Report</a></li>
+                </ul>
+            </li>
+
+            <li class="{{ request()->routeIs('manage-beverage-items.*') ? 'active' : '' }}"><a href="{{ route('manage-beverage-items.index') }}"><i class="fa-solid fa-bottle-water"></i> Beverage Manage</a></li>
+
+            <li><a href="javascript:void(0)"><i class="fa-solid fa-warehouse"></i> Beverage Stock</a>
+                <ul class="list-unstyled" style="{{ request()->routeIs('beverage-godown-stock.*') || request()->routeIs('beverage-bar-stock.*') ? 'display: block;' : 'display: none;' }}">
+                    <li class="{{ request()->routeIs('beverage-godown-stock.index') ? 'active' : '' }}"><a href="{{ route('beverage-godown-stock.index') }}">Godown Stock List</a></li>
+                    <li class="{{ request()->routeIs('beverage-godown-stock.report') ? 'active' : '' }}"><a href="{{ route('beverage-godown-stock.report') }}">Godown Report</a></li>
+                    <li class="{{ request()->routeIs('beverage-bar-stock.index') ? 'active' : '' }}"><a href="{{ route('beverage-bar-stock.index') }}">Bar Stock List</a></li>
+                    <li class="{{ request()->routeIs('beverage-bar-stock.report') ? 'active' : '' }}"><a href="{{ route('beverage-bar-stock.report') }}">Bar Report</a></li>
                 </ul>
             </li>
 

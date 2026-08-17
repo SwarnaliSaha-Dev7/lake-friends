@@ -288,7 +288,32 @@ class DashboardController extends Controller
 
             $liquorItems = $beerItems->merge($spiritServings)->values();
 
-            return response()->json(['statusCode' => 200, 'foodItems' => $foodItems, 'liquorItems' => $liquorItems]);
+            // Beverage items: whole-unit sale (bottle/can/glass), like beer — but taxed
+            // separately (5% beverage GST) instead of going through the liquor GST-free path.
+            $beverageItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'beverage')
+                ->where('is_active', 1)
+                ->with('foodItemPrice')
+                ->get()
+                ->map(function ($item) use ($offerMap, $barStockMap) {
+                    return [
+                        'id'           => 'bev_' . $item->id,
+                        'food_item_id' => $item->id,
+                        'name'         => $item->name,
+                        'volume_ml'    => null,
+                        'price'        => isset($item->foodItemPrice) ? (float) $item->foodItemPrice->price : 0,
+                        'bar_stock'    => (int) ($barStockMap[$item->id] ?? 0),
+                        'offer'        => $offerMap[$item->id] ?? null,
+                    ];
+                })
+                ->values();
+
+            return response()->json([
+                'statusCode'    => 200,
+                'foodItems'     => $foodItems,
+                'liquorItems'   => $liquorItems,
+                'beverageItems' => $beverageItems,
+            ]);
         } catch (\Throwable $th) {
             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
         }

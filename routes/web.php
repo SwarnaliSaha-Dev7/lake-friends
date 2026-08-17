@@ -13,7 +13,10 @@ use App\Http\Controllers\BarOrderController;
 use App\Http\Controllers\BarStockController;
 use App\Http\Controllers\LiquorServingController;
 use App\Http\Controllers\GodownStockController;
+use App\Http\Controllers\BeverageGodownStockController;
+use App\Http\Controllers\BeverageBarStockController;
 use App\Http\Controllers\LiquorItemManageController;
+use App\Http\Controllers\BeverageItemManageController;
 use App\Http\Controllers\OfferManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
@@ -21,6 +24,7 @@ use App\Http\Controllers\Master\FineRulesManageController;
 use App\Http\Controllers\Master\FoodCategoryManageController;
 use App\Http\Controllers\Master\GstRatesManageController;
 use App\Http\Controllers\Master\LiquorCategoryManageController;
+use App\Http\Controllers\Master\BeverageCategoryManageController;
 use App\Http\Controllers\Master\LockerManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\MinimumSpendRuleManageController;
@@ -65,6 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('manage-minimum-spend-rules', MinimumSpendRuleManageController::class);
         Route::resource('manage-food-categories', FoodCategoryManageController::class);
         Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
+        Route::resource('manage-beverage-categories', BeverageCategoryManageController::class);
         Route::resource('manage-lockers', LockerManageController::class);
         Route::post('manage-lockers/delink', [LockerManageController::class, 'delink'])->name('manage-lockers.delink');
     });
@@ -173,6 +178,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('manage-liquor-items', LiquorItemManageController::class);
     Route::post('liquor-price-request', [LiquorItemManageController::class, 'requestPriceChange'])->name('liquorItemPriceApproval.request');
 
+    Route::resource('manage-beverage-items', BeverageItemManageController::class);
+    Route::post('beverage-price-request', [BeverageItemManageController::class, 'requestPriceChange'])->name('beverageItemPriceApproval.request');
+
     Route::resource('liquor-servings', LiquorServingController::class)->only(['index', 'store', 'edit', 'update', 'destroy']);
 
     Route::prefix('manage-liquor-serving-approval')->controller(ActionApprovalController::class)->group(function () {
@@ -198,6 +206,15 @@ Route::middleware('auth')->group(function () {
         Route::get('godown/report/download', [GodownStockController::class, 'downloadReport'])->name('godown-stock.report.download');
     });
 
+    // Beverage Godown Stock
+    Route::prefix('beverage-stock')->group(function () {
+        Route::get('godown',         [BeverageGodownStockController::class, 'index'])->name('beverage-godown-stock.index');
+        Route::post('godown',        [BeverageGodownStockController::class, 'store'])->name('beverage-godown-stock.store');
+        Route::post('godown/adjust', [BeverageGodownStockController::class, 'adjust'])->name('beverage-godown-stock.adjust');
+        Route::get('godown/report',          [BeverageGodownStockController::class, 'report'])->name('beverage-godown-stock.report');
+        Route::get('godown/report/download', [BeverageGodownStockController::class, 'downloadReport'])->name('beverage-godown-stock.report.download');
+    });
+
     Route::prefix('manage-godown-stock-approval')->controller(ActionApprovalController::class)->group(function () {
         Route::get('list',         'godownStockApprovalList')->name('godownStockApproval.list');
         Route::get('approve/{id}', 'approve')->name('godownStockApproval.approve');
@@ -210,6 +227,14 @@ Route::middleware('auth')->group(function () {
         Route::post('bar/transfer',        [BarStockController::class, 'transfer'])->name('bar-stock.transfer');
         Route::get('bar/report',           [BarStockController::class, 'report'])->name('bar-stock.report');
         Route::get('bar/report/download',  [BarStockController::class, 'downloadReport'])->name('bar-stock.report.download');
+    });
+
+    // Beverage Bar Stock
+    Route::prefix('beverage-stock')->group(function () {
+        Route::get('bar',                  [BeverageBarStockController::class, 'index'])->name('beverage-bar-stock.index');
+        Route::post('bar/transfer',        [BeverageBarStockController::class, 'transfer'])->name('beverage-bar-stock.transfer');
+        Route::get('bar/report',           [BeverageBarStockController::class, 'report'])->name('beverage-bar-stock.report');
+        Route::get('bar/report/download',  [BeverageBarStockController::class, 'downloadReport'])->name('beverage-bar-stock.report.download');
     });
 
     Route::prefix('manage-bar-stock-approval')->controller(ActionApprovalController::class)->group(function () {

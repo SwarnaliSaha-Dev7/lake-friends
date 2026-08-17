@@ -212,7 +212,7 @@
                                         <span class="fw-semibold text-success" id="cartDiscount">- Rs 0.00</span>
                                     </div>
                                     <div class="d-flex justify-content-between small mb-1">
-                                        <span class="text-muted">GST (<span id="cartGstPct">0</span>%)</span>
+                                        <span class="text-muted">GST</span>
                                         <span class="fw-semibold" id="cartGstAmt">Rs 0.00</span>
                                     </div>
                                     <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-1">
@@ -239,6 +239,7 @@
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="spirit">Spirit</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beer">Beer</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="cocktail">Cocktail</button>
+                                    <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beverage">Beverage</button>
                                 </div>
                             </div>
                             <div id="barItemsGrid" class="row g-2" style="max-height:420px;overflow-y:auto;">
@@ -301,7 +302,7 @@
 <script>
 $(document).ready(function () {
 
-    var GST_PCT   = 0; // Bar Orders are liquor-only — GST applies to restaurant (food) orders, not liquor.
+    // GST is per-item now (0% liquor, {{ $globalBeverageGstPercentage }}% beverage) — see gst_rate on each bar item.
     var barItems  = [];
     var cart      = [];   // [{id, name, is_beer, volume_ml, quantity, deduct_qty, unit_price, total}]
 
@@ -350,6 +351,11 @@ $(document).ready(function () {
                 typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#7c3aed;">Cocktail</span>';
                 sizeTxt      = item.size_ml + ' ml';
                 itemType     = 'cocktail';
+            } else if (item.is_beverage) {
+                stockDisplay = item.bar_stock + ' BTL';
+                typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#0dcaf0;">Beverage</span>';
+                sizeTxt      = item.size_ml ? item.size_ml + ' ml' : '';
+                itemType     = 'beverage';
             } else if (item.is_beer) {
                 stockDisplay = item.bar_stock + ' BTL';
                 typeBadge    = '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Beer</span>';
@@ -413,6 +419,7 @@ $(document).ready(function () {
                 +     ' data-is-cocktail="' + (item.is_cocktail ? '1' : '0') + '"'
                 +     ' data-size-ml="' + item.size_ml + '"'
                 +     ' data-price="' + item.price + '"'
+                +     ' data-gst-rate="' + (item.gst_rate || 0) + '"'
                 +     ' data-stock="' + item.bar_stock + '"'
                 +     ((item.in_stock && !isB1g1Insufficient) ? '' : ' disabled')
                 +   '><i class="fa-solid fa-plus me-1"></i>Add</button>'
@@ -478,6 +485,7 @@ $(document).ready(function () {
         var price      = parseFloat($btn.data('price'));
         var stock      = parseInt($btn.data('stock'));
         var sizeMl     = parseInt($btn.data('size-ml')) || 0;
+        var gstRate    = parseFloat($btn.data('gst-rate')) || 0;
 
         var barItem = barItems.find(function (bi) {
             return servingId
@@ -500,7 +508,7 @@ $(document).ready(function () {
                 volume_ml: sizeMl,
                 paid_qty: 1, free_qty: 0, quantity: 1,
                 deduct_qty: deductQty,
-                unit_price: price, bar_stock: stock, offer: offer,
+                unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate,
             });
         } else if (isBeer) {
             if (offer && offer.type_slug === 'b1g1') {
@@ -520,10 +528,10 @@ $(document).ready(function () {
                     volume_ml: null, paid_qty: buyQty, free_qty: getQty,
                     quantity: buyQty + getQty,
                     deduct_qty: buyQty + getQty,
-                    unit_price: price, bar_stock: stock, offer: offer,
+                    unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate,
                 });
             } else {
-                addToCart({ id: id, serving_id: null, name: name, is_beer: true, is_cocktail: false, volume_ml: null, paid_qty: 1, free_qty: 0, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock, offer: offer });
+                addToCart({ id: id, serving_id: null, name: name, is_beer: true, is_cocktail: false, volume_ml: null, paid_qty: 1, free_qty: 0, quantity: 1, deduct_qty: 1, unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate });
             }
         } else {
             // Spirit item with no Liquor Serving configured yet — nothing to sell it as.
@@ -590,11 +598,14 @@ $(document).ready(function () {
             var offerTag = (item.offer && item.offer.type_slug === 'b1g1')
                 ? ' <span class="badge bg-danger text-white rounded-pill px-1" style="font-size:0.6rem;">B1G1</span>'
                 : '';
+            var gstTag = (item.gst_rate > 0)
+                ? ' <span class="text-muted" style="font-size:0.68rem;">+' + item.gst_rate + '% GST</span>'
+                : '';
 
             html += '<div class="d-flex align-items-start gap-2 mb-2 pb-2 border-bottom">'
                 +   '<div class="flex-grow-1">'
                 +     '<div class="fw-semibold small">' + item.name + offerTag + '</div>'
-                +     '<div class="text-muted" style="font-size:0.75rem;">' + desc + ' · Rs ' + item.unit_price.toFixed(2) + '/unit</div>'
+                +     '<div class="text-muted" style="font-size:0.75rem;">' + desc + ' · Rs ' + item.unit_price.toFixed(2) + '/unit' + gstTag + '</div>'
                 +   '</div>'
                 +   '<div class="text-end">'
                 +     '<div class="fw-bold small">Rs ' + lineTotal.toFixed(2) + '</div>'
@@ -612,7 +623,10 @@ $(document).ready(function () {
         var discountAmt = cart.reduce(function (s, c) {
             return s + (c.free_qty || 0) * c.unit_price;
         }, 0);
-        var gstAmt = subtotal * GST_PCT / 100;
+        var gstAmt = cart.reduce(function (s, c) {
+            var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
+            return s + (paidQty * c.unit_price) * ((c.gst_rate || 0) / 100);
+        }, 0);
         var total  = subtotal + gstAmt;
 
         $('#cartSubtotal').text('Rs ' + subtotal.toFixed(2));
@@ -622,7 +636,6 @@ $(document).ready(function () {
         } else {
             $('#cartDiscountRow').hide();
         }
-        $('#cartGstPct').text(GST_PCT);
         $('#cartGstAmt').text('Rs ' + gstAmt.toFixed(2));
         $('#cartTotal').text('Rs ' + total.toFixed(2));
         $('#barCartTotals').show();
@@ -660,8 +673,14 @@ $(document).ready(function () {
         var discountAmt = cart.reduce(function (s, c) {
             return s + (c.free_qty || 0) * c.unit_price;
         }, 0);
-        var gstAmt = subtotal * GST_PCT / 100;
+        var gstAmt = cart.reduce(function (s, c) {
+            var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
+            return s + (paidQty * c.unit_price) * ((c.gst_rate || 0) / 100);
+        }, 0);
         var netAmt = subtotal + gstAmt;
+        // Blended rate for the order's single gst_percentage record — items can mix
+        // 0% liquor and 5% beverage lines, so this is an effective/average, not a fixed rate.
+        var blendedGstPct = subtotal > 0 ? Math.round((gstAmt / subtotal) * 10000) / 100 : 0;
 
         var items = cart.map(function (c) {
             var paidQty = c.paid_qty !== undefined ? c.paid_qty : c.quantity;
@@ -695,7 +714,7 @@ $(document).ready(function () {
                 items:            items,
                 taxable_amount:   subtotal.toFixed(2),
                 discount_amount:  discountAmt.toFixed(2),
-                gst_percentage:   GST_PCT,
+                gst_percentage:   blendedGstPct,
                 gst_amount:       gstAmt.toFixed(2),
                 net_amount:       netAmt.toFixed(2),
             }),
