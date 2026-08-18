@@ -231,6 +231,9 @@
 <script>
 $(document).ready(function () {
 
+    var VIEW_FOOD_GST_RATE = {{ $globalRestaurantGstPercentage / 100 }};
+    var VIEW_BEV_GST_RATE  = {{ $globalBeverageGstPercentage / 100 }};
+
     /* ── Open New Session ──────────────────────────────────────────── */
     $('#openSessionBtn').on('click', function () {
         $('#sessionMemberSelect').val('');
@@ -525,19 +528,45 @@ $(document).ready(function () {
 
         // Compute session-level subtotal, discount, gst from orders
         var sessionSubtotal  = 0, sessionDiscount = 0, sessionGst = 0;
+        var sessionFoodSubtotal = 0, sessionBeverageSubtotal = 0;
         (session.orders || []).forEach(function (o) {
             if (o.status === 'cancelled') return;
             sessionSubtotal  += parseFloat(o.taxable_amount)  || 0;
             sessionDiscount  += parseFloat(o.discount_amount) || 0;
             sessionGst       += parseFloat(o.gst_amount)      || 0;
+            (o.items || []).forEach(function (it) {
+                var itemType = it.food_item ? it.food_item.item_type : null;
+                var amt      = parseFloat(it.total_amount) || 0;
+                if (itemType === 'food') sessionFoodSubtotal += amt;
+                else if (itemType === 'beverage') sessionBeverageSubtotal += amt;
+            });
         });
         var sessionNet = sessionSubtotal - sessionDiscount + sessionGst;
+
+        // Food/Beverage GST are taxed at different rates, so the single stored
+        // gst_amount is split proportionally between the two — this keeps the
+        // breakdown reconciling exactly to the actual amount charged even if
+        // rates have changed since the order was placed.
+        var rawFoodGst = sessionFoodSubtotal * VIEW_FOOD_GST_RATE;
+        var rawBevGst  = sessionBeverageSubtotal * VIEW_BEV_GST_RATE;
+        var rawGstSum  = rawFoodGst + rawBevGst;
+        var dispFoodGst = 0, dispBevGst = 0;
+        if (rawGstSum > 0) {
+            dispFoodGst = rawFoodGst * (sessionGst / rawGstSum);
+            dispBevGst  = rawBevGst  * (sessionGst / rawGstSum);
+        }
 
         html += '<div class="p-3 bg-light border rounded-3 mt-2">'
             + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Subtotal</div>'
             + '<div class="col-4 text-center fw-semibold small">Rs ' + sessionSubtotal.toFixed(2) + '</div></div>'
-            + '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">GST</div>'
-            + '<div class="col-4 text-center fw-semibold small">Rs ' + sessionGst.toFixed(2) + '</div></div>'
+            + (sessionFoodSubtotal > 0
+                ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Food GST ({{ $globalRestaurantGstPercentage }}%)</div>'
+                  + '<div class="col-4 text-center fw-semibold small">Rs ' + dispFoodGst.toFixed(2) + '</div></div>'
+                : '')
+            + (sessionBeverageSubtotal > 0
+                ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Beverage GST ({{ $globalBeverageGstPercentage }}%)</div>'
+                  + '<div class="col-4 text-center fw-semibold small">Rs ' + dispBevGst.toFixed(2) + '</div></div>'
+                : '')
             + (sessionDiscount > 0
                 ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-warning small fw-medium">Offer Applied</div>'
                   + '<div class="col-4 text-center fw-semibold small text-muted">-Rs ' + sessionDiscount.toFixed(2) + '</div></div>'

@@ -164,7 +164,7 @@ class RestaurantOrderController extends Controller
                 ->whereDate('created_at', '>=', $startDate)
                 ->whereDate('created_at', '<=', $endDate)
                 ->whereNotIn('status', ['cancelled'])
-                ->with(['member', 'orders'])
+                ->with(['member', 'orders.items.foodItem'])
                 ->latest()
                 ->get();
 
@@ -225,10 +225,14 @@ class RestaurantOrderController extends Controller
                 ->where('club_id', club_id())
                 ->findOrFail($id);
 
-            $foodItems   = $order->items->where('unit', 'plate');
-            $liquorItems = $order->items->whereIn('unit', ['ml', 'btl']);
+            $foodItems     = $order->items->where('unit', 'plate');
+            $bottleItems   = $order->items->whereIn('unit', ['ml', 'btl']);
+            // Liquor and beverage share unit ml/btl — told apart by item_type;
+            // beverage is taxed, liquor never is.
+            $liquorItems   = $bottleItems->filter(fn($i) => ($i->foodItem->item_type ?? null) !== 'beverage');
+            $beverageItems = $bottleItems->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'beverage');
 
-            $pdf = Pdf::loadView('restaurant_orders.invoice', compact('order', 'foodItems', 'liquorItems'))
+            $pdf = Pdf::loadView('restaurant_orders.invoice', compact('order', 'foodItems', 'liquorItems', 'beverageItems'))
                 ->setPaper('a4', 'portrait');
 
             $filename = 'invoice-' . str_replace('/', '-', $order->order_no) . '.pdf';

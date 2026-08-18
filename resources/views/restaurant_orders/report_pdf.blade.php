@@ -81,10 +81,30 @@
     </div>
 
     {{-- Date-wise breakdown --}}
+    @php
+        // Food and beverage are taxed at different rates, so each session's single
+        // stored gst_amount is split proportionally by section subtotal — this keeps
+        // the breakdown reconciling exactly to the amount actually charged even if
+        // GST rates have changed since the session was billed.
+        $splitSessionGst = function ($session) use ($globalRestaurantGstPercentage, $globalBeverageGstPercentage) {
+            $items = $session->orders->whereNotIn('status', ['cancelled'])->flatMap(fn($o) => $o->items);
+            $foodSubtotal     = $items->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'food')->sum('total_amount');
+            $beverageSubtotal = $items->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'beverage')->sum('total_amount');
+            $rawFoodGst       = $foodSubtotal * ($globalRestaurantGstPercentage / 100);
+            $rawBeverageGst   = $beverageSubtotal * ($globalBeverageGstPercentage / 100);
+            $rawGstSum        = $rawFoodGst + $rawBeverageGst;
+            return [
+                'food'     => $rawGstSum > 0 ? $rawFoodGst * ($session->gst_amount / $rawGstSum) : 0,
+                'beverage' => $rawGstSum > 0 ? $rawBeverageGst * ($session->gst_amount / $rawGstSum) : 0,
+            ];
+        };
+    @endphp
     @foreach($byDate as $date => $daySessions)
         @php
-            $dayRevenue  = $daySessions->sum('net_amount');
-            $dayDiscount = $daySessions->sum('discount_amount');
+            $dayRevenue      = $daySessions->sum('net_amount');
+            $dayDiscount     = $daySessions->sum('discount_amount');
+            $dayFoodGst      = 0;
+            $dayBeverageGst  = 0;
         @endphp
         <div class="date-group">
             <div class="date-heading">
@@ -101,7 +121,8 @@
                         <th class="text-center">Rounds</th>
                         <th>Status</th>
                         <th class="text-right">Subtotal</th>
-                        <th class="text-right">GST</th>
+                        <th class="text-right">Food GST</th>
+                        <th class="text-right">Beverage GST</th>
                         <th class="text-right">Discount</th>
                         <th class="text-right">Net Amount</th>
                     </tr>
@@ -110,6 +131,9 @@
                     @foreach($daySessions as $session)
                         @php
                             $roundCount = $session->orders->whereNotIn('status', ['cancelled'])->count();
+                            $gstSplit   = $splitSessionGst($session);
+                            $dayFoodGst     += $gstSplit['food'];
+                            $dayBeverageGst += $gstSplit['beverage'];
                         @endphp
                         <tr>
                             <td>{{ $session->session_no }}</td>
@@ -124,7 +148,8 @@
                                 @endif
                             </td>
                             <td class="text-right">Rs {{ number_format($session->taxable_amount, 2) }}</td>
-                            <td class="text-right">Rs {{ number_format($session->gst_amount, 2) }}</td>
+                            <td class="text-right">{{ $gstSplit['food'] > 0 ? 'Rs '.number_format($gstSplit['food'], 2) : '—' }}</td>
+                            <td class="text-right">{{ $gstSplit['beverage'] > 0 ? 'Rs '.number_format($gstSplit['beverage'], 2) : '—' }}</td>
                             <td class="text-right">Rs {{ number_format($session->discount_amount, 2) }}</td>
                             <td class="text-right">Rs {{ number_format($session->net_amount, 2) }}</td>
                         </tr>
@@ -133,7 +158,8 @@
                 <tr class="subtotal-row">
                     <td colspan="5">Day Total</td>
                     <td class="text-right"></td>
-                    <td class="text-right"></td>
+                    <td class="text-right">Rs {{ number_format($dayFoodGst, 2) }}</td>
+                    <td class="text-right">Rs {{ number_format($dayBeverageGst, 2) }}</td>
                     <td class="text-right">Rs {{ number_format($dayDiscount, 2) }}</td>
                     <td class="text-right">Rs {{ number_format($dayRevenue, 2) }}</td>
                 </tr>
@@ -142,11 +168,22 @@
     @endforeach
 
     {{-- Grand Total --}}
+    @php
+        $grandFoodGst = 0;
+        $grandBeverageGst = 0;
+        foreach ($sessions as $s) {
+            $gstSplit = $splitSessionGst($s);
+            $grandFoodGst     += $gstSplit['food'];
+            $grandBeverageGst += $gstSplit['beverage'];
+        }
+    @endphp
     <table style="margin-top:8px;">
         <tfoot>
             <tr>
-                <td colspan="6">Grand Total ({{ $totalOrders }} sessions)</td>
+                <td colspan="5">Grand Total ({{ $totalOrders }} sessions)</td>
                 <td class="text-right"></td>
+                <td class="text-right">Rs {{ number_format($grandFoodGst, 2) }}</td>
+                <td class="text-right">Rs {{ number_format($grandBeverageGst, 2) }}</td>
                 <td class="text-right">Rs {{ number_format($totalDiscount, 2) }}</td>
                 <td class="text-right">Rs {{ number_format($totalRevenue, 2) }}</td>
             </tr>

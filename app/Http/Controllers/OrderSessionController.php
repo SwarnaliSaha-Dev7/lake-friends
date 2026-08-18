@@ -675,21 +675,29 @@ class OrderSessionController extends Controller
                     ];
                 })->values();
 
-            // Aggregate liquor items (group by food_item_id + unit + volume + offer)
-            $liquorItems = $allItems->whereIn('unit', ['ml', 'btl'])
-                ->groupBy(fn($i) => $i->food_item_id . '_' . $i->unit . '_' . ($i->metadata['volume_ml'] ?? '') . '_' . ($i->offer_applied ? json_encode($i->offer_applied) : ''))
-                ->map(function ($group) {
-                    $first = $group->first();
-                    return (object) [
-                        'foodItem'      => $first->foodItem,
-                        'quantity'      => $group->sum('quantity'),
-                        'unit'          => $first->unit,
-                        'unit_price'    => $first->unit_price,
-                        'offer_applied' => $first->offer_applied,
-                        'total_amount'  => $group->sum('total_amount'),
-                        'metadata'      => $first->metadata,
-                    ];
-                })->values();
+            // Aggregate liquor/beverage items (group by food_item_id + unit + volume + offer).
+            // Both share unit ml/btl, so they're told apart by the underlying item's
+            // item_type — beverage is taxed, liquor never is.
+            $aggregateBottleItems = function ($items) {
+                return $items
+                    ->groupBy(fn($i) => $i->food_item_id . '_' . $i->unit . '_' . ($i->metadata['volume_ml'] ?? '') . '_' . ($i->offer_applied ? json_encode($i->offer_applied) : ''))
+                    ->map(function ($group) {
+                        $first = $group->first();
+                        return (object) [
+                            'foodItem'      => $first->foodItem,
+                            'quantity'      => $group->sum('quantity'),
+                            'unit'          => $first->unit,
+                            'unit_price'    => $first->unit_price,
+                            'offer_applied' => $first->offer_applied,
+                            'total_amount'  => $group->sum('total_amount'),
+                            'metadata'      => $first->metadata,
+                        ];
+                    })->values();
+            };
+
+            $bottleItems     = $allItems->whereIn('unit', ['ml', 'btl']);
+            $liquorItems     = $aggregateBottleItems($bottleItems->filter(fn($i) => ($i->foodItem->item_type ?? null) !== 'beverage'));
+            $beverageItems   = $aggregateBottleItems($bottleItems->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'beverage'));
 
             // --------------------------
             // Card Balance (at bill time)
@@ -814,6 +822,7 @@ class OrderSessionController extends Controller
                 'session',
                 'foodItems',
                 'liquorItems',
+                'beverageItems',
                 'cardBalanceInfo',
                 'minimumUsageInfo'
             ))

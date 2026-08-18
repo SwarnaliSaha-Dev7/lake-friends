@@ -315,17 +315,77 @@
         </table>
     @endif
 
+    {{-- ===== Beverage Order Summary ===== --}}
+    @if($beverageItems->count())
+        <div class="section-label">
+            <span class="label-icon">B</span> Beverage Order Summary
+        </div>
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th class="tc">Quantity</th>
+                    <th class="tr">Unit Price</th>
+                    <th class="tr">Total Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($beverageItems as $item)
+                    @php
+                        $offer      = $item->offer_applied;
+                        $offerBadge = '';
+                        if ($offer) {
+                            if (($offer['type_slug'] ?? '') === 'b1g1')
+                                $offerBadge = '<span class="badge b-b1g1">B1G1</span>';
+                            elseif (($offer['type_slug'] ?? '') === 'percentage' && ($offer['discount_value'] ?? 0))
+                                $offerBadge = '<span class="badge b-pct">' . $offer['discount_value'] . '% off</span>';
+                            elseif (($offer['type_slug'] ?? '') === 'flat' && ($offer['discount_value'] ?? 0))
+                                $offerBadge = '<span class="badge b-flat">Rs ' . $offer['discount_value'] . ' off</span>';
+                        }
+                    @endphp
+                    <tr>
+                        <td>{!! ($item->foodItem->name ?? '—') . $offerBadge !!}</td>
+                        <td class="tc">{{ $item->quantity }}</td>
+                        <td class="tr">Rs {{ number_format($item->unit_price, 2) }}</td>
+                        <td class="tr">Rs {{ number_format($item->total_amount, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
     {{-- ===== Bill Summary ===== --}}
+    @php
+        // Food and beverage are taxed at different rates, so the single stored
+        // gst_amount is split proportionally by section subtotal — this keeps
+        // the breakdown reconciling exactly to the amount actually charged even
+        // if GST rates have changed since the order was placed.
+        $foodSubtotal     = $foodItems->sum('total_amount');
+        $beverageSubtotal = $beverageItems->sum('total_amount');
+        $rawFoodGst       = $foodSubtotal * ($globalRestaurantGstPercentage / 100);
+        $rawBeverageGst   = $beverageSubtotal * ($globalBeverageGstPercentage / 100);
+        $rawGstSum        = $rawFoodGst + $rawBeverageGst;
+        $dispFoodGst      = $rawGstSum > 0 ? $rawFoodGst * ($session->gst_amount / $rawGstSum) : 0;
+        $dispBeverageGst  = $rawGstSum > 0 ? $rawBeverageGst * ($session->gst_amount / $rawGstSum) : 0;
+    @endphp
     <div class="bill-box">
         <table class="bill-row-table">
             <tr>
                 <td class="bill-lbl">Subtotal</td>
                 <td class="bill-val">Rs {{ number_format($session->taxable_amount, 2) }}</td>
             </tr>
+            @if($foodSubtotal > 0)
             <tr>
-                <td class="bill-lbl">GST ({{ number_format($session->gst_percentage, 0) }}%)</td>
-                <td class="bill-val">Rs {{ number_format($session->gst_amount, 2) }}</td>
+                <td class="bill-lbl">Food GST ({{ $globalRestaurantGstPercentage }}%)</td>
+                <td class="bill-val">Rs {{ number_format($dispFoodGst, 2) }}</td>
             </tr>
+            @endif
+            @if($beverageSubtotal > 0)
+            <tr>
+                <td class="bill-lbl">Beverage GST ({{ $globalBeverageGstPercentage }}%)</td>
+                <td class="bill-val">Rs {{ number_format($dispBeverageGst, 2) }}</td>
+            </tr>
+            @endif
             <tr>
                 <td class="bill-offer-lbl">Offer Applied</td>
                 <td class="bill-offer-val">-Rs {{ number_format($session->discount_amount, 2) }}</td>

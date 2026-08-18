@@ -156,6 +156,9 @@
 <script>
 $(document).ready(function () {
 
+    var VIEW_FOOD_GST_RATE = {{ $globalRestaurantGstPercentage / 100 }};
+    var VIEW_BEV_GST_RATE  = {{ $globalBeverageGstPercentage / 100 }};
+
     /* ---- View order ---- */
     $(document).on('click', '.view-order-btn', function () {
         var id = $(this).data('id');
@@ -171,12 +174,15 @@ $(document).ready(function () {
             var o     = res.data;
             var items = o.items || [];
 
-            var foodRows   = '';
-            var liquorRows = '';
+            var foodRows     = '';
+            var liquorRows   = '';
+            var beverageRows = '';
+            var foodSubtotal = 0, beverageSubtotal = 0;
 
             for (var i = 0; i < items.length; i++) {
                 var it       = items[i];
                 var meta     = it.metadata || {};
+                var itemType = it.food_item ? it.food_item.item_type : null;
                 var itemName = (meta.is_cocktail && meta.cocktail_name)
                     ? meta.cocktail_name
                     : ((it.food_item && it.food_item.name) ? it.food_item.name : '—');
@@ -196,13 +202,19 @@ $(document).ready(function () {
                     var volDesc = it.unit === 'btl'
                         ? '1 BTL'
                         : ((it.metadata && it.metadata.volume_ml) ? it.metadata.volume_ml + ' ml' : '—');
-                    liquorRows += '<tr>'
+                    var rowHtml = '<tr>'
                         + '<td class="text-muted">' + itemName + offerBadge + '</td>'
                         + '<td class="text-center text-muted text-nowrap">' + volDesc + '</td>'
                         + '<td class="text-center text-muted">' + it.quantity + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td>'
                         + '</tr>';
+                    if (itemType === 'beverage') {
+                        beverageRows += rowHtml;
+                        beverageSubtotal += parseFloat(it.total_amount) || 0;
+                    } else {
+                        liquorRows += rowHtml;
+                    }
                 } else {
                     foodRows += '<tr>'
                         + '<td class="text-muted">' + itemName + offerBadge + '</td>'
@@ -210,6 +222,7 @@ $(document).ready(function () {
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
                         + '<td class="text-end text-muted text-nowrap">Rs ' + parseFloat(it.total_amount).toFixed(2) + '</td>'
                         + '</tr>';
+                    foodSubtotal += parseFloat(it.total_amount) || 0;
                 }
             }
 
@@ -261,6 +274,43 @@ $(document).ready(function () {
                     + '</table></div></div></div>';
             }
 
+            var beverageSection = '';
+            if (beverageRows) {
+                beverageSection = '<div class="mb-4">'
+                    + '<label class="form-label fw-semibold text-dark mb-2">Beverage Order Summary</label>'
+                    + '<div class="border rounded-3 overflow-hidden"><div class="table-responsive">'
+                    + '<table class="table mb-0 align-middle">'
+                    + '<thead><tr>'
+                    + '<th ' + thStyle  + '>Item Name</th>'
+                    + '<th ' + thStyleC + '>Volume</th>'
+                    + '<th ' + thStyleC + '>Quantity</th>'
+                    + '<th ' + thStyleR + '>Unit Price</th>'
+                    + '<th ' + thStyleR + '>Total Price</th>'
+                    + '</tr></thead>'
+                    + '<tbody>' + beverageRows + '</tbody>'
+                    + '</table></div></div></div>';
+            }
+
+            // Food and beverage are taxed at different rates, so the single stored
+            // gst_amount is split proportionally by section subtotal — this keeps
+            // the breakdown reconciling exactly to the amount actually charged even
+            // if GST rates have changed since the order was placed.
+            var rawFoodGst = foodSubtotal * VIEW_FOOD_GST_RATE;
+            var rawBevGst  = beverageSubtotal * VIEW_BEV_GST_RATE;
+            var rawGstSum  = rawFoodGst + rawBevGst;
+            var dispFoodGst = 0, dispBevGst = 0;
+            if (rawGstSum > 0) {
+                dispFoodGst = rawFoodGst * (parseFloat(o.gst_amount) / rawGstSum);
+                dispBevGst  = rawBevGst  * (parseFloat(o.gst_amount) / rawGstSum);
+            }
+            var gstRows = ''
+                + (foodSubtotal > 0
+                    ? '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">Food GST ({{ $globalRestaurantGstPercentage }}%)</div><div class="col-4 text-center fw-semibold">Rs ' + dispFoodGst.toFixed(2) + '</div></div>'
+                    : '')
+                + (beverageSubtotal > 0
+                    ? '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">Beverage GST ({{ $globalBeverageGstPercentage }}%)</div><div class="col-4 text-center fw-semibold">Rs ' + dispBevGst.toFixed(2) + '</div></div>'
+                    : '');
+
             var statusLabel = o.status.charAt(0).toUpperCase() + o.status.slice(1);
 
             var html = ''
@@ -288,9 +338,10 @@ $(document).ready(function () {
                 + '</div>'
                 + foodSection
                 + liquorSection
+                + beverageSection
                 + '<div class="p-3 bg-light border rounded-3">'
                 +   '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">Subtotal</div><div class="col-4 text-center fw-semibold">Rs ' + parseFloat(o.taxable_amount).toFixed(2) + '</div></div>'
-                +   '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">GST (' + parseFloat(o.gst_percentage).toFixed(0) + '%)</div><div class="col-4 text-center fw-semibold">Rs ' + parseFloat(o.gst_amount).toFixed(2) + '</div></div>'
+                +   gstRows
                 +   '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-warning fw-medium">Offer Applied</div><div class="col-4 text-center text-muted fw-semibold">-Rs ' + parseFloat(o.discount_amount).toFixed(2) + '</div></div>'
                 +   '<div class="row mt-3 py-2 bg-dark text-white rounded-3 mx-0"><div class="col-8 text-end">Grand Total</div><div class="col-4 text-center fw-bold fs-5">Rs ' + parseFloat(o.net_amount).toFixed(2) + '</div></div>'
                 + '</div>';

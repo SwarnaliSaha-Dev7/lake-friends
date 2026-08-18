@@ -212,7 +212,7 @@
                                         <span class="fw-semibold text-success" id="cartDiscount">- Rs 0.00</span>
                                     </div>
                                     <div class="d-flex justify-content-between small mb-1">
-                                        <span class="text-muted">GST</span>
+                                        <span class="text-muted">Beverage GST</span>
                                         <span class="fw-semibold" id="cartGstAmt">Rs 0.00</span>
                                     </div>
                                     <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-1">
@@ -902,7 +902,7 @@ $(document).ready(function () {
                 footerRows += '<tr><td colspan="3" class="text-end pe-2 text-success small"><i class="fa-solid fa-tag me-1"></i>Offer Savings</td>'
                     + '<td class="text-end text-nowrap text-success small">- Rs ' + discountAmt.toFixed(2) + '</td></tr>';
             }
-            footerRows += '<tr><td colspan="3" class="text-end pe-2 text-muted small">GST (' + gstPct + '%)</td>'
+            footerRows += '<tr><td colspan="3" class="text-end pe-2 text-muted small">Beverage GST (' + gstPct + '%)</td>'
                 + '<td class="text-end text-nowrap small">Rs ' + gstAmt.toFixed(2) + '</td></tr>'
                 + '<tr class="fw-bold"><td colspan="3" class="text-end pe-2 fs-6">Total Charged</td>'
                 + '<td class="text-end fs-6 text-primary text-nowrap">Rs ' + netAmt.toFixed(2) + '</td></tr>';
