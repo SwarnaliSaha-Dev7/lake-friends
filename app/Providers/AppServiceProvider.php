@@ -39,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
             'FoodItem'                   => \App\Models\FoodItem::class,
             'LiquorServing'              => \App\Models\LiquorServing::class,
             'MembershipPurchaseHistory'  => \App\Models\MembershipPurchaseHistory::class,
+            'MiscItem'                   => \App\Models\MiscItem::class,
         ]);
 
         View::composer('*', function ($view) {

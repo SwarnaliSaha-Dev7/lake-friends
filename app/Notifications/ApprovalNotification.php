@@ -278,6 +278,38 @@ class ApprovalNotification extends Notification
                 $notificationType = 'beverage_price_update';
                 break;
 
+            case 'misc_item_create':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $this->approval->entity?->name ?? $payload['item_name'] ?? $payload['name'] ?? 'a miscellaneous item';
+                $title            = 'Misc Item Add Approval';
+                $message          = "New miscellaneous item \"{$itemName}\" has been added and is waiting for your approval.";
+                $notificationType = 'misc_item_create';
+                break;
+
+            case 'misc_item_delete':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $this->approval->entity?->name ?? $payload['item_name'] ?? $payload['name'] ?? 'a miscellaneous item';
+                $title            = 'Misc Item Delete Approval';
+                $message          = "Deletion request for miscellaneous item \"{$itemName}\" is waiting for your approval.";
+                $notificationType = 'misc_item_delete';
+                break;
+
+            case 'misc_price_update':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $this->approval->entity?->name ?? $payload['item_name'] ?? 'a miscellaneous item';
+                $oldPrice         = $payload['old_price'] ?? 0;
+                $newPrice         = $payload['new_price'] ?? 0;
+                $title            = 'Misc Price Update Approval';
+                $message          = "Price update request for \"{$itemName}\" (₹{$oldPrice} → ₹{$newPrice}) is waiting for your approval.";
+                $notificationType = 'misc_price_update';
+                break;
+
             case 'liquor_serving_create':
             case 'liquor_serving_update':
             case 'liquor_serving_delete':

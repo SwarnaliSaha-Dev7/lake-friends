@@ -54,7 +54,7 @@
                                                 $detail = ($member->name ?? '-') . ($plan ? ' — ' . $plan->name : '');
                                             } elseif (str_contains($mod, 'member')) {
                                                 $detail = $data->entity->email ?? ($data->entity->name ?? '-');
-                                            } elseif (in_array($mod, ['food_price_update', 'liquor_price_update', 'beverage_price_update'])) {
+                                            } elseif (in_array($mod, ['food_price_update', 'liquor_price_update', 'beverage_price_update', 'misc_price_update'])) {
                                                 $eName  = $data->entity->name ?? '-';
                                                 $old    = isset($p['old_price']) ? 'Rs ' . number_format($p['old_price'], 2) : null;
                                                 $new    = isset($p['new_price']) ? 'Rs ' . number_format($p['new_price'], 2) : null;

@@ -9,7 +9,7 @@
 
             @role('admin')
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Master Manage</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('manage-operators.*') || request()->routeIs('manage-gst-rates.*') || request()->routeIs('manage-fine-rules.*') || request()->routeIs('manage-minimum-spend-rules.*') || request()->routeIs('manage-food-categories.*') || request()->routeIs('manage-liquor-categories.*') || request()->routeIs('manage-beverage-categories.*') || request()->routeIs('manage-lockers.*') || request()->routeIs('manage-cards.*') ? 'display: block;' : 'display: none;' }}">
+                <ul class="list-unstyled" style="{{ request()->routeIs('manage-operators.*') || request()->routeIs('manage-gst-rates.*') || request()->routeIs('manage-fine-rules.*') || request()->routeIs('manage-minimum-spend-rules.*') || request()->routeIs('manage-food-categories.*') || request()->routeIs('manage-liquor-categories.*') || request()->routeIs('manage-beverage-categories.*') || request()->routeIs('manage-misc-categories.*') || request()->routeIs('manage-lockers.*') || request()->routeIs('manage-cards.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('manage-operators.*') ? 'active' : '' }}"><a href="{{ route('manage-operators.index') }}">Operator</a></li>
                     <li class="{{ request()->routeIs('manage-gst-rates.*') ? 'active' : '' }}"><a href="{{ route('manage-gst-rates.index') }}">GST Rate</a></li>
                     <li class="{{ request()->routeIs('manage-fine-rules.*') ? 'active' : '' }}"><a href="{{ route('manage-fine-rules.index') }}">Fine Rules</a></li>
@@ -17,6 +17,7 @@
                     <li class="{{ request()->routeIs('manage-food-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-food-categories.index') }}">Food Categories</a></li>
                     <li class="{{ request()->routeIs('manage-liquor-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-liquor-categories.index') }}">Liquor Categories</a></li>
                     <li class="{{ request()->routeIs('manage-beverage-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-beverage-categories.index') }}">Beverage Categories</a></li>
+                    <li class="{{ request()->routeIs('manage-misc-categories.*') ? 'active' : '' }}"><a href="{{ route('manage-misc-categories.index') }}">Misc Categories</a></li>
                     <li class="{{ request()->routeIs('manage-lockers.*') ? 'active' : '' }}"><a href="{{ route('manage-lockers.index') }}">Locker</a></li>
                     <li class="{{ request()->routeIs('manage-cards.*') ? 'active' : '' }}"><a href="{{ route('manage-cards.index') }}">Card Manage</a></li>
                 </ul>
@@ -58,6 +59,15 @@
                 </ul>
             </li>
 
+            <li class="{{ request()->routeIs('manage-misc-items.*') ? 'active' : '' }}"><a href="{{ route('manage-misc-items.index') }}"><i class="fa-solid fa-box"></i> Misc Manage</a></li>
+
+            <li><a href="javascript:void(0)"><i class="fa-solid fa-receipt"></i> Misc Billing</a>
+                <ul class="list-unstyled" style="{{ request()->routeIs('misc-billing.*') || request()->routeIs('misc-bills.*') ? 'display: block;' : 'display: none;' }}">
+                    <li class="{{ request()->routeIs('misc-billing.*') ? 'active' : '' }}"><a href="{{ route('misc-billing.index') }}">New Bill</a></li>
+                    <li class="{{ request()->routeIs('misc-bills.history') ? 'active' : '' }}"><a href="{{ route('misc-bills.history') }}">Bill History</a></li>
+                </ul>
+            </li>
+
             <li class="{{ request()->routeIs('manage-offers.*') ? 'active' : '' }}"><a href="{{ route('manage-offers.index') }}"><i class="fa-solid fa-tag"></i> Offer Manage</a></li>
 
             <li><a href="javascript:void(0)"><i class="fa-brands fa-first-order"></i> Order</a>
@@ -89,7 +99,7 @@
             </li>
 
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Approval</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') || request()->routeIs('foodItemPriceApproval.*') || request()->routeIs('offerApproval.*') || request()->routeIs('liquorApproval.*') || request()->routeIs('beverageApproval.*') || request()->routeIs('godownStockApproval.*') || request()->routeIs('barStockApproval.*') || request()->routeIs('liquorServingApproval.*') ? 'display: block;' : 'display: none;' }}">
+                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') || request()->routeIs('foodItemPriceApproval.*') || request()->routeIs('offerApproval.*') || request()->routeIs('liquorApproval.*') || request()->routeIs('beverageApproval.*') || request()->routeIs('miscApproval.*') || request()->routeIs('godownStockApproval.*') || request()->routeIs('barStockApproval.*') || request()->routeIs('liquorServingApproval.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('memberActionApproval.*') ? 'active' : '' }}"><a href="{{ route('memberActionApproval.list') }}">Members</a></li>
                     <li class="{{ request()->routeIs('foodItemPriceApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('foodItemPriceApproval.list') }}">Food Item</a>
@@ -102,6 +112,9 @@
                     </li>
                     <li class="{{ request()->routeIs('beverageApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('beverageApproval.list') }}">Beverage</a>
+                    </li>
+                    <li class="{{ request()->routeIs('miscApproval.*') ? 'active' : '' }}">
+                        <a href="{{ route('miscApproval.list') }}">Miscellaneous</a>
                     </li>
                     <li class="{{ request()->routeIs('godownStockApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('godownStockApproval.list') }}">Godown Stock</a>

@@ -111,6 +111,17 @@ if (!function_exists('generateBillNo')) {
     }
 }
 
+if (!function_exists('generateMiscBillNo')) {
+    function generateMiscBillNo($forDate = null): string
+    {
+        $clubId = club_id();
+        $carbon = $forDate ? \Carbon\Carbon::parse($forDate) : now();
+        $fy     = financialYearLabel($carbon);
+        $next   = _nextSequenceValue('misc_bill_no', $clubId, $fy);
+        return 'LF/' . $fy . '/' . str_pad($next, 4, '0', STR_PAD_LEFT);
+    }
+}
+
 if (!function_exists('amountToWords')) {
     function amountToWords(float $amount): string
     {

@@ -17,6 +17,8 @@ use App\Http\Controllers\BeverageGodownStockController;
 use App\Http\Controllers\BeverageBarStockController;
 use App\Http\Controllers\LiquorItemManageController;
 use App\Http\Controllers\BeverageItemManageController;
+use App\Http\Controllers\MiscItemManageController;
+use App\Http\Controllers\MiscBillController;
 use App\Http\Controllers\OfferManageController;
 use App\Http\Controllers\Master\CardsManageController;
 use App\Http\Controllers\Master\CardTypesManageController;
@@ -25,6 +27,7 @@ use App\Http\Controllers\Master\FoodCategoryManageController;
 use App\Http\Controllers\Master\GstRatesManageController;
 use App\Http\Controllers\Master\LiquorCategoryManageController;
 use App\Http\Controllers\Master\BeverageCategoryManageController;
+use App\Http\Controllers\Master\MiscCategoryManageController;
 use App\Http\Controllers\Master\LockerManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\MinimumSpendRuleManageController;
@@ -70,6 +73,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('manage-food-categories', FoodCategoryManageController::class);
         Route::resource('manage-liquor-categories', LiquorCategoryManageController::class);
         Route::resource('manage-beverage-categories', BeverageCategoryManageController::class);
+        Route::resource('manage-misc-categories', MiscCategoryManageController::class);
         Route::resource('manage-lockers', LockerManageController::class);
         Route::post('manage-lockers/delink', [LockerManageController::class, 'delink'])->name('manage-lockers.delink');
     });
@@ -181,6 +185,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('manage-beverage-items', BeverageItemManageController::class);
     Route::post('beverage-price-request', [BeverageItemManageController::class, 'requestPriceChange'])->name('beverageItemPriceApproval.request');
 
+    Route::resource('manage-misc-items', MiscItemManageController::class);
+    Route::post('misc-price-request', [MiscItemManageController::class, 'requestPriceChange'])->name('miscItemPriceApproval.request');
+
     Route::resource('liquor-servings', LiquorServingController::class)->only(['index', 'store', 'edit', 'update', 'destroy']);
 
     Route::prefix('manage-liquor-serving-approval')->controller(ActionApprovalController::class)->group(function () {
@@ -199,6 +206,12 @@ Route::middleware('auth')->group(function () {
         Route::get('list',         'beverageApprovalList')->name('beverageApproval.list');
         Route::get('approve/{id}', 'approve')->name('beverageApproval.approve');
         Route::get('reject/{id}',  'reject')->name('beverageApproval.reject');
+    });
+
+    Route::prefix('manage-misc-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',         'miscApprovalList')->name('miscApproval.list');
+        Route::get('approve/{id}', 'approve')->name('miscApproval.approve');
+        Route::get('reject/{id}',  'reject')->name('miscApproval.reject');
     });
 
     Route::resource('manage-offers', OfferManageController::class);
@@ -260,6 +273,15 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{id}/serve',  [BarOrderController::class, 'markServed'])->name('bar-orders.serve');
         Route::patch('/{id}/cancel', [BarOrderController::class, 'cancel'])->name('bar-orders.cancel');
     });
+
+    // Miscellaneous Item Billing
+    Route::get('misc-billing',                [MiscBillController::class, 'index'])->name('misc-billing.index');
+    Route::post('misc-billing',               [MiscBillController::class, 'store'])->name('misc-billing.store');
+    Route::get('misc-bills-history',          [MiscBillController::class, 'history'])->name('misc-bills.history');
+    Route::get('misc-bills-history/download', [MiscBillController::class, 'downloadReport'])->name('misc-bills.report.download');
+    Route::get('misc-bills/{id}',             [MiscBillController::class, 'show'])->name('misc-bills.show');
+    Route::get('misc-bills/{id}/receipt',     [MiscBillController::class, 'downloadReceipt'])->name('misc-bills.receipt');
+    Route::patch('misc-bills/{id}/cancel',    [MiscBillController::class, 'cancel'])->name('misc-bills.cancel');
 });
 
 

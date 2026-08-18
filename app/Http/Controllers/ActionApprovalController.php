@@ -13,6 +13,8 @@ use App\Models\LockerPrice;
 use App\Models\Location;
 use App\Models\LiquorServing;
 use App\Models\Member;
+use App\Models\MiscItem;
+use App\Models\MiscItemPrice;
 use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
 use App\Models\MembershipFormDetail;
@@ -588,6 +590,49 @@ class ActionApprovalController extends Controller
                 }
             }
 
+            if ($data->module == 'misc_price_update') {
+                $payload  = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $itemId   = $data->entity_id;
+                $newPrice = $payload->new_price;
+
+                DB::beginTransaction();
+
+                $currentPrice = MiscItemPrice::where('misc_item_id', $itemId)
+                                             ->where('is_active', 1)
+                                             ->first();
+
+                if ($currentPrice) {
+                    $currentPrice->update([
+                        'is_active'    => 0,
+                        'effective_to' => now()
+                    ]);
+                }
+
+                MiscItemPrice::create([
+                    'misc_item_id'   => $itemId,
+                    'price'          => $newPrice,
+                    'effective_from' => now(),
+                    'is_active'      => 1
+                ]);
+
+                DB::commit();
+            }
+
+            if ($data->module == 'misc_item_create') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = MiscItem::find($data->entity_id);
+                if ($item) {
+                    $item->update(['is_active' => $payload->is_active ?? 1]);
+                }
+            }
+
+            if ($data->module == 'misc_item_delete') {
+                $item = MiscItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            }
+
             if ($data->module == 'liquor_serving_create') {
                 $serving = LiquorServing::find($data->entity_id);
                 if ($serving) {
@@ -808,7 +853,15 @@ class ActionApprovalController extends Controller
                 if ($item) {
                     $item->delete();
                 }
-            } elseif ($data->module == 'liquor_serving_create') {
+            } elseif ($data->module == 'misc_item_create') {
+                $item = MiscItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            }
+            // misc_item_delete / misc_price_update: no rollback needed — nothing
+            // was mutated while pending
+            elseif ($data->module == 'liquor_serving_create') {
                 $serving = LiquorServing::find($data->entity_id);
                 if ($serving) {
                     $serving->forceDelete();
@@ -1068,6 +1121,27 @@ class ActionApprovalController extends Controller
                 ->get();
 
             return view('action_approval.beverage.list', compact('title', 'page_title', 'beverageApprovalData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function miscApprovalList()
+    {
+        try {
+            $title      = 'Misc Approval List';
+            $page_title = 'Miscellaneous Approval';
+            $clubId     = club_id();
+
+            $miscApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
+                ->where('club_id', $clubId)
+                ->whereIn('module', ['misc_item_create', 'misc_item_delete', 'misc_price_update'])
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.misc.list', compact('title', 'page_title', 'miscApprovalData'));
         } catch (\Throwable $th) {
             return $th->getMessage();
         }
