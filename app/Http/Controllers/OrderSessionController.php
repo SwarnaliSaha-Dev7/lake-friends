@@ -17,7 +17,6 @@ use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
-use App\Models\GstRate;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -218,7 +217,12 @@ class OrderSessionController extends Controller
             $memberId      = $session->member_id;
             $netAmount     = (float) $request->input('net_amount');
             $items         = $request->input('items', []);
-            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
+            // Effective GST rate for this order — a food+beverage mix blends two
+            // different rates (and liquor contributes none), so this is derived
+            // from what was actually charged rather than a single fixed rate.
+            $orderTaxable  = (float) $request->input('taxable_amount');
+            $orderGstAmt   = (float) $request->input('gst_amount');
+            $effectiveGst  = $orderTaxable > 0 ? round(($orderGstAmt / $orderTaxable) * 100, 2) : 0;
 
             if (empty($items)) {
                 return response()->json(['statusCode' => 422, 'message' => 'No items in order.']);
@@ -291,10 +295,10 @@ class OrderSessionController extends Controller
                 'member_id'       => $memberId,
                 'order_no'        => $orderNo,
                 'ac_head'         => 'Restaurant Order',
-                'taxable_amount'  => $request->input('taxable_amount'),
+                'taxable_amount'  => $orderTaxable,
                 'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => $restaurantGst,
-                'gst_amount'      => $request->input('gst_amount'),
+                'gst_percentage'  => $effectiveGst,
+                'gst_amount'      => $orderGstAmt,
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
             ]);
@@ -546,14 +550,17 @@ class OrderSessionController extends Controller
                 }
             }
 
-            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
+            // Effective GST rate for the whole bill — pending orders can mix food
+            // (restaurant rate), beverage (beverage rate), and liquor (GST-free),
+            // so this reflects what was actually charged rather than a fixed rate.
+            $effectiveGst = $totalTaxable > 0 ? round(($totalGst / $totalTaxable) * 100, 2) : 0;
 
             // Update session totals
             $session->update([
                 'status'                 => 'billed',
                 'taxable_amount'         => $totalTaxable,
                 'discount_amount'        => $totalDiscount,
-                'gst_percentage'         => $restaurantGst,
+                'gst_percentage'         => $effectiveGst,
                 'gst_amount'             => $totalGst,
                 'net_amount'             => $totalNet,
                 'bill_no'                => generateBillNo($sessionDate),

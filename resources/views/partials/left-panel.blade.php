@@ -89,7 +89,7 @@
             </li>
 
             <li><a href="javascript:void(0)"><i class="fa-solid fa-user-gear"></i> Approval</a>
-                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') || request()->routeIs('foodItemPriceApproval.*') || request()->routeIs('offerApproval.*') || request()->routeIs('liquorApproval.*') || request()->routeIs('godownStockApproval.*') || request()->routeIs('barStockApproval.*') || request()->routeIs('liquorServingApproval.*') ? 'display: block;' : 'display: none;' }}">
+                <ul class="list-unstyled" style="{{ request()->routeIs('memberActionApproval.*') || request()->routeIs('foodItemPriceApproval.*') || request()->routeIs('offerApproval.*') || request()->routeIs('liquorApproval.*') || request()->routeIs('beverageApproval.*') || request()->routeIs('godownStockApproval.*') || request()->routeIs('barStockApproval.*') || request()->routeIs('liquorServingApproval.*') ? 'display: block;' : 'display: none;' }}">
                     <li class="{{ request()->routeIs('memberActionApproval.*') ? 'active' : '' }}"><a href="{{ route('memberActionApproval.list') }}">Members</a></li>
                     <li class="{{ request()->routeIs('foodItemPriceApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('foodItemPriceApproval.list') }}">Food Item</a>
@@ -99,6 +99,9 @@
                     </li>
                     <li class="{{ request()->routeIs('liquorApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('liquorApproval.list') }}">Liquor</a>
+                    </li>
+                    <li class="{{ request()->routeIs('beverageApproval.*') ? 'active' : '' }}">
+                        <a href="{{ route('beverageApproval.list') }}">Beverage</a>
                     </li>
                     <li class="{{ request()->routeIs('godownStockApproval.*') ? 'active' : '' }}">
                         <a href="{{ route('godownStockApproval.list') }}">Godown Stock</a>

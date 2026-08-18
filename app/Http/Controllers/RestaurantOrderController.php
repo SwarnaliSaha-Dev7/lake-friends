@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\FoodItem;
-use App\Models\GstRate;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
 use App\Models\OrderSession;
@@ -416,7 +415,12 @@ class RestaurantOrderController extends Controller
                 }
             }
 
-            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
+            // Effective GST rate for this order — a food+beverage mix blends two
+            // different rates (and liquor contributes none), so this is derived
+            // from what was actually charged rather than a single fixed rate.
+            $taxableAmount = (float) $request->input('taxable_amount');
+            $gstAmount     = (float) $request->input('gst_amount');
+            $effectiveGst  = $taxableAmount > 0 ? round(($gstAmount / $taxableAmount) * 100, 2) : 0;
 
             // Generate order number
             $orderNo = generateOrderNo();
@@ -429,10 +433,10 @@ class RestaurantOrderController extends Controller
                 'mr_no'           => generateMrNo(),
                 'bill_no'         => generateBillNo(),
                 'ac_head'         => 'Restaurant Order',
-                'taxable_amount'  => $request->input('taxable_amount'),
+                'taxable_amount'  => $taxableAmount,
                 'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => $restaurantGst,
-                'gst_amount'      => $request->input('gst_amount'),
+                'gst_percentage'  => $effectiveGst,
+                'gst_amount'      => $gstAmount,
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
             ]);

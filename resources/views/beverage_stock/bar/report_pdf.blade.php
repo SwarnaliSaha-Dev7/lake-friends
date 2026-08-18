@@ -86,7 +86,7 @@
         </tr>
     </table>
 
-    <div class="note">* Spirits shown in ml | Beer shown in BTL | Summary totals in bottle equivalents (ml / size)</div>
+    <div class="note">* All quantities shown in bottle/can/glass units (BTL)</div>
 
     {{-- Report Table --}}
     <table>
@@ -135,9 +135,7 @@
                     <td>{{ $row['item']->name }}</td>
                     <td>{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                     <td>
-                        @if($isBeer) <span class="badge-beer">Beer</span>
-                        @else <span class="badge-spirit">Spirit</span>
-                        @endif
+                        <span class="badge-beer">Beverage</span>
                     </td>
                     <td>{{ $sizeMl ? $sizeMl . ' ml' : '—' }}</td>
                     <td>{{ $fmtQty($row['opening_qty']) }}</td>

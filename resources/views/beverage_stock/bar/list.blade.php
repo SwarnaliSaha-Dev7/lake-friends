@@ -157,11 +157,7 @@
                                     <td class="text-nowrap fw-medium">{{ $item->name }}</td>
                                     <td class="text-nowrap">{{ $item->foodItemCat->name ?? '—' }}</td>
                                     <td class="text-nowrap">
-                                        @if($isBeer)
-                                            <span class="badge bg-warning text-dark">Beer</span>
-                                        @else
-                                            <span class="badge bg-info text-white">Spirit</span>
-                                        @endif
+                                        <span class="badge text-white" style="background:#0dcaf0;">Beverage</span>
                                     </td>
                                     <td class="text-nowrap">{{ $item->size_ml ? $item->size_ml . ' ml' : '—' }}</td>
                                     <td class="text-nowrap fw-bold">{{ $barDisplay }}</td>

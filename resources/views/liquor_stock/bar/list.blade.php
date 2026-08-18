@@ -137,6 +137,7 @@
                                     $godownQty   = $godownStock ? (int) $godownStock->quantity : 0;
                                     $isPending   = in_array($item->id, $pendingItemIds);
                                     $isBeer      = (bool) $item->is_beer;
+                                    $isWine      = $isBeer && strtolower($item->foodItemCat->name ?? '') === 'wine';
                                     $sizeMl      = (int) ($item->size_ml ?? 1);
                                     $alertQty    = (int) ($item->low_stock_alert_qty ?? 0);
                                     $barBtlEq    = $isBeer ? $barQty : ($sizeMl > 0 ? floor($barQty / $sizeMl) : 0);
@@ -157,7 +158,9 @@
                                     <td class="text-nowrap fw-medium">{{ $item->name }}</td>
                                     <td class="text-nowrap">{{ $item->foodItemCat->name ?? '—' }}</td>
                                     <td class="text-nowrap">
-                                        @if($isBeer)
+                                        @if($isWine)
+                                            <span class="badge text-white" style="background:#9d174d;">Wine</span>
+                                        @elseif($isBeer)
                                             <span class="badge bg-warning text-dark">Beer</span>
                                         @else
                                             <span class="badge bg-info text-white">Spirit</span>

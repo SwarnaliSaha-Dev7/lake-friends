@@ -151,6 +151,41 @@
                     </div>
                 </div>
 
+                <!-- Beverage Order Summary -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="member-list-part position-relative">
+                            <label class="form-label fw-semibold text-dark mb-3">
+                                <span class="text-info rounded-3 label-icon p-1 d-inline-flex align-items-center justify-content-center me-2">
+                                    <i class="fa-solid fa-bottle-water"></i>
+                                </span>Beverage Order Summary
+                            </label>
+                            <div class="table-responsive">
+                                <table class="table rounded-3 overflow-hidden" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-white fw-medium align-middle text-nowrap">Item Name</th>
+                                            <th class="text-white fw-medium align-middle text-nowrap">Quantity</th>
+                                            <th class="text-white fw-medium align-middle text-nowrap">Unit Price</th>
+                                            <th class="text-white fw-medium align-middle text-nowrap">Offer</th>
+                                            <th class="text-white fw-medium align-middle text-nowrap">Total</th>
+                                            <th class="text-white fw-medium align-middle text-nowrap">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cbBeverageTableBody">
+                                        <tr id="cbBeverageEmptyRow">
+                                            <td colspan="6" class="text-center text-muted py-3 small">No beverage items added.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="text-end mt-2">
+                                    <button class="btn btn-info btn-sm cb-add-beverage-item" type="button">+ Add Item</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Totals -->
                 <div class="total-section">
                     <div class="mt-4 p-3 bg-light border rounded-3">
@@ -159,8 +194,12 @@
                             <div class="col-4 text-center fw-semibold" id="cbOrderSubtotal">Rs 0</div>
                         </div>
                         <div class="row mb-2 border-bottom p-2">
-                            <div class="col-8 text-end text-muted">GST (5%)</div>
+                            <div class="col-8 text-end text-muted">Food GST ({{ $globalRestaurantGstPercentage }}%)</div>
                             <div class="col-4 text-center fw-semibold" id="cbOrderGst">Rs 0</div>
+                        </div>
+                        <div class="row mb-2 border-bottom p-2">
+                            <div class="col-8 text-end text-muted">Beverage GST ({{ $globalBeverageGstPercentage }}%)</div>
+                            <div class="col-4 text-center fw-semibold" id="cbOrderBeverageGst">Rs 0</div>
                         </div>
                         <div class="row mb-2 border-bottom p-2">
                             <div class="col-8 text-end text-warning fw-medium">Offer applied</div>
@@ -188,11 +227,14 @@
 @section('customJS')
 <script>
 $(function () {
-    var GST_RATE       = {{ $globalRestaurantGstPercentage / 100 }};
-    var cbFoodItems    = [];
-    var cbLiquorItems  = [];
-    var cbFoodOfferMap  = {};
-    var cbLiquorOfferMap = {};
+    var GST_RATE          = {{ $globalRestaurantGstPercentage / 100 }};
+    var BEVERAGE_GST_RATE = {{ $globalBeverageGstPercentage / 100 }};
+    var cbFoodItems       = [];
+    var cbLiquorItems     = [];
+    var cbBeverageItems   = [];
+    var cbFoodOfferMap     = {};
+    var cbLiquorOfferMap   = {};
+    var cbBeverageOfferMap = {};
     var cbItemsLoaded  = false;
     var cbSessionId    = null;
 
@@ -211,15 +253,17 @@ $(function () {
         $('#cbOrderDate').text(date);
         $('#cbFoodTableBody').html('<tr id="cbFoodEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No food items added.</td></tr>');
         $('#cbLiquorTableBody').html('<tr id="cbLiquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');
+        $('#cbBeverageTableBody').html('<tr id="cbBeverageEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No beverage items added.</td></tr>');
         cbRecalc();
         $('#cbOrderModal').modal('show');
 
         if (!cbItemsLoaded) {
             $.get('{{ route("getOrderItems") }}', function (res) {
                 if (res.statusCode == 200) {
-                    cbFoodItems    = res.foodItems;
-                    cbLiquorItems  = res.liquorItems;
-                    cbItemsLoaded  = true;
+                    cbFoodItems     = res.foodItems;
+                    cbLiquorItems   = res.liquorItems;
+                    cbBeverageItems = res.beverageItems;
+                    cbItemsLoaded   = true;
                 }
                 cbAddFoodRow();
             });
@@ -235,6 +279,18 @@ $(function () {
             var pr = (it.food_item_price && it.food_item_price.price) ? it.food_item_price.price : 0;
             cbFoodOfferMap[it.id] = it.offer || null;
             html += '<option value="' + it.id + '" data-price="' + pr + '">' + it.name + '</option>';
+        });
+        return html;
+    }
+    function cbBuildBeverageOptions() {
+        var html = '<option value="">-- Select Item --</option>';
+        cbBeverageItems.forEach(function (it) {
+            cbBeverageOfferMap[it.id] = it.offer || null;
+            html += '<option value="' + it.id + '"'
+                + ' data-food-item-id="' + it.food_item_id + '"'
+                + ' data-price="' + it.price + '"'
+                + ' data-bar-stock="' + (it.bar_stock || 0) + '">'
+                + it.name + '</option>';
         });
         return html;
     }
@@ -266,6 +322,20 @@ $(function () {
             + '<td class="text-nowrap cb-food-offer text-muted small">—</td>'
             + '<td><input type="text" class="form-control form-control-sm bg-light border-warning cb-food-total-price" value="Rs 0" readonly></td>'
             + '<td><button class="border-0 bg-light p-1 rounded-3 lh-1 cb-delete-food-row" type="button" title="Delete"><small><i class="fa-solid fa-trash"></i></small></button></td>'
+            + '</tr>';
+    }
+    function cbBuildBeverageRow() {
+        return '<tr class="cb-beverage-order-row">'
+            + '<td style="width:40%;"><select class="form-select form-select-sm cb-beverage-item-sel shadow-none">' + cbBuildBeverageOptions() + '</select></td>'
+            + '<td><div class="input-group input-group-sm" style="width:100px;">'
+            + '<button class="btn btn-outline-warning fw-bold py-0 cb-beverage-qty-minus" type="button">-</button>'
+            + '<input type="text" class="form-control text-center border-warning px-1 cb-beverage-qty-input" value="1" readonly>'
+            + '<button class="btn btn-outline-warning fw-bold py-0 cb-beverage-qty-plus" type="button">+</button>'
+            + '</div></td>'
+            + '<td><input type="text" class="form-control form-control-sm bg-light border-warning cb-beverage-unit-price" value="Rs 0" readonly></td>'
+            + '<td class="text-nowrap cb-beverage-offer text-muted small">—</td>'
+            + '<td><input type="text" class="form-control form-control-sm bg-light border-warning cb-beverage-total-price" value="Rs 0" readonly></td>'
+            + '<td><button class="border-0 bg-light p-1 rounded-3 lh-1 cb-delete-beverage-row" type="button" title="Delete"><small><i class="fa-solid fa-trash"></i></small></button></td>'
             + '</tr>';
     }
     function cbBuildLiquorRow() {
@@ -303,9 +373,17 @@ $(function () {
         $row.find('.cb-liquor-item-sel').select2({ dropdownParent: $('body'), placeholder: 'Search liquor item...', allowClear: true, width: '100%' });
         cbRecalc();
     }
+    function cbAddBeverageRow() {
+        $('#cbBeverageEmptyRow').remove();
+        var $row = $(cbBuildBeverageRow());
+        $('#cbBeverageTableBody').append($row);
+        $row.find('.cb-beverage-item-sel').select2({ dropdownParent: $('body'), placeholder: 'Search beverage item...', allowClear: true, width: '100%' });
+        cbRecalc();
+    }
 
-    $(document).on('click', '.cb-add-food-item',   function () { cbAddFoodRow();   });
-    $(document).on('click', '.cb-add-liquor-item', function () { cbAddLiquorRow(); });
+    $(document).on('click', '.cb-add-food-item',     function () { cbAddFoodRow();     });
+    $(document).on('click', '.cb-add-liquor-item',   function () { cbAddLiquorRow();   });
+    $(document).on('click', '.cb-add-beverage-item', function () { cbAddBeverageRow(); });
 
     /* ── Helpers ── */
     function cbReadOffer($opt, map) {
@@ -361,6 +439,42 @@ $(function () {
         var qty = parseInt($row.find('.cb-food-qty-input').val()) || 1;
         var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
         $row.find('.cb-food-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
+        cbRecalc();
+    }
+
+    /* ── Beverage item change ── */
+    $(document).on('change', '.cb-beverage-item-sel', function () {
+        var o = cbReadOffer($(this).find('option:selected'), cbBeverageOfferMap);
+        var $row = $(this).closest('tr');
+        var qty = parseInt($row.find('.cb-beverage-qty-input').val()) || 1;
+        var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+        $row.find('.cb-beverage-unit-price').val('Rs ' + o.price.toFixed(2));
+        $row.find('.cb-beverage-offer').html(cbOfferBadge(o.ofType, o.ofVal, o.buyQty, o.getQty));
+        $row.find('.cb-beverage-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
+        cbRecalc();
+    });
+
+    /* ── Beverage qty +/- ── */
+    $(document).on('click', '.cb-beverage-qty-plus', function () {
+        var $row = $(this).closest('tr');
+        var $inp = $row.find('.cb-beverage-qty-input');
+        var $opt = $row.find('.cb-beverage-item-sel option:selected');
+        var barStock = parseInt($opt.attr('data-bar-stock')) || 0;
+        var curQty = parseInt($inp.val()) || 1;
+        if (barStock > 0 && curQty >= barStock) { toastr.warning('Stock limit reached (' + barStock + ' available).'); return; }
+        $inp.val(curQty + 1);
+        cbUpdateBeverageRowTotal($row);
+    });
+    $(document).on('click', '.cb-beverage-qty-minus', function () {
+        var $inp = $(this).closest('tr').find('.cb-beverage-qty-input');
+        $inp.val(Math.max(1, parseInt($inp.val()) - 1));
+        cbUpdateBeverageRowTotal($(this).closest('tr'));
+    });
+    function cbUpdateBeverageRowTotal($row) {
+        var o = cbReadOffer($row.find('.cb-beverage-item-sel option:selected'), cbBeverageOfferMap);
+        var qty = parseInt($row.find('.cb-beverage-qty-input').val()) || 1;
+        var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+        $row.find('.cb-beverage-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
         cbRecalc();
     }
 
@@ -432,10 +546,16 @@ $(function () {
             $('#cbLiquorTableBody').html('<tr id="cbLiquorEmptyRow"><td colspan="7" class="text-center text-muted py-3 small">No liquor items added.</td></tr>');
         cbRecalc();
     });
+    $(document).on('click', '.cb-delete-beverage-row', function () {
+        $(this).closest('tr').remove();
+        if (!$('#cbBeverageTableBody .cb-beverage-order-row').length)
+            $('#cbBeverageTableBody').html('<tr id="cbBeverageEmptyRow"><td colspan="6" class="text-center text-muted py-3 small">No beverage items added.</td></tr>');
+        cbRecalc();
+    });
 
-    /* ── Recalc ── */
+    /* ── Recalc (Food GST at restaurant rate, Beverage GST at its own rate, none on liquor) ── */
     function cbRecalc() {
-        var foodSub = 0, foodDisc = 0, liquorSub = 0, liquorDisc = 0;
+        var foodSub = 0, foodDisc = 0, liquorSub = 0, liquorDisc = 0, bevSub = 0, bevDisc = 0;
         $('#cbFoodTableBody .cb-food-order-row').each(function () {
             var o = cbReadOffer($(this).find('.cb-food-item-sel option:selected'), cbFoodOfferMap);
             var q = parseInt($(this).find('.cb-food-qty-input').val()) || 0;
@@ -448,13 +568,21 @@ $(function () {
             liquorSub  += o.price * q;
             liquorDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
         });
-        var sub   = foodSub + liquorSub;
-        var disc  = foodDisc + liquorDisc;
-        var gst   = Math.round((foodSub - foodDisc) * GST_RATE * 100) / 100;
-        var grand = sub - disc + gst;
+        $('#cbBeverageTableBody .cb-beverage-order-row').each(function () {
+            var o = cbReadOffer($(this).find('.cb-beverage-item-sel option:selected'), cbBeverageOfferMap);
+            var q = parseInt($(this).find('.cb-beverage-qty-input').val()) || 0;
+            bevSub  += o.price * q;
+            bevDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+        });
+        var sub    = foodSub + liquorSub + bevSub;
+        var disc   = foodDisc + liquorDisc + bevDisc;
+        var gst    = Math.round((foodSub - foodDisc) * GST_RATE * 100) / 100;
+        var bevGst = Math.round((bevSub - bevDisc) * BEVERAGE_GST_RATE * 100) / 100;
+        var grand  = sub - disc + gst + bevGst;
         $('#cbOrderSubtotal').text('Rs ' + sub.toFixed(2));
         $('#cbOrderOfferApplied').text('-Rs ' + disc.toFixed(2));
         $('#cbOrderGst').text('Rs ' + gst.toFixed(2));
+        $('#cbOrderBeverageGst').text('Rs ' + bevGst.toFixed(2));
         $('#cbOrderGrandTotal').text('Rs ' + grand.toFixed(2));
 
     }
@@ -504,10 +632,31 @@ $(function () {
             });
         });
 
+        $('#cbBeverageTableBody .cb-beverage-order-row').each(function () {
+            var $opt   = $(this).find('.cb-beverage-item-sel option:selected');
+            var itemId = $opt.val();
+            if (!itemId) { valid = false; return false; }
+            var foodItemId = $opt.attr('data-food-item-id') || itemId;
+            var o    = cbReadOffer($opt, cbBeverageOfferMap);
+            var qty  = parseInt($(this).find('.cb-beverage-qty-input').val()) || 1;
+            var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+            items.push({
+                food_item_id:  foodItemId,
+                quantity:      qty,
+                unit:          'btl',
+                is_beer:       true,
+                volume_ml:     null,
+                deduct_qty:    qty,
+                unit_price:    o.price,
+                offer_applied: o.ofType ? { type_slug: o.ofType, discount_value: o.ofVal, buy_qty: o.buyQty, get_qty: o.getQty } : null,
+                total_amount:  parseFloat((o.price * qty - disc).toFixed(2)),
+            });
+        });
+
         if (!items.length) { toastr.warning('Please add at least one item.'); return; }
         if (!valid)        { toastr.warning('Please select an item for each row.'); return; }
 
-        var foodSub = 0, foodDisc = 0, liquorSub = 0, liquorDisc = 0;
+        var foodSub = 0, foodDisc = 0, liquorSub = 0, liquorDisc = 0, bevSub = 0, bevDisc = 0;
         $('#cbFoodTableBody .cb-food-order-row').each(function () {
             var o = cbReadOffer($(this).find('.cb-food-item-sel option:selected'), cbFoodOfferMap);
             var q = parseInt($(this).find('.cb-food-qty-input').val()) || 0;
@@ -520,10 +669,17 @@ $(function () {
             liquorSub  += o.price * q;
             liquorDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
         });
-        var subtotal  = foodSub + liquorSub;
-        var totalDisc = foodDisc + liquorDisc;
+        $('#cbBeverageTableBody .cb-beverage-order-row').each(function () {
+            var o = cbReadOffer($(this).find('.cb-beverage-item-sel option:selected'), cbBeverageOfferMap);
+            var q = parseInt($(this).find('.cb-beverage-qty-input').val()) || 0;
+            bevSub  += o.price * q;
+            bevDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+        });
+        var subtotal  = foodSub + liquorSub + bevSub;
+        var totalDisc = foodDisc + liquorDisc + bevDisc;
         var gst       = Math.round((foodSub - foodDisc) * GST_RATE * 100) / 100;
-        var grand     = parseFloat((subtotal - totalDisc + gst).toFixed(2));
+        var bevGst    = Math.round((bevSub - bevDisc) * BEVERAGE_GST_RATE * 100) / 100;
+        var grand     = parseFloat((subtotal - totalDisc + gst + bevGst).toFixed(2));
 
         var $btn = $(this);
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Placing...');
@@ -537,7 +693,7 @@ $(function () {
                 items:           items,
                 taxable_amount:  parseFloat(subtotal.toFixed(2)),
                 discount_amount: parseFloat(totalDisc.toFixed(2)),
-                gst_amount:      gst,
+                gst_amount:      parseFloat((gst + bevGst).toFixed(2)),
                 net_amount:      grand,
             }),
             success: function (res) {

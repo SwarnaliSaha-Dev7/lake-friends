@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\FoodItem;
-use App\Models\GstRate;
 use App\Models\FoodItemCurrentStock;
 use App\Models\Location;
 use App\Models\OrderSession;
@@ -89,7 +88,12 @@ class CancelledBillController extends Controller
                 }
             }
 
-            $restaurantGst = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'restaurant')->value('gst_percentage') ?? 0);
+            // Effective GST rate for this order — a food+beverage mix blends two
+            // different rates (and liquor contributes none), so this is derived
+            // from what was actually charged rather than a single fixed rate.
+            $orderTaxable = (float) $request->input('taxable_amount');
+            $orderGstAmt  = (float) $request->input('gst_amount');
+            $effectiveGst = $orderTaxable > 0 ? round(($orderGstAmt / $orderTaxable) * 100, 2) : 0;
 
             // Create order (backdated to session's original date)
             $orderNo = generateOrderNo($sessionDate);
@@ -99,10 +103,10 @@ class CancelledBillController extends Controller
                 'member_id'       => $session->member_id,
                 'order_no'        => $orderNo,
                 'ac_head'         => 'Restaurant Order',
-                'taxable_amount'  => $request->input('taxable_amount'),
+                'taxable_amount'  => $orderTaxable,
                 'discount_amount' => $request->input('discount_amount'),
-                'gst_percentage'  => $restaurantGst,
-                'gst_amount'      => $request->input('gst_amount'),
+                'gst_percentage'  => $effectiveGst,
+                'gst_amount'      => $orderGstAmt,
                 'net_amount'      => $netAmount,
                 'status'          => 'pending',
             ]);

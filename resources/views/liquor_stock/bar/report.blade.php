@@ -138,6 +138,7 @@
                                     $alertQty = (int) ($row['item']->low_stock_alert_qty ?? 0);
                                     $sizeMl   = $row['size_ml'];
                                     $isBeer   = $row['is_beer'];
+                                    $isWine   = $isBeer && strtolower($row['item']->foodItemCat->name ?? '') === 'wine';
                                     $unit     = $row['unit'];
                                     $closing  = $row['closing_qty'];
                                     $closingBtlEq = $isBeer ? $closing : ($sizeMl > 0 ? floor($closing / $sizeMl) : 0);
@@ -160,7 +161,9 @@
                                     <td class="text-nowrap fw-medium">{{ $row['item']->name }}</td>
                                     <td class="text-nowrap">{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                                     <td class="text-nowrap">
-                                        @if($isBeer)
+                                        @if($isWine)
+                                            <span class="badge text-white" style="background:#9d174d;">Wine</span>
+                                        @elseif($isBeer)
                                             <span class="badge bg-warning text-dark">Beer</span>
                                         @else
                                             <span class="badge bg-info text-white">Spirit</span>

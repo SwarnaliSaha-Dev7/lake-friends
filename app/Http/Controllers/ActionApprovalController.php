@@ -469,7 +469,7 @@ class ActionApprovalController extends Controller
                 }
             }
 
-            if($data->module == 'food_price_update' || $data->module == 'liquor_price_update'){
+            if($data->module == 'food_price_update' || $data->module == 'liquor_price_update' || $data->module == 'beverage_price_update'){
 
                 $payload  = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
                 $itemId   = $data->entity_id;
@@ -564,6 +564,21 @@ class ActionApprovalController extends Controller
             }
 
             if ($data->module == 'liquor_item_delete') {
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            }
+
+            if ($data->module == 'beverage_item_create') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->update(['is_active' => $payload->is_active ?? 1]);
+                }
+            }
+
+            if ($data->module == 'beverage_item_delete') {
                 $item = FoodItem::find($data->entity_id);
                 if ($item) {
                     $item->delete();
@@ -781,6 +796,11 @@ class ActionApprovalController extends Controller
                     $offer->update(['status' => $revertStatus]);
                 }
             } elseif ($data->module == 'liquor_item_create') {
+                $item = FoodItem::find($data->entity_id);
+                if ($item) {
+                    $item->delete();
+                }
+            } elseif ($data->module == 'beverage_item_create') {
                 $item = FoodItem::find($data->entity_id);
                 if ($item) {
                     $item->delete();
@@ -1024,6 +1044,27 @@ class ActionApprovalController extends Controller
                 ->get();
 
             return view('action_approval.liquor.list', compact('title', 'page_title', 'liquorApprovalData'));
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function beverageApprovalList()
+    {
+        try {
+            $title      = 'Beverage Approval List';
+            $page_title = 'Beverage Approval';
+            $clubId     = club_id();
+
+            $beverageApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
+                ->where('club_id', $clubId)
+                ->whereIn('module', ['beverage_item_create', 'beverage_item_delete', 'beverage_price_update'])
+                ->where('maker_user_id', '!=', Auth::id())
+                ->where('status', 'pending')
+                ->latest()
+                ->get();
+
+            return view('action_approval.beverage.list', compact('title', 'page_title', 'beverageApprovalData'));
         } catch (\Throwable $th) {
             return $th->getMessage();
         }

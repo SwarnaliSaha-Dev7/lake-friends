@@ -32,6 +32,7 @@
         .text-danger  { color: #dc3545; font-weight: bold; }
         .badge-beer    { background: #ffc107; color: #212529; padding: 1px 5px; border-radius: 3px; font-size: 8px; }
         .badge-spirit  { background: #17a2b8; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 8px; }
+        .badge-wine    { background: #9d174d; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 8px; }
         .badge-danger  { background: #dc3545; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 8px; }
         .badge-warning { background: #ffc107; color: #212529; padding: 1px 5px; border-radius: 3px; font-size: 8px; }
 
@@ -112,6 +113,7 @@
                 @php
                     $alertQty     = (int) ($row['item']->low_stock_alert_qty ?? 0);
                     $isBeer       = $row['is_beer'];
+                    $isWine       = $isBeer && strtolower($row['item']->foodItemCat->name ?? '') === 'wine';
                     $sizeMl       = $row['size_ml'];
                     $unit         = $row['unit'];
                     $closing      = $row['closing_qty'];
@@ -135,7 +137,8 @@
                     <td>{{ $row['item']->name }}</td>
                     <td>{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                     <td>
-                        @if($isBeer) <span class="badge-beer">Beer</span>
+                        @if($isWine) <span class="badge-wine">Wine</span>
+                        @elseif($isBeer) <span class="badge-beer">Beer</span>
                         @else <span class="badge-spirit">Spirit</span>
                         @endif
                     </td>

@@ -111,7 +111,7 @@
                             @endif
                         </small>
                     </h2>
-                    <small class="text-muted">* Spirits shown in ml | Beer shown in BTL | Totals in bottle equivalents</small>
+                    <small class="text-muted">* All quantities shown in bottle/can/glass units (BTL)</small>
                 </div>
                 <div class="table-responsive">
                     <table class="table rounded-3 overflow-hidden clubmemberlist2" cellspacing="0" width="100%">
@@ -160,11 +160,7 @@
                                     <td class="text-nowrap fw-medium">{{ $row['item']->name }}</td>
                                     <td class="text-nowrap">{{ $row['item']->foodItemCat->name ?? '—' }}</td>
                                     <td class="text-nowrap">
-                                        @if($isBeer)
-                                            <span class="badge bg-warning text-dark">Beer</span>
-                                        @else
-                                            <span class="badge bg-info text-white">Spirit</span>
-                                        @endif
+                                        <span class="badge text-white" style="background:#0dcaf0;">Beverage</span>
                                     </td>
                                     <td class="text-nowrap">{{ $sizeMl ? $sizeMl . ' ml' : '—' }}</td>
                                     <td class="text-nowrap">{{ $fmtQty($row['opening_qty']) }}</td>

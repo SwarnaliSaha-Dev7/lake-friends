@@ -275,6 +275,7 @@ class BeverageBarStockController extends Controller
             return [
                 'item'           => $item,
                 'unit'           => 'BTL',
+                'is_beer'        => true, // beverages are always whole-unit sale, like beer
                 'size_ml'        => (int) ($item->size_ml ?? 0),
                 'opening_qty'    => $openingQty,
                 'in_qty'         => $inQty,

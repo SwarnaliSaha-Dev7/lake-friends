@@ -238,6 +238,7 @@
                                     <button type="button" class="btn btn-outline-secondary active bar-type-filter" data-filter="all">All</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="spirit">Spirit</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beer">Beer</button>
+                                    <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="wine">Wine</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="cocktail">Cocktail</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beverage">Beverage</button>
                                 </div>
@@ -356,6 +357,12 @@ $(document).ready(function () {
                 typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#0dcaf0;">Beverage</span>';
                 sizeTxt      = item.size_ml ? item.size_ml + ' ml' : '';
                 itemType     = 'beverage';
+            } else if (item.is_beer && String(item.category).toLowerCase() === 'wine') {
+                // Wine — sold whole-bottle like beer (750/375/187ml etc.), just labeled distinctly
+                stockDisplay = item.bar_stock + ' BTL';
+                typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#9d174d;">Wine</span>';
+                sizeTxt      = item.size_ml ? item.size_ml + ' ml' : '';
+                itemType     = 'wine';
             } else if (item.is_beer) {
                 stockDisplay = item.bar_stock + ' BTL';
                 typeBadge    = '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Beer</span>';

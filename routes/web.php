@@ -195,6 +195,12 @@ Route::middleware('auth')->group(function () {
         Route::get('reject/{id}',  'reject')->name('liquorApproval.reject');
     });
 
+    Route::prefix('manage-beverage-approval')->controller(ActionApprovalController::class)->group(function () {
+        Route::get('list',         'beverageApprovalList')->name('beverageApproval.list');
+        Route::get('approve/{id}', 'approve')->name('beverageApproval.approve');
+        Route::get('reject/{id}',  'reject')->name('beverageApproval.reject');
+    });
+
     Route::resource('manage-offers', OfferManageController::class);
 
     // Godown Stock
