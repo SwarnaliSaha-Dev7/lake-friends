@@ -413,6 +413,7 @@ class BeverageItemManageController extends Controller
                     'checker_user_id'         => Auth::id(),
                     'status'                  => 'approved',
                     'approved_or_rejected_at' => now(),
+                    'request_payload'         => json_encode(['item_id' => $id, 'item_name' => $beverageItem->name]),
                 ]);
 
                 $beverageItem->delete();
@@ -430,6 +431,7 @@ class BeverageItemManageController extends Controller
                 'entity_id'       => $beverageItem->id,
                 'maker_user_id'   => Auth::id(),
                 'status'          => 'pending',
+                'request_payload' => json_encode(['item_id' => $id, 'item_name' => $beverageItem->name]),
             ]);
 
             $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
