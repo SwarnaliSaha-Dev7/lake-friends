@@ -566,6 +566,9 @@ class ActionApprovalController extends Controller
             if ($data->module == 'liquor_item_delete') {
                 $item = FoodItem::find($data->entity_id);
                 if ($item) {
+                    // Take the item's peg/cocktail servings down with it — see the
+                    // same cascade in LiquorItemManageController::destroy().
+                    LiquorServing::where('food_item_id', $item->id)->delete();
                     $item->delete();
                 }
             }

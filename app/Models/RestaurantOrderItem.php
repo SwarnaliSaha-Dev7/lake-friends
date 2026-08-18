@@ -27,6 +27,8 @@ class RestaurantOrderItem extends Model
 
     public function foodItem()
     {
-        return $this->belongsTo(FoodItem::class);
+        // withTrashed: a menu item can be deleted after it's been ordered — past
+        // orders/invoices should still show what was actually sold.
+        return $this->belongsTo(FoodItem::class)->withTrashed();
     }
 }

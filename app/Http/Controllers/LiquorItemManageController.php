@@ -6,6 +6,7 @@ use App\Models\ActionApproval;
 use App\Models\FoodCategory;
 use App\Models\FoodItem;
 use App\Models\FoodItemPrice;
+use App\Models\LiquorServing;
 use App\Models\User;
 use App\Notifications\ApprovalNotification;
 use Illuminate\Http\Request;
@@ -426,6 +427,10 @@ class LiquorItemManageController extends Controller
             }
 
             if (Auth::user()->hasRole('admin')) {
+                // A deleted item's own peg/cocktail servings must go with it — otherwise
+                // they keep showing up as orderable (with stale stock) even though the
+                // base item is gone.
+                LiquorServing::where('food_item_id', $liquorItem->id)->delete();
                 $liquorItem->delete();
                 return response()->json(['statusCode' => 200, 'message' => 'Liquor item deleted successfully.']);
             }
