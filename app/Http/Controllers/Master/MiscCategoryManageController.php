@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\MiscCategory;
+use App\Models\MiscItem;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -136,6 +137,14 @@ class MiscCategoryManageController extends Controller
         $miscCats    = MiscCategory::where('club_id', $club_id)
                                   ->where('id', $id)
                                   ->firstOrFail();
+
+        $inUse = MiscItem::where('misc_category_id', $miscCats->id)->exists();
+
+        if ($inUse) {
+            return redirect()
+                ->route('manage-misc-categories.index')
+                ->with('error', 'Cannot delete this category. It is assigned to one or more Misc items.');
+        }
 
         $miscCats->delete();
 

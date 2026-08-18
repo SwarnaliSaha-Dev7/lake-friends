@@ -129,6 +129,10 @@
                     <label class="form-label small mb-1">Buyer Contact <span class="text-muted">(optional)</span></label>
                     <input type="text" id="miscBuyerContact" class="form-control form-control-sm shadow-none" placeholder="Phone number">
                 </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Event / Booking Date <span class="text-muted">(optional — for advance bookings like Banquet Rent)</span></label>
+                    <input type="date" id="miscEventDate" class="form-control form-control-sm shadow-none">
+                </div>
                 <div class="row g-2 mb-2">
                     <div class="col-6">
                         <label class="form-label small mb-1">Payment Mode</label>
@@ -148,7 +152,7 @@
                 </div>
                 <div class="mb-2">
                     <label class="form-label small mb-1">Remarks / Notes <span class="text-muted">(optional)</span></label>
-                    <textarea id="miscRemarks" class="form-control form-control-sm shadow-none" rows="2" placeholder="e.g. event date, size, any note about this bill"></textarea>
+                    <textarea id="miscRemarks" class="form-control form-control-sm shadow-none" rows="2" placeholder="e.g. size, guest count, any note about this bill"></textarea>
                 </div>
 
                 <button type="button" id="placeMiscBillBtn" class="btn btn-primary w-100 fw-semibold mt-2" style="display:none;">
@@ -171,6 +175,7 @@
                                 <th class="text-white fw-medium text-nowrap">Buyer</th>
                                 <th class="text-white fw-medium text-nowrap">Time</th>
                                 <th class="text-white fw-medium text-nowrap">Items</th>
+                                <th class="text-white fw-medium text-nowrap">Event Date</th>
                                 <th class="text-white fw-medium text-nowrap">Amount</th>
                                 <th class="text-white fw-medium text-nowrap">Payment</th>
                                 <th class="text-white fw-medium text-nowrap">Status</th>
@@ -189,6 +194,13 @@
                                                 {{ $it->miscItem->name ?? '—' }} <span class="text-muted">&times;{{ rtrim(rtrim(number_format($it->quantity, 2), '0'), '.') }}</span>
                                             </div>
                                         @endforeach
+                                    </td>
+                                    <td class="text-nowrap">
+                                        @if($bill->event_date)
+                                            <span class="badge bg-info-subtle text-info border border-info rounded-pill px-2">{{ $bill->event_date->format('d M Y') }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
                                     </td>
                                     <td class="text-nowrap fw-semibold">Rs {{ number_format($bill->net_amount, 2) }}</td>
                                     <td class="text-nowrap text-capitalize">{{ str_replace('_', ' ', $bill->payment_mode) }}</td>
@@ -210,7 +222,7 @@
                                 </tr>
                             @empty
                                 <tr id="miscEmptyRow">
-                                    <td colspan="8" class="text-center text-muted py-4">No misc bills today.</td>
+                                    <td colspan="9" class="text-center text-muted py-4">No misc bills today.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -381,6 +393,7 @@ $(document).ready(function () {
                 items: items,
                 buyer_name: $('#miscBuyerName').val(),
                 buyer_contact: $('#miscBuyerContact').val(),
+                event_date: $('#miscEventDate').val(),
                 payment_mode: $('#miscPaymentMode').val(),
                 payment_reference: $('#miscPaymentReference').val(),
                 remarks: $('#miscRemarks').val(),

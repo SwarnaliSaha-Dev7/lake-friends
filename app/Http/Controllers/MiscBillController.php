@@ -71,6 +71,7 @@ class MiscBillController extends Controller
                 'buyer_name'               => 'nullable|string|max:255',
                 'buyer_contact'            => 'nullable|string|max:20',
                 'remarks'                  => 'nullable|string',
+                'event_date'               => 'nullable|date',
             ]);
 
             // Recompute every line's money server-side from the DB-held item —
@@ -129,6 +130,7 @@ class MiscBillController extends Controller
                 'net_amount'        => $netAmount,
                 'status'            => 'paid',
                 'remarks'           => $request->remarks,
+                'event_date'        => $request->event_date,
                 'created_by'        => Auth::id(),
             ]);
 
@@ -187,6 +189,7 @@ class MiscBillController extends Controller
                 'payment_mode'  => ucfirst(str_replace('_', ' ', $bill->payment_mode)),
                 'received_from' => $bill->buyer_name ?: 'Cash Customer',
                 'buyer_contact' => $bill->buyer_contact,
+                'event_date'    => $bill->event_date?->format('d-m-Y'),
                 'taxable_amount'=> number_format((float) $bill->subtotal, 2),
                 'misc_gst'      => number_format((float) $bill->gst_amount, 2),
                 'net_amount'    => number_format((float) $bill->net_amount, 2),

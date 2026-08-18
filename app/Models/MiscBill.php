@@ -26,6 +26,7 @@ class MiscBill extends Model
         'net_amount',
         'status',
         'remarks',
+        'event_date',
         'created_by',
         'cancelled_by',
         'cancelled_at',
@@ -34,6 +35,7 @@ class MiscBill extends Model
 
     protected $casts = [
         'cancelled_at' => 'datetime',
+        'event_date'   => 'date',
     ];
 
     public function items(): HasMany

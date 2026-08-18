@@ -15,6 +15,39 @@ use Illuminate\Support\Facades\Notification;
 
 class MiscItemManageController extends Controller
 {
+    private const PENDING_MODULES = ['misc_item_create', 'misc_item_delete', 'misc_price_update', 'misc_item_update'];
+
+    /**
+     * Returns a 423 JSON response if this item already has a pending request of
+     * any kind, so create/delete/price/update requests can't overlap. Returns
+     * null when it's safe to proceed.
+     */
+    private function blockIfPending(int $club_id, string $itemId)
+    {
+        $pendingApproval = ActionApproval::where('club_id', $club_id)
+            ->where('entity_id', $itemId)
+            ->whereIn('module', self::PENDING_MODULES)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$pendingApproval) {
+            return null;
+        }
+
+        $label = match ($pendingApproval->module) {
+            'misc_item_create'  => 'add',
+            'misc_item_delete'  => 'delete',
+            'misc_price_update' => 'price change',
+            'misc_item_update'  => 'edit',
+            default              => 'approval',
+        };
+
+        return response()->json([
+            'statusCode' => 423,
+            'message'    => "This item already has a pending {$label} request. Please wait for it to be processed first.",
+        ]);
+    }
+
     public function index()
     {
         try {
@@ -31,7 +64,7 @@ class MiscItemManageController extends Controller
             $miscCatList = MiscCategory::where('club_id', $club_id)->get();
 
             $pendingByItem = ActionApproval::where('club_id', $club_id)
-                ->whereIn('module', ['misc_item_create', 'misc_item_delete', 'misc_price_update'])
+                ->whereIn('module', self::PENDING_MODULES)
                 ->where('status', 'pending')
                 ->get(['entity_id', 'module'])
                 ->groupBy('entity_id')
@@ -39,11 +72,12 @@ class MiscItemManageController extends Controller
 
             $pendingCreateIds = $pendingByItem->filter(fn($m) => in_array('misc_item_create', $m))->keys()->toArray();
             $pendingDeleteIds = $pendingByItem->filter(fn($m) => in_array('misc_item_delete', $m))->keys()->toArray();
+            $pendingUpdateIds = $pendingByItem->filter(fn($m) => in_array('misc_item_update', $m))->keys()->toArray();
             $pendingAnyIds    = $pendingByItem->keys()->toArray();
 
             return view('misc_items.list', compact(
                 'miscItemsList', 'miscCatList', 'page_title', 'title',
-                'pendingCreateIds', 'pendingDeleteIds', 'pendingAnyIds'
+                'pendingCreateIds', 'pendingDeleteIds', 'pendingUpdateIds', 'pendingAnyIds'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -191,11 +225,20 @@ class MiscItemManageController extends Controller
                 ->latest()
                 ->first();
 
+            $pendingUpdateApproval = ActionApproval::where('club_id', $club_id)
+                ->where('module', 'misc_item_update')
+                ->where('entity_model', 'MiscItem')
+                ->where('entity_id', $miscItem->id)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
             return response()->json([
-                'data'            => $miscItem,
-                'pendingApproval' => $pendingPriceApproval,
-                'statusCode'      => 200,
-                'message'         => 'Misc item fetched successfully',
+                'data'                  => $miscItem,
+                'pendingApproval'       => $pendingPriceApproval,
+                'pendingUpdateApproval' => $pendingUpdateApproval,
+                'statusCode'            => 200,
+                'message'               => 'Misc item fetched successfully',
             ]);
         } catch (\Throwable $th) {
             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
@@ -207,8 +250,6 @@ class MiscItemManageController extends Controller
         try {
             $user    = auth()->user();
             $club_id = $user->club_id;
-
-            DB::beginTransaction();
 
             $request->validate([
                 'itemName'          => ['required', 'string', 'max:255'],
@@ -224,6 +265,10 @@ class MiscItemManageController extends Controller
             $miscItem = MiscItem::where('club_id', $club_id)
                 ->where('id', $id)
                 ->firstOrFail();
+
+            if ($blocked = $this->blockIfPending($club_id, $id)) {
+                return $blocked;
+            }
 
             $dupName = MiscItem::where('club_id', $club_id)
                 ->whereNull('deleted_at')
@@ -249,9 +294,13 @@ class MiscItemManageController extends Controller
             }
 
             $image_path = $miscItem->image;
+            $isAdmin    = Auth::user()->hasRole('admin');
 
             if ($request->hasFile('itemImage')) {
-                if ($miscItem->image && file_exists(public_path($miscItem->image))) {
+                // Only replace the live image file now if an admin's edit is
+                // applying immediately — an operator's pending request keeps the
+                // old image live until approved.
+                if ($isAdmin && $miscItem->image && file_exists(public_path($miscItem->image))) {
                     unlink(public_path($miscItem->image));
                 }
                 $file       = $request->file('itemImage');
@@ -260,7 +309,7 @@ class MiscItemManageController extends Controller
                 $image_path = 'storage/' . $path;
             }
 
-            $miscItem->update([
+            $newValues = [
                 'name'               => $request->itemName,
                 'misc_category_id'   => $request->itemCat,
                 'image'              => $image_path,
@@ -270,11 +319,48 @@ class MiscItemManageController extends Controller
                 'unit'               => $request->unit ?: 'pcs',
                 'gst_percentage'     => $request->gstPercentage,
                 'is_price_editable'  => (bool) $request->isPriceEditable,
+            ];
+
+            DB::beginTransaction();
+
+            if ($isAdmin) {
+                $miscItem->update($newValues);
+
+                ActionApproval::create([
+                    'club_id'                 => $club_id,
+                    'module'                  => 'misc_item_update',
+                    'action_type'             => 'update',
+                    'entity_model'            => 'MiscItem',
+                    'entity_id'               => $miscItem->id,
+                    'maker_user_id'           => Auth::id(),
+                    'checker_user_id'         => Auth::id(),
+                    'request_payload'         => json_encode(['item_id' => $id, 'item_name' => $miscItem->name] + $newValues),
+                    'status'                  => 'approved',
+                    'approved_or_rejected_at' => now(),
+                ]);
+
+                DB::commit();
+
+                return response()->json(['statusCode' => 200, 'message' => 'Misc item updated successfully.']);
+            }
+
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'misc_item_update',
+                'action_type'     => 'update',
+                'entity_model'    => 'MiscItem',
+                'entity_id'       => $miscItem->id,
+                'maker_user_id'   => Auth::id(),
+                'request_payload' => json_encode(['item_id' => $id, 'item_name' => $miscItem->name] + $newValues),
+                'status'          => 'pending',
             ]);
 
             DB::commit();
 
-            return response()->json(['statusCode' => 200, 'message' => 'Misc item updated successfully.']);
+            $approvers = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            Notification::send($approvers, new ApprovalNotification($approval));
+
+            return response()->json(['statusCode' => 200, 'message' => 'Edit request submitted for approval.']);
         } catch (\Throwable $th) {
             DB::rollBack();
             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
@@ -295,6 +381,10 @@ class MiscItemManageController extends Controller
             $miscItem = MiscItem::where('club_id', $club_id)
                 ->where('id', $request->item_id)
                 ->firstOrFail();
+
+            if ($blocked = $this->blockIfPending($club_id, (string) $miscItem->id)) {
+                return $blocked;
+            }
 
             $currentPrice = MiscItemPrice::where('misc_item_id', $miscItem->id)
                 ->where('is_active', 1)
@@ -370,24 +460,8 @@ class MiscItemManageController extends Controller
                 ->where('id', $id)
                 ->firstOrFail();
 
-            $pendingApproval = ActionApproval::where('club_id', $club_id)
-                ->where('entity_id', $id)
-                ->whereIn('module', ['misc_item_create', 'misc_item_delete', 'misc_price_update'])
-                ->where('status', 'pending')
-                ->first();
-
-            if ($pendingApproval) {
-                $label = match($pendingApproval->module) {
-                    'misc_item_create'  => 'add',
-                    'misc_item_delete'  => 'delete',
-                    'misc_price_update' => 'price change',
-                    default             => 'approval',
-                };
-
-                return response()->json([
-                    'statusCode' => 423,
-                    'message'    => "This item already has a pending {$label} request. Please wait for it to be processed first.",
-                ]);
+            if ($blocked = $this->blockIfPending($club_id, $id)) {
+                return $blocked;
             }
 
             $isAdmin = Auth::user()->hasRole('admin');

@@ -310,6 +310,16 @@ class ApprovalNotification extends Notification
                 $notificationType = 'misc_price_update';
                 break;
 
+            case 'misc_item_update':
+                $payload          = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName         = $this->approval->entity?->name ?? $payload['item_name'] ?? 'a miscellaneous item';
+                $title            = 'Misc Item Edit Approval';
+                $message          = "Edit request for miscellaneous item \"{$itemName}\" is waiting for your approval.";
+                $notificationType = 'misc_item_update';
+                break;
+
             case 'liquor_serving_create':
             case 'liquor_serving_update':
             case 'liquor_serving_delete':

@@ -92,6 +92,7 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Bill No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Buyer</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Items</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Event Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Payment</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Net Amount</th>
@@ -111,6 +112,13 @@
                                                 {{ $it->miscItem->name ?? '—' }} <span class="text-muted">&times;{{ rtrim(rtrim(number_format($it->quantity, 2), '0'), '.') }}</span>
                                             </div>
                                         @endforeach
+                                    </td>
+                                    <td class="text-nowrap">
+                                        @if($bill->event_date)
+                                            <span class="badge bg-info-subtle text-info border border-info rounded-pill px-2">{{ $bill->event_date->format('d M Y') }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
                                     </td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($bill->created_at)->format('d-m-Y h:i A') }}</td>
                                     <td class="text-nowrap text-capitalize">{{ str_replace('_', ' ', $bill->payment_mode) }}</td>
@@ -133,7 +141,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">No misc bills in this period.</td>
+                                    <td colspan="10" class="text-center text-muted py-4">No misc bills in this period.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -196,6 +204,7 @@ $(document).ready(function () {
             + '<div>'
             + '<div class="fw-bold fs-6">' + bill.bill_no + '</div>'
             + '<div class="text-muted small">' + (bill.buyer_name || 'Cash Customer') + (bill.buyer_contact ? ' · ' + bill.buyer_contact : '') + '</div>'
+            + (bill.event_date ? '<div class="small mt-1"><span class="badge bg-info-subtle text-info border border-info rounded-pill px-2">Event Date: ' + new Date(bill.event_date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) + '</span></div>' : '')
             + '</div>'
             + '<span class="fw-semibold ' + sc + '">' + bill.status.charAt(0).toUpperCase() + bill.status.slice(1) + '</span>'
             + '</div>';

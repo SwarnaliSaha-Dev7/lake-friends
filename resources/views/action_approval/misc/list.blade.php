@@ -32,6 +32,7 @@
                                         'misc_item_create'  => 'Add Item',
                                         'misc_item_delete'  => 'Delete Item',
                                         'misc_price_update' => 'Price Change',
+                                        'misc_item_update'  => 'Edit Item',
                                         default              => ucfirst(str_replace('_', ' ', $data->module)),
                                     };
 
@@ -39,6 +40,7 @@
                                         'misc_item_create'  => 'bg-success-subtle text-success border-success',
                                         'misc_item_delete'  => 'bg-danger-subtle text-danger border-danger',
                                         'misc_price_update' => 'bg-info-subtle text-info border-info',
+                                        'misc_item_update'  => 'bg-warning-subtle text-warning border-warning',
                                         default              => 'bg-secondary-subtle text-secondary border-secondary',
                                     };
                                 @endphp
@@ -53,6 +55,8 @@
                                             ₹{{ $payload->old_price }} → ₹{{ $payload->new_price }}
                                         @elseif($data->module === 'misc_item_create')
                                             Price: ₹{{ $payload->price ?? '—' }}
+                                        @elseif($data->module === 'misc_item_update')
+                                            New name: {{ $payload->name ?? '—' }}
                                         @else
                                             —
                                         @endif

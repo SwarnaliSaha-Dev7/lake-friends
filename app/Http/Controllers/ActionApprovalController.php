@@ -633,6 +633,32 @@ class ActionApprovalController extends Controller
                 }
             }
 
+            if ($data->module == 'misc_item_update') {
+                $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
+                $item    = MiscItem::find($data->entity_id);
+                if ($item) {
+                    // Swap the image file only now that the edit is approved —
+                    // the old one stayed live while this was pending.
+                    if (!empty($payload->image) && $payload->image !== $item->image) {
+                        if ($item->image && file_exists(public_path($item->image))) {
+                            unlink(public_path($item->image));
+                        }
+                    }
+
+                    $item->update([
+                        'name'              => $payload->name,
+                        'misc_category_id'  => $payload->misc_category_id,
+                        'image'             => $payload->image,
+                        'code'              => $payload->code,
+                        'description'       => $payload->description ?? null,
+                        'is_active'         => $payload->is_active,
+                        'unit'              => $payload->unit ?? 'pcs',
+                        'gst_percentage'    => $payload->gst_percentage,
+                        'is_price_editable' => $payload->is_price_editable,
+                    ]);
+                }
+            }
+
             if ($data->module == 'liquor_serving_create') {
                 $serving = LiquorServing::find($data->entity_id);
                 if ($serving) {
@@ -859,8 +885,8 @@ class ActionApprovalController extends Controller
                     $item->delete();
                 }
             }
-            // misc_item_delete / misc_price_update: no rollback needed — nothing
-            // was mutated while pending
+            // misc_item_delete / misc_price_update / misc_item_update: no rollback
+            // needed — nothing was mutated while pending
             elseif ($data->module == 'liquor_serving_create') {
                 $serving = LiquorServing::find($data->entity_id);
                 if ($serving) {
@@ -1135,7 +1161,7 @@ class ActionApprovalController extends Controller
 
             $miscApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
                 ->where('club_id', $clubId)
-                ->whereIn('module', ['misc_item_create', 'misc_item_delete', 'misc_price_update'])
+                ->whereIn('module', ['misc_item_create', 'misc_item_delete', 'misc_price_update', 'misc_item_update'])
                 ->where('maker_user_id', '!=', Auth::id())
                 ->where('status', 'pending')
                 ->latest()

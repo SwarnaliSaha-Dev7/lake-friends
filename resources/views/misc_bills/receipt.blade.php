@@ -191,6 +191,12 @@
                     <span class="meta-label">Status: </span>
                     <span class="status-pill {{ $statusPillClass }}">{{ ucfirst($bill->status) }}</span>
                 </div>
+                @if($receipt['event_date'])
+                <div style="margin-top:5px;">
+                    <span class="meta-label">Event / Booking Date: </span>
+                    <span class="status-pill" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;">{{ $receipt['event_date'] }}</span>
+                </div>
+                @endif
             </td>
             <td class="meta-right">
                 <div class="meta-heading">Received From</div>

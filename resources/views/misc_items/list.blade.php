@@ -51,6 +51,9 @@
                                         @else
                                             <span class="text-secondary">Inactive</span>
                                         @endif
+                                        @if(in_array($items->id, $pendingUpdateIds))
+                                            <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2 ms-1">Edit Pending</span>
+                                        @endif
                                     </td>
                                     <td class="text-nowrap">&#8377;{{ $items->miscItemPrice->price ?? '0' }}</td>
                                     <td class="text-nowrap">
@@ -216,6 +219,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <div id="pendingUpdateMessage" class="alert alert-warning py-2 px-3 small mb-3" style="display:none;"></div>
                     <form id="editMiscItemForm" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
@@ -499,6 +503,8 @@ $(document).ready(function () {
 
         $('#pendingPriceMessage').hide().text('');
         $('.changePriceBtn').prop('disabled', false).css({'opacity': '', 'cursor': ''});
+        $('#pendingUpdateMessage').hide().text('');
+        $('#editMiscItem_submit').prop('disabled', false);
 
         $.ajax({
             url: "{{ url('manage-misc-items') }}/" + id + '/edit',
@@ -532,6 +538,15 @@ $(document).ready(function () {
                     $('#pendingPriceMessage')
                         .text('Price change request is pending: ₹' + payload.old_price + ' → ₹' + payload.new_price + ' (awaiting approval)')
                         .show();
+                    $('.changePriceBtn').prop('disabled', true).css({'opacity': '1', 'cursor': 'not-allowed'});
+                    $('#editMiscItem_submit').prop('disabled', true);
+                }
+
+                if (response.pendingUpdateApproval) {
+                    $('#pendingUpdateMessage')
+                        .text('An edit request for this item is already pending approval. You can view the current details below, but a new edit can\'t be submitted until that one is resolved.')
+                        .show();
+                    $('#editMiscItem_submit').prop('disabled', true);
                     $('.changePriceBtn').prop('disabled', true).css({'opacity': '1', 'cursor': 'not-allowed'});
                 }
 
