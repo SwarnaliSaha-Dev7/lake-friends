@@ -91,6 +91,7 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Sl No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Bill No</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Buyer</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Items</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Date</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Payment</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Net Amount</th>
@@ -104,6 +105,13 @@
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap fw-medium">{{ $bill->bill_no }}</td>
                                     <td class="text-nowrap">{{ $bill->buyer_name ?: 'Cash Customer' }}</td>
+                                    <td>
+                                        @foreach($bill->items as $it)
+                                            <div class="small text-nowrap">
+                                                {{ $it->miscItem->name ?? '—' }} <span class="text-muted">&times;{{ rtrim(rtrim(number_format($it->quantity, 2), '0'), '.') }}</span>
+                                            </div>
+                                        @endforeach
+                                    </td>
                                     <td class="text-nowrap">{{ \Carbon\Carbon::parse($bill->created_at)->format('d-m-Y h:i A') }}</td>
                                     <td class="text-nowrap text-capitalize">{{ str_replace('_', ' ', $bill->payment_mode) }}</td>
                                     <td class="text-nowrap fw-semibold">Rs {{ number_format($bill->net_amount, 2) }}</td>
@@ -125,7 +133,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">No misc bills in this period.</td>
+                                    <td colspan="9" class="text-center text-muted py-4">No misc bills in this period.</td>
                                 </tr>
                             @endforelse
                         </tbody>

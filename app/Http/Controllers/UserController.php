@@ -49,7 +49,7 @@ class UserController extends Controller
             // Mail::send('email.otpVerificationMail', $data, function ($message) use ($toEmail) {
             //     $message->to($toEmail) // Use the recipient's email
             //         ->subject('Email Verification OTP');
-            //     $message->from(env('MAIL_FROM_ADDRESS'), "Lake Friends Club");
+            //     $message->from(env('MAIL_FROM_ADDRESS'), "Lake Friends");
             // });
 
 

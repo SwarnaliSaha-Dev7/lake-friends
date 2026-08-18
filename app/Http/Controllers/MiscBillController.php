@@ -180,8 +180,6 @@ class MiscBillController extends Controller
                 ->where('club_id', club_id())
                 ->findOrFail($id);
 
-            $halfGst = round((float) $bill->gst_amount / 2, 2);
-
             $receipt = [
                 'date'          => $bill->created_at->format('d-m-Y'),
                 'bill_no'       => $bill->bill_no,
@@ -190,8 +188,7 @@ class MiscBillController extends Controller
                 'received_from' => $bill->buyer_name ?: 'Cash Customer',
                 'buyer_contact' => $bill->buyer_contact,
                 'taxable_amount'=> number_format((float) $bill->subtotal, 2),
-                'cgst'          => number_format($halfGst, 2),
-                'sgst'          => number_format($halfGst, 2),
+                'misc_gst'      => number_format((float) $bill->gst_amount, 2),
                 'net_amount'    => number_format((float) $bill->net_amount, 2),
                 'amount_words'  => amountToWords((float) $bill->net_amount),
                 'collected_by'  => $bill->createdBy?->name ?? '—',

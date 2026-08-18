@@ -253,12 +253,8 @@
                 <td class="bill-val">Rs {{ $receipt['taxable_amount'] }}</td>
             </tr>
             <tr>
-                <td class="bill-lbl">CGST</td>
-                <td class="bill-val">Rs {{ $receipt['cgst'] }}</td>
-            </tr>
-            <tr>
-                <td class="bill-lbl">SGST</td>
-                <td class="bill-val">Rs {{ $receipt['sgst'] }}</td>
+                <td class="bill-lbl">Misc GST</td>
+                <td class="bill-val">Rs {{ $receipt['misc_gst'] }}</td>
             </tr>
             <tr class="grand-total-row">
                 <td class="bill-lbl">Net Amount</td>
