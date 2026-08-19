@@ -34,6 +34,7 @@
                                     <th class="text-white fw-medium align-middle text-nowrap">Locker No.</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Status</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Availability</th>
+                                    <th class="text-white fw-medium align-middle text-nowrap">Occupied By</th>
                                     <th class="text-white fw-medium align-middle text-nowrap">Action</th>
                                 </tr>
                             </thead>
@@ -58,6 +59,17 @@
                                     </td>
 
                                     <td class="text-nowrap">{{ ucfirst($lockers->status) }}</td>
+
+                                    <td class="text-nowrap">
+                                        @if($lockers->status === 'occupied' && $lockers->latestAllocation)
+                                            <div class="fw-medium">{{ $lockers->latestAllocation->member->name ?? '—' }}</div>
+                                            @if($lockers->latestAllocation->start_date)
+                                                <small class="text-muted">Since {{ \Carbon\Carbon::parse($lockers->latestAllocation->start_date)->format('d M Y') }}</small>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
 
                                     <!-- <td class="text-success text-nowrap">No</td> -->
                                     <td class="text-nowrap d-flex gap-1 flex-wrap">

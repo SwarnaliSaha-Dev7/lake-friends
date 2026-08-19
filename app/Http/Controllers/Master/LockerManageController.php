@@ -23,6 +23,7 @@ class LockerManageController extends Controller
         $club_id    = $user->club_id;
 
         $lockersList  = Locker::where('club_id', $club_id)
+                              ->with('latestAllocation.member')
                               ->latest()
                               ->get();
 
