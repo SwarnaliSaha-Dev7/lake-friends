@@ -62,9 +62,9 @@
 
                                     <td class="text-nowrap">
                                         @if($lockers->status === 'occupied' && $lockers->latestAllocation)
-                                            <div class="fw-medium">{{ $lockers->latestAllocation->member->name ?? '—' }}</div>
+                                            <span class="fw-medium">{{ $lockers->latestAllocation->member->name ?? '—' }}</span>
                                             @if($lockers->latestAllocation->start_date)
-                                                <small class="text-muted">Since {{ \Carbon\Carbon::parse($lockers->latestAllocation->start_date)->format('d M Y') }}</small>
+                                                <span class="text-muted">&nbsp;&middot; Since {{ \Carbon\Carbon::parse($lockers->latestAllocation->start_date)->format('d M Y') }}</span>
                                             @endif
                                         @else
                                             <span class="text-muted">—</span>
