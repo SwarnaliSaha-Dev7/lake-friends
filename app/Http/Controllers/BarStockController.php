@@ -272,21 +272,12 @@ class BarStockController extends Controller
                 : 0,
         ]);
 
-        // ── Current bar stock map (fallback for items with no ledger history) ──
+        // ── Current bar stock map — always the ground truth for closing balance ──
         $currentBarStockMap = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
             ->where('location_id', $barLocation->id)
             ->pluck('quantity', 'food_items_id');
 
-        // ── Qty movements ─────────────────────────────────────────────────────
-        // All bar movements before period → opening
-        $beforeFrom = StockLedger::where('warehouse_id', $warehouse->id)
-            ->where('location_id', $barLocation->id)
-            ->where('created_at', '<', $from)
-            ->select('food_items_id', 'direction', DB::raw('SUM(quantity) as total'))
-            ->groupBy('food_items_id', 'direction')
-            ->get()
-            ->groupBy('food_items_id');
-
+        // ── Qty movements during period ─────────────────────────────────────────
         // IN during period = transfers received from godown
         $inDuring = StockLedger::where('warehouse_id', $warehouse->id)
             ->where('location_id', $barLocation->id)
@@ -307,20 +298,16 @@ class BarStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $wacPerBottle, $currentBarStockMap) {
-            $before     = $beforeFrom->get($item->id, collect());
-            $beforeIn   = (int) $before->where('direction', 'in')->sum('total');
-            $beforeOut  = (int) $before->where('direction', 'out')->sum('total');
-            $openingQty = max(0, $beforeIn - $beforeOut);
-            $inQty      = (int) ($inDuring[$item->id]  ?? 0);
-            $outQty     = (int) ($outDuring[$item->id] ?? 0);
-            $ledgerClosing = max(0, $openingQty + $inQty - $outQty);
+        $reportData = $liquorItems->map(function ($item) use ($inDuring, $outDuring, $wacPerBottle, $currentBarStockMap) {
+            $inQty  = (int) ($inDuring[$item->id]  ?? 0);
+            $outQty = (int) ($outDuring[$item->id] ?? 0);
 
-            // Fallback: ledger-এ data না থাকলে FoodItemCurrentStock থেকে qty নাও
-            $hasNoLedger = $openingQty === 0 && $inQty === 0;
-            $closingQty  = ($hasNoLedger && $ledgerClosing === 0)
-                ? (int) ($currentBarStockMap[$item->id] ?? 0)
-                : $ledgerClosing;
+            // Closing always reflects the true current stock (FoodItemCurrentStock);
+            // opening is derived backward from it so movements outside transfer/sale
+            // (manual stock-sync adjustments, corrections) never leave a stale closing
+            // balance that disagrees with the actual stock on hand.
+            $closingQty = (int) ($currentBarStockMap[$item->id] ?? 0);
+            $openingQty = max(0, $closingQty - $inQty + $outQty);
 
             $sizeMl    = (int) ($item->size_ml ?? 1);
             $isBeer    = (bool) $item->is_beer;

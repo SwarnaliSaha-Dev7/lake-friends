@@ -370,20 +370,12 @@ class GodownStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        // ── Current stock map (fallback for items with no ledger history) ────
+        // ── Current stock map — always the ground truth for closing balance ────
         $currentStockMap = FoodItemCurrentStock::where('warehouse_id', $godown->id)
             ->where('location_id', $godownLocation->id)
             ->pluck('quantity', 'food_items_id');
 
-        // ── Qty movements ─────────────────────────────────────────────────────
-        $beforeFrom = StockLedger::where('warehouse_id', $godown->id)
-            ->where('location_id', $godownLocation->id)
-            ->where('created_at', '<', $from)
-            ->select('food_items_id', 'direction', DB::raw('SUM(quantity) as total'))
-            ->groupBy('food_items_id', 'direction')
-            ->get()
-            ->groupBy('food_items_id');
-
+        // ── Qty movements during period ─────────────────────────────────────────
         $inDuring = StockLedger::where('warehouse_id', $godown->id)
             ->where('location_id', $godownLocation->id)
             ->whereBetween('created_at', [$from, $to])
@@ -412,21 +404,17 @@ class GodownStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($beforeFrom, $inDuring, $outDuring, $transferDuring, $inAmountDuring, $wac, $currentStockMap) {
-            $before      = $beforeFrom->get($item->id, collect());
-            $beforeIn    = (int) $before->where('direction', 'in')->sum('total');
-            $beforeOut   = (int) $before->where('direction', 'out')->sum('total');
-            $openingQty  = max(0, $beforeIn - $beforeOut);
+        $reportData = $liquorItems->map(function ($item) use ($inDuring, $outDuring, $transferDuring, $inAmountDuring, $wac, $currentStockMap) {
             $inQty       = (int) ($inDuring[$item->id]       ?? 0);
             $outQty      = (int) ($outDuring[$item->id]      ?? 0);
             $transferQty = (int) ($transferDuring[$item->id] ?? 0);
-            $ledgerClosing = max(0, $openingQty + $inQty - $outQty - $transferQty);
 
-            // Fallback: যদি ledger-এ কোনো data না থাকে, FoodItemCurrentStock থেকে qty নাও
-            $hasNoLedger = $openingQty === 0 && $inQty === 0;
-            $closingQty  = ($hasNoLedger && $ledgerClosing === 0)
-                ? (int) ($currentStockMap[$item->id] ?? 0)
-                : $ledgerClosing;
+            // Closing always reflects the true current stock (FoodItemCurrentStock);
+            // opening is derived backward from it so movements outside the tracked
+            // in/out/transfer buckets (manual stock-sync adjustments, corrections)
+            // never leave a stale closing balance that disagrees with actual stock.
+            $closingQty = (int) ($currentStockMap[$item->id] ?? 0);
+            $openingQty = max(0, $closingQty - $inQty + $outQty + $transferQty);
 
             // WAC per bottle — used for opening, out, transfer, closing valuation
             $wacPerBtl   = (float) ($wac[$item->id] ?? 0);
