@@ -244,6 +244,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('liquor-stock')->group(function () {
         Route::get('bar',                  [BarStockController::class, 'index'])->name('bar-stock.index');
         Route::post('bar/transfer',        [BarStockController::class, 'transfer'])->name('bar-stock.transfer');
+        Route::post('bar/adjust',          [BarStockController::class, 'adjust'])->name('bar-stock.adjust');
         Route::get('bar/report',           [BarStockController::class, 'report'])->name('bar-stock.report');
         Route::get('bar/report/download',  [BarStockController::class, 'downloadReport'])->name('bar-stock.report.download');
     });

@@ -65,7 +65,7 @@ class BarStockController extends Controller
                 ->keyBy('food_items_id');
 
             $pendingItemIds = ActionApproval::where('club_id', $club_id)
-                ->where('module', 'bar_stock_transfer')
+                ->whereIn('module', ['bar_stock_transfer', 'bar_stock_adjustment'])
                 ->where('status', 'pending')
                 ->pluck('entity_id')
                 ->toArray();
@@ -243,6 +243,180 @@ class BarStockController extends Controller
                 'food_items_id' => $foodItemId,
                 'quantity'      => $barQty,
             ]);
+        }
+    }
+
+    // Direct physical-count correction for bar stock — needed because "Transfer to
+    // Bar" can only ever add stock (pulled from godown); it cannot fix a bar count
+    // that's too high, or set an exact known value (e.g. matching a parallel
+    // system's stock). Mirrors GodownStockController::adjust(), except the physical
+    // count is unit-aware: whole bottles for beer/wine, bottles+ml for spirits
+    // (bar stores spirits in ml, since pegs are poured by the ml).
+    public function adjust(Request $request)
+    {
+        try {
+            $club_id = auth()->user()->club_id;
+
+            $request->validate([
+                'food_items_id'     => 'required|exists:food_items,id',
+                'physical_bottles'  => 'required|integer|min:0',
+                'physical_ml'       => 'nullable|integer|min:0',
+                'reason'            => 'required|string|max:500',
+                'date'              => 'nullable|date|before_or_equal:today',
+            ]);
+
+            $warehouse   = $this->getOrCreateWarehouse($club_id);
+            $barLocation = $this->getBarLocation();
+            $isAdmin     = Auth::user()->hasRole('admin');
+
+            $foodItem = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->where('id', $request->food_items_id)
+                ->firstOrFail();
+
+            // Check for any pending bar-side request for this item (transfer or
+            // adjustment) — avoids two in-flight operations racing on the same item.
+            $hasPending = ActionApproval::where('club_id', $club_id)
+                ->whereIn('module', ['bar_stock_transfer', 'bar_stock_adjustment'])
+                ->where('entity_id', $foodItem->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($hasPending) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message'    => 'This item already has a pending bar stock request. Please wait for it to be approved or rejected first.',
+                ]);
+            }
+
+            $isBeer   = (bool) $foodItem->is_beer;
+            $sizeMl   = (int) ($foodItem->size_ml ?? 0);
+            $physicalBottles = (int) $request->physical_bottles;
+            $physicalMl      = $isBeer ? 0 : (int) ($request->physical_ml ?? 0);
+
+            if (!$isBeer && $sizeMl > 0 && $physicalMl >= $sizeMl) {
+                return response()->json([
+                    'statusCode' => 422,
+                    'message'    => "Partial ml must be less than the bottle size ({$sizeMl} ml).",
+                ]);
+            }
+
+            $physicalQty = $isBeer ? $physicalBottles : ($physicalBottles * $sizeMl) + $physicalMl;
+
+            // Optional backdated entry date, same as Add Stock / Transfer.
+            $entryDate = $request->filled('date')
+                ? Carbon::parse($request->date)->setTimeFrom(now())
+                : null;
+
+            $currentStock = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
+                ->where('location_id', $barLocation->id)
+                ->where('food_items_id', $foodItem->id)
+                ->first();
+
+            $systemQty = $currentStock ? (int) $currentStock->quantity : 0;
+            $diff      = $physicalQty - $systemQty;
+
+            if ($diff === 0) {
+                return response()->json([
+                    'statusCode' => 200,
+                    'message'    => 'No adjustment needed. Physical count matches system stock.',
+                ]);
+            }
+
+            $direction = $diff > 0 ? 'in' : 'out';
+            $adjQty    = abs($diff);
+
+            $payload = [
+                'warehouse_id'   => $warehouse->id,
+                'location_id'    => $barLocation->id,
+                'food_items_id'  => $foodItem->id,
+                'item_name'      => $foodItem->name,
+                'system_qty'     => $systemQty,
+                'physical_qty'   => $physicalQty,
+                'quantity'       => $adjQty,
+                'direction'      => $direction,
+                'is_beer'        => $isBeer,
+                'unit'           => $isBeer ? 'bottle' : 'ml',
+                'size_ml'        => $foodItem->size_ml,
+                'reason'         => $request->reason,
+                'movement_type'  => 'adjustment',
+                'reference_type' => 'manual',
+                'date'           => $entryDate?->toDateTimeString(),
+            ];
+
+            if ($isAdmin) {
+                DB::beginTransaction();
+
+                $ledger = StockLedger::create([
+                    'warehouse_id'   => $warehouse->id,
+                    'location_id'    => $barLocation->id,
+                    'food_items_id'  => $foodItem->id,
+                    'movement_type'  => 'adjustment',
+                    'direction'      => $direction,
+                    'quantity'       => $adjQty,
+                    'reference_type' => 'manual',
+                ]);
+
+                if ($entryDate) {
+                    $ledger->created_at = $entryDate;
+                    $ledger->updated_at = $entryDate;
+                    $ledger->save();
+                }
+
+                if ($currentStock) {
+                    if ($direction === 'in') {
+                        $currentStock->increment('quantity', $adjQty);
+                    } else {
+                        $currentStock->decrement('quantity', $adjQty);
+                    }
+                } else {
+                    FoodItemCurrentStock::create([
+                        'warehouse_id'  => $warehouse->id,
+                        'location_id'   => $barLocation->id,
+                        'food_items_id' => $foodItem->id,
+                        'quantity'      => $adjQty,
+                    ]);
+                }
+
+                $approval = ActionApproval::create([
+                    'club_id'                 => $club_id,
+                    'module'                  => 'bar_stock_adjustment',
+                    'action_type'             => 'update',
+                    'entity_model'            => 'FoodItem',
+                    'entity_id'               => $foodItem->id,
+                    'maker_user_id'           => Auth::id(),
+                    'checker_user_id'         => Auth::id(),
+                    'request_payload'         => $payload,
+                    'status'                  => 'approved',
+                    'approved_or_rejected_at' => now(),
+                ]);
+
+                DB::commit();
+
+                $recipients = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+                Notification::send($recipients, new ApprovalNotification($approval));
+
+                return response()->json(['statusCode' => 200, 'message' => 'Bar stock adjusted successfully.']);
+            }
+
+            $approval = ActionApproval::create([
+                'club_id'         => $club_id,
+                'module'          => 'bar_stock_adjustment',
+                'action_type'     => 'update',
+                'entity_model'    => 'FoodItem',
+                'entity_id'       => $foodItem->id,
+                'maker_user_id'   => Auth::id(),
+                'request_payload' => $payload,
+                'status'          => 'pending',
+            ]);
+
+            $recipients = User::role(['operator', 'admin'])->where('id', '!=', Auth::id())->get();
+            Notification::send($recipients, new ApprovalNotification($approval));
+
+            return response()->json(['statusCode' => 200, 'message' => 'Bar stock adjustment submitted for approval.']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
         }
     }
 

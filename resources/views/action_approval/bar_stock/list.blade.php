@@ -9,7 +9,7 @@
         <div class="col-12">
             <div class="member-list-part position-relative">
                 <div class="d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap">
-                    <h2 class="fs-5 common-heading mb-0 fw-semibold">Pending Bar Stock Transfer Requests</h2>
+                    <h2 class="fs-5 common-heading mb-0 fw-semibold">Pending Bar Stock Requests</h2>
                 </div>
                 <div class="table-responsive">
                     <table class="table rounded-3 overflow-hidden clubmemberlist2" cellspacing="0" width="100%">
@@ -17,9 +17,9 @@
                             <tr>
                                 <th class="text-white fw-medium text-nowrap">Sl. No.</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Item Name</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Bottles (Godown→Bar)</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Bar Receives</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">Notes</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Type</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Detail</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Notes / Reason</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Requested By</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Requested At</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Action</th>
@@ -28,23 +28,36 @@
                         <tbody>
                             @forelse($transferApprovalData as $index => $approval)
                                 @php
-                                    $payload  = is_array($approval->request_payload)
+                                    $payload = is_array($approval->request_payload)
                                         ? $approval->request_payload
                                         : json_decode($approval->request_payload, true);
-                                    $isBeer   = $payload['is_beer'] ?? false;
-                                    $barQty   = $payload['bar_qty'] ?? 0;
-                                    $barUnit  = $payload['bar_unit'] ?? 'ml';
-                                    $sizeMl   = $payload['size_ml'] ?? null;
-                                    $barDisplay = $isBeer
-                                        ? "{$barQty} BTL"
-                                        : number_format($barQty) . " ml" . ($sizeMl ? " ({$payload['bottles']}×{$sizeMl}ml)" : '');
+                                    $isBeer  = $payload['is_beer'] ?? false;
+                                    $isAdjustment = $approval->module === 'bar_stock_adjustment';
+
+                                    if ($isAdjustment) {
+                                        $unit   = $isBeer ? 'BTL' : 'ml';
+                                        $detail = number_format($payload['system_qty'] ?? 0) . ' → ' . number_format($payload['physical_qty'] ?? 0) . " {$unit} "
+                                            . (($payload['direction'] ?? 'in') === 'in' ? '(+' : '(−') . number_format($payload['quantity'] ?? 0) . " {$unit})";
+                                    } else {
+                                        $barQty = $payload['bar_qty'] ?? 0;
+                                        $sizeMl = $payload['size_ml'] ?? null;
+                                        $detail = ($payload['bottles'] ?? 0) . ' BTL (Godown) → ' . ($isBeer
+                                            ? "{$barQty} BTL"
+                                            : number_format($barQty) . ' ml' . ($sizeMl ? " ({$payload['bottles']}×{$sizeMl}ml)" : ''));
+                                    }
                                 @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $index + 1 }}</td>
                                     <td class="text-nowrap fw-medium">{{ $payload['item_name'] ?? '—' }}</td>
-                                    <td class="text-nowrap">{{ $payload['bottles'] ?? 0 }} BTL</td>
-                                    <td class="text-nowrap">{{ $barDisplay }}</td>
-                                    <td>{{ $payload['notes'] ?? '—' }}</td>
+                                    <td class="text-nowrap">
+                                        @if($isAdjustment)
+                                            <span class="badge bg-warning-subtle text-warning border border-warning">Adjustment</span>
+                                        @else
+                                            <span class="badge bg-info-subtle text-info border border-info">Transfer</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-nowrap">{{ $detail }}</td>
+                                    <td>{{ $payload['reason'] ?? $payload['notes'] ?? '—' }}</td>
                                     <td class="text-nowrap">{{ $approval->operatorDetails->name ?? '—' }}</td>
                                     <td class="text-nowrap">{{ $approval->created_at->format('d M Y, h:i A') }}</td>
                                     <td class="text-nowrap">
@@ -60,7 +73,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">No pending transfer requests.</td>
+                                    <td colspan="8" class="text-center text-muted py-4">No pending bar stock requests.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -83,7 +96,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Are you sure you want to <strong class="text-success">approve</strong> this transfer request?</p>
+                    <p class="mb-0">Are you sure you want to <strong class="text-success">approve</strong> this request?</p>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -102,7 +115,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Are you sure you want to <strong class="text-danger">reject</strong> this transfer request?</p>
+                    <p class="mb-0">Are you sure you want to <strong class="text-danger">reject</strong> this request?</p>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

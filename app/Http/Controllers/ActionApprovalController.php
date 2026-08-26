@@ -718,7 +718,7 @@ class ActionApprovalController extends Controller
                 DB::commit();
             }
 
-            if ($data->module == 'stock_adjustment') {
+            if (in_array($data->module, ['stock_adjustment', 'bar_stock_adjustment'])) {
                 $payload = is_array($data->request_payload) ? (object) $data->request_payload : json_decode($data->request_payload);
 
                 DB::beginTransaction();
@@ -1212,7 +1212,7 @@ class ActionApprovalController extends Controller
 
             $transferApprovalData = ActionApproval::with(['operatorDetails', 'entity'])
                 ->where('club_id', $clubId)
-                ->where('module', 'bar_stock_transfer')
+                ->whereIn('module', ['bar_stock_transfer', 'bar_stock_adjustment'])
                 ->where('maker_user_id', '!=', Auth::id())
                 ->where('status', 'pending')
                 ->latest()

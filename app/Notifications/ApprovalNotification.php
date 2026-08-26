@@ -214,6 +214,31 @@ class ApprovalNotification extends Notification
                 }
                 break;
 
+            case 'bar_stock_adjustment':
+                $payload     = is_array($this->approval->request_payload)
+                    ? $this->approval->request_payload
+                    : json_decode($this->approval->request_payload, true);
+                $itemName    = $payload['item_name']  ?? 'Unknown Item';
+                $isBeer      = $payload['is_beer']    ?? false;
+                $systemQty   = $payload['system_qty']   ?? 0;
+                $physicalQty = $payload['physical_qty'] ?? 0;
+                $qty         = $payload['quantity']     ?? 0;
+                $direction   = $payload['direction']    ?? 'in';
+                $unit        = $isBeer ? 'BTL' : 'ml';
+                $diff        = ($direction === 'in' ? '+' : '−') . number_format($qty) . " {$unit}";
+                $isPending   = $this->approval->status === 'pending';
+
+                if ($isPending) {
+                    $title            = 'Bar Stock Adjustment Request';
+                    $message          = "Physical count adjustment for \"{$itemName}\" (" . number_format($systemQty) . " → " . number_format($physicalQty) . " {$unit}, {$diff}) is waiting for approval.";
+                    $notificationType = 'bar_stock_adjust_pending';
+                } else {
+                    $title            = 'Bar Stock Adjusted';
+                    $message          = "\"{$itemName}\" bar stock adjusted: " . number_format($systemQty) . " → " . number_format($physicalQty) . " {$unit} ({$diff}).";
+                    $notificationType = 'bar_stock_adjusted';
+                }
+                break;
+
             case 'liquor_item_create':
                 $payload          = is_array($this->approval->request_payload)
                     ? $this->approval->request_payload
