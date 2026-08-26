@@ -88,12 +88,20 @@ class BarStockController extends Controller
                 'food_items_id' => 'required|exists:food_items,id',
                 'bottles'       => 'required|integer|min:1',
                 'notes'         => 'nullable|string|max:500',
+                'date'          => 'nullable|date|before_or_equal:today',
             ]);
 
             $warehouse      = $this->getOrCreateWarehouse($club_id);
             $godownLocation = $this->getGodownLocation();
             $barLocation    = $this->getBarLocation();
             $isAdmin        = Auth::user()->hasRole('admin');
+
+            // Optional backdated entry date (e.g. catching up historical transfers
+            // from a parallel system) — keeps today's time-of-day so relative
+            // ordering against same-day entries stays sane. Defaults to now().
+            $entryDate = $request->filled('date')
+                ? Carbon::parse($request->date)->setTimeFrom(now())
+                : null;
 
             $foodItem = FoodItem::where('club_id', $club_id)
                 ->where('item_type', 'liquor')
@@ -130,6 +138,7 @@ class BarStockController extends Controller
                 'size_ml'            => $foodItem->size_ml,
                 'is_beer'            => $isBeer,
                 'notes'              => $request->notes,
+                'date'               => $entryDate?->toDateTimeString(),
             ];
 
             if ($isAdmin) {
@@ -137,7 +146,7 @@ class BarStockController extends Controller
 
                 $this->executeTransfer(
                     $warehouse->id, $godownLocation->id, $barLocation->id,
-                    $foodItem->id, $request->bottles, $barQty, $godownStock
+                    $foodItem->id, $request->bottles, $barQty, $godownStock, $entryDate
                 );
 
                 $approval = ActionApproval::create([
@@ -182,9 +191,9 @@ class BarStockController extends Controller
         }
     }
 
-    public function executeTransfer(int $warehouseId, int $godownLocationId, int $barLocationId, int $foodItemId, int $bottles, int $barQty, ?FoodItemCurrentStock $godownStock): void
+    public function executeTransfer(int $warehouseId, int $godownLocationId, int $barLocationId, int $foodItemId, int $bottles, int $barQty, ?FoodItemCurrentStock $godownStock, ?\Carbon\Carbon $entryDate = null): void
     {
-        StockLedger::create([
+        $outLedger = StockLedger::create([
             'warehouse_id'   => $warehouseId,
             'location_id'    => $godownLocationId,
             'food_items_id'  => $foodItemId,
@@ -194,11 +203,17 @@ class BarStockController extends Controller
             'reference_type' => 'manual',
         ]);
 
+        if ($entryDate) {
+            $outLedger->created_at = $entryDate;
+            $outLedger->updated_at = $entryDate;
+            $outLedger->save();
+        }
+
         if ($godownStock) {
             $godownStock->decrement('quantity', $bottles);
         }
 
-        StockLedger::create([
+        $inLedger = StockLedger::create([
             'warehouse_id'   => $warehouseId,
             'location_id'    => $barLocationId,
             'food_items_id'  => $foodItemId,
@@ -207,6 +222,12 @@ class BarStockController extends Controller
             'quantity'       => $barQty,
             'reference_type' => 'manual',
         ]);
+
+        if ($entryDate) {
+            $inLedger->created_at = $entryDate;
+            $inLedger->updated_at = $entryDate;
+            $inLedger->save();
+        }
 
         $barStock = FoodItemCurrentStock::where('warehouse_id', $warehouseId)
             ->where('location_id', $barLocationId)
@@ -298,15 +319,45 @@ class BarStockController extends Controller
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        $reportData = $liquorItems->map(function ($item) use ($inDuring, $outDuring, $wacPerBottle, $currentBarStockMap) {
+        // A report ending "now" or later (i.e. covering today) can always trust the
+        // live current-stock table for closing — it's the ground truth regardless of
+        // ledger completeness. A report for a fully past date range has no "now" to
+        // read from, so closing there must be reconstructed from ledger history up
+        // to that date instead (needed once backdated entries are used to catch up
+        // historical data from a parallel system).
+        $useLiveClosing = $to->isToday() || $to->isFuture();
+
+        $closingInUpToTo  = collect();
+        $closingOutUpToTo = collect();
+        if (!$useLiveClosing) {
+            $closingInUpToTo = StockLedger::where('warehouse_id', $warehouse->id)
+                ->where('location_id', $barLocation->id)
+                ->where('created_at', '<=', $to)
+                ->where('direction', 'in')
+                ->select('food_items_id', DB::raw('SUM(quantity) as total'))
+                ->groupBy('food_items_id')
+                ->pluck('total', 'food_items_id');
+
+            $closingOutUpToTo = StockLedger::where('warehouse_id', $warehouse->id)
+                ->where('location_id', $barLocation->id)
+                ->where('created_at', '<=', $to)
+                ->where('direction', 'out')
+                ->select('food_items_id', DB::raw('SUM(quantity) as total'))
+                ->groupBy('food_items_id')
+                ->pluck('total', 'food_items_id');
+        }
+
+        $reportData = $liquorItems->map(function ($item) use ($inDuring, $outDuring, $wacPerBottle, $currentBarStockMap, $useLiveClosing, $closingInUpToTo, $closingOutUpToTo) {
             $inQty  = (int) ($inDuring[$item->id]  ?? 0);
             $outQty = (int) ($outDuring[$item->id] ?? 0);
 
-            // Closing always reflects the true current stock (FoodItemCurrentStock);
-            // opening is derived backward from it so movements outside transfer/sale
-            // (manual stock-sync adjustments, corrections) never leave a stale closing
-            // balance that disagrees with the actual stock on hand.
-            $closingQty = (int) ($currentBarStockMap[$item->id] ?? 0);
+            // Closing reflects the true stock as of the report's end date: live
+            // current stock for a report covering today, otherwise reconstructed
+            // from all ledger movements up to that date. Opening is derived
+            // backward from closing using this period's movements.
+            $closingQty = $useLiveClosing
+                ? (int) ($currentBarStockMap[$item->id] ?? 0)
+                : max(0, (int) ($closingInUpToTo[$item->id] ?? 0) - (int) ($closingOutUpToTo[$item->id] ?? 0));
             $openingQty = max(0, $closingQty - $inQty + $outQty);
 
             $sizeMl    = (int) ($item->size_ml ?? 1);

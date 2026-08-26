@@ -145,6 +145,13 @@
                             <textarea name="notes" id="stock_notes" class="form-control py-2 shadow-none" rows="2"
                                 placeholder="e.g. Supplier name, invoice no."></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold"><small>Date <span class="text-muted fw-normal">(optional)</span></small></label>
+                            <input type="date" name="date" id="stock_date" class="form-control py-2 shadow-none"
+                                max="{{ now()->format('Y-m-d') }}">
+                            <div class="text-muted mt-1" style="font-size:0.78rem;">Leave empty to use today's date. Set a past date only to record historical stock (e.g. catching up entries from another system).</div>
+                            <div class="error-div text-danger small"></div>
+                        </div>
                         <div class="text-end">
                             <button type="submit" class="btn btn-primary fw-semibold" id="addStock_submit">Submit</button>
                         </div>
@@ -246,6 +253,7 @@ $(document).ready(function () {
         $('#stock_quantity').val('');
         $('#stock_unit_price').val('');
         $('#stock_notes').val('');
+        $('#stock_date').val('');
         $('#stock_total_hint').text('');
         $('#addStockModal').modal('show');
         return false;

@@ -27,6 +27,7 @@ use App\Models\Offer;
 use App\Models\OfferItem;
 use App\Models\StockLedger;
 use App\Models\StockWarehouse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -710,7 +711,8 @@ class ActionApprovalController extends Controller
                     $payload->food_items_id,
                     $payload->bottles,
                     $payload->bar_qty,
-                    $godownStock
+                    $godownStock,
+                    !empty($payload->date) ? Carbon::parse($payload->date) : null
                 );
 
                 DB::commit();
@@ -721,7 +723,7 @@ class ActionApprovalController extends Controller
 
                 DB::beginTransaction();
 
-                StockLedger::create([
+                $ledger = StockLedger::create([
                     'warehouse_id'   => $payload->warehouse_id,
                     'location_id'    => $payload->location_id,
                     'food_items_id'  => $payload->food_items_id,
@@ -731,6 +733,13 @@ class ActionApprovalController extends Controller
                     'unit_price'     => isset($payload->unit_price) ? (float) $payload->unit_price : null,
                     'reference_type' => 'manual',
                 ]);
+
+                if (!empty($payload->date)) {
+                    $entryDate = Carbon::parse($payload->date);
+                    $ledger->created_at = $entryDate;
+                    $ledger->updated_at = $entryDate;
+                    $ledger->save();
+                }
 
                 $currentStock = FoodItemCurrentStock::where('warehouse_id', $payload->warehouse_id)
                     ->where('location_id', $payload->location_id)

@@ -246,6 +246,12 @@
                             <div class="small text-muted mb-1">Bar Will Receive</div>
                             <div id="transfer_preview" class="fw-bold text-success fs-5"></div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date <small class="text-muted fw-normal">(optional)</small></label>
+                            <input type="date" id="transfer_date" name="date" class="form-control shadow-none"
+                                max="{{ now()->format('Y-m-d') }}">
+                            <div class="form-text text-muted">Leave empty to use today's date. Set a past date only to record historical transfers (e.g. catching up entries from another system).</div>
+                        </div>
                         <div class="mb-1">
                             <label class="form-label fw-semibold">Notes <small class="text-muted fw-normal">(optional)</small></label>
                             <textarea name="notes" id="transfer_notes" class="form-control shadow-none"
@@ -293,6 +299,7 @@ $(document).ready(function () {
         $('#transfer_godown_display').val(godownQty + ' BTL');
         $('#transfer_bottles').val('').attr('max', godownQty);
         $('#transfer_notes').val('');
+        $('#transfer_date').val('');
         $('#transfer_preview_row').hide();
         $('#transfer_preview').text('');
 
@@ -353,6 +360,7 @@ $(document).ready(function () {
                 food_items_id: $('#transfer_item_id').val(),
                 bottles:       bottles,
                 notes:         $('#transfer_notes').val(),
+                date:          $('#transfer_date').val(),
             },
             success: function (res) {
                 if (res.statusCode === 200) {
