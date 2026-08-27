@@ -355,7 +355,10 @@ class OrderSessionController extends Controller
                 $secondary  = $secondaryByIndex[$idx] ?? null;
 
                 $metadata = null;
-                if ($isCocktail && $volumeMl) {
+                if ($isCocktail) {
+                    // volume_ml is null here for a bottle-based mocktail (its base is a
+                    // beverage, deducted by whole bottle) — that's expected and consistent
+                    // with how the rest of the app treats bottle-based items.
                     $metadata = [
                         'volume_ml'     => $volumeMl,
                         'is_cocktail'   => true,

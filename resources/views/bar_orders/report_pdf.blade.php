@@ -98,8 +98,9 @@
                     : (($item->metadata['volume_ml'] ?? '?') . 'ml × ' . $item->quantity);
             }
 
+            $isMocktailItem = ($item->foodItem->item_type ?? null) === 'beverage';
             $itemLabel = !empty($item->metadata['is_cocktail'])
-                ? ($item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—')) . ' (Cocktail)'
+                ? ($item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—')) . ($isMocktailItem ? ' (Mocktail)' : ' (Cocktail)')
                 : ($item->foodItem->name ?? '—');
             if ($offerApplied) {
                 $offerTag = match($offerApplied['type_slug'] ?? '') {

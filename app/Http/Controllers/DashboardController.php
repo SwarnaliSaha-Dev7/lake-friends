@@ -268,16 +268,22 @@ class DashboardController extends Controller
                     ];
                 });
 
-            // Spirit servings + cocktails: ml-wise menu items from liquor_servings
+            // Spirit servings + cocktails: ml-wise menu items from liquor_servings.
+            // A serving's base can now be a beverage (whole-bottle mocktail like
+            // "Masala Coke") instead of a spirit — is_beer must reflect the base
+            // item's actual unit convention, not be hardcoded to ml-based.
             $spiritServings = LiquorServing::where('club_id', $clubId)
                 ->where('is_active', 1)
+                ->with('foodItem')
                 ->get()
                 ->map(function ($serving) use ($offerMap, $barStockMap) {
+                    $isBeer = (bool) ($serving->foodItem->is_beer ?? false);
                     return [
                         'id'           => 'srv_' . $serving->id,
+                        'serving_id'   => $serving->id,
                         'food_item_id' => $serving->food_item_id,
                         'name'         => $serving->name,
-                        'is_beer'      => 0,
+                        'is_beer'      => $isBeer,
                         'is_cocktail'  => (bool) $serving->is_cocktail,
                         'volume_ml'    => $serving->volume_ml,
                         'price'        => (float) $serving->price,

@@ -925,6 +925,7 @@
                 liquorOfferMap[it.id] = it.offer || null;
                 html += '<option value="' + it.id + '"'
                     + ' data-food-item-id="' + it.food_item_id + '"'
+                    + ' data-serving-id="' + (it.serving_id || '') + '"'
                     + ' data-price="' + it.price + '"'
                     + ' data-is-beer="' + (it.is_beer ? '1' : '0') + '"'
                     + ' data-is-cocktail="' + (it.is_cocktail ? '1' : '0') + '"'
@@ -1201,6 +1202,17 @@
             };
         }
 
+        // A liquor-table row is a non-alcoholic "mocktail" (Masala Coke, Virgin
+        // Mojito etc.) only when its base item is BOTH a cocktail recipe AND
+        // bottle-based (is_beer=1 is reused as the "beverage base" convention
+        // here, same as elsewhere in the app) — real beer rows never carry
+        // is_cocktail, and real spirit-based cocktails never carry is_beer.
+        // Unlike true liquor, its base is a beverage and must be taxed at the
+        // beverage GST rate, not treated as GST-free liquor.
+        function isMocktailOption($opt) {
+            return $opt.attr('data-is-cocktail') === '1' && $opt.attr('data-is-beer') === '1';
+        }
+
         /* ---- Food item select change ---- */
         $(document).on('change', '.food-item-sel', function () {
             var o    = readRowOffer($(this).find('option:selected'), foodOfferMap);
@@ -1345,10 +1357,19 @@
                 foodDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             });
             $('#liquorTableBody .liquor-order-row').each(function () {
-                var o   = readRowOffer($(this).find('.liquor-item-sel option:selected'), liquorOfferMap);
-                var qty = parseInt($(this).find('.liquor-qty-input').val()) || 0;
-                liquorSubtotal += o.price * qty;
-                liquorDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+                var $opt = $(this).find('.liquor-item-sel option:selected');
+                var o    = readRowOffer($opt, liquorOfferMap);
+                var qty  = parseInt($(this).find('.liquor-qty-input').val()) || 0;
+                var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+                // A mocktail's base is a beverage, not a spirit — it belongs in the
+                // beverage-taxed bucket, not the GST-free liquor bucket.
+                if (isMocktailOption($opt)) {
+                    beverageSubtotal += o.price * qty;
+                    beverageDiscount += disc;
+                } else {
+                    liquorSubtotal += o.price * qty;
+                    liquorDiscount += disc;
+                }
             });
             $('#beverageTableBody .beverage-order-row').each(function () {
                 var o   = readRowOffer($(this).find('.beverage-item-sel option:selected'), beverageOfferMap);
@@ -1423,6 +1444,7 @@
                 if (!itemId) { valid = false; return false; }
 
                 var foodItemId   = $opt.attr('data-food-item-id') || itemId;
+                var servingId    = $opt.attr('data-serving-id') || null;
                 var isBeer       = $(this).find('.liquor-is-beer').val() === '1';
                 var isCocktail   = $opt.attr('data-is-cocktail') === '1';
                 var cocktailName = $opt.attr('data-cocktail-name') || '';
@@ -1434,6 +1456,7 @@
 
                 items.push({
                     food_item_id:  foodItemId,
+                    serving_id:    servingId,
                     quantity:      qty,
                     unit:          isBeer ? 'btl' : 'ml',
                     is_beer:       isBeer,
@@ -1485,10 +1508,19 @@
                 foodDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
             });
             $('#liquorTableBody .liquor-order-row').each(function () {
-                var o = readRowOffer($(this).find('.liquor-item-sel option:selected'), liquorOfferMap);
-                var q = parseInt($(this).find('.liquor-qty-input').val()) || 0;
-                liquorSubtotal += o.price * q;
-                liquorDiscount += rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+                var $opt = $(this).find('.liquor-item-sel option:selected');
+                var o    = readRowOffer($opt, liquorOfferMap);
+                var q    = parseInt($(this).find('.liquor-qty-input').val()) || 0;
+                var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+                // A mocktail's base is a beverage, not a spirit — it belongs in the
+                // beverage-taxed bucket, not the GST-free liquor bucket.
+                if (isMocktailOption($opt)) {
+                    beverageSubtotal += o.price * q;
+                    beverageDiscount += disc;
+                } else {
+                    liquorSubtotal += o.price * q;
+                    liquorDiscount += disc;
+                }
             });
             $('#beverageTableBody .beverage-order-row').each(function () {
                 var o = readRowOffer($(this).find('.beverage-item-sel option:selected'), beverageOfferMap);

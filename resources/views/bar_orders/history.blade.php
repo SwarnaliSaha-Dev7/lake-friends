@@ -125,8 +125,15 @@
                                         <td class="text-nowrap text-muted small">{{ $order->created_at->format('d M Y, h:i A') }}</td>
                                         <td class="text-nowrap">
                                             @if(!empty($item->metadata['is_cocktail']))
+                                                @php
+                                                    $isMocktailItem = ($item->foodItem->item_type ?? null) === 'beverage';
+                                                @endphp
                                                 {{ $item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—') }}
-                                                <span class="badge ms-1" style="font-size:0.62rem;background:#7c3aed;color:#fff;">Cocktail</span>
+                                                @if($isMocktailItem)
+                                                    <span class="badge ms-1" style="font-size:0.62rem;background:#0e7490;color:#fff;">Mocktail</span>
+                                                @else
+                                                    <span class="badge ms-1" style="font-size:0.62rem;background:#7c3aed;color:#fff;">Cocktail</span>
+                                                @endif
                                                 <br><small class="text-muted">base: {{ $item->foodItem->name ?? '—' }}</small>
                                             @else
                                                 {{ $item->foodItem->name ?? '—' }}
