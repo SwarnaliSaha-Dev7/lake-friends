@@ -468,6 +468,37 @@ $(document).ready(function () {
     var adjSizeMl    = 0;
     var adjSystemQty = 0; // always stored in ml for spirits, bottles for beer
 
+    function renderAdjSystemQtyLabel(dateSuffix) {
+        dateSuffix = dateSuffix || '';
+        if (adjIsBeer) {
+            $('#adj_system_qty_label').text('System stock: ' + adjSystemQty + ' BTL' + dateSuffix);
+        } else {
+            var btl = adjSizeMl > 0 ? Math.floor(adjSystemQty / adjSizeMl) : 0;
+            var rem = adjSizeMl > 0 ? adjSystemQty % adjSizeMl : adjSystemQty;
+            $('#adj_system_qty_label').text('System stock: ' + adjSystemQty.toLocaleString() + ' ml (' + btl + ' BTL' + (rem > 0 ? ' ' + rem + ' ml' : '') + ')' + dateSuffix);
+        }
+    }
+
+    function refreshAdjSystemQty() {
+        var itemId = $('#adj_item_id').val();
+        var date   = $('#adj_date').val();
+        if (!itemId) return;
+
+        $('#adj_system_qty_label').text('Loading...');
+        $.ajax({
+            url: '{{ route("bar-stock.stock-as-of") }}',
+            type: 'GET',
+            data: { food_items_id: itemId, date: date },
+            success: function (res) {
+                if (res.statusCode === 200) {
+                    adjSystemQty = res.quantity;
+                    renderAdjSystemQtyLabel(date ? ' (as of ' + date + ')' : '');
+                    $('#adj_bottles_beer, #adj_bottles_spirit, #adj_ml_spirit').trigger('input');
+                }
+            }
+        });
+    }
+
     $(document).on('click', '.btn-adjust-bar-stock', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -483,15 +514,13 @@ $(document).ready(function () {
         $('#adj_diff_box').hide();
         $('.error-div', '#barAdjustForm').text('');
 
+        renderAdjSystemQtyLabel();
+
         if (adjIsBeer) {
-            $('#adj_system_qty_label').text('System stock: ' + adjSystemQty + ' BTL');
             $('#adj_beer_row').show();
             $('#adj_spirit_row').hide();
             $('#adj_bottles_beer').val('');
         } else {
-            var btl = adjSizeMl > 0 ? Math.floor(adjSystemQty / adjSizeMl) : 0;
-            var rem = adjSizeMl > 0 ? adjSystemQty % adjSizeMl : adjSystemQty;
-            $('#adj_system_qty_label').text('System stock: ' + adjSystemQty.toLocaleString() + ' ml (' + btl + ' BTL' + (rem > 0 ? ' ' + rem + ' ml' : '') + ')');
             $('#adj_spirit_row').show();
             $('#adj_beer_row').hide();
             $('#adj_bottles_spirit').val('');
@@ -500,6 +529,8 @@ $(document).ready(function () {
 
         $('#barAdjustModal').modal('show');
     });
+
+    $(document).on('change', '#adj_date', refreshAdjSystemQty);
 
     function computeAdjPhysicalQty() {
         if (adjIsBeer) {

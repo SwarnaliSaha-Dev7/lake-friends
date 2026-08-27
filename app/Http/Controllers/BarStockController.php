@@ -37,6 +37,31 @@ class BarStockController extends Controller
         return Location::where('name', Location::BAR)->firstOrFail();
     }
 
+    // Reconstructs what stock was at the end of a given date, from ledger history.
+    // Needed for backdated adjustments: comparing a staff-observed historical
+    // physical count against LIVE current stock (instead of the stock as it stood
+    // on that date) would compute a wildly wrong delta whenever other movements
+    // happened between that date and now, corrupting both the historical record
+    // and — since the delta is always applied to live stock — today's real stock too.
+    private function reconstructStockAsOf(int $warehouseId, int $locationId, int $foodItemId, Carbon $asOfDate): int
+    {
+        $totalIn = (int) StockLedger::where('warehouse_id', $warehouseId)
+            ->where('location_id', $locationId)
+            ->where('food_items_id', $foodItemId)
+            ->where('created_at', '<=', $asOfDate)
+            ->where('direction', 'in')
+            ->sum('quantity');
+
+        $totalOut = (int) StockLedger::where('warehouse_id', $warehouseId)
+            ->where('location_id', $locationId)
+            ->where('food_items_id', $foodItemId)
+            ->where('created_at', '<=', $asOfDate)
+            ->where('direction', 'out')
+            ->sum('quantity');
+
+        return max(0, $totalIn - $totalOut);
+    }
+
     public function index()
     {
         try {
@@ -313,7 +338,12 @@ class BarStockController extends Controller
                 ->where('food_items_id', $foodItem->id)
                 ->first();
 
-            $systemQty = $currentStock ? (int) $currentStock->quantity : 0;
+            // When backdating, the physical count staff observed is being compared
+            // against what stock was AS OF that date — not today's live stock (which
+            // may already include unrelated movements from after that date).
+            $systemQty = $entryDate
+                ? $this->reconstructStockAsOf($warehouse->id, $barLocation->id, $foodItem->id, $entryDate)
+                : ($currentStock ? (int) $currentStock->quantity : 0);
             $diff      = $physicalQty - $systemQty;
 
             if ($diff === 0) {
@@ -420,6 +450,45 @@ class BarStockController extends Controller
         }
     }
 
+    // Used by the Physical Stock Count modal: returns the correct baseline stock
+    // for a given item — live current stock if no date is picked, or the
+    // reconstructed stock as of that date if one is. Keeps the "System Stock"
+    // shown in the UI in sync with what adjust() will actually compare against.
+    public function stockAsOf(Request $request)
+    {
+        try {
+            $club_id = auth()->user()->club_id;
+
+            $request->validate([
+                'food_items_id' => 'required|exists:food_items,id',
+                'date'          => 'nullable|date|before_or_equal:today',
+            ]);
+
+            $warehouse   = $this->getOrCreateWarehouse($club_id);
+            $barLocation = $this->getBarLocation();
+
+            $foodItem = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->where('id', $request->food_items_id)
+                ->firstOrFail();
+
+            if ($request->filled('date')) {
+                $asOfDate = Carbon::parse($request->date)->setTimeFrom(now());
+                $qty = $this->reconstructStockAsOf($warehouse->id, $barLocation->id, $foodItem->id, $asOfDate);
+            } else {
+                $stock = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
+                    ->where('location_id', $barLocation->id)
+                    ->where('food_items_id', $foodItem->id)
+                    ->first();
+                $qty = $stock ? (int) $stock->quantity : 0;
+            }
+
+            return response()->json(['statusCode' => 200, 'quantity' => $qty]);
+        } catch (\Throwable $th) {
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
+        }
+    }
+
     // ─── Report ───────────────────────────────────────────────────────────────
 
     private function getBarReportData(Request $request): array
@@ -473,21 +542,24 @@ class BarStockController extends Controller
             ->pluck('quantity', 'food_items_id');
 
         // ── Qty movements during period ─────────────────────────────────────────
-        // IN during period = transfers received from godown
+        // IN during period — all direction=in movements (transfers from godown,
+        // plus any stock adjustments that added stock). Not filtered to
+        // movement_type='transfer' — an adjustment-in would otherwise be invisible
+        // in this column and would also break opening/closing day-to-day
+        // continuity (opening of the next day must equal closing of this one).
         $inDuring = StockLedger::where('warehouse_id', $warehouse->id)
             ->where('location_id', $barLocation->id)
             ->whereBetween('created_at', [$from, $to])
-            ->where('movement_type', 'transfer')
             ->where('direction', 'in')
             ->select('food_items_id', DB::raw('SUM(quantity) as total'))
             ->groupBy('food_items_id')
             ->pluck('total', 'food_items_id');
 
-        // OUT during period = sales from bar
+        // OUT during period — all direction=out movements (sales, plus any stock
+        // adjustments that reduced stock). Same reasoning as above.
         $outDuring = StockLedger::where('warehouse_id', $warehouse->id)
             ->where('location_id', $barLocation->id)
             ->whereBetween('created_at', [$from, $to])
-            ->where('movement_type', 'sale')
             ->where('direction', 'out')
             ->select('food_items_id', DB::raw('SUM(quantity) as total'))
             ->groupBy('food_items_id')

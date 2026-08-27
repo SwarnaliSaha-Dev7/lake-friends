@@ -68,13 +68,13 @@
             </td>
             <td width="6"></td>
             <td class="card card-green">
-                <div class="card-label">IN from Godown</div>
+                <div class="card-label">Total IN (Period)</div>
                 <div class="card-value">+{{ number_format($totalIn, 2) }} BTL</div>
                 <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalInAmount, 0) }}</div>
             </td>
             <td width="6"></td>
             <td class="card card-orange">
-                <div class="card-label">OUT (Sales)</div>
+                <div class="card-label">Total OUT (Period)</div>
                 <div class="card-value">-{{ number_format($totalOut, 2) }} BTL</div>
                 <div class="card-label" style="margin-top:3px;">Rs {{ number_format($totalOutAmount, 0) }}</div>
             </td>

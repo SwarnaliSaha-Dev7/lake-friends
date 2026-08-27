@@ -32,6 +32,31 @@ class GodownStockController extends Controller
         return Location::where('name', Location::GODOWN)->firstOrFail();
     }
 
+    // Reconstructs what stock was at the end of a given date, from ledger history.
+    // Needed for backdated adjustments: comparing a staff-observed historical
+    // physical count against LIVE current stock (instead of the stock as it stood
+    // on that date) would compute a wildly wrong delta whenever other movements
+    // happened between that date and now, corrupting both the historical record
+    // and — since the delta is always applied to live stock — today's real stock too.
+    private function reconstructStockAsOf(int $warehouseId, int $locationId, int $foodItemId, Carbon $asOfDate): int
+    {
+        $totalIn = (int) StockLedger::where('warehouse_id', $warehouseId)
+            ->where('location_id', $locationId)
+            ->where('food_items_id', $foodItemId)
+            ->where('created_at', '<=', $asOfDate)
+            ->where('direction', 'in')
+            ->sum('quantity');
+
+        $totalOut = (int) StockLedger::where('warehouse_id', $warehouseId)
+            ->where('location_id', $locationId)
+            ->where('food_items_id', $foodItemId)
+            ->where('created_at', '<=', $asOfDate)
+            ->where('direction', 'out')
+            ->sum('quantity');
+
+        return max(0, $totalIn - $totalOut);
+    }
+
     public function index()
     {
         try {
@@ -200,6 +225,7 @@ class GodownStockController extends Controller
                 'food_items_id'  => 'required|exists:food_items,id',
                 'physical_count' => 'required|integer|min:0',
                 'reason'         => 'required|string|max:500',
+                'date'           => 'nullable|date|before_or_equal:today',
             ]);
 
             $godown         = $this->getOrCreateGodown($club_id);
@@ -225,12 +251,22 @@ class GodownStockController extends Controller
                 ]);
             }
 
+            // Optional backdated entry date, same as Add Stock.
+            $entryDate = $request->filled('date')
+                ? Carbon::parse($request->date)->setTimeFrom(now())
+                : null;
+
             $currentStock = FoodItemCurrentStock::where('warehouse_id', $godown->id)
                 ->where('location_id', $godownLocation->id)
                 ->where('food_items_id', $foodItem->id)
                 ->first();
 
-            $systemQty   = $currentStock ? (int) $currentStock->quantity : 0;
+            // When backdating, the physical count staff observed is being compared
+            // against what stock was AS OF that date — not today's live stock (which
+            // may already include unrelated movements from after that date).
+            $systemQty = $entryDate
+                ? $this->reconstructStockAsOf($godown->id, $godownLocation->id, $foodItem->id, $entryDate)
+                : ($currentStock ? (int) $currentStock->quantity : 0);
             $physicalQty = (int) $request->physical_count;
             $diff        = $physicalQty - $systemQty;
 
@@ -258,12 +294,13 @@ class GodownStockController extends Controller
                 'reason'         => $request->reason,
                 'movement_type'  => 'adjustment',
                 'reference_type' => 'manual',
+                'date'           => $entryDate?->toDateTimeString(),
             ];
 
             if ($isAdmin) {
                 DB::beginTransaction();
 
-                StockLedger::create([
+                $ledger = StockLedger::create([
                     'warehouse_id'   => $godown->id,
                     'location_id'    => $godownLocation->id,
                     'food_items_id'  => $foodItem->id,
@@ -272,6 +309,12 @@ class GodownStockController extends Controller
                     'quantity'       => $adjQty,
                     'reference_type' => 'manual',
                 ]);
+
+                if ($entryDate) {
+                    $ledger->created_at = $entryDate;
+                    $ledger->updated_at = $entryDate;
+                    $ledger->save();
+                }
 
                 if ($currentStock) {
                     if ($direction === 'in') {
@@ -327,6 +370,45 @@ class GodownStockController extends Controller
             return response()->json(['statusCode' => 200, 'message' => 'Stock adjustment submitted for approval.']);
         } catch (\Throwable $th) {
             DB::rollBack();
+            return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
+        }
+    }
+
+    // Used by the Physical Stock Count modal: returns the correct baseline stock
+    // for a given item — live current stock if no date is picked, or the
+    // reconstructed stock as of that date if one is. Keeps the "System Stock"
+    // shown in the UI in sync with what adjust() will actually compare against.
+    public function stockAsOf(Request $request)
+    {
+        try {
+            $club_id = auth()->user()->club_id;
+
+            $request->validate([
+                'food_items_id' => 'required|exists:food_items,id',
+                'date'          => 'nullable|date|before_or_equal:today',
+            ]);
+
+            $godown         = $this->getOrCreateGodown($club_id);
+            $godownLocation = $this->getGodownLocation();
+
+            $foodItem = FoodItem::where('club_id', $club_id)
+                ->where('item_type', 'liquor')
+                ->where('id', $request->food_items_id)
+                ->firstOrFail();
+
+            if ($request->filled('date')) {
+                $asOfDate = Carbon::parse($request->date)->setTimeFrom(now());
+                $qty = $this->reconstructStockAsOf($godown->id, $godownLocation->id, $foodItem->id, $asOfDate);
+            } else {
+                $stock = FoodItemCurrentStock::where('warehouse_id', $godown->id)
+                    ->where('location_id', $godownLocation->id)
+                    ->where('food_items_id', $foodItem->id)
+                    ->first();
+                $qty = $stock ? (int) $stock->quantity : 0;
+            }
+
+            return response()->json(['statusCode' => 200, 'quantity' => $qty]);
+        } catch (\Throwable $th) {
             return response()->json(['statusCode' => 500, 'error' => $th->getMessage()]);
         }
     }

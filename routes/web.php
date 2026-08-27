@@ -221,6 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::get('godown',         [GodownStockController::class, 'index'])->name('godown-stock.index');
         Route::post('godown',        [GodownStockController::class, 'store'])->name('godown-stock.store');
         Route::post('godown/adjust', [GodownStockController::class, 'adjust'])->name('godown-stock.adjust');
+        Route::get('godown/stock-as-of',     [GodownStockController::class, 'stockAsOf'])->name('godown-stock.stock-as-of');
         Route::get('godown/report',          [GodownStockController::class, 'report'])->name('godown-stock.report');
         Route::get('godown/report/download', [GodownStockController::class, 'downloadReport'])->name('godown-stock.report.download');
     });
@@ -230,6 +231,7 @@ Route::middleware('auth')->group(function () {
         Route::get('godown',         [BeverageGodownStockController::class, 'index'])->name('beverage-godown-stock.index');
         Route::post('godown',        [BeverageGodownStockController::class, 'store'])->name('beverage-godown-stock.store');
         Route::post('godown/adjust', [BeverageGodownStockController::class, 'adjust'])->name('beverage-godown-stock.adjust');
+        Route::get('godown/stock-as-of',     [BeverageGodownStockController::class, 'stockAsOf'])->name('beverage-godown-stock.stock-as-of');
         Route::get('godown/report',          [BeverageGodownStockController::class, 'report'])->name('beverage-godown-stock.report');
         Route::get('godown/report/download', [BeverageGodownStockController::class, 'downloadReport'])->name('beverage-godown-stock.report.download');
     });
@@ -245,6 +247,7 @@ Route::middleware('auth')->group(function () {
         Route::get('bar',                  [BarStockController::class, 'index'])->name('bar-stock.index');
         Route::post('bar/transfer',        [BarStockController::class, 'transfer'])->name('bar-stock.transfer');
         Route::post('bar/adjust',          [BarStockController::class, 'adjust'])->name('bar-stock.adjust');
+        Route::get('bar/stock-as-of',      [BarStockController::class, 'stockAsOf'])->name('bar-stock.stock-as-of');
         Route::get('bar/report',           [BarStockController::class, 'report'])->name('bar-stock.report');
         Route::get('bar/report/download',  [BarStockController::class, 'downloadReport'])->name('bar-stock.report.download');
     });
@@ -253,6 +256,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('beverage-stock')->group(function () {
         Route::get('bar',                  [BeverageBarStockController::class, 'index'])->name('beverage-bar-stock.index');
         Route::post('bar/transfer',        [BeverageBarStockController::class, 'transfer'])->name('beverage-bar-stock.transfer');
+        Route::post('bar/adjust',          [BeverageBarStockController::class, 'adjust'])->name('beverage-bar-stock.adjust');
+        Route::get('bar/stock-as-of',      [BeverageBarStockController::class, 'stockAsOf'])->name('beverage-bar-stock.stock-as-of');
         Route::get('bar/report',           [BeverageBarStockController::class, 'report'])->name('beverage-bar-stock.report');
         Route::get('bar/report/download',  [BeverageBarStockController::class, 'downloadReport'])->name('beverage-bar-stock.report.download');
     });

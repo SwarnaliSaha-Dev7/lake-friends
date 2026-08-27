@@ -189,6 +189,14 @@
                                                 @if($godownQty === 0) disabled title="No godown stock available" @endif>
                                                 <i class="fa-solid fa-arrow-right-arrow-left"></i> Transfer to Bar
                                             </button>
+                                            <button type="button"
+                                                class="btn btn-sm btn-outline-warning ms-1 btn-adjust-bar-stock"
+                                                data-id="{{ $item->id }}"
+                                                data-name="{{ $item->name }}"
+                                                data-qty="{{ $barQty }}"
+                                                title="Physical Count Adjustment">
+                                                <i class="fa-solid fa-scale-balanced"></i> Adjust
+                                            </button>
                                         @endif
                                     </td>
                                 </tr>
@@ -239,6 +247,12 @@
                             <div class="small text-muted mb-1">Bar Will Receive</div>
                             <div id="transfer_preview" class="fw-bold text-success fs-5"></div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date <small class="text-muted fw-normal">(optional)</small></label>
+                            <input type="date" id="transfer_date" name="date" class="form-control shadow-none"
+                                max="{{ now()->format('Y-m-d') }}">
+                            <div class="form-text text-muted">Leave empty to use today's date. Set a past date only to record historical transfers (e.g. catching up entries from another system).</div>
+                        </div>
                         <div class="mb-1">
                             <label class="form-label fw-semibold">Notes <small class="text-muted fw-normal">(optional)</small></label>
                             <textarea name="notes" id="transfer_notes" class="form-control shadow-none"
@@ -249,6 +263,63 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary fw-semibold" id="transferSubmitBtn">
                             <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Transfer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Physical Stock Count / Adjust Modal --}}
+    <div class="modal fade" id="barAdjustModal" tabindex="-1" aria-labelledby="barAdjustModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-semibold" id="barAdjustModalLabel">
+                        <i class="fa-solid fa-scale-balanced me-2 text-warning"></i>Physical Stock Count
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="barAdjustForm">
+                    @csrf
+                    <input type="hidden" id="adj_item_id" name="food_items_id">
+                    <div class="modal-body">
+                        <div class="mb-3 p-3 rounded-3 bg-light">
+                            <div class="fw-semibold" id="adj_item_name"></div>
+                            <div class="text-muted small" id="adj_system_qty_label"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold"><small>Physical Count <span class="badge bg-secondary fw-normal">Bottle</span></small></label>
+                            <input type="number" id="adj_bottles" class="form-control shadow-none" placeholder="Count you see" min="0">
+                        </div>
+                        <div class="error-div text-danger small mb-2"></div>
+
+                        <div class="mb-3 p-3 rounded-3 border" id="adj_diff_box" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold">Adjustment:</span>
+                                <span class="fw-bold fs-5" id="adj_diff_label"></span>
+                            </div>
+                            <div class="text-muted small mt-1" id="adj_diff_note"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date <small class="text-muted fw-normal">(optional)</small></label>
+                            <input type="date" id="adj_date" name="date" class="form-control shadow-none"
+                                max="{{ now()->format('Y-m-d') }}">
+                            <div class="form-text text-muted">Leave empty to correct today's stock. Set a past date to correct a historical count — System Stock above will update to what stock was on that date.</div>
+                        </div>
+
+                        <div class="mb-1">
+                            <label class="form-label fw-semibold"><small>Reason <span class="text-danger">*</span></small></label>
+                            <textarea name="reason" id="adj_reason" class="form-control shadow-none" rows="2"
+                                placeholder="e.g. Entry error, breakage, physical verification" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning fw-semibold text-dark" id="barAdjustSubmitBtn">
+                            Submit Adjustment
                         </button>
                     </div>
                 </form>
@@ -286,6 +357,7 @@ $(document).ready(function () {
         $('#transfer_godown_display').val(godownQty + ' BTL');
         $('#transfer_bottles').val('').attr('max', godownQty);
         $('#transfer_notes').val('');
+        $('#transfer_date').val('');
         $('#transfer_preview_row').hide();
         $('#transfer_preview').text('');
 
@@ -346,6 +418,7 @@ $(document).ready(function () {
                 food_items_id: $('#transfer_item_id').val(),
                 bottles:       bottles,
                 notes:         $('#transfer_notes').val(),
+                date:          $('#transfer_date').val(),
             },
             success: function (res) {
                 if (res.statusCode === 200) {
@@ -364,6 +437,127 @@ $(document).ready(function () {
             },
             complete: function () {
                 $btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Transfer');
+            }
+        });
+    });
+
+    // ── PHYSICAL COUNT ADJUSTMENT ──
+
+    var adjSystemQty = 0;
+
+    function refreshAdjSystemQty() {
+        var itemId = $('#adj_item_id').val();
+        var date   = $('#adj_date').val();
+        if (!itemId) return;
+
+        $('#adj_system_qty_label').text('Loading...');
+        $.ajax({
+            url: '{{ route("beverage-bar-stock.stock-as-of") }}',
+            type: 'GET',
+            data: { food_items_id: itemId, date: date },
+            success: function (res) {
+                if (res.statusCode === 200) {
+                    adjSystemQty = res.quantity;
+                    $('#adj_system_qty_label').text('System stock: ' + adjSystemQty + ' BTL' + (date ? ' (as of ' + date + ')' : ''));
+                    $('#adj_bottles').trigger('input');
+                }
+            }
+        });
+    }
+
+    $(document).on('click', '.btn-adjust-bar-stock', function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        adjSystemQty = parseInt($(this).data('qty')) || 0;
+
+        $('#adj_item_id').val($(this).data('id'));
+        $('#adj_item_name').text($(this).data('name'));
+        $('#adj_system_qty_label').text('System stock: ' + adjSystemQty + ' BTL');
+        $('#adj_bottles').val('');
+        $('#adj_reason').val('');
+        $('#adj_date').val('');
+        $('#adj_diff_box').hide();
+        $('.error-div', '#barAdjustForm').text('');
+
+        $('#barAdjustModal').modal('show');
+    });
+
+    $(document).on('change', '#adj_date', refreshAdjSystemQty);
+
+    $(document).on('input', '#adj_bottles', function () {
+        var physical = parseInt($(this).val());
+        var diffBox   = $('#adj_diff_box');
+        var diffLabel = $('#adj_diff_label');
+        var diffNote  = $('#adj_diff_note');
+
+        if (isNaN(physical) || physical < 0) {
+            diffBox.hide();
+            return;
+        }
+
+        var diff = physical - adjSystemQty;
+        diffBox.show().removeClass('border-success border-danger border-secondary');
+
+        if (diff === 0) {
+            diffLabel.text('No change').attr('class', 'fw-bold fs-5 text-secondary');
+            diffNote.text('Physical count matches system stock.');
+            diffBox.addClass('border-secondary');
+        } else if (diff > 0) {
+            diffLabel.text('+' + diff + ' BTL').attr('class', 'fw-bold fs-5 text-success');
+            diffNote.text('System stock will increase by ' + diff + ' bottle(s).');
+            diffBox.addClass('border-success');
+        } else {
+            diffLabel.text(diff + ' BTL').attr('class', 'fw-bold fs-5 text-danger');
+            diffNote.text('System stock will decrease by ' + Math.abs(diff) + ' bottle(s).');
+            diffBox.addClass('border-danger');
+        }
+    });
+
+    $('#barAdjustForm').on('submit', function (e) {
+        e.preventDefault();
+
+        var isValid = true;
+        var physical = $('#adj_bottles').val();
+        if (physical === '' || parseInt(physical) < 0) {
+            $('.error-div', '#barAdjustForm').text('Enter a valid physical count (0 or more).');
+            isValid = false;
+        } else {
+            $('.error-div', '#barAdjustForm').text('');
+        }
+        if (!$('#adj_reason').val().trim()) {
+            toastr.warning('Reason is required.');
+            isValid = false;
+        }
+        if (!isValid) return;
+
+        var $btn = $('#barAdjustSubmitBtn');
+        var orig = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
+
+        $.ajax({
+            url: '{{ route("beverage-bar-stock.adjust") }}',
+            type: 'POST',
+            data: {
+                _token:           '{{ csrf_token() }}',
+                food_items_id:    $('#adj_item_id').val(),
+                physical_bottles: parseInt($('#adj_bottles').val()) || 0,
+                reason:           $('#adj_reason').val(),
+                date:             $('#adj_date').val(),
+            },
+            success: function (response) {
+                $btn.html(orig).prop('disabled', false);
+                if (response.statusCode == 200) {
+                    toastr.success(response.message);
+                    $('#barAdjustModal').modal('hide');
+                    setTimeout(function () { location.reload(); }, 1500);
+                } else {
+                    toastr.error(response.error || response.message || 'Something went wrong.');
+                }
+            },
+            error: function () {
+                $btn.html(orig).prop('disabled', false);
+                toastr.error('Something went wrong.');
             }
         });
     });

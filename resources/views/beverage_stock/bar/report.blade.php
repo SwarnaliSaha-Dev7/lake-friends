@@ -55,7 +55,7 @@
             <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
                 style="background: linear-gradient(135deg, #28c76f, #1a9e52);">
                 <div>
-                    <div class="small mb-1 opacity-75">IN from Godown</div>
+                    <div class="small mb-1 opacity-75">Total IN (Period)</div>
                     <div class="fs-4 fw-bold">+{{ number_format($totalIn, 2) }} BTL</div>
                     <div class="small opacity-75" style="font-size:10px;">Bottle equivalents</div>
                 </div>
@@ -66,7 +66,7 @@
             <div class="rounded-3 p-3 text-white d-flex align-items-center justify-content-between"
                 style="background: linear-gradient(135deg, #ff9f43, #e08020);">
                 <div>
-                    <div class="small mb-1 opacity-75">OUT (Sales)</div>
+                    <div class="small mb-1 opacity-75">Total OUT (Period)</div>
                     <div class="fs-4 fw-bold">−{{ number_format($totalOut, 2) }} BTL</div>
                     <div class="small opacity-75" style="font-size:10px;">Bottle equivalents</div>
                 </div>
@@ -124,9 +124,9 @@
                                 <th class="text-white fw-medium align-middle text-nowrap">Size</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Opening</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Opening Value</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">IN from Godown (+)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Total IN (+)</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">IN Value</th>
-                                <th class="text-white fw-medium align-middle text-nowrap">OUT Sales (−)</th>
+                                <th class="text-white fw-medium align-middle text-nowrap">Total OUT (−)</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">OUT Value</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Closing</th>
                                 <th class="text-white fw-medium align-middle text-nowrap">Closing Value</th>

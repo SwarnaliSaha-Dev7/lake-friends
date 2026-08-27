@@ -206,6 +206,13 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label fw-semibold"><small>Date <span class="text-muted fw-normal">(optional)</span></small></label>
+                            <input type="date" name="date" id="adj_date" class="form-control py-2 shadow-none"
+                                max="{{ now()->format('Y-m-d') }}">
+                            <div class="text-muted mt-1" style="font-size:0.78rem;">Leave empty to correct today's stock. Set a past date to correct a historical count — System Stock above will update to what stock was on that date.</div>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label fw-semibold"><small>Reason <span class="text-danger">*</span></small></label>
                             <textarea name="reason" id="adj_reason" class="form-control py-2 shadow-none" rows="2"
                                 placeholder="e.g. Entry error, breakage, theft, physical verification" required></textarea>
@@ -336,6 +343,26 @@ $(document).ready(function () {
 
     var adjSystemQty = 0;
 
+    function refreshAdjSystemQty() {
+        var itemId = $('#adj_item_id').val();
+        var date   = $('#adj_date').val();
+        if (!itemId) return;
+
+        $('#adj_system_qty').text('Loading...');
+        $.ajax({
+            url: '{{ route("godown-stock.stock-as-of") }}',
+            type: 'GET',
+            data: { food_items_id: itemId, date: date },
+            success: function (res) {
+                if (res.statusCode === 200) {
+                    adjSystemQty = res.quantity;
+                    $('#adj_system_qty').text(adjSystemQty + ' BTL' + (date ? ' (as of ' + date + ')' : ''));
+                    $('#adj_physical_count').trigger('input');
+                }
+            }
+        });
+    }
+
     $(document).on('click', '.adjust-stock-btn', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -349,11 +376,14 @@ $(document).ready(function () {
         $('#adj_system_qty').text(adjSystemQty + ' BTL');
         $('#adj_physical_count').val('');
         $('#adj_reason').val('');
+        $('#adj_date').val('');
         $('#adj_diff_box').hide();
 
         $('#adjustStockModal').modal('show');
         return false;
     });
+
+    $(document).on('change', '#adj_date', refreshAdjSystemQty);
 
     // Live difference calculation
     $('#adj_physical_count').on('input', function () {
