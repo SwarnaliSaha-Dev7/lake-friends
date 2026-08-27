@@ -37,10 +37,21 @@
                                     $isPendingDelete = in_array($serving->id, $pendingDeleteIds);
                                     $hasPending      = in_array($serving->id, $pendingAnyIds);
                                 @endphp
+                                @php
+                                    // A "cocktail" is only really a cocktail if it has an alcoholic
+                                    // (liquor) base — one with a beverage base (Masala Coke, Virgin
+                                    // Mojito etc.) is non-alcoholic and should read as a Mocktail.
+                                    $isMocktail = $serving->is_cocktail && (($serving->foodItem->item_type ?? null) === 'beverage');
+                                @endphp
                                 <tr>
                                     <td class="text-nowrap">{{ $loop->iteration }}</td>
                                     <td class="text-nowrap">
-                                        @if($serving->is_cocktail)
+                                        @if($isMocktail)
+                                            <span class="badge border rounded-pill px-2 py-1"
+                                                style="background:#cffafe;color:#0e7490;border-color:#67e8f9!important;">
+                                                Mocktail
+                                            </span>
+                                        @elseif($serving->is_cocktail)
                                             <span class="badge border rounded-pill px-2 py-1 bg-purple-subtle text-purple border-purple"
                                                 style="background:#f3e8ff;color:#7c3aed;border-color:#c4b5fd!important;">
                                                 Cocktail
@@ -67,11 +78,14 @@
                                             </div>
                                         @endif
                                     </td>
+                                    @php
+                                        $volumeUnit = ($serving->foodItem->is_beer ?? false) ? 'BTL' : 'ml';
+                                    @endphp
                                     <td class="text-nowrap">
                                         @if($serving->is_cocktail)
-                                            {{ $serving->volume_ml }} ml <small class="text-muted">(deduct)</small>
+                                            {{ $serving->volume_ml }} {{ $volumeUnit }} <small class="text-muted">(deduct)</small>
                                         @else
-                                            {{ $serving->volume_ml }} ml
+                                            {{ $serving->volume_ml }} {{ $volumeUnit }}
                                         @endif
                                     </td>
                                     <td class="text-nowrap fw-semibold">Rs {{ number_format($serving->price, 2) }}</td>

@@ -240,6 +240,7 @@
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beer">Beer</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="wine">Wine</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="cocktail">Cocktail</button>
+                                    <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="mocktail">Mocktail</button>
                                     <button type="button" class="btn btn-outline-secondary bar-type-filter" data-filter="beverage">Beverage</button>
                                 </div>
                             </div>
@@ -347,7 +348,14 @@ $(document).ready(function () {
             }
 
             var stockDisplay, typeBadge, sizeTxt, itemType;
-            if (item.is_cocktail) {
+            if (item.is_cocktail && item.is_mocktail) {
+                // Non-alcoholic "cocktail" built on a beverage base (Masala Coke,
+                // Virgin Mojito etc.) — deducted by the bottle, not ml.
+                stockDisplay = item.btl_eq + ' servings';
+                typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#0e7490;">Mocktail</span>';
+                sizeTxt      = item.size_ml + ' BTL';
+                itemType     = 'mocktail';
+            } else if (item.is_cocktail) {
                 stockDisplay = item.btl_eq + ' servings';
                 typeBadge    = '<span class="badge text-white" style="font-size:0.65rem;background:#7c3aed;">Cocktail</span>';
                 sizeTxt      = item.size_ml + ' ml';
@@ -380,9 +388,10 @@ $(document).ready(function () {
             var stockLabel  = isOut ? 'Out of Stock'
                             : isB1g1Insufficient ? 'Insufficient for B1G1'
                             : (isLow ? 'Low Stock' : 'In Stock');
-            var cardBorder  = (isOut || isB1g1Insufficient) ? 'border-danger' : (isLow ? 'border-warning' : item.is_cocktail ? 'border-purple' : '');
+            var cardBorder  = (isOut || isB1g1Insufficient) ? 'border-danger' : (isLow ? 'border-warning' : item.is_mocktail ? 'border-info' : item.is_cocktail ? 'border-purple' : '');
             var cardBg      = (isOut || isB1g1Insufficient) ? 'background:#fff5f5;'
                             : isLow ? 'background:#fffbf0;'
+                            : item.is_mocktail ? 'background:#ecfeff;'
                             : item.is_cocktail ? 'background:#faf5ff;' : '';
 
             var offerBadge = '';
@@ -881,8 +890,12 @@ $(document).ready(function () {
 
                 var displayName;
                 if (meta.is_cocktail) {
+                    var isMocktailItem = it.food_item && it.food_item.item_type === 'beverage';
+                    var typeBadgeHtml = isMocktailItem
+                        ? ' <span class="badge ms-1" style="font-size:0.6rem;background:#0e7490;color:#fff;">Mocktail</span>'
+                        : ' <span class="badge ms-1" style="font-size:0.6rem;background:#7c3aed;color:#fff;">Cocktail</span>';
                     displayName = (meta.cocktail_name || (it.food_item ? it.food_item.name : '—'))
-                        + ' <span class="badge ms-1" style="font-size:0.6rem;background:#7c3aed;color:#fff;">Cocktail</span>'
+                        + typeBadgeHtml
                         + '<br><small class="text-muted">base: ' + (it.food_item ? it.food_item.name : '—') + '</small>';
                 } else {
                     displayName = it.food_item ? it.food_item.name : '—';

@@ -305,13 +305,19 @@ class BarOrderController extends Controller
                         $canMake = min($canMake, (int) floor($secondaryStock / $secondaryQty));
                     }
 
+                    // A "cocktail" is only really a cocktail with an alcoholic (liquor)
+                    // base — one built on a beverage base (Masala Coke, Virgin Mojito
+                    // etc.) is non-alcoholic and should read as a Mocktail instead.
+                    $isMocktail = $serving->is_cocktail && (($serving->foodItem->item_type ?? null) === 'beverage');
+
                     return [
                         'id'          => $baseItemId,   // base item food_item_id, for stock deduction
                         'serving_id'  => $serving->id,  // unique key per serving (peg size or cocktail)
                         'name'        => $serving->name,
-                        'category'    => $serving->is_cocktail ? 'Cocktail' : ($serving->foodItem->foodItemCat->name ?? '—'),
+                        'category'    => $isMocktail ? 'Mocktail' : ($serving->is_cocktail ? 'Cocktail' : ($serving->foodItem->foodItemCat->name ?? '—')),
                         'is_beer'     => $baseIsBeer,
                         'is_cocktail' => (bool) $serving->is_cocktail,
+                        'is_mocktail' => $isMocktail,
                         'size_ml'     => $deductMl,      // ml deducted per serving (or bottle count if base is a beverage)
                         'price'       => (float) $serving->price,
                         'bar_stock'   => $stockMl,
