@@ -280,24 +280,39 @@ class BarOrderController extends Controller
             //    spirit food item has no sellable price of its own (see
             //    LiquorItemManageController::store(), which always stores 0 for
             //    non-beer items), so pricing must come from here, not the item. ──
+            $beverageGstRate = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'beverage')->value('gst_percentage') ?? 0);
+
             $servings = LiquorServing::where('club_id', $clubId)
                 ->where('is_active', true)
-                ->with('foodItem.foodItemCat')
+                ->with(['foodItem.foodItemCat', 'secondaryFoodItem'])
                 ->get()
-                ->map(function ($serving) use ($barStockMap) {
+                ->map(function ($serving) use ($barStockMap, $beverageGstRate) {
                     $baseItemId  = $serving->food_item_id;
+                    // Base item can be a spirit (deduct ml) or, for a non-alcoholic
+                    // drink like "Masala Coke"/"Fresh Lime Soda", a beverage item
+                    // (deduct whole bottles) — is_beer on the base item decides which.
+                    $baseIsBeer  = (bool) ($serving->foodItem->is_beer ?? false);
                     $stockMl     = (int) ($barStockMap[$baseItemId] ?? 0);
                     $deductMl    = (int) ($serving->volume_ml ?? 1);
                     $canMake     = $deductMl > 0 ? (int) floor($stockMl / $deductMl) : 0;
 
+                    // Optional mixer/soda — its stock also caps how many servings can
+                    // be poured, even if the base item itself has plenty left.
+                    $secondaryId    = $serving->secondary_food_item_id;
+                    $secondaryQty   = (int) ($serving->secondary_quantity ?? 0);
+                    $secondaryStock = $secondaryId ? (int) ($barStockMap[$secondaryId] ?? 0) : null;
+                    if ($secondaryId && $secondaryQty > 0) {
+                        $canMake = min($canMake, (int) floor($secondaryStock / $secondaryQty));
+                    }
+
                     return [
-                        'id'          => $baseItemId,   // base spirit food_item_id, for stock deduction
+                        'id'          => $baseItemId,   // base item food_item_id, for stock deduction
                         'serving_id'  => $serving->id,  // unique key per serving (peg size or cocktail)
                         'name'        => $serving->name,
                         'category'    => $serving->is_cocktail ? 'Cocktail' : ($serving->foodItem->foodItemCat->name ?? '—'),
-                        'is_beer'     => false,
+                        'is_beer'     => $baseIsBeer,
                         'is_cocktail' => (bool) $serving->is_cocktail,
-                        'size_ml'     => $deductMl,      // ml deducted per serving
+                        'size_ml'     => $deductMl,      // ml deducted per serving (or bottle count if base is a beverage)
                         'price'       => (float) $serving->price,
                         'bar_stock'   => $stockMl,
                         'in_stock'    => $canMake > 0,
@@ -305,12 +320,15 @@ class BarOrderController extends Controller
                         'btl_eq'      => $canMake,       // how many servings can be poured
                         'alert_qty'   => 0,
                         'offer'       => null,
-                        'gst_rate'    => 0, // liquor is GST-free in Bar Order — see BUSINESS_LOGIC.md GST section
+                        // Liquor-based servings are GST-free (see BUSINESS_LOGIC.md);
+                        // a beverage-based mocktail/soft-drink still carries beverage GST.
+                        'gst_rate'    => $baseIsBeer ? $beverageGstRate : 0,
+                        'secondary_item_id'   => $secondaryId,
+                        'secondary_item_name' => $serving->secondaryFoodItem->name ?? null,
+                        'secondary_quantity'  => $secondaryQty ?: null,
+                        'secondary_stock'     => $secondaryStock,
                     ];
                 });
-
-            // ── Beverages: whole-unit sale like beer, but taxed at the beverage GST rate ──
-            $beverageGstRate = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'beverage')->value('gst_percentage') ?? 0);
 
             $beverageItems = FoodItem::where('club_id', $clubId)
                 ->where('item_type', 'beverage')
@@ -390,12 +408,58 @@ class BarOrderController extends Controller
             $warehouse   = $this->getWarehouse($clubId);
             $barLocation = $this->getBarLocation();
 
+            // Re-derive every serving-based line (peg or cocktail) from LiquorServing
+            // server-side — not trusted from the client. This matters beyond
+            // security: a serving's base item can now be a beverage (e.g. "Masala
+            // Coke", deducted by the bottle) rather than a spirit (deducted by ml),
+            // and getting that unit wrong would silently deduct the wrong quantity.
+            // Also resolves the optional mixer/soda, which the client never needs
+            // to know about at all — so it can't be omitted to skip the deduction
+            // while still charging the cocktail's full (mixer-inclusive) price.
+            $secondaryByIndex = [];
+            foreach ($items as $idx => &$item) {
+                if (!empty($item['serving_id'])) {
+                    $serving = LiquorServing::where('club_id', $clubId)
+                        ->with('foodItem')
+                        ->find((int) $item['serving_id']);
+
+                    if (!$serving || !$serving->foodItem) {
+                        DB::rollBack();
+                        return response()->json(['statusCode' => 422, 'message' => 'One or more items are no longer available.']);
+                    }
+
+                    $baseIsBeer = (bool) $serving->foodItem->is_beer;
+                    $qty        = (int) $item['quantity'];
+
+                    $item['food_item_id'] = $serving->food_item_id;
+                    $item['is_beer']      = $baseIsBeer;
+                    $item['is_cocktail']  = (bool) $serving->is_cocktail;
+                    $item['volume_ml']    = (int) $serving->volume_ml;
+                    $item['deduct_qty']   = $baseIsBeer ? $qty : $qty * (int) $serving->volume_ml;
+
+                    if ($serving->secondary_food_item_id && $serving->secondary_quantity) {
+                        $secondaryByIndex[$idx] = [
+                            'food_item_id' => (int) $serving->secondary_food_item_id,
+                            'name'         => $serving->secondaryFoodItem->name ?? null,
+                            'per_unit_qty' => (int) $serving->secondary_quantity,
+                            'quantity'     => $qty * (int) $serving->secondary_quantity,
+                        ];
+                    }
+                }
+            }
+            unset($item);
+
             $deductMap = [];
             $isBeerMap = [];
             foreach ($items as $item) {
                 $foodItemId = (int) $item['food_item_id'];
                 $deductMap[$foodItemId] = ($deductMap[$foodItemId] ?? 0) + (int) $item['deduct_qty'];
                 $isBeerMap[$foodItemId] = (bool) $item['is_beer'];
+            }
+            foreach ($secondaryByIndex as $secondary) {
+                $sid = $secondary['food_item_id'];
+                $deductMap[$sid] = ($deductMap[$sid] ?? 0) + $secondary['quantity'];
+                $isBeerMap[$sid] = true; // beverages/mixers are always whole-bottle
             }
 
             foreach ($deductMap as $foodItemId => $totalDeduct) {
@@ -434,7 +498,7 @@ class BarOrderController extends Controller
             ]);
 
             // Create order items + deduct bar stock
-            foreach ($items as $item) {
+            foreach ($items as $idx => $item) {
                 $foodItemId   = (int) $item['food_item_id'];
                 $isBeer       = (bool) $item['is_beer'];
                 $isCocktail   = (bool) ($item['is_cocktail'] ?? false);
@@ -443,6 +507,7 @@ class BarOrderController extends Controller
                 $quantity     = (int) $item['quantity'];
                 $unit         = $isBeer ? 'btl' : 'ml';
                 $offerApplied = $item['offer_applied'] ?? null;
+                $secondary    = $secondaryByIndex[$idx] ?? null;
 
                 $metadata = null;
                 if ($isCocktail) {
@@ -452,6 +517,14 @@ class BarOrderController extends Controller
                         'cocktail_name' => $item['name'] ?? '',
                         'serving_id'    => $item['serving_id'] ?? null,
                     ];
+                    // Mixer/soda deducted alongside the base spirit — never its own
+                    // bill line, so it's recorded here only for stock-reversal on
+                    // cancel, not shown anywhere on the receipt.
+                    if ($secondary) {
+                        $metadata['secondary_food_item_id'] = $secondary['food_item_id'];
+                        $metadata['secondary_item_name']    = $secondary['name'];
+                        $metadata['secondary_quantity']     = $secondary['quantity'];
+                    }
                 } elseif ($volumeMl) {
                     $metadata = ['volume_ml' => $volumeMl];
                 }
@@ -486,6 +559,30 @@ class BarOrderController extends Controller
                     'quantity'       => $deductQty,
                     'reference_type' => 'order',
                 ]);
+
+                // Deduct the mixer/soda separately — its own stock row and ledger
+                // entry (for accurate reporting), but no separate RestaurantOrderItem
+                // row, so it never appears as its own line on the bill.
+                if ($secondary) {
+                    $secondaryStock = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
+                        ->where('location_id', $barLocation->id)
+                        ->where('food_items_id', $secondary['food_item_id'])
+                        ->first();
+
+                    if ($secondaryStock) {
+                        $secondaryStock->decrement('quantity', $secondary['quantity']);
+                    }
+
+                    StockLedger::create([
+                        'warehouse_id'   => $warehouse->id,
+                        'location_id'    => $barLocation->id,
+                        'food_items_id'  => $secondary['food_item_id'],
+                        'movement_type'  => 'sale',
+                        'direction'      => 'out',
+                        'quantity'       => $secondary['quantity'],
+                        'reference_type' => 'order',
+                    ]);
+                }
             }
 
             // Deduct wallet
@@ -590,6 +687,38 @@ class BarOrderController extends Controller
                     'quantity'       => $deductQty,
                     'reference_type' => 'order',
                 ]);
+
+                // Restore the mixer/soda that was deducted alongside this cocktail,
+                // if any (never its own bill line, but its own stock/ledger entry).
+                $secondaryItemId = $item->metadata['secondary_food_item_id'] ?? null;
+                $secondaryQty    = $item->metadata['secondary_quantity'] ?? null;
+                if ($secondaryItemId && $secondaryQty) {
+                    $secondaryStock = FoodItemCurrentStock::where('warehouse_id', $warehouse->id)
+                        ->where('location_id', $barLocation->id)
+                        ->where('food_items_id', $secondaryItemId)
+                        ->first();
+
+                    if ($secondaryStock) {
+                        $secondaryStock->increment('quantity', (int) $secondaryQty);
+                    } else {
+                        FoodItemCurrentStock::create([
+                            'warehouse_id'  => $warehouse->id,
+                            'location_id'   => $barLocation->id,
+                            'food_items_id' => $secondaryItemId,
+                            'quantity'      => (int) $secondaryQty,
+                        ]);
+                    }
+
+                    StockLedger::create([
+                        'warehouse_id'   => $warehouse->id,
+                        'location_id'    => $barLocation->id,
+                        'food_items_id'  => $secondaryItemId,
+                        'movement_type'  => 'adjustment',
+                        'direction'      => 'in',
+                        'quantity'       => (int) $secondaryQty,
+                        'reference_type' => 'order',
+                    ]);
+                }
             }
 
             // Refund wallet

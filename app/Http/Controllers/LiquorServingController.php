@@ -35,8 +35,15 @@ class LiquorServingController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'size_ml', 'is_beer']);
 
+            // Mixer/soda choices for cocktails — beverage items only.
+            $beverageItems = FoodItem::where('club_id', $clubId)
+                ->where('item_type', 'beverage')
+                ->where('is_active', 1)
+                ->orderBy('name')
+                ->get(['id', 'name', 'size_ml']);
+
             $servings = LiquorServing::where('club_id', $clubId)
-                ->with('foodItem')
+                ->with(['foodItem', 'secondaryFoodItem'])
                 ->latest()
                 ->get();
 
@@ -53,7 +60,7 @@ class LiquorServingController extends Controller
             $pendingAnyIds    = $pendingByServing->keys()->toArray();
 
             return view('liquor_servings.index', compact(
-                'servings', 'liquorItems', 'allLiquorItems', 'page_title', 'title',
+                'servings', 'liquorItems', 'allLiquorItems', 'beverageItems', 'page_title', 'title',
                 'pendingCreateIds', 'pendingUpdateIds', 'pendingDeleteIds', 'pendingAnyIds'
             ));
         } catch (\Throwable $th) {
@@ -70,22 +77,43 @@ class LiquorServingController extends Controller
             $isCocktail = (bool) $request->input('is_cocktail', false);
 
             $request->validate([
-                'food_item_id'  => 'required|integer',
-                'volume_ml'     => 'required|integer|min:1',
-                'price'         => 'required|numeric|min:0|decimal:0,2',
-                'cocktail_name' => $isCocktail ? 'required|string|max:200' : 'nullable|string|max:200',
+                'food_item_id'            => 'required|integer',
+                'volume_ml'               => 'required|integer|min:1',
+                'price'                   => 'required|numeric|min:0|decimal:0,2',
+                'cocktail_name'           => $isCocktail ? 'required|string|max:200' : 'nullable|string|max:200',
+                'secondary_food_item_id'  => 'nullable|integer',
+                'secondary_quantity'      => 'nullable|integer|min:1',
             ]);
 
             $foodItemQuery = FoodItem::where('club_id', $clubId)
-                ->where('id', $request->food_item_id)
-                ->where('item_type', 'liquor');
+                ->where('id', $request->food_item_id);
 
-            // Regular servings: only non-beer spirits; cocktails: any liquor item as base
-            if (!$isCocktail) {
-                $foodItemQuery->where('is_beer', 0);
+            if ($isCocktail) {
+                // Cocktails/mocktails: base can be any liquor item, OR — for a
+                // purely non-alcoholic drink like "Masala Coke" or "Fresh Lime
+                // Soda" — a beverage item, whose stock deducts by whole bottle
+                // (volume_ml is then a bottle count, not ml; see getBarItems()).
+                $foodItemQuery->whereIn('item_type', ['liquor', 'beverage']);
+            } else {
+                // Regular pegs: only non-beer spirits.
+                $foodItemQuery->where('item_type', 'liquor')->where('is_beer', 0);
             }
 
             $foodItem = $foodItemQuery->firstOrFail();
+
+            // Optional mixer/soda — cocktails only, must be an active beverage item
+            // belonging to the same club. Both fields are required together.
+            $secondaryFoodItemId = null;
+            $secondaryQuantity   = null;
+            if ($isCocktail && $request->filled('secondary_food_item_id')) {
+                $secondaryItem = FoodItem::where('club_id', $clubId)
+                    ->where('id', $request->secondary_food_item_id)
+                    ->where('item_type', 'beverage')
+                    ->firstOrFail();
+
+                $secondaryFoodItemId = $secondaryItem->id;
+                $secondaryQuantity   = (int) ($request->secondary_quantity ?? 1);
+            }
 
             // Duplicate check only for regular servings (same item + volume)
             if (!$isCocktail) {
@@ -106,24 +134,29 @@ class LiquorServingController extends Controller
                 : $foodItem->name . ' ' . $request->volume_ml . 'ml';
 
             $serving = LiquorServing::create([
-                'club_id'      => $clubId,
-                'food_item_id' => $foodItem->id,
-                'name'         => $name,
-                'volume_ml'    => $request->volume_ml,
-                'price'        => $request->price,
-                'is_active'    => $isAdmin ? 1 : 0,
-                'is_cocktail'  => $isCocktail,
-                'created_by'   => Auth::id(),
+                'club_id'                 => $clubId,
+                'food_item_id'            => $foodItem->id,
+                'secondary_food_item_id'  => $secondaryFoodItemId,
+                'secondary_quantity'      => $secondaryQuantity,
+                'name'                    => $name,
+                'volume_ml'               => $request->volume_ml,
+                'price'                   => $request->price,
+                'is_active'               => $isAdmin ? 1 : 0,
+                'is_cocktail'             => $isCocktail,
+                'created_by'              => Auth::id(),
             ]);
 
             $payload = [
-                'serving_id'   => $serving->id,
-                'name'         => $name,
-                'food_item_id' => $foodItem->id,
-                'item_name'    => $foodItem->name,
-                'volume_ml'    => $request->volume_ml,
-                'price'        => $request->price,
-                'is_cocktail'  => $isCocktail,
+                'serving_id'              => $serving->id,
+                'name'                    => $name,
+                'food_item_id'            => $foodItem->id,
+                'item_name'               => $foodItem->name,
+                'volume_ml'               => $request->volume_ml,
+                'price'                   => $request->price,
+                'is_cocktail'             => $isCocktail,
+                'secondary_food_item_id'  => $secondaryFoodItemId,
+                'secondary_item_name'     => $secondaryFoodItemId ? FoodItem::find($secondaryFoodItemId)->name : null,
+                'secondary_quantity'      => $secondaryQuantity,
             ];
 
             $approval = ActionApproval::create([
@@ -194,10 +227,26 @@ class LiquorServingController extends Controller
             $isCocktail = (bool) $serving->is_cocktail;
 
             $request->validate([
-                'volume_ml'     => 'required|integer|min:1',
-                'price'         => 'required|numeric|min:0|decimal:0,2',
-                'cocktail_name' => $isCocktail ? 'required|string|max:200' : 'nullable|string|max:200',
+                'volume_ml'               => 'required|integer|min:1',
+                'price'                   => 'required|numeric|min:0|decimal:0,2',
+                'cocktail_name'           => $isCocktail ? 'required|string|max:200' : 'nullable|string|max:200',
+                'secondary_food_item_id'  => 'nullable|integer',
+                'secondary_quantity'      => 'nullable|integer|min:1',
             ]);
+
+            // Optional mixer/soda — cocktails only. Sending an empty
+            // secondary_food_item_id clears an existing mixer.
+            $secondaryFoodItemId = null;
+            $secondaryQuantity   = null;
+            if ($isCocktail && $request->filled('secondary_food_item_id')) {
+                $secondaryItem = FoodItem::where('club_id', $clubId)
+                    ->where('id', $request->secondary_food_item_id)
+                    ->where('item_type', 'beverage')
+                    ->firstOrFail();
+
+                $secondaryFoodItemId = $secondaryItem->id;
+                $secondaryQuantity   = (int) ($request->secondary_quantity ?? 1);
+            }
 
             $pendingApproval = ActionApproval::where('club_id', $clubId)
                 ->where('entity_id', $id)
@@ -235,9 +284,11 @@ class LiquorServingController extends Controller
                 : $serving->foodItem->name . ' ' . $request->volume_ml . 'ml';
 
             $serving->fill([
-                'name'      => $newName,
-                'volume_ml' => $request->volume_ml,
-                'price'     => $request->price,
+                'name'                    => $newName,
+                'volume_ml'               => $request->volume_ml,
+                'price'                   => $request->price,
+                'secondary_food_item_id'  => $secondaryFoodItemId,
+                'secondary_quantity'      => $secondaryQuantity,
             ]);
 
             if (!$serving->isDirty()) {
@@ -245,27 +296,40 @@ class LiquorServingController extends Controller
                 return response()->json(['statusCode' => 200, 'message' => 'No changes were made']);
             }
 
+            $secondaryItemName = $secondaryFoodItemId ? FoodItem::find($secondaryFoodItemId)->name : null;
+            $oldSecondaryItemName = $serving->getOriginal('secondary_food_item_id')
+                ? FoodItem::find($serving->getOriginal('secondary_food_item_id'))?->name
+                : null;
+
             $payload = [
                 'serving_id'  => $serving->id,
                 'item_name'   => $serving->foodItem->name ?? '—',
                 'is_cocktail' => $isCocktail,
                 'old'         => [
-                    'name'      => $serving->getOriginal('name'),
-                    'volume_ml' => $serving->getOriginal('volume_ml'),
-                    'price'     => $serving->getOriginal('price'),
+                    'name'                   => $serving->getOriginal('name'),
+                    'volume_ml'              => $serving->getOriginal('volume_ml'),
+                    'price'                  => $serving->getOriginal('price'),
+                    'secondary_food_item_id' => $serving->getOriginal('secondary_food_item_id'),
+                    'secondary_item_name'    => $oldSecondaryItemName,
+                    'secondary_quantity'     => $serving->getOriginal('secondary_quantity'),
                 ],
                 'new'         => [
-                    'name'      => $newName,
-                    'volume_ml' => $request->volume_ml,
-                    'price'     => $request->price,
+                    'name'                   => $newName,
+                    'volume_ml'              => $request->volume_ml,
+                    'price'                  => $request->price,
+                    'secondary_food_item_id' => $secondaryFoodItemId,
+                    'secondary_item_name'    => $secondaryItemName,
+                    'secondary_quantity'     => $secondaryQuantity,
                 ],
             ];
 
             if ($isAdmin) {
                 $serving->update([
-                    'name'      => $newName,
-                    'volume_ml' => $request->volume_ml,
-                    'price'     => $request->price,
+                    'name'                    => $newName,
+                    'volume_ml'               => $request->volume_ml,
+                    'price'                   => $request->price,
+                    'secondary_food_item_id'  => $secondaryFoodItemId,
+                    'secondary_quantity'      => $secondaryQuantity,
                 ]);
 
                 ActionApproval::create([

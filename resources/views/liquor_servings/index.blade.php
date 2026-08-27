@@ -61,6 +61,11 @@
                                         @elseif($isPendingDelete)
                                             <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2 ms-1" style="font-size:0.65rem;">Pending Delete</span>
                                         @endif
+                                        @if($serving->secondary_food_item_id)
+                                            <div class="text-muted fst-italic" style="font-size:0.72rem;">
+                                                <i class="fa-solid fa-plus"></i> {{ $serving->secondary_quantity }} BTL {{ $serving->secondaryFoodItem->name ?? '—' }} (not billed separately)
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="text-nowrap">
                                         @if($serving->is_cocktail)
@@ -153,29 +158,39 @@
                             <small class="text-muted">Beer items are served by bottle — only spirit items shown.</small>
                         </div>
 
-                        {{-- Base Spirit (cocktail only) --}}
+                        {{-- Base Spirit / Beverage (cocktail only) --}}
                         <div class="mb-3" id="addBaseItemWrapper" style="display:none;">
-                            <label class="form-label fw-medium">Base Spirit / Item <span class="text-danger">*</span></label>
+                            <label class="form-label fw-medium">Base Item <span class="text-danger">*</span></label>
                             <select class="form-select shadow-none select2-all-liquor" id="addBaseItemId">
                                 <option value="">-- Search & Select Base Item --</option>
-                                @foreach($allLiquorItems as $item)
-                                    <option value="{{ $item->id }}" data-name="{{ $item->name }}">
-                                        {{ $item->name }}{{ $item->size_ml ? ' ('.$item->size_ml.'ml BTL)' : '' }}
-                                        {{ $item->is_beer ? '(Beer)' : '' }}
-                                    </option>
-                                @endforeach
+                                <optgroup label="Liquor">
+                                    @foreach($allLiquorItems as $item)
+                                        <option value="{{ $item->id }}" data-name="{{ $item->name }}" data-is-beer="{{ $item->is_beer ? '1' : '0' }}">
+                                            {{ $item->name }}{{ $item->size_ml ? ' ('.$item->size_ml.'ml BTL)' : '' }}
+                                            {{ $item->is_beer ? '(Beer)' : '' }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Beverage (non-alcoholic base, e.g. Masala Coke)">
+                                    @foreach($beverageItems as $item)
+                                        <option value="{{ $item->id }}" data-name="{{ $item->name }}" data-is-beer="1">
+                                            {{ $item->name }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
                             </select>
-                            <small class="text-muted">Stock will be deducted from this item when cocktail is ordered.</small>
+                            <small class="text-muted">Stock will be deducted from this item when the drink is ordered. Pick a beverage here for a non-alcoholic mocktail like "Masala Coke".</small>
                         </div>
 
-                        {{-- Volume --}}
-                        <div class="mb-3">
+                        {{-- Volume (spirit base) / Bottles (beverage base) --}}
+                        <div class="mb-3" id="addVolumeMlWrapper">
                             <label class="form-label fw-medium" id="addVolumeMlLabel">Volume (ml) <span class="text-danger">*</span></label>
                             <select class="form-select shadow-none" id="addVolumeMl">
                                 <option value="">-- Select Volume --</option>
                                 <option value="30">30 ml (Single Peg)</option>
                                 <option value="60">60 ml (Double Peg)</option>
                             </select>
+                            <input type="number" class="form-control shadow-none" id="addBottleQty" min="1" step="1" value="1" style="display:none;">
                             <small class="text-muted" id="addVolumeHint">Amount deducted from bar stock per serving.</small>
                         </div>
 
@@ -184,6 +199,27 @@
                             <label class="form-label fw-medium">Price (Rs) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control shadow-none" id="addPrice"
                                 placeholder="0.00" min="0" step="0.01">
+                        </div>
+
+                        {{-- Mixer / Soda (cocktail only, optional) --}}
+                        <div class="mb-3 p-2 bg-light rounded-3" id="addMixerWrapper" style="display:none;">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="addHasMixer">
+                                <label class="form-check-label fw-medium" for="addHasMixer">Include a mixer/soda?</label>
+                            </div>
+                            <div id="addMixerFields" style="display:none;">
+                                <label class="form-label fw-medium">Mixer / Soda Item <span class="text-danger">*</span></label>
+                                <select class="form-select shadow-none select2-beverage mb-2" id="addSecondaryItemId">
+                                    <option value="">-- Search & Select Mixer --</option>
+                                    @foreach($beverageItems as $item)
+                                        <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                <label class="form-label fw-medium">Quantity (Bottles) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control shadow-none" id="addSecondaryQuantity"
+                                    placeholder="1" min="1" step="1" value="1">
+                                <small class="text-muted">Deducted from this item's bar stock alongside the base spirit. Never shown as a separate bill line — its cost is already included in the cocktail's price.</small>
+                            </div>
                         </div>
 
                         {{-- Preview Name (non-cocktail only) --}}
@@ -229,15 +265,36 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-medium" id="editVolumeMlLabel">Volume (ml) <span class="text-danger">*</span></label>
-                            <select class="form-select shadow-none" id="editVolumeMl" required>
+                            <select class="form-select shadow-none" id="editVolumeMl">
                                 <option value="">-- Select Volume --</option>
                                 <option value="30">30 ml (Single Peg)</option>
                                 <option value="60">60 ml (Double Peg)</option>
                             </select>
+                            <input type="number" class="form-control shadow-none" id="editBottleQty" min="1" step="1" value="1" style="display:none;">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-medium">Price (Rs) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control shadow-none" id="editPrice" min="0" step="0.01" required>
+                        </div>
+
+                        {{-- Mixer / Soda (cocktail only, optional) --}}
+                        <div class="mb-3 p-2 bg-light rounded-3" id="editMixerWrapper" style="display:none;">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="editHasMixer">
+                                <label class="form-check-label fw-medium" for="editHasMixer">Include a mixer/soda?</label>
+                            </div>
+                            <div id="editMixerFields" style="display:none;">
+                                <label class="form-label fw-medium">Mixer / Soda Item <span class="text-danger">*</span></label>
+                                <select class="form-select shadow-none select2-beverage mb-2" id="editSecondaryItemId">
+                                    <option value="">-- Search & Select Mixer --</option>
+                                    @foreach($beverageItems as $item)
+                                        <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                <label class="form-label fw-medium">Quantity (Bottles) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control shadow-none" id="editSecondaryQuantity"
+                                    placeholder="1" min="1" step="1" value="1">
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -295,7 +352,32 @@ $(document).ready(function () {
                 width:          '100%',
             });
         }
+        if (!$('#addSecondaryItemId').data('select2')) {
+            $('#addSecondaryItemId').select2({
+                dropdownParent: $('#addServingModal'),
+                placeholder:    'Search mixer/soda...',
+                allowClear:     true,
+                width:          '100%',
+            });
+        }
     });
+
+    /* ── Base item type (spirit vs beverage) controls the volume/bottle field ── */
+    function updateAddVolumeFieldForBase() {
+        var isBeerBase = $('#addBaseItemId option:selected').data('is-beer') == 1;
+        if (isBeerBase) {
+            $('#addVolumeMl').hide().val('');
+            $('#addBottleQty').show();
+            $('#addVolumeMlLabel').html('Quantity (Bottles) <span class="text-danger">*</span>');
+            $('#addVolumeHint').text('Bottles of this beverage deducted from bar stock per serving.');
+        } else {
+            $('#addVolumeMl').show();
+            $('#addBottleQty').hide().val(1);
+            $('#addVolumeMlLabel').html('Deduction Volume (ml) <span class="text-danger">*</span>');
+            $('#addVolumeHint').text('ml of base item deducted from bar stock per cocktail order.');
+        }
+    }
+    $('#addBaseItemId').on('change', updateAddVolumeFieldForBase);
 
     /* ── Cocktail toggle ── */
     function toggleCocktailMode(isCocktail) {
@@ -305,13 +387,18 @@ $(document).ready(function () {
             $('#addBaseItemWrapper').show();
             $('#addSpiritWrapper').hide();
             $('#addPreviewName').hide();
-            $('#addVolumeMlLabel').html('Deduction Volume (ml) <span class="text-danger">*</span>');
-            $('#addVolumeHint').text('ml of base item deducted from bar stock per cocktail order.');
+            $('#addMixerWrapper').show();
+            updateAddVolumeFieldForBase();
         } else {
             $('#addServingModalTitle').text('Add Liquor Menu Item');
             $('#addCocktailNameWrapper').hide();
             $('#addBaseItemWrapper').hide();
             $('#addSpiritWrapper').show();
+            $('#addMixerWrapper').hide();
+            $('#addHasMixer').prop('checked', false);
+            $('#addMixerFields').hide();
+            $('#addVolumeMl').show();
+            $('#addBottleQty').hide().val(1);
             $('#addVolumeMlLabel').html('Volume (ml) <span class="text-danger">*</span>');
             $('#addVolumeHint').text('Amount deducted from bar stock per serving.');
             updateAddPreview();
@@ -320,6 +407,14 @@ $(document).ready(function () {
 
     $('#addIsCocktail').on('change', function () {
         toggleCocktailMode(this.checked);
+    });
+
+    $('#addHasMixer').on('change', function () {
+        $('#addMixerFields').toggle(this.checked);
+        if (!this.checked) {
+            $('#addSecondaryItemId').val('').trigger('change');
+            $('#addSecondaryQuantity').val(1);
+        }
     });
 
     function updateAddPreview() {
@@ -341,7 +436,8 @@ $(document).ready(function () {
         var $btn        = $(this);
         var isCocktail  = $('#addIsCocktail').is(':checked');
         var foodItemId  = isCocktail ? $('#addBaseItemId').val() : $('#addFoodItemId').val();
-        var volumeMl    = $('#addVolumeMl').val();
+        var baseIsBeer  = isCocktail && $('#addBaseItemId option:selected').data('is-beer') == 1;
+        var volumeMl    = baseIsBeer ? $('#addBottleQty').val() : $('#addVolumeMl').val();
         var price       = $('#addPrice').val();
         var cocktailName = $('#addCocktailName').val().trim();
 
@@ -349,6 +445,12 @@ $(document).ready(function () {
         if (!volumeMl)    { toastr.warning('Please select volume.'); return; }
         if (!price)       { toastr.warning('Please enter a price.'); return; }
         if (isCocktail && !cocktailName) { toastr.warning('Please enter the cocktail name.'); return; }
+
+        var hasMixer      = isCocktail && $('#addHasMixer').is(':checked');
+        var secondaryId   = hasMixer ? $('#addSecondaryItemId').val() : null;
+        var secondaryQty  = hasMixer ? $('#addSecondaryQuantity').val() : null;
+        if (hasMixer && !secondaryId)  { toastr.warning('Please select a mixer/soda item.'); return; }
+        if (hasMixer && (!secondaryQty || parseInt(secondaryQty) < 1)) { toastr.warning('Please enter a valid mixer quantity.'); return; }
 
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Submitting...');
 
@@ -360,6 +462,10 @@ $(document).ready(function () {
             is_cocktail:  isCocktail ? 1 : 0,
         };
         if (isCocktail) payload.cocktail_name = cocktailName;
+        if (hasMixer) {
+            payload.secondary_food_item_id = secondaryId;
+            payload.secondary_quantity     = secondaryQty;
+        }
 
         $.ajax({
             url:         '{{ route("liquor-servings.store") }}',
@@ -394,7 +500,33 @@ $(document).ready(function () {
         if ($('#addBaseItemId').data('select2')) {
             $('#addBaseItemId').val('').trigger('change');
         }
+        if ($('#addSecondaryItemId').data('select2')) {
+            $('#addSecondaryItemId').val('').trigger('change');
+        }
+        $('#addHasMixer').prop('checked', false);
+        $('#addMixerFields').hide();
+        $('#addSecondaryQuantity').val(1);
         $('#addPreviewName').hide();
+    });
+
+    /* ── Edit Modal: Init Select2 ── */
+    $('#editServingModal').on('shown.bs.modal', function () {
+        if (!$('#editSecondaryItemId').data('select2')) {
+            $('#editSecondaryItemId').select2({
+                dropdownParent: $('#editServingModal'),
+                placeholder:    'Search mixer/soda...',
+                allowClear:     true,
+                width:          '100%',
+            });
+        }
+    });
+
+    $('#editHasMixer').on('change', function () {
+        $('#editMixerFields').toggle(this.checked);
+        if (!this.checked) {
+            $('#editSecondaryItemId').val('').trigger('change');
+            $('#editSecondaryQuantity').val(1);
+        }
     });
 
     /* ── Edit serving ── */
@@ -408,22 +540,54 @@ $(document).ready(function () {
 
             $('#editServingId').val(s.id);
             $('#editIsCocktail').val(isCocktail ? 1 : 0);
-            $('#editVolumeMl').val(s.volume_ml);
             $('#editPrice').val(s.price);
 
             if (isCocktail) {
+                var baseIsBeer = s.food_item ? !!s.food_item.is_beer : false;
                 $('#editServingModalTitle').text('Edit Cocktail');
                 $('#editItemLabel').text('Base Item (readonly)');
                 $('#editItemName').val(s.food_item ? s.food_item.name : '—');
                 $('#editCocktailName').val(s.name);
                 $('#editCocktailNameWrapper').show();
-                $('#editVolumeMlLabel').html('Deduction Volume (ml) <span class="text-danger">*</span>');
+                $('#editVolumeMlLabel').html(
+                    baseIsBeer
+                        ? 'Quantity (Bottles) <span class="text-danger">*</span>'
+                        : 'Deduction Volume (ml) <span class="text-danger">*</span>'
+                );
+                if (baseIsBeer) {
+                    $('#editVolumeMl').hide().val('');
+                    $('#editBottleQty').show().val(s.volume_ml);
+                } else {
+                    $('#editVolumeMl').show().val(s.volume_ml);
+                    $('#editBottleQty').hide().val(1);
+                }
+                $('#editMixerWrapper').show();
+
+                var hasMixer = !!s.secondary_food_item_id;
+                $('#editHasMixer').prop('checked', hasMixer);
+                $('#editMixerFields').toggle(hasMixer);
+                if (hasMixer) {
+                    if ($('#editSecondaryItemId').data('select2')) {
+                        $('#editSecondaryItemId').val(String(s.secondary_food_item_id)).trigger('change');
+                    } else {
+                        $('#editSecondaryItemId').val(String(s.secondary_food_item_id));
+                    }
+                    $('#editSecondaryQuantity').val(s.secondary_quantity || 1);
+                } else {
+                    $('#editSecondaryItemId').val('');
+                    $('#editSecondaryQuantity').val(1);
+                }
             } else {
                 $('#editServingModalTitle').text('Edit Liquor Menu Item');
                 $('#editItemLabel').text('Item');
                 $('#editItemName').val(s.food_item ? s.food_item.name : s.name);
                 $('#editCocktailNameWrapper').hide();
                 $('#editVolumeMlLabel').html('Volume (ml) <span class="text-danger">*</span>');
+                $('#editVolumeMl').show().val(s.volume_ml);
+                $('#editBottleQty').hide().val(1);
+                $('#editMixerWrapper').hide();
+                $('#editHasMixer').prop('checked', false);
+                $('#editMixerFields').hide();
             }
 
             $('#editServingModal').modal('show');
@@ -440,15 +604,28 @@ $(document).ready(function () {
             return;
         }
 
+        var hasMixer     = isCocktail && $('#editHasMixer').is(':checked');
+        var secondaryId  = hasMixer ? $('#editSecondaryItemId').val() : null;
+        var secondaryQty = hasMixer ? $('#editSecondaryQuantity').val() : null;
+        if (hasMixer && !secondaryId)  { toastr.warning('Please select a mixer/soda item.'); return; }
+        if (hasMixer && (!secondaryQty || parseInt(secondaryQty) < 1)) { toastr.warning('Please enter a valid mixer quantity.'); return; }
+
+        var volumeVal = $('#editBottleQty').is(':visible') ? $('#editBottleQty').val() : $('#editVolumeMl').val();
+        if (!volumeVal) { toastr.warning('Please enter a valid volume/quantity.'); return; }
+
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Saving...');
 
         var payload = {
             _token:    '{{ csrf_token() }}',
             _method:   'PUT',
-            volume_ml: $('#editVolumeMl').val(),
+            volume_ml: volumeVal,
             price:     $('#editPrice').val(),
         };
         if (isCocktail) payload.cocktail_name = $('#editCocktailName').val().trim();
+        if (hasMixer) {
+            payload.secondary_food_item_id = secondaryId;
+            payload.secondary_quantity     = secondaryQty;
+        }
 
         $.ajax({
             url:         '{{ url("liquor-servings") }}/' + id,

@@ -401,6 +401,9 @@ $(document).ready(function () {
 
             var priceLabel = item.is_beer ? '/BTL' : '/unit';
             var servingId  = item.serving_id || '';
+            var mixerNote  = item.secondary_item_name
+                ? '<div class="text-muted" style="font-size:0.72rem;"><i class="fa-solid fa-plus me-1"></i>Includes ' + item.secondary_quantity + ' BTL ' + item.secondary_item_name + '</div>'
+                : '';
 
             html += '<div class="col-sm-6 col-md-4 bar-item-card" data-name="' + item.name.toLowerCase() + '" data-type="' + itemType + '">'
                 + '<div class="border rounded-3 p-2 h-100 d-flex flex-column ' + cardBorder + '" style="font-size:0.82rem;' + cardBg + '">'
@@ -409,6 +412,7 @@ $(document).ready(function () {
                 +     typeBadge
                 +   '</div>'
                 +   '<div class="text-muted mb-1">' + item.category + (sizeTxt ? ' · ' + sizeTxt + (item.is_cocktail ? ' deduct' : '') : '') + '</div>'
+                +   mixerNote
                 +   '<div class="mb-1 d-flex align-items-center gap-2">'
                 +     '<span class="fw-bold" style="color:' + stockColor + ';font-size:0.78rem;">'
                 +       '<i class="fa-solid fa-' + ((isOut || isB1g1Insufficient) ? 'circle-xmark' : (isLow ? 'triangle-exclamation' : 'circle-check')) + ' me-1"></i>'
@@ -428,6 +432,9 @@ $(document).ready(function () {
                 +     ' data-price="' + item.price + '"'
                 +     ' data-gst-rate="' + (item.gst_rate || 0) + '"'
                 +     ' data-stock="' + item.bar_stock + '"'
+                +     ' data-secondary-name="' + (item.secondary_item_name || '') + '"'
+                +     ' data-secondary-qty="' + (item.secondary_quantity || 0) + '"'
+                +     ' data-secondary-stock="' + (item.secondary_stock || 0) + '"'
                 +     ((item.in_stock && !isB1g1Insufficient) ? '' : ' disabled')
                 +   '><i class="fa-solid fa-plus me-1"></i>Add</button>'
                 + '</div></div>';
@@ -493,6 +500,8 @@ $(document).ready(function () {
         var stock      = parseInt($btn.data('stock'));
         var sizeMl     = parseInt($btn.data('size-ml')) || 0;
         var gstRate    = parseFloat($btn.data('gst-rate')) || 0;
+        var secondaryName = $btn.data('secondary-name') || '';
+        var secondaryQty  = parseInt($btn.data('secondary-qty')) || 0;
 
         var barItem = barItems.find(function (bi) {
             return servingId
@@ -511,11 +520,12 @@ $(document).ready(function () {
             }
             addToCart({
                 id: id, serving_id: servingId, name: name,
-                is_beer: false, is_cocktail: isCocktail,
+                is_beer: isBeer, is_cocktail: isCocktail,
                 volume_ml: sizeMl,
                 paid_qty: 1, free_qty: 0, quantity: 1,
                 deduct_qty: deductQty,
                 unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate,
+                secondary_name: secondaryName, secondary_qty: secondaryQty,
             });
         } else if (isBeer) {
             if (offer && offer.type_slug === 'b1g1') {
@@ -608,11 +618,15 @@ $(document).ready(function () {
             var gstTag = (item.gst_rate > 0)
                 ? ' <span class="text-muted" style="font-size:0.68rem;">+' + item.gst_rate + '% GST</span>'
                 : '';
+            var mixerTag = item.secondary_name
+                ? '<div class="text-muted fst-italic" style="font-size:0.7rem;">+ ' + (item.secondary_qty * item.quantity) + ' BTL ' + item.secondary_name + ' (not billed separately)</div>'
+                : '';
 
             html += '<div class="d-flex align-items-start gap-2 mb-2 pb-2 border-bottom">'
                 +   '<div class="flex-grow-1">'
                 +     '<div class="fw-semibold small">' + item.name + offerTag + '</div>'
                 +     '<div class="text-muted" style="font-size:0.75rem;">' + desc + ' · Rs ' + item.unit_price.toFixed(2) + '/unit' + gstTag + '</div>'
+                +     mixerTag
                 +   '</div>'
                 +   '<div class="text-end">'
                 +     '<div class="fw-bold small">Rs ' + lineTotal.toFixed(2) + '</div>'

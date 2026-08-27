@@ -673,9 +673,11 @@ class ActionApprovalController extends Controller
                 if ($serving && isset($payload['new'])) {
                     $new = $payload['new'];
                     $serving->update([
-                        'name'      => $new['name'],
-                        'volume_ml' => $new['volume_ml'],
-                        'price'     => $new['price'],
+                        'name'                   => $new['name'],
+                        'volume_ml'              => $new['volume_ml'],
+                        'price'                  => $new['price'],
+                        'secondary_food_item_id' => $new['secondary_food_item_id'] ?? null,
+                        'secondary_quantity'     => $new['secondary_quantity'] ?? null,
                     ]);
                 }
             }
