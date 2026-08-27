@@ -138,12 +138,19 @@ class BeverageBarStockController extends Controller
                 ->where('food_items_id', $foodItem->id)
                 ->first();
 
-            $godownQty = $godownStock ? (int) $godownStock->quantity : 0;
+            // Sufficiency must be checked against what godown stock actually was ON
+            // THE BACKDATED DATE, not today's live stock — otherwise a transfer that
+            // was genuinely impossible on that date (stock arrived only afterward)
+            // would be wrongly allowed just because more has arrived since.
+            $godownQty = $entryDate
+                ? $this->reconstructStockAsOf($warehouse->id, $godownLocation->id, $foodItem->id, $entryDate)
+                : ($godownStock ? (int) $godownStock->quantity : 0);
 
             if ($godownQty < (int) $request->bottles) {
+                $asOfLabel = $entryDate ? " as of {$request->date}" : '';
                 return response()->json([
                     'statusCode' => 422,
-                    'message'    => "Insufficient godown stock. Available: {$godownQty} BTL.",
+                    'message'    => "Insufficient godown stock{$asOfLabel}. Available: {$godownQty} BTL.",
                 ]);
             }
 
