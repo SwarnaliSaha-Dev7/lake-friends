@@ -99,6 +99,13 @@ class CancelledBillController extends Controller
                             'name'         => $serving->secondaryFoodItem->name ?? null,
                             'quantity'     => $qty * (int) $serving->secondary_quantity,
                             'cost'         => 0, // priced via the client's mixer-inclusive item price, not re-added here
+                            // A mocktail's base is already a beverage, so the client
+                            // routed this whole line (mixer cost included) into the
+                            // beverage-taxed bucket and it's already correctly taxed
+                            // once. Only a true (spirit-based) cocktail's line landed
+                            // in the GST-free liquor bucket, silently untaxing its
+                            // mixer portion — that's the only case needing a correction.
+                            'needs_gst_correction' => !$baseIsBeer,
                         ];
                     }
                 }
@@ -143,6 +150,7 @@ class CancelledBillController extends Controller
             $orderGstAmt  = (float) $request->input('gst_amount');
             $secondaryCostSum = 0;
             foreach ($secondaryByIndex as $idx => $secondary) {
+                if (!$secondary['needs_gst_correction']) continue;
                 $servingId = $items[$idx]['serving_id'] ?? null;
                 $serving   = $servingId ? LiquorServing::with('secondaryFoodItem.foodItemPrice')->find($servingId) : null;
                 $unitPrice = $serving ? (float) ($serving->secondaryFoodItem->foodItemPrice->price ?? 0) : 0;

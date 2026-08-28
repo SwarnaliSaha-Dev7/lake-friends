@@ -453,6 +453,13 @@ class RestaurantOrderController extends Controller
                             'name'         => $serving->secondaryFoodItem->name ?? null,
                             'quantity'     => $secondaryTotalQty,
                             'cost'         => $secondaryCost,
+                            // A mocktail's base is already a beverage, so the client
+                            // routed this whole line (mixer cost included) into the
+                            // beverage-taxed bucket and it's already correctly taxed
+                            // once. Only a true (spirit-based) cocktail's line landed
+                            // in the GST-free liquor bucket, silently untaxing its
+                            // mixer portion — that's the only case needing a correction.
+                            'needs_gst_correction' => !$baseIsBeer,
                         ];
                     }
                 }
@@ -461,8 +468,12 @@ class RestaurantOrderController extends Controller
 
             // The mixer's cost is already part of $taxableAmount (the client's price
             // already included it, via getOrderItems()) — only its GST (at the
-            // beverage rate, since a mixer is always a beverage) still needs adding.
-            $secondaryCostSum = array_sum(array_column($secondaryByIndex, 'cost'));
+            // beverage rate, since a mixer is always a beverage) still needs adding,
+            // and only for mixers attached to a true cocktail (see needs_gst_correction).
+            $secondaryCostSum = array_sum(array_column(
+                array_filter($secondaryByIndex, fn($s) => $s['needs_gst_correction']),
+                'cost'
+            ));
             $taxableAmount    = (float) $request->input('taxable_amount');
             $gstAmount        = (float) $request->input('gst_amount');
             if ($secondaryCostSum > 0) {

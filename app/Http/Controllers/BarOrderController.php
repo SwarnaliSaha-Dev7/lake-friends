@@ -459,6 +459,13 @@ class BarOrderController extends Controller
                             'per_unit_qty' => (int) $serving->secondary_quantity,
                             'quantity'     => $secondaryTotalQty,
                             'cost'         => $secondaryCost,
+                            // A mocktail's base is already a beverage, so getBarItems()
+                            // gave it gst_rate=beverageGstRate on its FULL price (mixer
+                            // cost included) — already correctly taxed once by the
+                            // client. Only a true (spirit-based) cocktail's line was
+                            // priced GST-free, silently untaxing its mixer portion —
+                            // that's the only case needing a correction here.
+                            'needs_gst_correction' => !$baseIsBeer,
                         ];
                     }
                 }
@@ -467,8 +474,12 @@ class BarOrderController extends Controller
 
             // The mixer's cost is already part of $taxable (the client's price
             // already included it) — only its GST (at the beverage rate, since a
-            // mixer is always a beverage) still needs adding on top.
-            $secondaryCostSum = array_sum(array_column($secondaryByIndex, 'cost'));
+            // mixer is always a beverage) still needs adding on top, and only for
+            // mixers attached to a true cocktail (see needs_gst_correction).
+            $secondaryCostSum = array_sum(array_column(
+                array_filter($secondaryByIndex, fn($s) => $s['needs_gst_correction']),
+                'cost'
+            ));
             if ($secondaryCostSum > 0) {
                 $beverageGstRate = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'beverage')->value('gst_percentage') ?? 0);
                 $secondaryGst    = round($secondaryCostSum * $beverageGstRate / 100, 2);
