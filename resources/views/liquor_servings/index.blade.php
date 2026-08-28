@@ -72,6 +72,12 @@
                                         @elseif($isPendingDelete)
                                             <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2 ms-1" style="font-size:0.65rem;">Pending Delete</span>
                                         @endif
+                                        @php
+                                            // Reset every row — without this, a row with no mixer would
+                                            // silently inherit the previous row's $mixerCost, since the
+                                            // @if below is skipped entirely and never overwrites it.
+                                            $mixerCost = 0;
+                                        @endphp
                                         @if($serving->secondary_food_item_id)
                                             @php
                                                 $mixerUnitPrice = (float) ($serving->secondaryFoodItem->foodItemPrice->price ?? 0);

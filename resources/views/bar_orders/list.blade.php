@@ -310,6 +310,7 @@ $(document).ready(function () {
 
     // GST is per-item now (0% liquor, {{ $globalBeverageGstPercentage }}% beverage) — see gst_rate on each bar item.
     var MASTER_BEVERAGE_GST_RATE = {{ $globalBeverageGstPercentage }};
+    var MASTER_FOOD_GST_RATE     = {{ $globalRestaurantGstPercentage }};
     var barItems  = [];
     var cart      = [];   // [{id, name, is_beer, volume_ml, quantity, deduct_qty, unit_price, total}]
 
@@ -858,6 +859,23 @@ $(document).ready(function () {
             var o = res.data;
             var rows = '';
             var liquorTotal = 0;
+            var foodTotal = 0;
+            // A Bar Order can come from a session that also billed food in the
+            // same order (Food + Liquor + Beverage together) — those food lines
+            // still count toward this order's total and its GST, so they must be
+            // shown here too, or the Subtotal/GST/Total Charged won't reconcile.
+            (o.items || []).filter(function (it) {
+                return it.unit === 'plate';
+            }).forEach(function (it) {
+                var amt = parseFloat(it.total_amount);
+                foodTotal += amt;
+                rows += '<tr>'
+                    + '<td class="fw-medium">' + (it.food_item ? it.food_item.name : '—') + '</td>'
+                    + '<td class="text-center text-nowrap">Qty ' + it.quantity + '</td>'
+                    + '<td class="text-end text-nowrap">Rs ' + parseFloat(it.unit_price).toFixed(2) + '</td>'
+                    + '<td class="text-end text-nowrap">Rs ' + amt.toFixed(2) + '</td>'
+                    + '</tr>';
+            });
             (o.items || []).filter(function (it) {
                 return it.unit === 'ml' || it.unit === 'btl';
             }).forEach(function (it) {
@@ -918,7 +936,7 @@ $(document).ready(function () {
             var statusLabel  = o.status === 'delivered' ? 'Served' : (o.status.charAt(0).toUpperCase() + o.status.slice(1));
             var sClass       = statusColors[o.status] || 'text-muted';
 
-            if (!rows) {
+            if (liquorTotal === 0 && foodTotal === 0) {
                 $('#viewBarOrderBody').html('<p class="text-muted text-center py-4">No liquor items in this order.</p>');
                 return;
             }
@@ -926,20 +944,31 @@ $(document).ready(function () {
             var discountAmt = parseFloat(o.discount_amount || 0);
             var gstAmt      = parseFloat(o.gst_amount || 0);
             var netAmt      = parseFloat(o.net_amount || 0);
-            // The order's stored gst_percentage is an order-wide EFFECTIVE rate
-            // (gst_amount / subtotal) — it drifts from the real beverage rate
-            // whenever the order also has GST-free liquor lines. The label here
-            // should always show the actual master-configured beverage rate.
-            var gstPct      = MASTER_BEVERAGE_GST_RATE;
+
+            // Food GST is exact — the food subtotal is never touched by a hidden
+            // cocktail mixer, so foodTotal * rate is always precisely right, no
+            // guessing needed. Everything else in the stored gst_amount (real
+            // beverage lines AND any hidden mixer inside a "liquor" cocktail line,
+            // which is always a beverage) is taxed at the same beverage rate, so
+            // it's shown as one "Beverage GST" figure — the exact remainder after
+            // food's share is removed. This also fixes the Subtotal/GST/Total
+            // Charged not reconciling whenever this order (from a session) also
+            // billed food alongside the bar items.
+            var dispFoodGst = foodTotal * (MASTER_FOOD_GST_RATE / 100);
+            var dispBevGst  = Math.max(0, gstAmt - dispFoodGst);
 
             var footerRows = '<tr><td colspan="3" class="text-end pe-2 text-muted small">Subtotal</td>'
-                + '<td class="text-end text-nowrap small">Rs ' + liquorTotal.toFixed(2) + '</td></tr>';
+                + '<td class="text-end text-nowrap small">Rs ' + (liquorTotal + foodTotal).toFixed(2) + '</td></tr>';
             if (discountAmt > 0) {
                 footerRows += '<tr><td colspan="3" class="text-end pe-2 text-success small"><i class="fa-solid fa-tag me-1"></i>Offer Savings</td>'
                     + '<td class="text-end text-nowrap text-success small">- Rs ' + discountAmt.toFixed(2) + '</td></tr>';
             }
-            footerRows += '<tr><td colspan="3" class="text-end pe-2 text-muted small">Beverage GST (' + gstPct + '%)</td>'
-                + '<td class="text-end text-nowrap small">Rs ' + gstAmt.toFixed(2) + '</td></tr>'
+            if (foodTotal > 0) {
+                footerRows += '<tr><td colspan="3" class="text-end pe-2 text-muted small">Food GST (' + MASTER_FOOD_GST_RATE + '%)</td>'
+                    + '<td class="text-end text-nowrap small">Rs ' + dispFoodGst.toFixed(2) + '</td></tr>';
+            }
+            footerRows += '<tr><td colspan="3" class="text-end pe-2 text-muted small">Beverage GST (' + MASTER_BEVERAGE_GST_RATE + '%)</td>'
+                + '<td class="text-end text-nowrap small">Rs ' + dispBevGst.toFixed(2) + '</td></tr>'
                 + '<tr class="fw-bold"><td colspan="3" class="text-end pe-2 fs-6">Total Charged</td>'
                 + '<td class="text-end fs-6 text-primary text-nowrap">Rs ' + netAmt.toFixed(2) + '</td></tr>';
 
