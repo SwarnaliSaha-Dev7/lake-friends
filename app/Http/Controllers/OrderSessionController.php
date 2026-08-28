@@ -754,12 +754,15 @@ class OrderSessionController extends Controller
                     ];
                 })->values();
 
-            // Aggregate liquor/beverage items (group by food_item_id + unit + volume + offer).
-            // Both share unit ml/btl, so they're told apart by the underlying item's
-            // item_type — beverage is taxed, liquor never is.
+            // Aggregate liquor/beverage items (group by food_item_id + unit + volume +
+            // offer + serving_id). Both share unit ml/btl, so they're told apart by the
+            // underlying item's item_type — beverage is taxed, liquor never is. serving_id
+            // is included so two different cocktail/mocktail recipes that happen to share
+            // the same base item (e.g. Bloody Mary and Screwdriver both on ABSOLUTE, or
+            // Fresh Lime Soda and Virgin Mojito both on SODA) never get merged into one row.
             $aggregateBottleItems = function ($items) {
                 return $items
-                    ->groupBy(fn($i) => $i->food_item_id . '_' . $i->unit . '_' . ($i->metadata['volume_ml'] ?? '') . '_' . ($i->offer_applied ? json_encode($i->offer_applied) : ''))
+                    ->groupBy(fn($i) => $i->food_item_id . '_' . $i->unit . '_' . ($i->metadata['volume_ml'] ?? '') . '_' . ($i->offer_applied ? json_encode($i->offer_applied) : '') . '_' . ($i->metadata['serving_id'] ?? ''))
                     ->map(function ($group) {
                         $first = $group->first();
                         return (object) [

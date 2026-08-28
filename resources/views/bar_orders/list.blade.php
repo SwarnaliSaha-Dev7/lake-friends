@@ -93,7 +93,11 @@
                                             <div class="small text-nowrap">
                                                 {{ !empty($item->metadata['is_cocktail']) ? ($item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—')) : ($item->foodItem->name ?? '—') }}
                                                 <span class="text-muted">
-                                                    &times;{{ $item->quantity }} {{ $item->unit === 'btl' ? 'BTL' : 'ml' }}
+                                                    @if($item->unit === 'btl')
+                                                        &times;{{ $item->quantity }} BTL
+                                                    @else
+                                                        {{ $item->metadata['volume_ml'] ?? '?' }}ml &times;{{ $item->quantity }}
+                                                    @endif
                                                 </span>
                                             </div>
                                         @endforeach
@@ -305,6 +309,7 @@
 $(document).ready(function () {
 
     // GST is per-item now (0% liquor, {{ $globalBeverageGstPercentage }}% beverage) — see gst_rate on each bar item.
+    var MASTER_BEVERAGE_GST_RATE = {{ $globalBeverageGstPercentage }};
     var barItems  = [];
     var cart      = [];   // [{id, name, is_beer, volume_ml, quantity, deduct_qty, unit_price, total}]
 
@@ -921,7 +926,11 @@ $(document).ready(function () {
             var discountAmt = parseFloat(o.discount_amount || 0);
             var gstAmt      = parseFloat(o.gst_amount || 0);
             var netAmt      = parseFloat(o.net_amount || 0);
-            var gstPct      = parseFloat(o.gst_percentage || 0);
+            // The order's stored gst_percentage is an order-wide EFFECTIVE rate
+            // (gst_amount / subtotal) — it drifts from the real beverage rate
+            // whenever the order also has GST-free liquor lines. The label here
+            // should always show the actual master-configured beverage rate.
+            var gstPct      = MASTER_BEVERAGE_GST_RATE;
 
             var footerRows = '<tr><td colspan="3" class="text-end pe-2 text-muted small">Subtotal</td>'
                 + '<td class="text-end text-nowrap small">Rs ' + liquorTotal.toFixed(2) + '</td></tr>';

@@ -342,9 +342,12 @@
                             elseif (($offer['type_slug'] ?? '') === 'flat' && ($offer['discount_value'] ?? 0))
                                 $offerBadge = '<span class="badge b-flat">Rs ' . $offer['discount_value'] . ' off</span>';
                         }
+                        $itemLabel = !empty($item->metadata['is_cocktail'])
+                            ? ($item->metadata['cocktail_name'] ?? ($item->foodItem->name ?? '—'))
+                            : ($item->foodItem->name ?? '—');
                     @endphp
                     <tr>
-                        <td>{!! ($item->foodItem->name ?? '—') . $offerBadge !!}</td>
+                        <td>{!! $itemLabel . $offerBadge !!}</td>
                         <td class="tc">{{ $item->quantity }}</td>
                         <td class="tr">Rs {{ number_format($item->unit_price, 2) }}</td>
                         <td class="tr">Rs {{ number_format($item->total_amount, 2) }}</td>
