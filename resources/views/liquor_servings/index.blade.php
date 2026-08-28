@@ -73,8 +73,12 @@
                                             <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2 ms-1" style="font-size:0.65rem;">Pending Delete</span>
                                         @endif
                                         @if($serving->secondary_food_item_id)
+                                            @php
+                                                $mixerUnitPrice = (float) ($serving->secondaryFoodItem->foodItemPrice->price ?? 0);
+                                                $mixerCost      = $mixerUnitPrice * $serving->secondary_quantity;
+                                            @endphp
                                             <div class="text-muted fst-italic" style="font-size:0.72rem;">
-                                                <i class="fa-solid fa-plus"></i> {{ $serving->secondary_quantity }} BTL {{ $serving->secondaryFoodItem->name ?? '—' }} (not billed separately)
+                                                <i class="fa-solid fa-plus"></i> {{ $serving->secondary_quantity }} BTL {{ $serving->secondaryFoodItem->name ?? '—' }} (+Rs {{ number_format($mixerCost, 2) }}, added to price, no separate bill line)
                                             </div>
                                         @endif
                                     </td>
@@ -88,7 +92,12 @@
                                             {{ $serving->volume_ml }} {{ $volumeUnit }}
                                         @endif
                                     </td>
-                                    <td class="text-nowrap fw-semibold">Rs {{ number_format($serving->price, 2) }}</td>
+                                    <td class="text-nowrap fw-semibold">
+                                        Rs {{ number_format($serving->price + ($mixerCost ?? 0), 2) }}
+                                        @if($serving->secondary_food_item_id)
+                                            <br><small class="text-muted fw-normal">(Rs {{ number_format($serving->price, 2) }} recipe + Rs {{ number_format($mixerCost ?? 0, 2) }} mixer)</small>
+                                        @endif
+                                    </td>
                                     <td class="text-nowrap">
                                         @if($isPendingCreate)
                                             <span class="badge border rounded-pill px-3 py-1 bg-warning-subtle text-warning border-warning">Pending Approval</span>

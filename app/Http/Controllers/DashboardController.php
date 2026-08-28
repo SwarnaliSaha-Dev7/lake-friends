@@ -274,10 +274,18 @@ class DashboardController extends Controller
             // item's actual unit convention, not be hardcoded to ml-based.
             $spiritServings = LiquorServing::where('club_id', $clubId)
                 ->where('is_active', 1)
-                ->with('foodItem')
+                ->with(['foodItem', 'secondaryFoodItem.foodItemPrice'])
                 ->get()
                 ->map(function ($serving) use ($offerMap, $barStockMap) {
                     $isBeer = (bool) ($serving->foodItem->is_beer ?? false);
+                    // The mixer's own catalog price is charged on top at order time
+                    // (see OrderSessionController::addOrder()/RestaurantOrderController::store())
+                    // — included here too so the cart/preview total staff see before
+                    // confirming already matches what gets charged, without naming the mixer.
+                    $secondaryUnitPrice = $serving->secondary_food_item_id
+                        ? (float) ($serving->secondaryFoodItem->foodItemPrice->price ?? 0)
+                        : 0;
+                    $displayPrice = (float) $serving->price + ($secondaryUnitPrice * (int) ($serving->secondary_quantity ?? 0));
                     return [
                         'id'           => 'srv_' . $serving->id,
                         'serving_id'   => $serving->id,
@@ -286,7 +294,7 @@ class DashboardController extends Controller
                         'is_beer'      => $isBeer,
                         'is_cocktail'  => (bool) $serving->is_cocktail,
                         'volume_ml'    => $serving->volume_ml,
-                        'price'        => (float) $serving->price,
+                        'price'        => round($displayPrice, 2),
                         'bar_stock'    => (int) ($barStockMap[$serving->food_item_id] ?? 0),
                         'offer'        => $offerMap[$serving->food_item_id] ?? null,
                     ];

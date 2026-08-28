@@ -43,7 +43,7 @@ class LiquorServingController extends Controller
                 ->get(['id', 'name', 'size_ml']);
 
             $servings = LiquorServing::where('club_id', $clubId)
-                ->with(['foodItem', 'secondaryFoodItem'])
+                ->with(['foodItem', 'secondaryFoodItem.foodItemPrice'])
                 ->latest()
                 ->get();
 

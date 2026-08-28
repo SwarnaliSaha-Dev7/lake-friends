@@ -284,7 +284,7 @@ class BarOrderController extends Controller
 
             $servings = LiquorServing::where('club_id', $clubId)
                 ->where('is_active', true)
-                ->with(['foodItem.foodItemCat', 'secondaryFoodItem'])
+                ->with(['foodItem.foodItemCat', 'secondaryFoodItem.foodItemPrice'])
                 ->get()
                 ->map(function ($serving) use ($barStockMap, $beverageGstRate) {
                     $baseItemId  = $serving->food_item_id;
@@ -310,6 +310,13 @@ class BarOrderController extends Controller
                     // etc.) is non-alcoholic and should read as a Mocktail instead.
                     $isMocktail = $serving->is_cocktail && (($serving->foodItem->item_type ?? null) === 'beverage');
 
+                    // The mixer's own catalog price is charged on top at order time
+                    // (see store()) — shown here too so the cart/preview total the
+                    // staff sees before confirming already matches what gets charged,
+                    // without ever naming the mixer itself.
+                    $secondaryUnitPrice = $secondaryId ? (float) ($serving->secondaryFoodItem->foodItemPrice->price ?? 0) : 0;
+                    $displayPrice       = (float) $serving->price + ($secondaryUnitPrice * $secondaryQty);
+
                     return [
                         'id'          => $baseItemId,   // base item food_item_id, for stock deduction
                         'serving_id'  => $serving->id,  // unique key per serving (peg size or cocktail)
@@ -319,7 +326,7 @@ class BarOrderController extends Controller
                         'is_cocktail' => (bool) $serving->is_cocktail,
                         'is_mocktail' => $isMocktail,
                         'size_ml'     => $deductMl,      // ml deducted per serving (or bottle count if base is a beverage)
-                        'price'       => (float) $serving->price,
+                        'price'       => round($displayPrice, 2),
                         'bar_stock'   => $stockMl,
                         'in_stock'    => $canMake > 0,
                         'is_low'      => false,
@@ -397,18 +404,8 @@ class BarOrderController extends Controller
 
             $taxable     = (float) $request->input('taxable_amount', 0);
             $discountAmt = (float) $request->input('discount_amount', 0);
-            $gstPct      = (float) $request->input('gst_percentage', 0);
             $gstAmt      = (float) $request->input('gst_amount', 0);
             $netAmt      = (float) $request->input('net_amount', 0);
-
-            if ((float) $wallet->current_balance < $netAmt) {
-                return response()->json([
-                    'statusCode'      => 422,
-                    'message'         => 'Insufficient wallet balance.',
-                    'wallet_balance'  => number_format($wallet->current_balance, 2),
-                    'required_amount' => number_format($netAmt, 2),
-                ]);
-            }
 
             // Stock check & deduction (aggregate per food_item_id first)
             $warehouse   = $this->getWarehouse($clubId);
@@ -422,11 +419,19 @@ class BarOrderController extends Controller
             // Also resolves the optional mixer/soda, which the client never needs
             // to know about at all — so it can't be omitted to skip the deduction
             // while still charging the cocktail's full (mixer-inclusive) price.
+            //
+            // The mixer's own catalog price is already folded into the price the
+            // client built this line from — see getBarItems(), which now returns
+            // a serving's price as base + mixer cost (never naming the mixer). So
+            // $item['total_amount']/'unit_price' need no adjustment here; only the
+            // GST does, since the client has no way to know part of a "liquor"
+            // (GST-free) line's price is actually a beverage mixer that must carry
+            // beverage GST.
             $secondaryByIndex = [];
             foreach ($items as $idx => &$item) {
                 if (!empty($item['serving_id'])) {
                     $serving = LiquorServing::where('club_id', $clubId)
-                        ->with('foodItem')
+                        ->with(['foodItem', 'secondaryFoodItem.foodItemPrice'])
                         ->find((int) $item['serving_id']);
 
                     if (!$serving || !$serving->foodItem) {
@@ -444,16 +449,43 @@ class BarOrderController extends Controller
                     $item['deduct_qty']   = $baseIsBeer ? $qty : $qty * (int) $serving->volume_ml;
 
                     if ($serving->secondary_food_item_id && $serving->secondary_quantity) {
+                        $secondaryUnitPrice = (float) ($serving->secondaryFoodItem->foodItemPrice->price ?? 0);
+                        $secondaryTotalQty  = $qty * (int) $serving->secondary_quantity;
+                        $secondaryCost      = round($secondaryUnitPrice * $secondaryTotalQty, 2);
+
                         $secondaryByIndex[$idx] = [
                             'food_item_id' => (int) $serving->secondary_food_item_id,
                             'name'         => $serving->secondaryFoodItem->name ?? null,
                             'per_unit_qty' => (int) $serving->secondary_quantity,
-                            'quantity'     => $qty * (int) $serving->secondary_quantity,
+                            'quantity'     => $secondaryTotalQty,
+                            'cost'         => $secondaryCost,
                         ];
                     }
                 }
             }
             unset($item);
+
+            // The mixer's cost is already part of $taxable (the client's price
+            // already included it) — only its GST (at the beverage rate, since a
+            // mixer is always a beverage) still needs adding on top.
+            $secondaryCostSum = array_sum(array_column($secondaryByIndex, 'cost'));
+            if ($secondaryCostSum > 0) {
+                $beverageGstRate = (float) (GstRate::where('club_id', $clubId)->where('gst_type', 'beverage')->value('gst_percentage') ?? 0);
+                $secondaryGst    = round($secondaryCostSum * $beverageGstRate / 100, 2);
+
+                $gstAmt += $secondaryGst;
+                $netAmt += $secondaryGst;
+            }
+            $gstPct = $taxable > 0 ? round(($gstAmt / $taxable) * 100, 2) : 0;
+
+            if ((float) $wallet->current_balance < $netAmt) {
+                return response()->json([
+                    'statusCode'      => 422,
+                    'message'         => 'Insufficient wallet balance.',
+                    'wallet_balance'  => number_format($wallet->current_balance, 2),
+                    'required_amount' => number_format($netAmt, 2),
+                ]);
+            }
 
             $deductMap = [];
             $isBeerMap = [];

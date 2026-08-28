@@ -633,7 +633,7 @@ $(document).ready(function () {
                 ? ' <span class="text-muted" style="font-size:0.68rem;">+' + item.gst_rate + '% GST</span>'
                 : '';
             var mixerTag = item.secondary_name
-                ? '<div class="text-muted fst-italic" style="font-size:0.7rem;">+ ' + (item.secondary_qty * item.quantity) + ' BTL ' + item.secondary_name + ' (not billed separately)</div>'
+                ? '<div class="text-muted fst-italic" style="font-size:0.7rem;">+ ' + (item.secondary_qty * item.quantity) + ' BTL ' + item.secondary_name + ' (cost included above, no separate bill line)</div>'
                 : '';
 
             html += '<div class="d-flex align-items-start gap-2 mb-2 pb-2 border-bottom">'
