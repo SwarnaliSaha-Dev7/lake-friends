@@ -368,7 +368,7 @@
                 <td class="bill-val">Rs {{ number_format($dispFoodGst, 2) }}</td>
             </tr>
             @endif
-            @if($beverageSubtotal > 0)
+            @if($dispBeverageGst > 0)
             <tr>
                 <td class="bill-lbl">Beverage GST ({{ $globalBeverageGstPercentage }}%)</td>
                 <td class="bill-val">Rs {{ number_format($dispBeverageGst, 2) }}</td>

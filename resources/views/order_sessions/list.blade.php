@@ -561,7 +561,7 @@ $(document).ready(function () {
                 ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Food GST ({{ $globalRestaurantGstPercentage }}%)</div>'
                   + '<div class="col-4 text-center fw-semibold small">Rs ' + dispFoodGst.toFixed(2) + '</div></div>'
                 : '')
-            + (sessionBeverageSubtotal > 0
+            + (dispBevGst > 0
                 ? '<div class="row mb-1 border-bottom pb-1"><div class="col-8 text-end text-muted small">Beverage GST ({{ $globalBeverageGstPercentage }}%)</div>'
                   + '<div class="col-4 text-center fw-semibold small">Rs ' + dispBevGst.toFixed(2) + '</div></div>'
                 : '')

@@ -305,7 +305,7 @@ $(document).ready(function () {
                 + (foodSubtotal > 0
                     ? '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">Food GST ({{ $globalRestaurantGstPercentage }}%)</div><div class="col-4 text-center fw-semibold">Rs ' + dispFoodGst.toFixed(2) + '</div></div>'
                     : '')
-                + (beverageSubtotal > 0
+                + (dispBevGst > 0
                     ? '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">Beverage GST ({{ $globalBeverageGstPercentage }}%)</div><div class="col-4 text-center fw-semibold">Rs ' + dispBevGst.toFixed(2) + '</div></div>'
                     : '');
 
