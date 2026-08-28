@@ -343,13 +343,18 @@
 
     {{-- ===== Bill Summary — same as modal ===== --}}
     @php
+        // Food GST is exact — the food subtotal is never touched by a hidden
+        // cocktail mixer, so foodSubtotal * rate is always precisely right, no
+        // proportional guessing needed. Everything else in the stored total
+        // (real beverage lines AND any hidden mixer inside a "liquor" cocktail
+        // line, which is always a beverage) is taxed at the same beverage rate,
+        // so it's shown as one "Beverage GST" figure — the exact remainder after
+        // food's share is removed, not a proportional split (which would wrongly
+        // smear part of a hidden mixer's tax onto the Food GST line).
         $foodSubtotal     = $foodItems->sum('total_amount');
         $beverageSubtotal = $beverageItems->sum('total_amount');
-        $rawFoodGst       = $foodSubtotal * ($globalRestaurantGstPercentage / 100);
-        $rawBeverageGst   = $beverageSubtotal * ($globalBeverageGstPercentage / 100);
-        $rawGstSum        = $rawFoodGst + $rawBeverageGst;
-        $dispFoodGst      = $rawGstSum > 0 ? $rawFoodGst * ($order->gst_amount / $rawGstSum) : 0;
-        $dispBeverageGst  = $rawGstSum > 0 ? $rawBeverageGst * ($order->gst_amount / $rawGstSum) : 0;
+        $dispFoodGst      = $foodSubtotal * ($globalRestaurantGstPercentage / 100);
+        $dispBeverageGst  = max(0, $order->gst_amount - $dispFoodGst);
     @endphp
     <div class="bill-box">
         <table class="bill-row-table">

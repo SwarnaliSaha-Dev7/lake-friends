@@ -291,18 +291,16 @@ $(document).ready(function () {
                     + '</table></div></div></div>';
             }
 
-            // Food and beverage are taxed at different rates, so the single stored
-            // gst_amount is split proportionally by section subtotal — this keeps
-            // the breakdown reconciling exactly to the amount actually charged even
-            // if GST rates have changed since the order was placed.
-            var rawFoodGst = foodSubtotal * VIEW_FOOD_GST_RATE;
-            var rawBevGst  = beverageSubtotal * VIEW_BEV_GST_RATE;
-            var rawGstSum  = rawFoodGst + rawBevGst;
-            var dispFoodGst = 0, dispBevGst = 0;
-            if (rawGstSum > 0) {
-                dispFoodGst = rawFoodGst * (parseFloat(o.gst_amount) / rawGstSum);
-                dispBevGst  = rawBevGst  * (parseFloat(o.gst_amount) / rawGstSum);
-            }
+            // Food GST is exact — the food subtotal is never touched by a hidden
+            // cocktail mixer, so foodSubtotal * rate is always precisely right, no
+            // proportional guessing needed. Everything else in the stored total
+            // (real beverage lines AND any hidden mixer inside a "liquor" cocktail
+            // line, which is always a beverage) is taxed at the same beverage rate,
+            // so it's shown as one "Beverage GST" figure — the exact remainder after
+            // food's share is removed, not a proportional split (which would wrongly
+            // smear part of a hidden mixer's tax onto the Food GST line).
+            var dispFoodGst = foodSubtotal * VIEW_FOOD_GST_RATE;
+            var dispBevGst  = Math.max(0, parseFloat(o.gst_amount) - dispFoodGst);
             var gstRows = ''
                 + (foodSubtotal > 0
                     ? '<div class="row mb-2 border-bottom p-2"><div class="col-8 text-end text-muted">Food GST ({{ $globalRestaurantGstPercentage }}%)</div><div class="col-4 text-center fw-semibold">Rs ' + dispFoodGst.toFixed(2) + '</div></div>'

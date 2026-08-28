@@ -82,20 +82,21 @@
 
     {{-- Date-wise breakdown --}}
     @php
-        // Food and beverage are taxed at different rates, so each session's single
-        // stored gst_amount is split proportionally by section subtotal — this keeps
-        // the breakdown reconciling exactly to the amount actually charged even if
-        // GST rates have changed since the session was billed.
-        $splitSessionGst = function ($session) use ($globalRestaurantGstPercentage, $globalBeverageGstPercentage) {
+        // Food GST is exact — the food subtotal is never touched by a hidden
+        // cocktail mixer, so foodSubtotal * rate is always precisely right, no
+        // proportional guessing needed. Everything else in the session's stored
+        // gst_amount (real beverage lines AND any hidden mixer inside a "liquor"
+        // cocktail line, which is always a beverage) is taxed at the same beverage
+        // rate, so it's shown as one "Beverage GST" figure — the exact remainder
+        // after food's share is removed, not a proportional split (which would
+        // wrongly smear part of a hidden mixer's tax onto the Food GST line).
+        $splitSessionGst = function ($session) use ($globalRestaurantGstPercentage) {
             $items = $session->orders->whereNotIn('status', ['cancelled'])->flatMap(fn($o) => $o->items);
-            $foodSubtotal     = $items->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'food')->sum('total_amount');
-            $beverageSubtotal = $items->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'beverage')->sum('total_amount');
-            $rawFoodGst       = $foodSubtotal * ($globalRestaurantGstPercentage / 100);
-            $rawBeverageGst   = $beverageSubtotal * ($globalBeverageGstPercentage / 100);
-            $rawGstSum        = $rawFoodGst + $rawBeverageGst;
+            $foodSubtotal = $items->filter(fn($i) => ($i->foodItem->item_type ?? null) === 'food')->sum('total_amount');
+            $foodGst      = $foodSubtotal * ($globalRestaurantGstPercentage / 100);
             return [
-                'food'     => $rawGstSum > 0 ? $rawFoodGst * ($session->gst_amount / $rawGstSum) : 0,
-                'beverage' => $rawGstSum > 0 ? $rawBeverageGst * ($session->gst_amount / $rawGstSum) : 0,
+                'food'     => $foodGst,
+                'beverage' => max(0, $session->gst_amount - $foodGst),
             ];
         };
     @endphp
