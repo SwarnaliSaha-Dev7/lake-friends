@@ -300,8 +300,11 @@ $(function () {
             cbLiquorOfferMap[it.id] = it.offer || null;
             html += '<option value="' + it.id + '"'
                 + ' data-food-item-id="' + it.food_item_id + '"'
+                + ' data-serving-id="' + (it.serving_id || '') + '"'
                 + ' data-price="' + it.price + '"'
                 + ' data-is-beer="' + (it.is_beer ? '1' : '0') + '"'
+                + ' data-is-cocktail="' + (it.is_cocktail ? '1' : '0') + '"'
+                + ' data-cocktail-name="' + (it.is_cocktail ? it.name : '') + '"'
                 + ' data-volume-ml="' + (it.volume_ml || 0) + '"'
                 + ' data-bar-stock="' + (it.bar_stock || 0) + '">'
                 + it.name + '</option>';
@@ -395,6 +398,14 @@ $(function () {
             buyQty: offer ? (offer.buy_qty        || 1)  : 1,
             getQty: offer ? (offer.get_qty        || 1)  : 1,
         };
+    }
+    // A liquor-table row is a non-alcoholic "mocktail" (Masala Coke, Virgin Mojito
+    // etc.) only when its base item is BOTH a cocktail recipe AND bottle-based
+    // (is_beer=1 reused as the "beverage base" convention here, same as elsewhere
+    // in the app). Its base is a beverage and must be taxed at the beverage GST
+    // rate, not treated as GST-free liquor.
+    function cbIsMocktailOption($opt) {
+        return $opt.attr('data-is-cocktail') === '1' && $opt.attr('data-is-beer') === '1';
     }
     function cbRowDiscount(price, ofType, ofVal, qty, buyQty, getQty) {
         qty = parseInt(qty) || 1; buyQty = parseInt(buyQty) || 1; getQty = parseInt(getQty) || 1;
@@ -563,10 +574,19 @@ $(function () {
             foodDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
         });
         $('#cbLiquorTableBody .cb-liquor-order-row').each(function () {
-            var o = cbReadOffer($(this).find('.cb-liquor-item-sel option:selected'), cbLiquorOfferMap);
-            var q = parseInt($(this).find('.cb-liquor-qty-input').val()) || 0;
-            liquorSub  += o.price * q;
-            liquorDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+            var $opt = $(this).find('.cb-liquor-item-sel option:selected');
+            var o    = cbReadOffer($opt, cbLiquorOfferMap);
+            var q    = parseInt($(this).find('.cb-liquor-qty-input').val()) || 0;
+            var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+            // A mocktail's base is a beverage, not a spirit — it belongs in the
+            // beverage-taxed bucket, not the GST-free liquor bucket.
+            if (cbIsMocktailOption($opt)) {
+                bevSub  += o.price * q;
+                bevDisc += disc;
+            } else {
+                liquorSub  += o.price * q;
+                liquorDisc += disc;
+            }
         });
         $('#cbBeverageTableBody .cb-beverage-order-row').each(function () {
             var o = cbReadOffer($(this).find('.cb-beverage-item-sel option:selected'), cbBeverageOfferMap);
@@ -613,7 +633,10 @@ $(function () {
             var $opt      = $(this).find('.cb-liquor-item-sel option:selected');
             var itemId    = $opt.val();
             if (!itemId) { valid = false; return false; }
-            var foodItemId = $opt.attr('data-food-item-id') || itemId;
+            var foodItemId   = $opt.attr('data-food-item-id') || itemId;
+            var servingId    = $opt.attr('data-serving-id') || null;
+            var isCocktail   = $opt.attr('data-is-cocktail') === '1';
+            var cocktailName = $opt.attr('data-cocktail-name') || '';
             var isBeer    = $(this).find('.cb-liquor-is-beer').val() === '1';
             var volumeMl  = parseInt($(this).find('.cb-liquor-volume-ml').val()) || 0;
             var o         = cbReadOffer($opt, cbLiquorOfferMap);
@@ -621,9 +644,12 @@ $(function () {
             var disc      = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             items.push({
                 food_item_id:  foodItemId,
+                serving_id:    servingId,
                 quantity:      qty,
                 unit:          isBeer ? 'btl' : 'ml',
                 is_beer:       isBeer,
+                is_cocktail:   isCocktail,
+                cocktail_name: isCocktail ? cocktailName : null,
                 volume_ml:     isBeer ? null : volumeMl,
                 deduct_qty:    isBeer ? qty : qty * volumeMl,
                 unit_price:    o.price,
@@ -664,10 +690,17 @@ $(function () {
             foodDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
         });
         $('#cbLiquorTableBody .cb-liquor-order-row').each(function () {
-            var o = cbReadOffer($(this).find('.cb-liquor-item-sel option:selected'), cbLiquorOfferMap);
-            var q = parseInt($(this).find('.cb-liquor-qty-input').val()) || 0;
-            liquorSub  += o.price * q;
-            liquorDisc += cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+            var $opt = $(this).find('.cb-liquor-item-sel option:selected');
+            var o    = cbReadOffer($opt, cbLiquorOfferMap);
+            var q    = parseInt($(this).find('.cb-liquor-qty-input').val()) || 0;
+            var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+            if (cbIsMocktailOption($opt)) {
+                bevSub  += o.price * q;
+                bevDisc += disc;
+            } else {
+                liquorSub  += o.price * q;
+                liquorDisc += disc;
+            }
         });
         $('#cbBeverageTableBody .cb-beverage-order-row').each(function () {
             var o = cbReadOffer($(this).find('.cb-beverage-item-sel option:selected'), cbBeverageOfferMap);
