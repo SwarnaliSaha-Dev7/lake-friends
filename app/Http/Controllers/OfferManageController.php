@@ -36,32 +36,29 @@ class OfferManageController extends Controller
                         ->where('is_active', 1)
                         ->get(['id', 'name', 'item_type']);
 
-        // Every active liquor catalog item (beer and spirits alike) — not just
-        // ones that happen to have a Liquor Serving/peg configured. An item with
-        // no peg yet is still a real, sellable product and must stay pickable
-        // here, or it can never be put on an offer at all. Where menu entries
-        // (pegs/cocktails) DO exist, their names are appended so the admin can
-        // recognise the item the way it actually appears on the Liquor Menu,
-        // instead of only the raw catalog name — an item can have several menu
-        // entries (30ml, 60ml, a cocktail...), so all of them are listed.
-        $menuNamesByItem = LiquorServing::where('club_id', $club_id)
+        // One row per Liquor Menu entry (each peg size / cocktail is its own
+        // pickable row, named exactly as it appears on the Liquor Menu) — plus
+        // one row for any liquor item that has no menu entry configured yet
+        // (using its raw catalog name, since there's no menu name to show). An
+        // offer still only ever links to the base food_item_id underneath, so
+        // several rows can share the same id — store()/update() dedupe that.
+        $itemsWithServing = LiquorServing::where('club_id', $club_id)
                         ->where('is_active', 1)
-                        ->get(['food_item_id', 'name'])
-                        ->groupBy('food_item_id')
-                        ->map(fn($group) => $group->pluck('name')->implode(', '));
+                        ->with('foodItem')
+                        ->get()
+                        ->filter(fn($s) => $s->foodItem && $s->foodItem->item_type === 'liquor')
+                        ->map(fn($s) => ['id' => $s->food_item_id, 'name' => $s->name]);
 
-        $liquorItems = FoodItem::where('club_id', $club_id)
+        $servedItemIds = $itemsWithServing->pluck('id')->unique();
+
+        $itemsWithoutServing = FoodItem::where('club_id', $club_id)
                         ->where('item_type', 'liquor')
                         ->where('is_active', 1)
+                        ->whereNotIn('id', $servedItemIds)
                         ->get(['id', 'name'])
-                        ->map(function ($item) use ($menuNamesByItem) {
-                            $menuNames = $menuNamesByItem[$item->id] ?? null;
-                            return [
-                                'id'   => $item->id,
-                                'name' => $menuNames ? "{$item->name} ({$menuNames})" : $item->name,
-                            ];
-                        })
-                        ->values();
+                        ->map(fn($item) => ['id' => $item->id, 'name' => $item->name]);
+
+        $liquorItems = $itemsWithServing->concat($itemsWithoutServing)->values();
 
         // Item IDs already in a currently active (non-expired) offer
         $activeOfferIds = Offer::where('club_id', $club_id)
@@ -86,6 +83,11 @@ class OfferManageController extends Controller
                 'items'         => 'required|array|min:1',
                 'items.*'       => 'exists:food_items,id',
             ]);
+
+            // The item picker now shows one row per menu entry (each peg size /
+            // cocktail), so several selected rows can share the same underlying
+            // food_item_id — collapse to one OfferItem per item, not one per row.
+            $request->merge(['items' => array_values(array_unique($request->items))]);
 
             $offerType = OfferType::findOrFail($request->offer_type_id);
 
@@ -273,6 +275,11 @@ class OfferManageController extends Controller
                 'items'         => 'required|array|min:1',
                 'items.*'       => 'exists:food_items,id',
             ]);
+
+            // The item picker now shows one row per menu entry (each peg size /
+            // cocktail), so several selected rows can share the same underlying
+            // food_item_id — collapse to one OfferItem per item, not one per row.
+            $request->merge(['items' => array_values(array_unique($request->items))]);
 
             $newOfferType = OfferType::findOrFail($request->offer_type_id);
 
