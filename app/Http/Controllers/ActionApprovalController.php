@@ -462,17 +462,22 @@ class ActionApprovalController extends Controller
                             'status'         => 'active',
                         ]);
 
-                        // Preserve any per-item rules (e.g. a volume_ml scope) for items
-                        // that stay selected and whose edit didn't touch that field —
-                        // this approval-apply path must not silently wipe them out.
-                        $oldRulesByItem = $offer->offerItems->pluck('rules', 'food_items_id');
-                        $newItemRules   = !empty($new['volume_ml']) ? ['volume_ml' => (int) $new['volume_ml']] : null;
+                        // items_detail carries each item's resolved menu_label/
+                        // picker_key from the moment the edit was submitted (see
+                        // OfferManageController::update()) — replay it verbatim so
+                        // the item picker still highlights the exact menu entry
+                        // that was actually chosen, not every entry on that item.
+                        $volumeRule = !empty($new['volume_ml']) ? (int) $new['volume_ml'] : null;
                         OfferItem::where('offer_id', $offer->id)->delete();
-                        foreach ($new['items'] as $itemId) {
+                        foreach (($new['items_detail'] ?? []) as $detail) {
                             OfferItem::create([
                                 'offer_id'      => $offer->id,
-                                'food_items_id' => $itemId,
-                                'rules'         => $newItemRules ?? ($oldRulesByItem[$itemId] ?? null),
+                                'food_items_id' => $detail['food_items_id'],
+                                'rules'         => array_filter([
+                                    'volume_ml'  => $volumeRule,
+                                    'menu_label' => $detail['menu_label'] ?? null,
+                                    'picker_key' => $detail['picker_key'] ?? null,
+                                ], fn($v) => $v !== null),
                             ]);
                         }
 

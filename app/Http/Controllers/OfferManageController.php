@@ -17,6 +17,41 @@ use Illuminate\Support\Facades\Notification;
 
 class OfferManageController extends Controller
 {
+    // Resolves one item-picker row key back to the real food_items_id it
+    // represents plus the exact menu label the admin saw and picked — both get
+    // stored on the OfferItem so re-opening the edit form can highlight
+    // precisely that row again, not every row that shares the same underlying
+    // item. Liquor rows use "srv_{serving_id}" / "item_{food_item_id}" (see
+    // index()); food rows are still a plain food_item_id, unchanged.
+    private function resolvePickerKey(string $key, int $clubId): ?array
+    {
+        if (ctype_digit($key)) {
+            $item = FoodItem::where('club_id', $clubId)->find((int) $key);
+            return $item ? ['food_items_id' => $item->id, 'menu_label' => $item->name, 'picker_key' => $key] : null;
+        }
+
+        if (str_starts_with($key, 'srv_')) {
+            $serving = LiquorServing::where('club_id', $clubId)
+                ->where('id', (int) substr($key, 4))
+                ->with('foodItem')
+                ->first();
+            if (!$serving || !$serving->foodItem) {
+                return null;
+            }
+            return ['food_items_id' => $serving->food_item_id, 'menu_label' => $serving->name, 'picker_key' => $key];
+        }
+
+        if (str_starts_with($key, 'item_')) {
+            $item = FoodItem::where('club_id', $clubId)->find((int) substr($key, 5));
+            if (!$item) {
+                return null;
+            }
+            return ['food_items_id' => $item->id, 'menu_label' => $item->name, 'picker_key' => $key];
+        }
+
+        return null;
+    }
+
     public function index()
     {
         $page_title = 'Offer Manage';
@@ -39,24 +74,28 @@ class OfferManageController extends Controller
         // One row per Liquor Menu entry (each peg size / cocktail is its own
         // pickable row, named exactly as it appears on the Liquor Menu) — plus
         // one row for any liquor item that has no menu entry configured yet
-        // (using its raw catalog name, since there's no menu name to show). An
-        // offer still only ever links to the base food_item_id underneath, so
-        // several rows can share the same id — store()/update() dedupe that.
+        // (using its raw catalog name, since there's no menu name to show).
+        // Every row gets a UNIQUE id ("srv_{serving_id}" / "item_{food_item_id}")
+        // distinct from every other row, even ones on the same base item — so
+        // picking exactly one menu entry only ever selects that one row, not
+        // every row that happens to share the same underlying item. The real
+        // food_item_id each row resolves to travels alongside for the "already
+        // in an active offer" check, which still applies per base item.
         $itemsWithServing = LiquorServing::where('club_id', $club_id)
                         ->where('is_active', 1)
                         ->with('foodItem')
                         ->get()
                         ->filter(fn($s) => $s->foodItem && $s->foodItem->item_type === 'liquor')
-                        ->map(fn($s) => ['id' => $s->food_item_id, 'name' => $s->name]);
+                        ->map(fn($s) => ['id' => 'srv_' . $s->id, 'food_item_id' => $s->food_item_id, 'name' => $s->name]);
 
-        $servedItemIds = $itemsWithServing->pluck('id')->unique();
+        $servedItemIds = $itemsWithServing->pluck('food_item_id')->unique();
 
         $itemsWithoutServing = FoodItem::where('club_id', $club_id)
                         ->where('item_type', 'liquor')
                         ->where('is_active', 1)
                         ->whereNotIn('id', $servedItemIds)
                         ->get(['id', 'name'])
-                        ->map(fn($item) => ['id' => $item->id, 'name' => $item->name]);
+                        ->map(fn($item) => ['id' => 'item_' . $item->id, 'food_item_id' => $item->id, 'name' => $item->name]);
 
         $liquorItems = $itemsWithServing->concat($itemsWithoutServing)->values();
 
@@ -81,13 +120,24 @@ class OfferManageController extends Controller
                 'start_at'      => 'required|date',
                 'end_at'        => 'required|date|after_or_equal:start_at',
                 'items'         => 'required|array|min:1',
-                'items.*'       => 'exists:food_items,id',
+                'items.*'       => 'string',
             ]);
 
-            // The item picker now shows one row per menu entry (each peg size /
-            // cocktail), so several selected rows can share the same underlying
-            // food_item_id — collapse to one OfferItem per item, not one per row.
-            $request->merge(['items' => array_values(array_unique($request->items))]);
+            // Resolve every picked row key to its real item + the exact menu
+            // label the admin saw, then de-duplicate by that resolved item so
+            // picking two rows that happen to be the same underlying item (e.g.
+            // both the 30ml and 60ml peg of the same spirit) doesn't create two
+            // links — but two DIFFERENT items keep their own distinct labels.
+            $clubId = auth()->user()->club_id;
+            $resolvedItems = collect($request->items)
+                ->map(fn($key) => $this->resolvePickerKey((string) $key, $clubId))
+                ->filter()
+                ->unique('food_items_id')
+                ->values();
+
+            if ($resolvedItems->isEmpty()) {
+                return response()->json(['statusCode' => 422, 'error' => 'One or more selected items are no longer available.']);
+            }
 
             $offerType = OfferType::findOrFail($request->offer_type_id);
 
@@ -127,14 +177,18 @@ class OfferManageController extends Controller
             // A volume_ml scope (e.g. "only the 60ml peg") is optional and applies
             // uniformly to every selected item — a blank value means the offer
             // covers every serving size of the item, same as before this existed.
-            $itemRules = ($offerType->slug === 'b1g1' && $request->filled('volume_ml'))
-                ? ['volume_ml' => (int) $request->volume_ml]
+            $volumeRule = ($offerType->slug === 'b1g1' && $request->filled('volume_ml'))
+                ? (int) $request->volume_ml
                 : null;
-            foreach ($request->items as $itemId) {
+            foreach ($resolvedItems as $resolved) {
                 OfferItem::create([
                     'offer_id'      => $offer->id,
-                    'food_items_id' => $itemId,
-                    'rules'         => $itemRules,
+                    'food_items_id' => $resolved['food_items_id'],
+                    'rules'         => array_filter([
+                        'volume_ml'  => $volumeRule,
+                        'menu_label' => $resolved['menu_label'],
+                        'picker_key' => $resolved['picker_key'],
+                    ], fn($v) => $v !== null),
                 ]);
             }
 
@@ -242,7 +296,21 @@ class OfferManageController extends Controller
                     'volume_ml'       => $offer->offerItems->first()?->rules['volume_ml'] ?? null,
                     'start_at'        => $offer->start_at,
                     'end_at'          => $offer->end_at,
-                    'item_ids'        => $offer->offerItems->pluck('food_items_id')->toArray(),
+                    // Pre-select the exact menu-entry row each item was originally
+                    // picked as (see resolvePickerKey()). Older offers saved before
+                    // that existed have no picker_key on record — best-effort
+                    // fall back to any current serving of that item (or the plain
+                    // item row if it has none), so the link still shows selected
+                    // instead of silently vanishing the next time this gets saved.
+                    'item_ids'        => $offer->offerItems->map(function ($oi) {
+                        if (!empty($oi->rules['picker_key'])) {
+                            return $oi->rules['picker_key'];
+                        }
+                        $fallbackServing = LiquorServing::where('food_item_id', $oi->food_items_id)
+                            ->where('is_active', 1)
+                            ->first();
+                        return $fallbackServing ? 'srv_' . $fallbackServing->id : 'item_' . $oi->food_items_id;
+                    })->toArray(),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -273,13 +341,22 @@ class OfferManageController extends Controller
                 'start_at'      => 'required|date',
                 'end_at'        => 'required|date|after_or_equal:start_at',
                 'items'         => 'required|array|min:1',
-                'items.*'       => 'exists:food_items,id',
+                'items.*'       => 'string',
             ]);
 
-            // The item picker now shows one row per menu entry (each peg size /
-            // cocktail), so several selected rows can share the same underlying
-            // food_item_id — collapse to one OfferItem per item, not one per row.
-            $request->merge(['items' => array_values(array_unique($request->items))]);
+            // Resolve every picked row key to its real item + the exact menu
+            // label the admin saw, then de-duplicate by that resolved item —
+            // see store() for the full reasoning.
+            $clubId = auth()->user()->club_id;
+            $resolvedItems = collect($request->items)
+                ->map(fn($key) => $this->resolvePickerKey((string) $key, $clubId))
+                ->filter()
+                ->unique('food_items_id')
+                ->values();
+
+            if ($resolvedItems->isEmpty()) {
+                return response()->json(['statusCode' => 422, 'error' => 'One or more selected items are no longer available.']);
+            }
 
             $newOfferType = OfferType::findOrFail($request->offer_type_id);
 
@@ -296,13 +373,8 @@ class OfferManageController extends Controller
 
             $isAdmin  = Auth::user()->hasRole('admin');
             $oldItems = $offer->offerItems->pluck('food_items_id')->toArray();
-            // Preserve any per-item volume_ml scope for items that stay selected
-            // and whose edit didn't touch that field (e.g. the offer type isn't
-            // b1g1 in this edit) — this update path must not silently wipe it out
-            // just because an unrelated field changed.
-            $oldRulesByItem = $offer->offerItems->pluck('rules', 'food_items_id');
-            $newItemRules = ($newOfferType->slug === 'b1g1' && $request->filled('volume_ml'))
-                ? ['volume_ml' => (int) $request->volume_ml]
+            $volumeRule = ($newOfferType->slug === 'b1g1' && $request->filled('volume_ml'))
+                ? (int) $request->volume_ml
                 : null;
 
             $payload = [
@@ -327,10 +399,14 @@ class OfferManageController extends Controller
                     'discount_value' => $request->discount_value ?? 0,
                     'buy_qty'        => $newOfferType->slug === 'b1g1' ? $request->buy_qty : null,
                     'get_qty'        => $newOfferType->slug === 'b1g1' ? $request->get_qty : null,
-                    'volume_ml'      => $newItemRules['volume_ml'] ?? null,
+                    'volume_ml'      => $volumeRule,
                     'start_at'       => $request->start_at,
                     'end_at'         => $request->end_at,
-                    'items'          => $request->items,
+                    'items'          => $resolvedItems->pluck('food_items_id')->all(),
+                    // Full per-item detail (label/picker_key), used to rebuild
+                    // OfferItem.rules correctly whenever this payload gets applied
+                    // — 'items' alone only has bare ids, not enough to do that.
+                    'items_detail'   => $resolvedItems->values()->all(),
                 ],
             ];
 
@@ -350,11 +426,15 @@ class OfferManageController extends Controller
                 ]);
 
                 OfferItem::where('offer_id', $offer->id)->delete();
-                foreach ($request->items as $itemId) {
+                foreach ($resolvedItems as $resolved) {
                     OfferItem::create([
                         'offer_id'      => $offer->id,
-                        'food_items_id' => $itemId,
-                        'rules'         => $newItemRules ?? ($oldRulesByItem[$itemId] ?? null),
+                        'food_items_id' => $resolved['food_items_id'],
+                        'rules'         => array_filter([
+                            'volume_ml'  => $volumeRule,
+                            'menu_label' => $resolved['menu_label'],
+                            'picker_key' => $resolved['picker_key'],
+                        ], fn($v) => $v !== null),
                     ]);
                 }
 

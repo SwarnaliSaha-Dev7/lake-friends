@@ -70,7 +70,7 @@
                                             <div class="d-flex flex-wrap gap-1">
                                                 @forelse($offer->offerItems->take(3) as $item)
                                                     <span class="badge bg-info-subtle text-secondary border border-info rounded-pill px-2 py-1">
-                                                        {{ $item->foodItem?->name }}
+                                                        {{ $item->rules['menu_label'] ?? $item->foodItem?->name }}
                                                     </span>
                                                 @empty
                                                     <span class="text-muted">—</span>
@@ -423,11 +423,26 @@ $(document).ready(function () {
         if (type === 'liquor') items = liquorItems;
         if (type === 'both')   items = [...foodItems, ...liquorItems];
 
+        // A liquor row's value is a unique per-menu-entry key ("srv_12"), not
+        // the underlying food_item_id — food rows have no separate row
+        // identity, so their value already IS the food_item_id. Compare
+        // everything as strings (option values are always strings in the DOM)
+        // and resolve any row key back to its food_item_id for the
+        // "already on another offer" check, which is inherently per-item.
+        const selectedStrs = selectedIds.map(String);
+        const takenStrs     = takenItemIds.map(String);
+        const resolveFoodItemId = (key) => {
+            const match = items.find(i => String(i.id) === key);
+            return match ? String(match.food_item_id ?? match.id) : key;
+        };
+        const ownFoodItemIds = ownIds.map(String).map(resolveFoodItemId);
+
         items.forEach(function (item) {
-            const isTaken   = takenItemIds.includes(item.id) && !ownIds.includes(item.id);
+            const itemFoodId = String(item.food_item_id ?? item.id);
+            const isTaken   = takenStrs.includes(itemFoodId) && !ownFoodItemIds.includes(itemFoodId);
             const baseLabel = type === 'both' ? item.name + ' (' + (item.item_type || '') + ')' : item.name;
             const label     = isTaken ? baseLabel + ' — already has active offer' : baseLabel;
-            const selected  = selectedIds.includes(item.id);
+            const selected  = selectedStrs.includes(String(item.id));
             const option    = new Option(label, item.id, selected, selected);
             if (isTaken) {
                 $(option).prop('disabled', true).css('color', '#aaa');
@@ -636,7 +651,7 @@ $(document).ready(function () {
     $('#edit_appliesToSelect').on('change', function () {
         const val     = $(this).val();
         const current = $('#edit_itemsSelect').val() ?? [];
-        if (val) { loadItemsInto('edit_itemsSelect', 'editoffer', val, current.map(Number), currentEditOwnIds); $('#edit_itemsError').text(''); }
+        if (val) { loadItemsInto('edit_itemsSelect', 'editoffer', val, current, currentEditOwnIds); $('#edit_itemsError').text(''); }
     });
 
     // Edit button click → check pending
