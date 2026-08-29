@@ -675,7 +675,28 @@ $(document).ready(function () {
                 const d = response.data;
                 $('#edit_offer_id').val(d.id);
                 $('#edit_offerName').val(d.name);
-                $('#edit_offerTypeId').val(d.offer_type_id).trigger('change');
+
+                // Several dropdown options share the same underlying
+                // offer_type_id for b1g1 offers (the ratio itself lives in
+                // buy_qty/get_qty, not which option was clicked) — pick the
+                // exact preset matching this offer's real numbers, so the
+                // dropdown shows what's actually saved instead of always
+                // defaulting to whichever b1g1 option comes first.
+                const $editTypeSelect = $('#edit_offerTypeId');
+                let $exactTypeMatch = $();
+                if (d.offer_type_slug === 'b1g1') {
+                    $exactTypeMatch = $editTypeSelect.find('option').filter(function () {
+                        return $(this).data('slug') === 'b1g1'
+                            && String($(this).attr('data-buy-qty')) === String(d.buy_qty)
+                            && String($(this).attr('data-get-qty')) === String(d.get_qty);
+                    });
+                }
+                if ($exactTypeMatch.length) {
+                    $exactTypeMatch.prop('selected', true);
+                } else {
+                    $editTypeSelect.val(d.offer_type_id);
+                }
+                $editTypeSelect.trigger('change');
                 handleDiscountField(d.offer_type_slug, 'edit_');
                 $('#edit_discountValue').val(d.discount_value);
                 $('#edit_buyQty').val(d.buy_qty);
