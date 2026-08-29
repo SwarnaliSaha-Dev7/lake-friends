@@ -114,7 +114,7 @@
                                             $of   = is_array($item->offer_applied) ? $item->offer_applied : (array) $item->offer_applied;
                                             $slug = $of['type_slug'] ?? '';
                                             if ($slug === 'b1g1') {
-                                                $offer = ['label' => 'B1G1', 'class' => 'bg-warning-subtle text-warning border-warning'];
+                                                $offer = ['label' => 'Buy ' . ($of['buy_qty'] ?? 1) . ' Get ' . ($of['get_qty'] ?? 1), 'class' => 'bg-warning-subtle text-warning border-warning'];
                                             } elseif ($slug === 'percentage' && !empty($of['discount_value'])) {
                                                 $offer = ['label' => $of['discount_value'] . '% off', 'class' => 'bg-success-subtle text-success border-success'];
                                             } elseif ($slug === 'flat' && !empty($of['discount_value'])) {

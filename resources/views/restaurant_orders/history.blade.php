@@ -244,7 +244,7 @@ $(document).ready(function () {
                 var offerBadge = '';
                 if (it.offer_applied && !isCancelled) {
                     var of = it.offer_applied;
-                    if (of.type_slug === 'b1g1') offerBadge = ' <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2" style="font-size:0.65rem;">B1G1</span>';
+                    if (of.type_slug === 'b1g1') offerBadge = ' <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2" style="font-size:0.65rem;">Buy ' + (of.buy_qty || 1) + ' Get ' + (of.get_qty || 1) + '</span>';
                     else if (of.type_slug === 'percentage' && of.discount_value) offerBadge = ' <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2" style="font-size:0.65rem;">' + of.discount_value + '% off</span>';
                     else if (of.type_slug === 'flat' && of.discount_value) offerBadge = ' <span class="badge bg-info-subtle text-info border border-info rounded-pill px-2" style="font-size:0.65rem;">Rs ' + of.discount_value + ' off</span>';
                 }

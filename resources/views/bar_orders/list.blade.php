@@ -659,7 +659,7 @@ $(document).ready(function () {
             }
 
             var offerTag = (item.offer && item.offer.type_slug === 'b1g1')
-                ? ' <span class="badge bg-danger text-white rounded-pill px-1" style="font-size:0.6rem;">B1G1</span>'
+                ? ' <span class="badge bg-danger text-white rounded-pill px-1" style="font-size:0.6rem;">Buy ' + (item.offer.buy_qty || 1) + ' Get ' + (item.offer.get_qty || 1) + '</span>'
                 : '';
             var gstTag = (item.gst_rate > 0)
                 ? ' <span class="text-muted" style="font-size:0.68rem;">+' + item.gst_rate + '% GST</span>'

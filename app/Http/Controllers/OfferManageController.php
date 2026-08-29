@@ -36,20 +36,32 @@ class OfferManageController extends Controller
                         ->where('is_active', 1)
                         ->get(['id', 'name', 'item_type']);
 
-        $beerItems = FoodItem::where('club_id', $club_id)
-                        ->where('item_type', 'liquor')
-                        ->where('is_beer', 1)
-                        ->where('is_active', 1)
-                        ->get(['id', 'name'])
-                        ->map(fn($item) => ['id' => $item->id, 'name' => $item->name]);
-
-        $spiritServings = LiquorServing::where('club_id', $club_id)
+        // Every active liquor catalog item (beer and spirits alike) — not just
+        // ones that happen to have a Liquor Serving/peg configured. An item with
+        // no peg yet is still a real, sellable product and must stay pickable
+        // here, or it can never be put on an offer at all. Where menu entries
+        // (pegs/cocktails) DO exist, their names are appended so the admin can
+        // recognise the item the way it actually appears on the Liquor Menu,
+        // instead of only the raw catalog name — an item can have several menu
+        // entries (30ml, 60ml, a cocktail...), so all of them are listed.
+        $menuNamesByItem = LiquorServing::where('club_id', $club_id)
                         ->where('is_active', 1)
                         ->get(['food_item_id', 'name'])
-                        ->map(fn($s) => ['id' => $s->food_item_id, 'name' => $s->name]);
+                        ->groupBy('food_item_id')
+                        ->map(fn($group) => $group->pluck('name')->implode(', '));
 
-        // $liquorItems = $beerItems->merge($spiritServings)->unique('id')->values();
-        $liquorItems = collect($beerItems)->merge($spiritServings)->unique('id')->values();
+        $liquorItems = FoodItem::where('club_id', $club_id)
+                        ->where('item_type', 'liquor')
+                        ->where('is_active', 1)
+                        ->get(['id', 'name'])
+                        ->map(function ($item) use ($menuNamesByItem) {
+                            $menuNames = $menuNamesByItem[$item->id] ?? null;
+                            return [
+                                'id'   => $item->id,
+                                'name' => $menuNames ? "{$item->name} ({$menuNames})" : $item->name,
+                            ];
+                        })
+                        ->values();
 
         // Item IDs already in a currently active (non-expired) offer
         $activeOfferIds = Offer::where('club_id', $club_id)

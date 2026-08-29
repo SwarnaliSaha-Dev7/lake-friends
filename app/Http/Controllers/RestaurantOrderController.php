@@ -125,7 +125,7 @@ class RestaurantOrderController extends Controller
                         $of   = is_array($item->offer_applied) ? $item->offer_applied : (array) $item->offer_applied;
                         $slug = $of['type_slug'] ?? '';
                         if ($slug === 'b1g1') {
-                            $offer = 'B1G1';
+                            $offer = 'Buy ' . ($of['buy_qty'] ?? 1) . ' Get ' . ($of['get_qty'] ?? 1);
                         } elseif ($slug === 'percentage' && !empty($of['discount_value'])) {
                             $offer = $of['discount_value'] . '% off';
                         } elseif ($slug === 'flat' && !empty($of['discount_value'])) {

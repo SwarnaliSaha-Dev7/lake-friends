@@ -163,8 +163,6 @@
                                             @if($type->slug === 'b1g1')
                                                 <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="1" data-get-qty="1">Buy 1 Get 1 Free</option>
                                                 <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="2" data-get-qty="1">Buy 2 Get 1 Free</option>
-                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="3" data-get-qty="1">Buy 3 Get 1 Free</option>
-                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="" data-get-qty="">Buy X Get Y (Custom)</option>
                                             @else
                                                 <option value="{{ $type->id }}" data-slug="{{ $type->slug }}">{{ $type->name }}</option>
                                             @endif
@@ -282,8 +280,6 @@
                                             @if($type->slug === 'b1g1')
                                                 <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="1" data-get-qty="1">Buy 1 Get 1 Free</option>
                                                 <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="2" data-get-qty="1">Buy 2 Get 1 Free</option>
-                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="3" data-get-qty="1">Buy 3 Get 1 Free</option>
-                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="" data-get-qty="">Buy X Get Y (Custom)</option>
                                             @else
                                                 <option value="{{ $type->id }}" data-slug="{{ $type->slug }}">{{ $type->name }}</option>
                                             @endif
@@ -479,9 +475,7 @@ $(document).ready(function () {
     }
 
     // Picking a ready-made ratio ("Buy 2 Get 1 Free") from the dropdown fills the
-    // Buy/Get boxes for you — no typing needed. "Buy X Get Y (Custom)" carries no
-    // preset numbers (data-buy-qty/data-get-qty are empty), so it leaves the boxes
-    // as they are for manual entry instead.
+    // Buy/Get boxes for you — no typing needed.
     function applyB1g1Preset($opt, prefix) {
         if ($opt.data('slug') !== 'b1g1') return;
         const buyQty = $opt.attr('data-buy-qty');

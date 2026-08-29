@@ -112,7 +112,7 @@
                 <td>
                     @if($r['offer'])
                         @php
-                            $cls = str_contains($r['offer'], '%') ? 'offer-pct' : (str_contains($r['offer'], 'B1G1') ? 'offer-b1g1' : 'offer-flat');
+                            $cls = str_contains($r['offer'], '%') ? 'offer-pct' : (str_contains($r['offer'], 'Buy ') ? 'offer-b1g1' : 'offer-flat');
                         @endphp
                         <span class="offer-badge {{ $cls }}">{{ $r['offer'] }}</span>
                     @else

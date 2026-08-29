@@ -252,7 +252,7 @@
                         $offerBadge = '';
                         if ($offer) {
                             if (($offer['type_slug'] ?? '') === 'b1g1')
-                                $offerBadge = '<span class="badge b-b1g1">B1G1</span>';
+                                $offerBadge = '<span class="badge b-b1g1">Buy ' . ($offer['buy_qty'] ?? 1) . ' Get ' . ($offer['get_qty'] ?? 1) . '</span>';
                             elseif (($offer['type_slug'] ?? '') === 'percentage' && ($offer['discount_value'] ?? 0))
                                 $offerBadge = '<span class="badge b-pct">' . $offer['discount_value'] . '% off</span>';
                             elseif (($offer['type_slug'] ?? '') === 'flat' && ($offer['discount_value'] ?? 0))
@@ -292,7 +292,7 @@
                         $offerBadge = '';
                         if ($offer) {
                             if (($offer['type_slug'] ?? '') === 'b1g1')
-                                $offerBadge = '<span class="badge b-b1g1">B1G1</span>';
+                                $offerBadge = '<span class="badge b-b1g1">Buy ' . ($offer['buy_qty'] ?? 1) . ' Get ' . ($offer['get_qty'] ?? 1) . '</span>';
                             elseif (($offer['type_slug'] ?? '') === 'percentage' && ($offer['discount_value'] ?? 0))
                                 $offerBadge = '<span class="badge b-pct">' . $offer['discount_value'] . '% off</span>';
                             elseif (($offer['type_slug'] ?? '') === 'flat' && ($offer['discount_value'] ?? 0))
@@ -336,7 +336,7 @@
                         $offerBadge = '';
                         if ($offer) {
                             if (($offer['type_slug'] ?? '') === 'b1g1')
-                                $offerBadge = '<span class="badge b-b1g1">B1G1</span>';
+                                $offerBadge = '<span class="badge b-b1g1">Buy ' . ($offer['buy_qty'] ?? 1) . ' Get ' . ($offer['get_qty'] ?? 1) . '</span>';
                             elseif (($offer['type_slug'] ?? '') === 'percentage' && ($offer['discount_value'] ?? 0))
                                 $offerBadge = '<span class="badge b-pct">' . $offer['discount_value'] . '% off</span>';
                             elseif (($offer['type_slug'] ?? '') === 'flat' && ($offer['discount_value'] ?? 0))
