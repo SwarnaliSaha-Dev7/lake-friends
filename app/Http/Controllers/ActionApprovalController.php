@@ -455,21 +455,24 @@ class ActionApprovalController extends Controller
                             'offer_type_id'  => $new['offer_type_id'],
                             'applies_to'     => $new['applies_to'],
                             'discount_value' => $new['discount_value'] ?? 0,
+                            'buy_qty'        => $new['buy_qty'] ?? null,
+                            'get_qty'        => $new['get_qty'] ?? null,
                             'start_at'       => $new['start_at'],
                             'end_at'         => $new['end_at'],
                             'status'         => 'active',
                         ]);
 
                         // Preserve any per-item rules (e.g. a volume_ml scope) for items
-                        // that stay selected — the UI has no field for these yet, so this
-                        // approval-apply path must not silently wipe them out.
+                        // that stay selected and whose edit didn't touch that field —
+                        // this approval-apply path must not silently wipe them out.
                         $oldRulesByItem = $offer->offerItems->pluck('rules', 'food_items_id');
+                        $newItemRules   = !empty($new['volume_ml']) ? ['volume_ml' => (int) $new['volume_ml']] : null;
                         OfferItem::where('offer_id', $offer->id)->delete();
                         foreach ($new['items'] as $itemId) {
                             OfferItem::create([
                                 'offer_id'      => $offer->id,
                                 'food_items_id' => $itemId,
-                                'rules'         => $oldRulesByItem[$itemId] ?? null,
+                                'rules'         => $newItemRules ?? ($oldRulesByItem[$itemId] ?? null),
                             ]);
                         }
 

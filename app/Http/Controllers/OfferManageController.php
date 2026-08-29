@@ -84,6 +84,15 @@ class OfferManageController extends Controller
                 ]);
             }
 
+            // Validate buy/get quantities for b1g1
+            if ($offerType->slug === 'b1g1') {
+                $request->validate([
+                    'buy_qty'   => 'required|integer|min:1',
+                    'get_qty'   => 'required|integer|min:1',
+                    'volume_ml' => 'nullable|integer|min:1',
+                ]);
+            }
+
             $isAdmin = Auth::user()->hasRole('admin');
 
             DB::beginTransaction();
@@ -94,15 +103,24 @@ class OfferManageController extends Controller
                 'name'           => $request->name,
                 'applies_to'     => $request->applies_to,
                 'discount_value' => $request->discount_value ?? 0,
+                'buy_qty'        => $offerType->slug === 'b1g1' ? $request->buy_qty : null,
+                'get_qty'        => $offerType->slug === 'b1g1' ? $request->get_qty : null,
                 'start_at'       => $request->start_at,
                 'end_at'         => $request->end_at,
                 'status'         => $isAdmin ? 'active' : 'pending',
             ]);
 
+            // A volume_ml scope (e.g. "only the 60ml peg") is optional and applies
+            // uniformly to every selected item — a blank value means the offer
+            // covers every serving size of the item, same as before this existed.
+            $itemRules = ($offerType->slug === 'b1g1' && $request->filled('volume_ml'))
+                ? ['volume_ml' => (int) $request->volume_ml]
+                : null;
             foreach ($request->items as $itemId) {
                 OfferItem::create([
                     'offer_id'      => $offer->id,
                     'food_items_id' => $itemId,
+                    'rules'         => $itemRules,
                 ]);
             }
 
@@ -124,6 +142,9 @@ class OfferManageController extends Controller
                         'offer_type'     => $offerType->name,
                         'applies_to'     => $offer->applies_to,
                         'discount_value' => $offer->discount_value,
+                        'buy_qty'        => $offer->buy_qty,
+                        'get_qty'        => $offer->get_qty,
+                        'volume_ml'      => $itemRules['volume_ml'] ?? null,
                         'start_at'       => $offer->start_at,
                         'end_at'         => $offer->end_at,
                         'items'          => $request->items,
@@ -144,6 +165,9 @@ class OfferManageController extends Controller
                         'offer_type'     => $offerType->name,
                         'applies_to'     => $offer->applies_to,
                         'discount_value' => $offer->discount_value,
+                        'buy_qty'        => $offer->buy_qty,
+                        'get_qty'        => $offer->get_qty,
+                        'volume_ml'      => $itemRules['volume_ml'] ?? null,
                         'start_at'       => $offer->start_at,
                         'end_at'         => $offer->end_at,
                         'items'          => $request->items,
@@ -196,6 +220,12 @@ class OfferManageController extends Controller
                     'offer_type_slug' => $offer->offerType?->slug,
                     'applies_to'      => $offer->applies_to,
                     'discount_value'  => $offer->discount_value,
+                    'buy_qty'         => $offer->buy_qty,
+                    'get_qty'         => $offer->get_qty,
+                    // The volume_ml scope is set uniformly across every item on
+                    // the offer (see store()/update()), so the first item's rule
+                    // represents the whole offer's scope.
+                    'volume_ml'       => $offer->offerItems->first()?->rules['volume_ml'] ?? null,
                     'start_at'        => $offer->start_at,
                     'end_at'          => $offer->end_at,
                     'item_ids'        => $offer->offerItems->pluck('food_items_id')->toArray(),
@@ -237,14 +267,24 @@ class OfferManageController extends Controller
             if (in_array($newOfferType->slug, ['percentage', 'flat'])) {
                 $request->validate(['discount_value' => 'required|numeric|min:0']);
             }
+            if ($newOfferType->slug === 'b1g1') {
+                $request->validate([
+                    'buy_qty'   => 'required|integer|min:1',
+                    'get_qty'   => 'required|integer|min:1',
+                    'volume_ml' => 'nullable|integer|min:1',
+                ]);
+            }
 
             $isAdmin  = Auth::user()->hasRole('admin');
             $oldItems = $offer->offerItems->pluck('food_items_id')->toArray();
-            // Preserve any per-item rules (e.g. a volume_ml scope) for items that
-            // stay selected — the UI has no field for these yet, so the only way
-            // they exist is a seeder/direct DB edit, and this update path must not
-            // silently wipe them out just because an unrelated field changed.
+            // Preserve any per-item volume_ml scope for items that stay selected
+            // and whose edit didn't touch that field (e.g. the offer type isn't
+            // b1g1 in this edit) — this update path must not silently wipe it out
+            // just because an unrelated field changed.
             $oldRulesByItem = $offer->offerItems->pluck('rules', 'food_items_id');
+            $newItemRules = ($newOfferType->slug === 'b1g1' && $request->filled('volume_ml'))
+                ? ['volume_ml' => (int) $request->volume_ml]
+                : null;
 
             $payload = [
                 'offer_id' => $offer->id,
@@ -254,6 +294,8 @@ class OfferManageController extends Controller
                     'offer_type'     => $offer->offerType?->name,
                     'applies_to'     => $offer->applies_to,
                     'discount_value' => $offer->discount_value,
+                    'buy_qty'        => $offer->buy_qty,
+                    'get_qty'        => $offer->get_qty,
                     'start_at'       => $offer->start_at,
                     'end_at'         => $offer->end_at,
                     'items'          => $oldItems,
@@ -264,6 +306,9 @@ class OfferManageController extends Controller
                     'offer_type'     => $newOfferType->name,
                     'applies_to'     => $request->applies_to,
                     'discount_value' => $request->discount_value ?? 0,
+                    'buy_qty'        => $newOfferType->slug === 'b1g1' ? $request->buy_qty : null,
+                    'get_qty'        => $newOfferType->slug === 'b1g1' ? $request->get_qty : null,
+                    'volume_ml'      => $newItemRules['volume_ml'] ?? null,
                     'start_at'       => $request->start_at,
                     'end_at'         => $request->end_at,
                     'items'          => $request->items,
@@ -279,6 +324,8 @@ class OfferManageController extends Controller
                     'offer_type_id'  => $request->offer_type_id,
                     'applies_to'     => $request->applies_to,
                     'discount_value' => $request->discount_value ?? 0,
+                    'buy_qty'        => $newOfferType->slug === 'b1g1' ? $request->buy_qty : null,
+                    'get_qty'        => $newOfferType->slug === 'b1g1' ? $request->get_qty : null,
                     'start_at'       => $request->start_at,
                     'end_at'         => $request->end_at,
                 ]);
@@ -288,7 +335,7 @@ class OfferManageController extends Controller
                     OfferItem::create([
                         'offer_id'      => $offer->id,
                         'food_items_id' => $itemId,
-                        'rules'         => $oldRulesByItem[$itemId] ?? null,
+                        'rules'         => $newItemRules ?? ($oldRulesByItem[$itemId] ?? null),
                     ]);
                 }
 

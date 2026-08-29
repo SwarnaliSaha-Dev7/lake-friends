@@ -160,7 +160,14 @@
                                     <select name="offer_type_id" id="offerTypeId" class="form-select py-2 shadow-none">
                                         <option value="" selected hidden disabled>Select Offer Type</option>
                                         @foreach($offerTypes as $type)
-                                            <option value="{{ $type->id }}" data-slug="{{ $type->slug }}">{{ $type->name }}</option>
+                                            @if($type->slug === 'b1g1')
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="1" data-get-qty="1">Buy 1 Get 1 Free</option>
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="2" data-get-qty="1">Buy 2 Get 1 Free</option>
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="3" data-get-qty="1">Buy 3 Get 1 Free</option>
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="" data-get-qty="">Buy X Get Y (Custom)</option>
+                                            @else
+                                                <option value="{{ $type->id }}" data-slug="{{ $type->slug }}">{{ $type->name }}</option>
+                                            @endif
                                         @endforeach
                                     </select>
                                     <div class="error-div text-danger small"></div>
@@ -174,6 +181,26 @@
                                         <span class="input-group-text" id="discountSuffix">%</span>
                                     </div>
                                     <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 d-none" id="buyGetGroup">
+                                <div class="form-part mb-3">
+                                    <label class="form-label"><small>Buy / Get Quantity <span class="text-danger">*</span></small></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Buy</span>
+                                        <input type="number" name="buy_qty" id="buyQty" class="form-control py-2 shadow-none" placeholder="2" min="1" step="1">
+                                        <span class="input-group-text">Get</span>
+                                        <input type="number" name="get_qty" id="getQty" class="form-control py-2 shadow-none" placeholder="1" min="1" step="1">
+                                        <span class="input-group-text">Free</span>
+                                    </div>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 d-none" id="volumeMlGroup">
+                                <div class="form-part mb-3">
+                                    <label class="form-label"><small>Restrict to Volume (ml)</small></label>
+                                    <input type="number" name="volume_ml" id="volumeMl" class="form-control py-2 shadow-none" placeholder="e.g. 60 — leave blank for any size" min="1" step="1">
+                                    <div class="form-text">Only for peg-based liquor items. Leave blank to apply to every size (30ml, 60ml, 90ml...).</div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -252,7 +279,14 @@
                                     <select name="offer_type_id" id="edit_offerTypeId" class="form-select py-2 shadow-none">
                                         <option value="" selected hidden disabled>Select Offer Type</option>
                                         @foreach($offerTypes as $type)
-                                            <option value="{{ $type->id }}" data-slug="{{ $type->slug }}">{{ $type->name }}</option>
+                                            @if($type->slug === 'b1g1')
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="1" data-get-qty="1">Buy 1 Get 1 Free</option>
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="2" data-get-qty="1">Buy 2 Get 1 Free</option>
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="3" data-get-qty="1">Buy 3 Get 1 Free</option>
+                                                <option value="{{ $type->id }}" data-slug="b1g1" data-buy-qty="" data-get-qty="">Buy X Get Y (Custom)</option>
+                                            @else
+                                                <option value="{{ $type->id }}" data-slug="{{ $type->slug }}">{{ $type->name }}</option>
+                                            @endif
                                         @endforeach
                                     </select>
                                     <div class="error-div text-danger small"></div>
@@ -266,6 +300,26 @@
                                         <span class="input-group-text" id="edit_discountSuffix">%</span>
                                     </div>
                                     <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 d-none" id="edit_buyGetGroup">
+                                <div class="form-part mb-3">
+                                    <label class="form-label"><small>Buy / Get Quantity <span class="text-danger">*</span></small></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Buy</span>
+                                        <input type="number" name="buy_qty" id="edit_buyQty" class="form-control py-2 shadow-none" placeholder="2" min="1" step="1">
+                                        <span class="input-group-text">Get</span>
+                                        <input type="number" name="get_qty" id="edit_getQty" class="form-control py-2 shadow-none" placeholder="1" min="1" step="1">
+                                        <span class="input-group-text">Free</span>
+                                    </div>
+                                    <div class="error-div text-danger small"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 d-none" id="edit_volumeMlGroup">
+                                <div class="form-part mb-3">
+                                    <label class="form-label"><small>Restrict to Volume (ml)</small></label>
+                                    <input type="number" name="volume_ml" id="edit_volumeMl" class="form-control py-2 shadow-none" placeholder="e.g. 60 — leave blank for any size" min="1" step="1">
+                                    <div class="form-text">Only for peg-based liquor items. Leave blank to apply to every size (30ml, 60ml, 90ml...).</div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -409,6 +463,31 @@ $(document).ready(function () {
             group.addClass('d-none');
             input.val('');
         }
+
+        const buyGetGroup = $('#' + prefix + 'buyGetGroup');
+        const volumeGroup = $('#' + prefix + 'volumeMlGroup');
+        if (slug === 'b1g1') {
+            buyGetGroup.removeClass('d-none');
+            volumeGroup.removeClass('d-none');
+        } else {
+            buyGetGroup.addClass('d-none');
+            volumeGroup.addClass('d-none');
+            $('#' + prefix + 'buyQty').val('');
+            $('#' + prefix + 'getQty').val('');
+            $('#' + prefix + 'volumeMl').val('');
+        }
+    }
+
+    // Picking a ready-made ratio ("Buy 2 Get 1 Free") from the dropdown fills the
+    // Buy/Get boxes for you — no typing needed. "Buy X Get Y (Custom)" carries no
+    // preset numbers (data-buy-qty/data-get-qty are empty), so it leaves the boxes
+    // as they are for manual entry instead.
+    function applyB1g1Preset($opt, prefix) {
+        if ($opt.data('slug') !== 'b1g1') return;
+        const buyQty = $opt.attr('data-buy-qty');
+        const getQty = $opt.attr('data-get-qty');
+        if (buyQty) $('#' + prefix + 'buyQty').val(buyQty);
+        if (getQty) $('#' + prefix + 'getQty').val(getQty);
     }
 
     // ── Shared: validate offer form ────────────────────────────────────────
@@ -438,6 +517,15 @@ $(document).ready(function () {
         } else {
             $('#' + prefix + 'discountValue').removeClass('is-invalid');
             $('#' + prefix + 'discountValue').closest('.input-group').next('.error-div').text('');
+        }
+
+        if (slug === 'b1g1' && (!$('#' + prefix + 'buyQty').val() || !$('#' + prefix + 'getQty').val())) {
+            $('#' + prefix + 'buyQty, #' + prefix + 'getQty').addClass('is-invalid');
+            $('#' + prefix + 'buyQty').closest('.input-group').next('.error-div').text('Buy and Get quantities are required');
+            isValid = false;
+        } else {
+            $('#' + prefix + 'buyQty, #' + prefix + 'getQty').removeClass('is-invalid');
+            $('#' + prefix + 'buyQty').closest('.input-group').next('.error-div').text('');
         }
 
         if (!$('#' + prefix + 'offerStartAt').val() || !$('#' + prefix + 'offerEndAt').val()) {
@@ -480,7 +568,11 @@ $(document).ready(function () {
 
     $('#itemsSelect').select2({ dropdownParent: $('#createoffer'), placeholder: 'Search and select items...', allowClear: true, width: '100%' });
 
-    $('#offerTypeId').on('change', function () { handleDiscountField($(this).find(':selected').data('slug'), ''); });
+    $('#offerTypeId').on('change', function () {
+        const $opt = $(this).find(':selected');
+        handleDiscountField($opt.data('slug'), '');
+        applyB1g1Preset($opt, '');
+    });
 
     $('#appliesToSelect').on('change', function () {
         const val = $(this).val();
@@ -492,6 +584,7 @@ $(document).ready(function () {
         $('#createOfferForm')[0].reset();
         $('#offerDateRange').val(''); $('#offerStartAt,#offerEndAt').val('');
         $('#discountValueGroup').addClass('d-none'); $('#itemsGroup').addClass('d-none');
+        $('#buyGetGroup,#volumeMlGroup').addClass('d-none');
         $('#itemsSelect').empty().trigger('change');
         $('.error-div').text(''); $('#dateRangeError,#itemsError').text('');
         $('#createOffer_submit').prop('disabled', false).html('Submit for Approval');
@@ -540,7 +633,11 @@ $(document).ready(function () {
 
     $('#edit_itemsSelect').select2({ dropdownParent: $('#editoffer'), placeholder: 'Search and select items...', allowClear: true, width: '100%' });
 
-    $('#edit_offerTypeId').on('change', function () { handleDiscountField($(this).find(':selected').data('slug'), 'edit_'); });
+    $('#edit_offerTypeId').on('change', function () {
+        const $opt = $(this).find(':selected');
+        handleDiscountField($opt.data('slug'), 'edit_');
+        applyB1g1Preset($opt, 'edit_');
+    });
 
     $('#edit_appliesToSelect').on('change', function () {
         const val     = $(this).val();
@@ -572,6 +669,9 @@ $(document).ready(function () {
                 $('#edit_offerTypeId').val(d.offer_type_id).trigger('change');
                 handleDiscountField(d.offer_type_slug, 'edit_');
                 $('#edit_discountValue').val(d.discount_value);
+                $('#edit_buyQty').val(d.buy_qty);
+                $('#edit_getQty').val(d.get_qty);
+                $('#edit_volumeMl').val(d.volume_ml);
                 $('#edit_appliesToSelect').val(d.applies_to);
 
                 // Date range
@@ -600,6 +700,7 @@ $(document).ready(function () {
         $('#editOfferForm')[0].reset();
         $('#edit_offerDateRange').val(''); $('#edit_offerStartAt,#edit_offerEndAt').val('');
         $('#edit_discountValueGroup').addClass('d-none');
+        $('#edit_buyGetGroup,#edit_volumeMlGroup').addClass('d-none');
         $('#edit_itemsSelect').empty().trigger('change');
         $('.error-div').text(''); $('#edit_dateRangeError,#edit_itemsError').text('');
         $('#editOffer_submit').prop('disabled', false).html('Submit Edit for Approval');
