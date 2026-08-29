@@ -37,6 +37,22 @@ class BarOrderController extends Controller
         return Location::where('name', Location::BAR)->firstOrFail();
     }
 
+    // Picks the right offer for a food item, given the specific serving volume
+    // being sold (null for whole-bottle items, which aren't volume-scoped). An
+    // offer whose offer_item carries a volume_ml rule only matches a serving of
+    // that exact volume (e.g. "Buy 2 Get 1" on just the 60ml peg, not 30ml/90ml
+    // pegs of the same spirit) — an offer with no rule matches any volume.
+    private function resolveOffer(array $offerMap, int $foodItemId, ?int $volumeMl = null): ?array
+    {
+        foreach ($offerMap[$foodItemId] ?? [] as $candidate) {
+            if ($candidate['volume_ml'] !== null && $candidate['volume_ml'] != $volumeMl) {
+                continue;
+            }
+            return $candidate;
+        }
+        return null;
+    }
+
     // ── List (today) ────────────────────────────────────────────────────────
 
     public function index()
@@ -219,7 +235,10 @@ class BarOrderController extends Controller
                 ->where('location_id', $barLocation->id)
                 ->pluck('quantity', 'food_items_id');
 
-            // Build offer map keyed by food_item_id
+            // Build offer map keyed by food_item_id. Each item can carry several
+            // candidate offers (e.g. a plain-bottle offer plus a volume-scoped one
+            // for a single peg size) — see resolveOffer() for how the right one is
+            // picked for a given serving.
             $today = now()->toDateString();
             $offerMap = [];
             Offer::where('club_id', $clubId)
@@ -230,15 +249,14 @@ class BarOrderController extends Controller
                 ->get()
                 ->each(function ($offer) use (&$offerMap) {
                     foreach ($offer->offerItems as $oi) {
-                        if (!isset($offerMap[$oi->food_items_id])) {
-                            $offerMap[$oi->food_items_id] = [
-                                'offer_name'     => $offer->name,
-                                'type_slug'      => $offer->offerType ? $offer->offerType->slug : '',
-                                'discount_value' => (float) $offer->discount_value,
-                                'buy_qty'        => (int) ($offer->buy_qty ?? 1),
-                                'get_qty'        => (int) ($offer->get_qty ?? 1),
-                            ];
-                        }
+                        $offerMap[$oi->food_items_id][] = [
+                            'offer_name'     => $offer->name,
+                            'type_slug'      => $offer->offerType ? $offer->offerType->slug : '',
+                            'discount_value' => (float) $offer->discount_value,
+                            'buy_qty'        => (int) ($offer->buy_qty ?? 1),
+                            'get_qty'        => (int) ($offer->get_qty ?? 1),
+                            'volume_ml'      => $oi->rules['volume_ml'] ?? null,
+                        ];
                     }
                 });
 
@@ -270,7 +288,7 @@ class BarOrderController extends Controller
                         'is_low'      => $isLow,
                         'btl_eq'      => $btlEq,
                         'alert_qty'   => $alertQty,
-                        'offer'       => $offerMap[$item->id] ?? null,
+                        'offer'       => $this->resolveOffer($offerMap, $item->id),
                         'gst_rate'    => 0, // liquor is GST-free in Bar Order — see BUSINESS_LOGIC.md GST section
                     ];
                 });
@@ -286,7 +304,7 @@ class BarOrderController extends Controller
                 ->where('is_active', true)
                 ->with(['foodItem.foodItemCat', 'secondaryFoodItem.foodItemPrice'])
                 ->get()
-                ->map(function ($serving) use ($barStockMap, $beverageGstRate) {
+                ->map(function ($serving) use ($barStockMap, $beverageGstRate, $offerMap) {
                     $baseItemId  = $serving->food_item_id;
                     // Base item can be a spirit (deduct ml) or, for a non-alcoholic
                     // drink like "Masala Coke"/"Fresh Lime Soda", a beverage item
@@ -332,7 +350,9 @@ class BarOrderController extends Controller
                         'is_low'      => false,
                         'btl_eq'      => $canMake,       // how many servings can be poured
                         'alert_qty'   => 0,
-                        'offer'       => null,
+                        // Bottle-based servings (mocktails etc.) aren't volume-scoped by
+                        // ml, so only an unscoped offer can match them — pass null.
+                        'offer'       => $this->resolveOffer($offerMap, $baseItemId, $baseIsBeer ? null : (int) $serving->volume_ml),
                         // Liquor-based servings are GST-free (see BUSINESS_LOGIC.md);
                         // a beverage-based mocktail/soft-drink still carries beverage GST.
                         'gst_rate'    => $baseIsBeer ? $beverageGstRate : 0,
@@ -369,7 +389,7 @@ class BarOrderController extends Controller
                         'is_low'      => $isLow,
                         'btl_eq'      => $stock,
                         'alert_qty'   => $alertQty,
-                        'offer'       => $offerMap[$item->id] ?? null,
+                        'offer'       => $this->resolveOffer($offerMap, $item->id),
                         'gst_rate'    => $beverageGstRate,
                     ];
                 });

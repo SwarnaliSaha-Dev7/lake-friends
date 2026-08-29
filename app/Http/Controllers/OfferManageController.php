@@ -240,6 +240,11 @@ class OfferManageController extends Controller
 
             $isAdmin  = Auth::user()->hasRole('admin');
             $oldItems = $offer->offerItems->pluck('food_items_id')->toArray();
+            // Preserve any per-item rules (e.g. a volume_ml scope) for items that
+            // stay selected — the UI has no field for these yet, so the only way
+            // they exist is a seeder/direct DB edit, and this update path must not
+            // silently wipe them out just because an unrelated field changed.
+            $oldRulesByItem = $offer->offerItems->pluck('rules', 'food_items_id');
 
             $payload = [
                 'offer_id' => $offer->id,
@@ -280,7 +285,11 @@ class OfferManageController extends Controller
 
                 OfferItem::where('offer_id', $offer->id)->delete();
                 foreach ($request->items as $itemId) {
-                    OfferItem::create(['offer_id' => $offer->id, 'food_items_id' => $itemId]);
+                    OfferItem::create([
+                        'offer_id'      => $offer->id,
+                        'food_items_id' => $itemId,
+                        'rules'         => $oldRulesByItem[$itemId] ?? null,
+                    ]);
                 }
 
                 ActionApproval::create([

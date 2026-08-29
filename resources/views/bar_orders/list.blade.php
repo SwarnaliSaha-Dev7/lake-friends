@@ -346,10 +346,13 @@ $(document).ready(function () {
             var isOut = !item.in_stock;
             var isLow = item.is_low;
 
-            // B1G1 specific: need buy_qty + get_qty bottles in stock
+            // B1G1 specific: need buy_qty + get_qty units in stock — for beer
+            // that's bottles (bar_stock is already bottle-count), for a peg it's
+            // ml (bar_stock is raw ml, so the unit size scales the requirement).
             var isB1g1Insufficient = false;
-            if (!isOut && item.is_beer && item.offer && item.offer.type_slug === 'b1g1') {
-                var b1g1Need = (item.offer.buy_qty || 1) + (item.offer.get_qty || 1);
+            if (!isOut && item.offer && item.offer.type_slug === 'b1g1') {
+                var b1g1Sets = (item.offer.buy_qty || 1) + (item.offer.get_qty || 1);
+                var b1g1Need = item.is_beer ? b1g1Sets : b1g1Sets * (item.size_ml || 0);
                 isB1g1Insufficient = item.bar_stock < b1g1Need;
             }
 
@@ -528,20 +531,44 @@ $(document).ready(function () {
         if (servingId) {
             // Spirit peg or cocktail — fixed volume & price from Liquor Servings,
             // added straight to cart (no free-form peg size, no raw-item price).
-            var deductQty = sizeMl;
-            if (deductQty > stock) {
-                toastr.error('Not enough bar stock for "' + name + '".');
-                return;
+            if (offer && offer.type_slug === 'b1g1') {
+                var buyQty  = offer.buy_qty || 1;
+                var getQty  = offer.get_qty || 1;
+                var setQty  = buyQty + getQty;
+                var deductQty = sizeMl * setQty;
+                if (deductQty > stock) {
+                    toastr.error(
+                        '"' + name + '" এ Buy ' + buyQty + ' Get ' + getQty +
+                        ' offer আছে। কমপক্ষে ' + (setQty * sizeMl) + ' ml stock থাকতে হবে।' +
+                        ' বর্তমানে মাত্র ' + stock + ' ml available।'
+                    );
+                    return;
+                }
+                addToCart({
+                    id: id, serving_id: servingId, name: name,
+                    is_beer: isBeer, is_cocktail: isCocktail,
+                    volume_ml: sizeMl,
+                    paid_qty: buyQty, free_qty: getQty, quantity: setQty,
+                    deduct_qty: deductQty,
+                    unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate,
+                    secondary_name: secondaryName, secondary_qty: secondaryQty,
+                });
+            } else {
+                var deductQty = sizeMl;
+                if (deductQty > stock) {
+                    toastr.error('Not enough bar stock for "' + name + '".');
+                    return;
+                }
+                addToCart({
+                    id: id, serving_id: servingId, name: name,
+                    is_beer: isBeer, is_cocktail: isCocktail,
+                    volume_ml: sizeMl,
+                    paid_qty: 1, free_qty: 0, quantity: 1,
+                    deduct_qty: deductQty,
+                    unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate,
+                    secondary_name: secondaryName, secondary_qty: secondaryQty,
+                });
             }
-            addToCart({
-                id: id, serving_id: servingId, name: name,
-                is_beer: isBeer, is_cocktail: isCocktail,
-                volume_ml: sizeMl,
-                paid_qty: 1, free_qty: 0, quantity: 1,
-                deduct_qty: deductQty,
-                unit_price: price, bar_stock: stock, offer: offer, gst_rate: gstRate,
-                secondary_name: secondaryName, secondary_qty: secondaryQty,
-            });
         } else if (isBeer) {
             if (offer && offer.type_slug === 'b1g1') {
                 var buyQty = offer.buy_qty || 1;
@@ -623,7 +650,11 @@ $(document).ready(function () {
                 }
                 lineTotal = paidQty * item.unit_price;
             } else {
-                desc = item.quantity + ' × ' + item.volume_ml + ' ml = ' + item.deduct_qty.toLocaleString() + ' ml';
+                if (freeQty > 0) {
+                    desc = paidQty + ' × ' + item.volume_ml + ' ml + <span class="text-success fw-semibold">' + freeQty + ' Free</span> = ' + item.deduct_qty.toLocaleString() + ' ml';
+                } else {
+                    desc = item.quantity + ' × ' + item.volume_ml + ' ml = ' + item.deduct_qty.toLocaleString() + ' ml';
+                }
                 lineTotal = paidQty * item.unit_price;
             }
 

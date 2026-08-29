@@ -198,13 +198,32 @@ class DashboardController extends Controller
         }
     }
 
+    // Picks the right offer for a food item, given the specific serving volume
+    // being sold (null for whole-bottle items, which aren't volume-scoped). An
+    // offer whose offer_item carries a volume_ml rule only matches a serving of
+    // that exact volume (e.g. "Buy 2 Get 1" on just the 60ml peg, not 30ml/90ml
+    // pegs of the same spirit) — an offer with no rule matches any volume.
+    private function resolveOffer(array $offerMap, int $foodItemId, ?int $volumeMl = null): ?array
+    {
+        foreach ($offerMap[$foodItemId] ?? [] as $candidate) {
+            if ($candidate['volume_ml'] !== null && $candidate['volume_ml'] != $volumeMl) {
+                continue;
+            }
+            return $candidate;
+        }
+        return null;
+    }
+
     public function getOrderItems()
     {
         try {
             $clubId = club_id();
             $today  = now()->toDateString();
 
-            // Build a map of food_item_id => first active offer
+            // Build a map of food_item_id => candidate active offers. An item can
+            // carry several candidates (e.g. a plain-bottle offer plus a
+            // volume-scoped one for a single peg size) — see resolveOffer() for
+            // how the right one is picked for a given serving.
             $offerMap = [];
             $activeOffers = Offer::where('club_id', $clubId)
                 ->where('status', 'active')
@@ -215,15 +234,14 @@ class DashboardController extends Controller
 
             foreach ($activeOffers as $offer) {
                 foreach ($offer->offerItems as $oi) {
-                    if (!isset($offerMap[$oi->food_items_id])) {
-                        $offerMap[$oi->food_items_id] = [
-                            'offer_name'     => $offer->name,
-                            'type_slug'      => $offer->offerType ? $offer->offerType->slug : '',
-                            'discount_value' => (float) $offer->discount_value,
-                            'buy_qty'        => (int) $offer->buy_qty,
-                            'get_qty'        => (int) $offer->get_qty,
-                        ];
-                    }
+                    $offerMap[$oi->food_items_id][] = [
+                        'offer_name'     => $offer->name,
+                        'type_slug'      => $offer->offerType ? $offer->offerType->slug : '',
+                        'discount_value' => (float) $offer->discount_value,
+                        'buy_qty'        => (int) ($offer->buy_qty ?? 1),
+                        'get_qty'        => (int) ($offer->get_qty ?? 1),
+                        'volume_ml'      => $oi->rules['volume_ml'] ?? null,
+                    ];
                 }
             }
 
@@ -233,7 +251,7 @@ class DashboardController extends Controller
                 ->with('foodItemPrice')
                 ->get(['id', 'name', 'item_type'])
                 ->map(function ($item) use ($offerMap) {
-                    $item->offer = $offerMap[$item->id] ?? null;
+                    $item->offer = $this->resolveOffer($offerMap, $item->id);
                     return $item;
                 });
 
@@ -264,7 +282,7 @@ class DashboardController extends Controller
                         'volume_ml'    => null,
                         'price'        => isset($item->foodItemPrice) ? (float) $item->foodItemPrice->price : 0,
                         'bar_stock'    => (int) ($barStockMap[$item->id] ?? 0),
-                        'offer'        => $offerMap[$item->id] ?? null,
+                        'offer'        => $this->resolveOffer($offerMap, $item->id),
                     ];
                 });
 
@@ -296,7 +314,9 @@ class DashboardController extends Controller
                         'volume_ml'    => $serving->volume_ml,
                         'price'        => round($displayPrice, 2),
                         'bar_stock'    => (int) ($barStockMap[$serving->food_item_id] ?? 0),
-                        'offer'        => $offerMap[$serving->food_item_id] ?? null,
+                        // Bottle-based servings (mocktails etc.) aren't volume-scoped by
+                        // ml, so only an unscoped offer can match them — pass null.
+                        'offer'        => $this->resolveOffer($offerMap, $serving->food_item_id, $isBeer ? null : (int) $serving->volume_ml),
                     ];
                 });
 
@@ -317,7 +337,7 @@ class DashboardController extends Controller
                         'volume_ml'    => null,
                         'price'        => isset($item->foodItemPrice) ? (float) $item->foodItemPrice->price : 0,
                         'bar_stock'    => (int) ($barStockMap[$item->id] ?? 0),
-                        'offer'        => $offerMap[$item->id] ?? null,
+                        'offer'        => $this->resolveOffer($offerMap, $item->id),
                     ];
                 })
                 ->values();

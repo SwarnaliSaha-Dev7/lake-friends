@@ -49,7 +49,11 @@
                                         </td>
                                         <td class="text-nowrap">
                                             <span class="badge bg-warning-subtle text-secondary border border-warning rounded-pill px-3 py-2 fs-6">
-                                                {{ $offer->offerType?->name ?? '—' }}
+                                                @if($offer->offerType?->slug === 'b1g1')
+                                                    Buy {{ $offer->buy_qty ?? 1 }} Get {{ $offer->get_qty ?? 1 }}
+                                                @else
+                                                    {{ $offer->offerType?->name ?? '—' }}
+                                                @endif
                                             </span>
                                         </td>
                                         <td class="text-nowrap text-capitalize">{{ $offer->applies_to ?? '—' }}</td>
