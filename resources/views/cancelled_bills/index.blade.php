@@ -407,6 +407,16 @@ $(function () {
     function cbIsMocktailOption($opt) {
         return $opt.attr('data-is-cocktail') === '1' && $opt.attr('data-is-beer') === '1';
     }
+    // Free (bonus) units earned on top of a paid quantity under a b1g1 offer,
+    // e.g. buy_qty=2, get_qty=1: reordering 2 (paid) earns 1 free. Used to
+    // inflate stock deduction so the free units are actually restocked-out,
+    // not just discounted in price — mirrors base/app.blade.php's offerFreeQty.
+    function cbOfferFreeQty(qty, ofType, buyQty, getQty) {
+        qty = parseInt(qty) || 0; buyQty = parseInt(buyQty) || 1;
+        if (ofType !== 'b1g1' || buyQty <= 0) return 0;
+        getQty = parseInt(getQty) || 1;
+        return Math.floor(qty / buyQty) * getQty;
+    }
     function cbRowDiscount(price, ofType, ofVal, qty, buyQty, getQty) {
         qty = parseInt(qty) || 1; buyQty = parseInt(buyQty) || 1; getQty = parseInt(getQty) || 1;
         if (ofType === 'percentage' && ofVal > 0) return price * (ofVal / 100) * qty;
@@ -537,7 +547,7 @@ $(function () {
     function cbUpdateLiquorRowTotal($row) {
         var o    = cbReadOffer($row.find('.cb-liquor-item-sel option:selected'), cbLiquorOfferMap);
         var qty  = parseInt($row.find('.cb-liquor-qty-input').val()) || 1;
-        var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+        var disc = (o.ofType === 'b1g1') ? 0 : cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
         $row.find('.cb-liquor-unit-price').val('Rs ' + o.price.toFixed(2));
         $row.find('.cb-liquor-offer').html(cbOfferBadge(o.ofType, o.ofVal, o.buyQty, o.getQty));
         $row.find('.cb-liquor-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
@@ -577,7 +587,7 @@ $(function () {
             var $opt = $(this).find('.cb-liquor-item-sel option:selected');
             var o    = cbReadOffer($opt, cbLiquorOfferMap);
             var q    = parseInt($(this).find('.cb-liquor-qty-input').val()) || 0;
-            var disc = cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+            var disc = (o.ofType === 'b1g1') ? 0 : cbRowDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
             // A mocktail's base is a beverage, not a spirit — it belongs in the
             // beverage-taxed bucket, not the GST-free liquor bucket.
             if (cbIsMocktailOption($opt)) {
@@ -641,17 +651,19 @@ $(function () {
             var volumeMl  = parseInt($(this).find('.cb-liquor-volume-ml').val()) || 0;
             var o         = cbReadOffer($opt, cbLiquorOfferMap);
             var qty       = parseInt($(this).find('.cb-liquor-qty-input').val()) || 1;
-            var disc      = cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+            var freeQty   = cbOfferFreeQty(qty, o.ofType, o.buyQty, o.getQty);
+            var totalQty  = qty + freeQty;
+            var disc      = (o.ofType === 'b1g1') ? 0 : cbRowDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             items.push({
                 food_item_id:  foodItemId,
                 serving_id:    servingId,
-                quantity:      qty,
+                quantity:      totalQty,
                 unit:          isBeer ? 'btl' : 'ml',
                 is_beer:       isBeer,
                 is_cocktail:   isCocktail,
                 cocktail_name: isCocktail ? cocktailName : null,
                 volume_ml:     isBeer ? null : volumeMl,
-                deduct_qty:    isBeer ? qty : qty * volumeMl,
+                deduct_qty:    isBeer ? totalQty : totalQty * volumeMl,
                 unit_price:    o.price,
                 offer_applied: o.ofType ? { type_slug: o.ofType, discount_value: o.ofVal, buy_qty: o.buyQty, get_qty: o.getQty } : null,
                 total_amount:  parseFloat((o.price * qty - disc).toFixed(2)),

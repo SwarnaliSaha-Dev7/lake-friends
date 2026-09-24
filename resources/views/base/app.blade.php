@@ -1160,6 +1160,18 @@
         $(document).on('click', '.add-beverage-item', function () { addBeverageRow(); });
 
         /* ---- Helpers ---- */
+        // Free (bonus) units earned on top of a paid quantity under a b1g1 offer,
+        // e.g. buy_qty=2, get_qty=1: ordering 2 (paid) earns 1 free, ordering 4
+        // earns 2 free. Used to inflate stock deduction so the free units are
+        // actually poured/served, not just discounted in price.
+        function offerFreeQty(qty, ofType, buyQty, getQty) {
+            qty    = parseInt(qty)    || 0;
+            buyQty = parseInt(buyQty) || 1;
+            if (ofType !== 'b1g1' || buyQty <= 0) return 0;
+            getQty = parseInt(getQty) || 1;
+            return Math.floor(qty / buyQty) * getQty;
+        }
+
         function rowTotalDiscount(price, ofType, ofVal, qty, buyQty, getQty) {
             qty    = parseInt(qty)    || 1;
             buyQty = parseInt(buyQty) || 1;
@@ -1314,7 +1326,7 @@
         function updateLiquorRowTotal($row) {
             var o    = readRowOffer($row.find('.liquor-item-sel option:selected'), liquorOfferMap);
             var qty  = parseInt($row.find('.liquor-qty-input').val()) || 1;
-            var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+            var disc = (o.ofType === 'b1g1') ? 0 : rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
             $row.find('.liquor-unit-price').val('Rs ' + o.price.toFixed(2));
             $row.find('.liquor-offer').html(offerBadge(o.ofType, o.ofVal, o.buyQty, o.getQty));
             $row.find('.liquor-total-price').val('Rs ' + (o.price * qty - disc).toFixed(2));
@@ -1360,7 +1372,7 @@
                 var $opt = $(this).find('.liquor-item-sel option:selected');
                 var o    = readRowOffer($opt, liquorOfferMap);
                 var qty  = parseInt($(this).find('.liquor-qty-input').val()) || 0;
-                var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
+                var disc = (o.ofType === 'b1g1') ? 0 : rowTotalDiscount(o.price, o.ofType, o.ofVal, qty, o.buyQty, o.getQty);
                 // A mocktail's base is a beverage, not a spirit — it belongs in the
                 // beverage-taxed bucket, not the GST-free liquor bucket.
                 if (isMocktailOption($opt)) {
@@ -1451,13 +1463,20 @@
                 var volumeMl     = parseInt($(this).find('.liquor-volume-ml').val()) || 0;
                 var lo           = readRowOffer($opt, liquorOfferMap);
                 var qty          = parseInt($(this).find('.liquor-qty-input').val()) || 1;
-                var disc         = rowTotalDiscount(lo.price, lo.ofType, lo.ofVal, qty, lo.buyQty, lo.getQty);
-                var deductQty    = isBeer ? qty : qty * volumeMl;
+                // qty is the paid quantity the staff picked. For a b1g1 offer the
+                // free units are an EXTRA bonus on top of it (never billed), not a
+                // discount folded into qty — so the free units must be added before
+                // computing how much stock to deduct, same as the Bar Order screen
+                // already does when it auto-adds the free units on cart add.
+                var freeQty      = offerFreeQty(qty, lo.ofType, lo.buyQty, lo.getQty);
+                var totalQty     = qty + freeQty;
+                var disc         = (lo.ofType === 'b1g1') ? 0 : rowTotalDiscount(lo.price, lo.ofType, lo.ofVal, qty, lo.buyQty, lo.getQty);
+                var deductQty    = isBeer ? totalQty : totalQty * volumeMl;
 
                 items.push({
                     food_item_id:  foodItemId,
                     serving_id:    servingId,
-                    quantity:      qty,
+                    quantity:      totalQty,
                     unit:          isBeer ? 'btl' : 'ml',
                     is_beer:       isBeer,
                     is_cocktail:   isCocktail,
@@ -1511,7 +1530,7 @@
                 var $opt = $(this).find('.liquor-item-sel option:selected');
                 var o    = readRowOffer($opt, liquorOfferMap);
                 var q    = parseInt($(this).find('.liquor-qty-input').val()) || 0;
-                var disc = rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
+                var disc = (o.ofType === 'b1g1') ? 0 : rowTotalDiscount(o.price, o.ofType, o.ofVal, q, o.buyQty, o.getQty);
                 // A mocktail's base is a beverage, not a spirit — it belongs in the
                 // beverage-taxed bucket, not the GST-free liquor bucket.
                 if (isMocktailOption($opt)) {
