@@ -521,7 +521,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
                                             <input type="email" class="form-control py-2 shadow-none" name="swim_email" id=""
-                                                placeholder="Email" required>
+                                                placeholder="Email">
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
@@ -538,7 +538,7 @@
                                             {{-- <input type="text" class="form-control py-2 shadow-none" name="swim_address" id=""
                                                 placeholder="Address" required> --}}
                                             <textarea class="form-control py-2 shadow-none" id="" name="swim_address" rows="3"
-                                                placeholder="Address" required></textarea>
+                                                placeholder="Address"></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
@@ -901,7 +901,7 @@
                                         <div class="form-part mb-3">
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Email</small></label>
                                             <input type="email" class="form-control py-2 shadow-none" name="swim_email" id="swim_member_email"
-                                                placeholder="Email" required readonly>
+                                                placeholder="Email" readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">
@@ -917,7 +917,7 @@
                                             <label for="" class="form-label w-100 mb-1 w-100"><small>Address</small></label>
 
                                             <textarea class="form-control py-2 shadow-none" id="swim_member_address" name="swim_address" rows="3"
-                                                placeholder="Address" required></textarea>
+                                                placeholder="Address"></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-xl-3">

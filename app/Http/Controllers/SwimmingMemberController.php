@@ -146,18 +146,21 @@ class SwimmingMemberController extends Controller
 
             $membershipTypeId = $membershipType->id;
 
-            $exists = Member::where('email', $request->swim_email)
-                ->where('membership_type_id', $membershipTypeId)
-                ->where('club_id', $clubId)
-                ->exists();
-            // ->first();
+            // Email is optional now, so a blank email must never be matched as a
+            // "duplicate" against other members who also left it blank.
+            if ($request->filled('swim_email')) {
+                $exists = Member::where('email', $request->swim_email)
+                    ->where('membership_type_id', $membershipTypeId)
+                    ->where('club_id', $clubId)
+                    ->exists();
 
-            if ($exists) {
-                return response()->json([
-                    'statusCode' => 409,
-                    // 'message' => 'Email already exists'
-                    'message' => 'Member already registered with this membership type'
-                ]);
+                if ($exists) {
+                    return response()->json([
+                        'statusCode' => 409,
+                        // 'message' => 'Email already exists'
+                        'message' => 'Member already registered with this membership type'
+                    ]);
+                }
             }
 
 
@@ -233,7 +236,7 @@ class SwimmingMemberController extends Controller
                     'i_agree' => $iAgree,
                     'disease' => $request->input('swim_disease', []),
                     'image' => $image_path,
-                    'guardian_name' => ucwords($request->swim_guardian_name),
+                    'guardian_name' => ucwords((string) $request->swim_guardian_name),
                     'guardian_occupation' => $request->swim_guardian_occupation,
                     'guardian_image' => $guardian_image_path
                 ]
