@@ -111,8 +111,8 @@
                                             title="Wallet History" data-id="{{$member->id}}"><small><i
                                             class="fa-solid fa-list"></i></small></button>
                                     <button class="border-0 bg-light p-1 rounded-3 lh-1 action-btn lockerBtn" data-bs-toggle="modal" data-bs-target="#lockerModal"
-                                        title="Locker Purchase" data-id="{{$member->id}}">
-                                        {{-- title="Locker Purchase" data-id="{{$member->id}}" data-has-locker="{{ $member->has_locker ? 1 : 0 }}"> --}}
+                                        title="Locker" data-id="{{$member->id}}">
+                                        {{-- title="Locker" data-id="{{$member->id}}" data-has-locker="{{ $member->has_locker ? 1 : 0 }}"> --}}
                                         <small>
                                             <i class="fa-solid fa-table-cells-row-lock"></i>
                                         </small>
@@ -955,7 +955,7 @@
 
                 <!-- Header -->
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fw-semibold">Locker Purchase</h5>
+                    <h5 class="modal-title fw-semibold">Locker</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal">
                         <i class="fa-regular fa-circle-xmark"></i>
                     </button>

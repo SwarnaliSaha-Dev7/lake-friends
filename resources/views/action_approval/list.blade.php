@@ -784,7 +784,7 @@
 
                 <!-- Header -->
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fw-semibold">Locker Purchase</h5>
+                    <h5 class="modal-title fw-semibold">Locker</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal">
                         <i class="fa-regular fa-circle-xmark"></i>
                     </button>
