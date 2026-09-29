@@ -29,6 +29,7 @@ use App\Http\Controllers\Master\LiquorCategoryManageController;
 use App\Http\Controllers\Master\BeverageCategoryManageController;
 use App\Http\Controllers\Master\MiscCategoryManageController;
 use App\Http\Controllers\Master\LockerManageController;
+use App\Http\Controllers\Master\LockerPriceManageController;
 use App\Http\Controllers\Master\MembershipDurationTypesManageController;
 use App\Http\Controllers\Master\MinimumSpendRuleManageController;
 use App\Http\Controllers\Master\OperatorManageController;
@@ -76,6 +77,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('manage-misc-categories', MiscCategoryManageController::class);
         Route::resource('manage-lockers', LockerManageController::class);
         Route::post('manage-lockers/delink', [LockerManageController::class, 'delink'])->name('manage-lockers.delink');
+        Route::get('manage-locker-prices', [LockerPriceManageController::class, 'index'])->name('manage-locker-prices.index');
+        Route::put('manage-locker-prices', [LockerPriceManageController::class, 'update'])->name('manage-locker-prices.update');
     });
     // master manage end
 

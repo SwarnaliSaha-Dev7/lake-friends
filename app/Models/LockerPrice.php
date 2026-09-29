@@ -13,6 +13,10 @@ class LockerPrice extends Model
     protected $fillable = [
         'club_id',
         'price',
-        'is_active'
+        'is_active',
+        'club_first_price',
+        'club_renewal_price',
+        'swim_price',
+        'gst_percentage',
     ];
 }

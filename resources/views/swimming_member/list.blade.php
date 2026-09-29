@@ -1764,7 +1764,7 @@
                                     <select class="form-select shadow-none" id="lockerSelect" required>
                                         <option value="">Select Locker</option>
                                         @foreach($lockers as $locker)
-                                            <option value="{{ $locker->id }}" data-price="{{ $lockerPrice->price ?? 0 }}">
+                                            <option value="{{ $locker->id }}">
                                                 Locker {{ $locker->locker_number }}
                                             </option>
                                         @endforeach
@@ -1797,13 +1797,7 @@
                             </div>
                         </div>
 
-                        <!-- PRICE SECTION HERE -->
-                        <div class="text-end mt-3" id="lockerPriceWrapper">
-                            <small>Amount to Pay</small>
-                            <h5 class="fw-semibold mb-0">
-                                ₹ <span id="lockerPrice">0</span>
-                            </h5>
-                        </div>
+                        @include('partials.locker-bill-fields')
 
                         <!-- Bottom -->
                         <div class="border-top pt-3 mt-3 d-flex justify-content-end">
@@ -1823,6 +1817,7 @@
 @endsection
 
 @section('customJS')
+@include('partials.locker-bill-js')
 <script>
     $(document).ready(function() {
 
@@ -2545,7 +2540,7 @@
             $('#lockerMemberId').val(memberId);
             $('#lockerSelect option[data-assigned="1"]').remove();
             $('#lockerSelect').val('').prop('disabled', false);
-            $('#lockerPrice').text(0);
+            $('#lockerPrice').text('0.00');
             $('#lockerAllocationInfo').addClass('d-none');
             $('#lockerAllocationDates').text('-');
             $('#lockerAllocationStatus').text('').removeClass('text-success text-warning text-danger');
@@ -2561,6 +2556,9 @@
                 url: '{{ route("swimming-member.locker-allocation", ":memberId") }}'.replace(':memberId', memberId),
                 type: 'GET',
                 success: function(response){
+                    if (response.statusCode == 200) {
+                        window.lockerBill.fill(response.quote);
+                    }
                     if (response.statusCode == 200 && response.data) {
                         let allocation = response.data;
                         let lockerId = allocation.locker_id;
@@ -2569,7 +2567,7 @@
 
                         let $select = $('#lockerSelect');
                         if ($select.find(`option[value="${lockerId}"]`).length === 0) {
-                            $select.append(`<option value="${lockerId}" data-assigned="1" data-price="600.00">Locker ${lockerNumber}</option>`);
+                            $select.append(`<option value="${lockerId}" data-assigned="1">Locker ${lockerNumber}</option>`);
                         }
 
                         $select.val(lockerId).prop('disabled', !isExpired);
@@ -2620,8 +2618,6 @@
 
                         if (isExpired) {
                             $('#lockerModal').data('has-locker', false);
-                            let lockerPrice = $select.find(':selected').data('price') || 0;
-                            $('#lockerPrice').text(lockerPrice);
                             $('#lockerPriceWrapper').removeClass('d-none');
                             $('#purchaseLockerBtn').removeClass('d-none');
                         } else {
@@ -2658,15 +2654,12 @@
 
         $(document).on('change', '#lockerSelect', function() {
             let hasLocker = $('#lockerModal').data('has-locker') == 1;
-            let lockerPrice = $(this).find(':selected').data('price') || 0;
             let hasSelection = $(this).val() !== '';
 
             if (!hasLocker && hasSelection) {
-                $('#lockerPrice').text(lockerPrice);
                 $('#lockerPriceWrapper').removeClass('d-none');
                 $('#purchaseLockerBtn').removeClass('d-none');
             } else {
-                $('#lockerPrice').text(0);
                 $('#lockerPriceWrapper').addClass('d-none');
                 $('#purchaseLockerBtn').addClass('d-none');
             }
@@ -2683,6 +2676,12 @@
                 return;
             }
 
+            let billError = window.lockerBill.validate();
+            if (billError) {
+                toastr.error(billError);
+                return;
+            }
+
             let btn = $(this);
             btn.prop('disabled', true)
                 .html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
@@ -2690,11 +2689,11 @@
             $.ajax({
                 url: "{{ route('swimming-member.locker.purchase') }}",
                 type: "POST",
-                data: {
+                data: Object.assign({
                     _token: "{{ csrf_token() }}",
                     member_id: memberId,
                     locker_id: lockerId
-                },
+                }, window.lockerBill.payload()),
                 success: function(response) {
                     // console.log(response)
                     if (response.statusCode == 200) {
@@ -2705,7 +2704,7 @@
                             window.location.href = "{{ route('swimming-member.list') }}";
                         }, 1200);
                     } else {
-                        toastr.error(response.message ?? "Something went wrong");
+                        toastr.error(response.message ?? response.error ?? "Something went wrong");
                     }
                 },
                 error: function(xhr) {

@@ -10,7 +10,6 @@ use App\Models\Card;
 use App\Models\GstRate;
 use App\Models\Locker;
 use App\Models\LockerAllocation;
-use App\Models\LockerPrice;
 use App\Models\Member;
 use App\Models\MemberAddOn;
 use App\Models\MemberCardMapping;
@@ -24,6 +23,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Notifications\ApprovalNotification;
+use App\Services\LockerPurchaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -93,8 +93,6 @@ class ClubMemberController extends Controller
                 ->select('id', 'locker_number')
                 ->get();
 
-            $lockerPrice = LockerPrice::where('club_id', $clubId)->first();
-
             return view('club_member.list', compact(
                 'title',
                 'page_title',
@@ -104,8 +102,7 @@ class ClubMemberController extends Controller
                 'cards',
                 'members',
                 'addonList',
-                'lockers',
-                'lockerPrice'
+                'lockers'
             ));
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -1528,163 +1525,16 @@ class ClubMemberController extends Controller
         }
     }
 
-    public function purchaseLocker(Request $request)
+    public function purchaseLocker(Request $request, LockerPurchaseService $lockerPurchase)
     {
-        try {
-            $request->validate([
-                'member_id' => ['required', 'integer'],
-                'locker_id' => ['required', 'integer'],
-            ]);
-
-            $clubId = club_id();
-            $startDate = Carbon::today();
-            $endDate = Carbon::today()->addMonths(6);
-
-            DB::beginTransaction();
-
-            $memberDtls = Member::find($request->member_id);
-
-            $lockerAmount = LockerPrice::where('club_id', $clubId)->value('price') ?? 0;
-
-            $wallet = Wallet::where('member_id', $request->member_id)->lockForUpdate()->first();
-            if (!$wallet) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 404,
-                    'message' => 'Wallet not found'
-                ]);
-            }
-
-            if ($wallet->current_balance < $lockerAmount) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 422,
-                    'message' => 'Insufficient wallet balance'
-                ]);
-            }
-
-            $locker = Locker::where('id', $request->locker_id)
-                ->where('club_id', $clubId)
-                ->where('is_active', 1)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$locker) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 404,
-                    'message' => 'Locker not found'
-                ]);
-            }
-
-            $existingLockerAllocation = LockerAllocation::where('locker_id', $request->locker_id)->first();
-            if ($existingLockerAllocation && $existingLockerAllocation->member_id != $request->member_id) {
-                DB::rollBack();
-                return response()->json([
-                    'statusCode' => 409,
-                    'message' => 'Locker already allocated'
-                ]);
-            }
-
-            $previousAllocations = LockerAllocation::where('member_id', $request->member_id)
-                ->latest('id')
-                ->first();
-
-            if ($previousAllocations) {
-                Locker::where('id', $previousAllocations->locker_id)->update([
-                    'status' => 'available'
-                ]);
-
-                $previousAllocations->delete();
-            }
-
-            $lockerAllocation = LockerAllocation::create([
-                'club_id' => $clubId,
-                'locker_id' => $request->locker_id,
-                'member_id' => $request->member_id,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'price' => $lockerAmount,
-            ]);
-
-            // DEDUCT WALLET
-            $wallet->current_balance -= $lockerAmount;
-            $wallet->save();
-
-            $locker->update([
-                'status' => 'occupied'
-            ]);
-
-            // WALLET LOG
-            WalletTransaction::create([
-                'wallet_id' => $wallet->id,
-                'member_id' => $request->member_id,
-                'amount'    => $lockerAmount,
-                'direction' => 'debit',
-                'txn_type'  => 'locker_purchase',
-                'created_by' => auth()->id(),
-            ]);
-
-            $requestData = [
-                'locker_id' => $request->locker_id,
-                'locker_allocation_id' => $lockerAllocation->id,
-                'locker_price' => $lockerAmount,
-            ];
-
-            $approval = ActionApproval::create([
-                'club_id' => $clubId,
-                'module' => 'locker_purchase',
-                'action_type' => 'create',
-                'entity_model' => 'Member',
-                'entity_id' => $request->member_id,
-                'membership_type_id' => $memberDtls->membership_type_id,
-                'maker_user_id' => Auth::id(),
-                'request_payload' => json_encode($requestData)
-            ]);
-
-            if (Auth::user()->hasRole('admin')) {
-
-                $approval->update([
-                    'checker_user_id' => Auth::id(),
-                    'approved_or_rejected_at' => now(),
-                    'status' => 'approved'
-                ]);
-
-                $lockerAllocation->update([
-                    'status' => 'active'
-                ]);
-            }
-
-            if (Auth::user()->hasRole('operator')) {
-
-                $approvers = User::role(['operator', 'admin'])
-                    ->where('id', '!=', Auth::id())
-                    ->get();
-
-
-                Notification::send($approvers, new ApprovalNotification($approval));
-            }
-
-
-
-            DB::commit();
-
-            return response()->json([
-                'statusCode' => 200,
-                'message' => 'Locker purchased successfully'
-            ]);
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return response()->json([
-                'statusCode' => 500,
-                'error' => $th->getMessage(),
-            ]);
-        }
+        return response()->json($lockerPurchase->purchase($request, false));
     }
 
-    public function getMemberLockerAllocation($memberId)
+    public function getMemberLockerAllocation($memberId, LockerPurchaseService $lockerPurchase)
     {
         try {
+            $member = Member::where('club_id', club_id())->findOrFail($memberId);
+
             $allocation = LockerAllocation::with('locker:id,locker_number')
                 ->where('member_id', $memberId)
                 ->latest()
@@ -1697,9 +1547,16 @@ class ClubMemberController extends Controller
                     : false;
             }
 
+            $paymentHistory = PaymentHistory::where('member_id', $memberId)
+                ->where('purpose', 'club_locker_purchase')
+                ->orderBy('id', 'DESC')
+                ->get(['id', 'created_at', 'net_amount', 'payment_status']);
+
             return response()->json([
                 'statusCode' => 200,
-                'data' => $allocation
+                'data' => $allocation,
+                'payment_history' => $paymentHistory,
+                'quote' => $lockerPurchase->quote($member, false),
             ]);
         } catch (\Throwable $th) {
             return response()->json([

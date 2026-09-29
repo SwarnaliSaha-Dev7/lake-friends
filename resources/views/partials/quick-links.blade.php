@@ -209,6 +209,7 @@
                 <li><a href="{{ route('manage-food-categories.index') }}">Food Categories</a></li>
                 <li><a href="{{ route('manage-liquor-categories.index') }}">Liquor Categories</a></li>
                 <li><a href="{{ route('manage-lockers.index') }}">Lockers</a></li>
+                <li><a href="{{ route('manage-locker-prices.index') }}">Locker Price</a></li>
             </ul>
         </div>
         @endrole

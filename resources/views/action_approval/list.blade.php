@@ -822,6 +822,11 @@
                             <h5 class="fw-semibold mb-0">
                                 ₹ <span id="lockerPrice">0</span>
                             </h5>
+                            <div class="d-none small text-muted mt-1" id="lockerBillBreakdown">
+                                <span id="lockerPurchaseType"></span>
+                                Taxable ₹<span id="lockerTaxable">0</span>
+                                + GST <span id="lockerGstPct">0</span>% (₹<span id="lockerGstAmt">0</span>)
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1155,6 +1160,7 @@
             $('#lockerAllocationDates').text('-');
             $('#lockerPrice').text('0');
             $('#lockerAllocationInfo').addClass('d-none');
+            $('#lockerBillBreakdown').addClass('d-none');
 
             // open modal immediately
             $('#lockerModal').modal('show');
@@ -1173,6 +1179,15 @@
                         );
 
                         $('#lockerPrice').text(response.data.locker_price ?? 0);
+
+                        if (response.data.net_amount !== null && response.data.net_amount !== undefined) {
+                            var typeLabels = { first: 'First Time ·', renewal: 'Renewal ·', swim: '6 Months ·' };
+                            $('#lockerPurchaseType').text(typeLabels[response.data.purchase_type] || '');
+                            $('#lockerTaxable').text(response.data.taxable_amount);
+                            $('#lockerGstPct').text(response.data.gst_percentage);
+                            $('#lockerGstAmt').text(response.data.gst_amount);
+                            $('#lockerBillBreakdown').removeClass('d-none');
+                        }
 
                         $('#lockerAllocationInfo').removeClass('d-none');
                     }

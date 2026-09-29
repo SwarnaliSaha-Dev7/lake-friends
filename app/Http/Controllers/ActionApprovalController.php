@@ -956,6 +956,8 @@ class ActionApprovalController extends Controller
                         ->first();
 
                     if ($allocation) {
+                        // Marked rejected so it never counts as a past locker for renewal pricing.
+                        $allocation->update(['status' => 'rejected']);
                         $allocation->delete();
                     }
                 }
@@ -966,9 +968,16 @@ class ActionApprovalController extends Controller
                     ]);
                 }
 
-                if ($membershipType && $membershipType === 'Swimming Membership' && $lockerAllocationId) {
-                    PaymentHistory::where('locker_allocation_id', $lockerAllocationId)
-                                    ->update(['payment_status' => 'refunded']);
+                // Locker purchases are billed at the counter now; only approvals created before
+                // that change (no net_amount in payload) actually debited a club member's wallet.
+                $billedAtCounter = isset($payload['net_amount'])
+                    || ($membershipType && $membershipType === 'Swimming Membership');
+
+                if ($billedAtCounter) {
+                    if ($lockerAllocationId) {
+                        PaymentHistory::where('locker_allocation_id', $lockerAllocationId)
+                                        ->update(['payment_status' => 'refunded']);
+                    }
                 }
                 else{
                     //REFUND in wallet for club members
@@ -1088,6 +1097,11 @@ class ActionApprovalController extends Controller
                         'start_date' => $allocation->start_date ?? null,
                         'end_date' => $allocation->end_date ?? null,
                         'locker_price' => $details['locker_price'] ?? 0,
+                        'purchase_type' => $details['purchase_type'] ?? null,
+                        'taxable_amount' => $details['taxable_amount'] ?? null,
+                        'gst_percentage' => $details['gst_percentage'] ?? null,
+                        'gst_amount' => $details['gst_amount'] ?? null,
+                        'net_amount' => $details['net_amount'] ?? null,
                     ]
                 ]);
             }
